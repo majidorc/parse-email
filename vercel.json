@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "functions": {
+    "api/webhook.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "SMTP_HOST": "@smtp-host",
+    "SMTP_PORT": "@smtp-port",
+    "SMTP_USER": "@smtp-user",
+    "SMTP_PASS": "@smtp-pass",
+    "FROM_EMAIL": "@from-email",
+    "ALLOWED_SENDERS": "@allowed-senders"
+  }
+} 

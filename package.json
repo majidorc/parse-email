@@ -1,0 +1,23 @@
+{
+  "name": "email-auto-responder",
+  "version": "1.0.0",
+  "description": "Automated email processing and response system",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "nodemailer": "^6.9.0",
+    "mailparser": "^3.6.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

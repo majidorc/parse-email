@@ -1,9 +1,9 @@
 const { simpleParser } = require('mailparser');
 
-// Sample Bokun.io booking notification
+// Sample Bokun.io booking notification with updated format
 const sampleEmail = `From: no-reply@bokun.io
 To: recipient@example.com
-Subject: New booking: Fri 20.Jun '25 @ 07:30 (TT-T98893827) Ext. booking ref: 1275699329
+Subject: New booking: 20.Jun '25 @ 07:30 (TT-T98893827) Ext. booking ref: 1275699329
 
 The following booking was just created.
 
@@ -18,7 +18,7 @@ Booking channel   Viator.com
 Customer    Giroud, Marie-Caroline
 Customer email    S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
 Customer phone    FR+33 0666962682
-Date    Fri 20.Jun '25 @ 07:30
+Date    20.Jun '25 @ 07:30
 Rate    Included transfer (Inzone)
 PAX     2 Adult
 Pick-up     Access Resort & Villas
@@ -36,27 +36,31 @@ Use of Snorkelling equipment
 GUIDE : English
 Viator amount: THB 2600.0`;
 
-// Email parser class (same as in webhook.js)
+// Email parser class
 class EmailParser {
   constructor(emailContent) {
     this.content = emailContent;
   }
 
   extractBookingNumber() {
-    // First try to find VIA booking reference
-    const viaMatch = this.content.match(/Booking ref\.\s*([A-Z0-9-]+)/i);
-    if (viaMatch) return viaMatch[1];
-
-    // Then try external booking reference
-    const extMatch = this.content.match(/Ext\. booking ref\s*(\d+)/i);
+    // Get external booking reference
+    const extMatch = this.content.match(/Ext\.\s*booking\s*ref\s*(\d+)/i);
     if (extMatch) return extMatch[1];
-
     return 'N/A';
   }
 
   extractTourDate() {
-    const dateMatch = this.content.match(/Date\s*([^\n]+)/i);
-    if (dateMatch) return dateMatch[1].trim();
+    // First try to get date from subject
+    const subjectMatch = this.content.match(/Subject:.*?(\d{1,2}\.?\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*'\d{2})/i);
+    if (subjectMatch) {
+      return subjectMatch[1].trim();
+    }
+
+    // Then try to get from Date field
+    const dateMatch = this.content.match(/Date\s*(\d{1,2}\.?\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*'\d{2})/i);
+    if (dateMatch) {
+      return dateMatch[1].trim();
+    }
     return 'N/A';
   }
 
@@ -89,7 +93,7 @@ class EmailParser {
   }
 
   extractHotel() {
-    const pickupMatch = this.content.match(/Pick-up\s*([^\n]+)/i);
+    const pickupMatch = this.content.match(/Pick-up\s+([^\n]+)/i);
     if (pickupMatch) return pickupMatch[1].trim();
     return 'N/A';
   }
@@ -126,7 +130,6 @@ async function testEmailParsing() {
     console.log('Parsed Email:');
     console.log('From:', parsed.from?.value?.[0]?.address);
     console.log('Subject:', parsed.subject);
-    console.log('Date:', parsed.date);
     console.log('\nEmail Content:');
     console.log(parsed.text || parsed.html);
     console.log('\n' + '='.repeat(50) + '\n');

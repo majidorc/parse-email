@@ -8,20 +8,24 @@ class EmailParser {
   }
 
   extractBookingNumber() {
-    // First try to find VIA booking reference
-    const viaMatch = this.content.match(/Booking ref\.\s*([A-Z0-9-]+)/i);
-    if (viaMatch) return viaMatch[1];
-
-    // Then try external booking reference
-    const extMatch = this.content.match(/Ext\. booking ref\s*(\d+)/i);
+    // Get external booking reference
+    const extMatch = this.content.match(/Ext\.\s*booking\s*ref\s*(\d+)/i);
     if (extMatch) return extMatch[1];
-
     return 'N/A';
   }
 
   extractTourDate() {
-    const dateMatch = this.content.match(/Date\s*([^\n]+)/i);
-    if (dateMatch) return dateMatch[1].trim();
+    // First try to get date from subject
+    const subjectMatch = this.content.match(/Subject:.*?(\d{1,2}\.?\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*'\d{2})/i);
+    if (subjectMatch) {
+      return subjectMatch[1].trim();
+    }
+
+    // Then try to get from Date field
+    const dateMatch = this.content.match(/Date\s*(\d{1,2}\.?\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*'\d{2})/i);
+    if (dateMatch) {
+      return dateMatch[1].trim();
+    }
     return 'N/A';
   }
 
@@ -54,7 +58,7 @@ class EmailParser {
   }
 
   extractHotel() {
-    const pickupMatch = this.content.match(/Pick-up\s*([^\n]+)/i);
+    const pickupMatch = this.content.match(/Pick-up\s+([^\n]+)/i);
     if (pickupMatch) return pickupMatch[1].trim();
     return 'N/A';
   }

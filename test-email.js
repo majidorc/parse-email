@@ -1,25 +1,40 @@
 const { simpleParser } = require('mailparser');
 
-// Sample email content for testing
-const sampleEmail = `From: sender@example.com
+// Sample Bokun.io booking notification
+const sampleEmail = `From: no-reply@bokun.io
 To: recipient@example.com
-Subject: Booking Confirmation
-Date: Mon, 15 Dec 2024 10:00:00 +0000
+Subject: New booking: Fri 20.Jun '25 @ 07:30 (TT-T98893827) Ext. booking ref: 1275699329
 
-Dear Team,
+The following booking was just created.
 
-Please find the booking details below:
+Booking ref.     VIA-68941697
+Product booking ref.  TT-T98893827
+Ext. booking ref  1275699329
+Product     HKT0041 - Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
+Supplier    Tours.co.th
+Sold by     Viator.com
+Booking channel   Viator.com
 
-Booking no: BK123456
-Tour date: 15/12/2024
-Program: City Tour Package
-Name: John Doe
-2 adult, 1 child, 0 infant
-Hotel: Grand Hotel Downtown
-Phone Number: +1234567890
+Customer    Giroud, Marie-Caroline
+Customer email    S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
+Customer phone    FR+33 0666962682
+Date    Fri 20.Jun '25 @ 07:30
+Rate    Included transfer (Inzone)
+PAX     2 Adult
+Pick-up     Access Resort & Villas
+Extras
+Created     Thu, June 19 2025 @ 15:52
 
-Best regards,
-Sender`;
+Notes    --- Inclusions: ---
+Coffee and/or Tea - Coffee, tea, and juice, along with bakery and fresh fruits, are complimentary at the pier
+Bottled water
+Lunch
+Seasonal Fruit
+Use of Snorkelling equipment
+
+--- Booking languages: ---
+GUIDE : English
+Viator amount: THB 2600.0`;
 
 // Email parser class (same as in webhook.js)
 class EmailParser {
@@ -28,99 +43,60 @@ class EmailParser {
   }
 
   extractBookingNumber() {
-    const patterns = [
-      /booking\s*(?:no|number|#)?\s*:?\s*([A-Z0-9\-]{3,})/i,
-      /booking\s*([A-Z0-9\-]{3,})/i,
-      /confirmation\s*(?:no|number|#)?\s*:?\s*([A-Z0-9\-]{3,})/i,
-      /(?:booking|confirmation)\s*(?:id|reference)?\s*:?\s*([A-Z0-9\-]{3,})/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1];
-    }
+    // First try to find VIA booking reference
+    const viaMatch = this.content.match(/Booking ref\.\s*([A-Z0-9-]+)/i);
+    if (viaMatch) return viaMatch[1];
+
+    // Then try external booking reference
+    const extMatch = this.content.match(/Ext\. booking ref\s*(\d+)/i);
+    if (extMatch) return extMatch[1];
+
     return 'N/A';
   }
 
   extractTourDate() {
-    const patterns = [
-      /tour\s*date\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-      /date\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-      /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1];
-    }
+    const dateMatch = this.content.match(/Date\s*([^\n]+)/i);
+    if (dateMatch) return dateMatch[1].trim();
     return 'N/A';
   }
 
   extractProgram() {
-    const patterns = [
-      /program\s*:?\s*([^\n\r]+)/i,
-      /tour\s*:?\s*([^\n\r]+)/i,
-      /package\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
+    const productMatch = this.content.match(/Product\s+[A-Z0-9]+\s*-\s*([^\n]+)/i);
+    if (productMatch) {
+      return productMatch[1].trim();
     }
     return 'N/A';
   }
 
   extractName() {
-    const patterns = [
-      /name\s*:?\s*([^\n\r]+)/i,
-      /customer\s*name\s*:?\s*([^\n\r]+)/i,
-      /guest\s*name\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const customerMatch = this.content.match(/Customer\s*([^\n]+)/i);
+    if (customerMatch) return customerMatch[1].trim();
     return 'N/A';
   }
 
   extractPassengers() {
-    const adultMatch = this.content.match(/(\d+)\s*adult/i);
-    const childMatch = this.content.match(/(\d+)\s*child/i);
-    const infantMatch = this.content.match(/(\d+)\s*infant/i);
-    
-    return {
-      adult: adultMatch ? adultMatch[1] : '0',
-      child: childMatch ? childMatch[1] : '0',
-      infant: infantMatch ? infantMatch[1] : '0'
-    };
+    const paxMatch = this.content.match(/PAX\s*([^\n]+)/i);
+    if (paxMatch) {
+      const paxText = paxMatch[1].toLowerCase();
+      const adultMatch = paxText.match(/(\d+)\s*adult/i);
+      return {
+        adult: adultMatch ? adultMatch[1] : '0',
+        child: '0',
+        infant: '0'
+      };
+    }
+    return { adult: '0', child: '0', infant: '0' };
   }
 
   extractHotel() {
-    const patterns = [
-      /hotel\s*:?\s*([^\n\r]+)/i,
-      /accommodation\s*:?\s*([^\n\r]+)/i,
-      /pickup\s*from\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const pickupMatch = this.content.match(/Pick-up\s*([^\n]+)/i);
+    if (pickupMatch) return pickupMatch[1].trim();
     return 'N/A';
   }
 
   extractPhone() {
-    const patterns = [
-      /phone\s*(?:number)?\s*:?\s*([+\d\s\-\(\)]+)/i,
-      /contact\s*(?:number)?\s*:?\s*([+\d\s\-\(\)]+)/i,
-      /tel\s*:?\s*([+\d\s\-\(\)]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const phoneMatch = this.content.match(/Customer phone\s*([^\n]+)/i);
+    if (phoneMatch) return phoneMatch[1].trim();
     return 'N/A';
   }
 

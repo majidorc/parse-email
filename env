@@ -1,9 +1,9 @@
 # SMTP Configuration for sending emails
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-FROM_EMAIL=your-email@gmail.com
+SMTP_USER=o0dr.orc0o@gmail.com
+SMTP_PASS= PASS
+FROM_EMAIL=o0dr.orc0o@gmail.com
 
 # Authorized email senders (comma-separated)
 # Leave empty to allow all senders

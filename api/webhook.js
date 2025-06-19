@@ -1,117 +1,70 @@
 const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 
-// Email parser utility
+// Email parser utility for Bokun.io notifications
 class EmailParser {
   constructor(emailContent) {
     this.content = emailContent;
   }
 
-  // Extract booking number
   extractBookingNumber() {
-    const patterns = [
-      /booking\s*(?:no|number|#)?\s*:?\s*([A-Z0-9\-]{3,})/i,
-      /booking\s*([A-Z0-9\-]{3,})/i,
-      /confirmation\s*(?:no|number|#)?\s*:?\s*([A-Z0-9\-]{3,})/i,
-      /(?:booking|confirmation)\s*(?:id|reference)?\s*:?\s*([A-Z0-9\-]{3,})/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1];
-    }
+    // First try to find VIA booking reference
+    const viaMatch = this.content.match(/Booking ref\.\s*([A-Z0-9-]+)/i);
+    if (viaMatch) return viaMatch[1];
+
+    // Then try external booking reference
+    const extMatch = this.content.match(/Ext\. booking ref\s*(\d+)/i);
+    if (extMatch) return extMatch[1];
+
     return 'N/A';
   }
 
-  // Extract tour date
   extractTourDate() {
-    const patterns = [
-      /tour\s*date\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-      /date\s*:?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
-      /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1];
-    }
+    const dateMatch = this.content.match(/Date\s*([^\n]+)/i);
+    if (dateMatch) return dateMatch[1].trim();
     return 'N/A';
   }
 
-  // Extract program/tour name
   extractProgram() {
-    const patterns = [
-      /program\s*:?\s*([^\n\r]+)/i,
-      /tour\s*:?\s*([^\n\r]+)/i,
-      /package\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
+    const productMatch = this.content.match(/Product\s+[A-Z0-9]+\s*-\s*([^\n]+)/i);
+    if (productMatch) {
+      return productMatch[1].trim();
     }
     return 'N/A';
   }
 
-  // Extract customer name
   extractName() {
-    const patterns = [
-      /name\s*:?\s*([^\n\r]+)/i,
-      /customer\s*name\s*:?\s*([^\n\r]+)/i,
-      /guest\s*name\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const customerMatch = this.content.match(/Customer\s*([^\n]+)/i);
+    if (customerMatch) return customerMatch[1].trim();
     return 'N/A';
   }
 
-  // Extract passenger counts
   extractPassengers() {
-    const adultMatch = this.content.match(/(\d+)\s*adult/i);
-    const childMatch = this.content.match(/(\d+)\s*child/i);
-    const infantMatch = this.content.match(/(\d+)\s*infant/i);
-    
-    return {
-      adult: adultMatch ? adultMatch[1] : '0',
-      child: childMatch ? childMatch[1] : '0',
-      infant: infantMatch ? infantMatch[1] : '0'
-    };
+    const paxMatch = this.content.match(/PAX\s*([^\n]+)/i);
+    if (paxMatch) {
+      const paxText = paxMatch[1].toLowerCase();
+      const adultMatch = paxText.match(/(\d+)\s*adult/i);
+      return {
+        adult: adultMatch ? adultMatch[1] : '0',
+        child: '0',
+        infant: '0'
+      };
+    }
+    return { adult: '0', child: '0', infant: '0' };
   }
 
-  // Extract hotel information
   extractHotel() {
-    const patterns = [
-      /hotel\s*:?\s*([^\n\r]+)/i,
-      /accommodation\s*:?\s*([^\n\r]+)/i,
-      /pickup\s*from\s*:?\s*([^\n\r]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const pickupMatch = this.content.match(/Pick-up\s*([^\n]+)/i);
+    if (pickupMatch) return pickupMatch[1].trim();
     return 'N/A';
   }
 
-  // Extract phone number
   extractPhone() {
-    const patterns = [
-      /phone\s*(?:number)?\s*:?\s*([+\d\s\-\(\)]+)/i,
-      /contact\s*(?:number)?\s*:?\s*([+\d\s\-\(\)]+)/i,
-      /tel\s*:?\s*([+\d\s\-\(\)]+)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = this.content.match(pattern);
-      if (match) return match[1].trim();
-    }
+    const phoneMatch = this.content.match(/Customer phone\s*([^\n]+)/i);
+    if (phoneMatch) return phoneMatch[1].trim();
     return 'N/A';
   }
 
-  // Extract all information
   extractAll() {
     const passengers = this.extractPassengers();
     return {
@@ -131,7 +84,7 @@ class EmailParser {
 // Email sender utility
 class EmailSender {
   constructor() {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
       secure: process.env.SMTP_PORT === '465',
@@ -142,7 +95,7 @@ class EmailSender {
     });
   }
 
-  async sendResponse(toEmail, extractedInfo) {
+  async sendResponse(extractedInfo) {
     const responseTemplate = `Please confirm the *pickup time* for this booking:
 
 Booking no : ${extractedInfo.bookingNumber}
@@ -158,7 +111,7 @@ Please mentioned if there is any additional charge for transfer collect from cus
 
     const mailOptions = {
       from: process.env.FROM_EMAIL,
-      to: toEmail,
+      to: 'o0dr.orc0o@gmail.com', // Your email address
       subject: `Booking Confirmation - ${extractedInfo.bookingNumber}`,
       text: responseTemplate,
       html: responseTemplate.replace(/\n/g, '<br>')
@@ -201,12 +154,10 @@ module.exports = async (req, res) => {
     // Parse the email content
     const parsed = await simpleParser(email);
     
-    // Check if sender is allowed
-    const allowedSenders = process.env.ALLOWED_SENDERS?.split(',').map(s => s.trim()) || [];
+    // Check if sender is Bokun.io
     const senderEmail = parsed.from?.value?.[0]?.address;
-    
-    if (allowedSenders.length > 0 && !allowedSenders.includes(senderEmail)) {
-      return res.status(403).json({ error: 'Sender not authorized' });
+    if (senderEmail !== 'no-reply@bokun.io') {
+      return res.status(403).json({ error: 'Unauthorized sender' });
     }
 
     // Extract information from email
@@ -215,7 +166,7 @@ module.exports = async (req, res) => {
 
     // Send automated response
     const emailSender = new EmailSender();
-    const responseSent = await emailSender.sendResponse(senderEmail, extractedInfo);
+    const responseSent = await emailSender.sendResponse(extractedInfo);
 
     if (responseSent) {
       return res.status(200).json({

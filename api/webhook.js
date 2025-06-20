@@ -185,6 +185,11 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized sender' });
     }
 
+    // Only parse if subject contains 'New booking:'
+    if (!parsed.subject || !parsed.subject.includes('New booking:')) {
+      return res.status(204).end(); // No Content, do nothing
+    }
+
     // Extract information from email
     const emailParser = new EmailParser(parsed.text || parsed.html || '');
     const extractedInfo = emailParser.extractAll();

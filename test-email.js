@@ -7,17 +7,17 @@ Subject: New booking: 8.Jan '26 @ 07:00 (TT-T98893827) Ext. booking ref: 1275699
 
 The following booking was just created.
 
-Booking ref.     VIA-122345678
-Product booking ref.  TT-T122345678
-Ext. booking ref  122345678
+Booking ref.     VIA-68941697
+Product booking ref.  TT-T98893827
+Ext. booking ref  1275699329
 Product     HKT0041 - Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
 Supplier    Tours.co.th
 Sold by     Viator.com
 Booking channel   Viator.com
 
-Customer    Orc, Majid S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
+Customer    Giroud, Marie-Caroline S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
 Customer email    S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
-Customer phone    FR+66 1234567890
+Customer phone    FR+33 0666962682
 Date    Thu 8.Jan '26 @ 07:00
 Rate    Included transfer (Inzone)
 PAX     2 Adult, 1 Child, 1 Infant
@@ -35,6 +35,22 @@ Use of Snorkelling equipment
 --- Booking languages: ---
 GUIDE : English
 Viator amount: THB 2600.0`;
+
+// Sample non-booking email
+const nonBookingEmail = `From: no-reply@bokun.io
+To: recipient@example.com
+Subject: Booking cancelled: 8.Jan '26 @ 07:00 (TT-T98893827)
+
+The following booking was cancelled.
+
+Booking ref.     VIA-68941697
+Product booking ref.  TT-T98893827
+Ext. booking ref  1275699329
+Product     HKT0041 - Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
+
+Customer    Giroud, Marie-Caroline
+Customer phone    FR+33 0666962682
+Date    Thu 8.Jan '26 @ 07:00`;
 
 // Email parser class
 class EmailParser {
@@ -134,17 +150,24 @@ class EmailParser {
 
 // Test function
 async function testEmailParsing() {
+  console.log('=== TEST 1: New Booking Email ===\n');
+  
   try {
-    console.log('Testing Email Parsing...\n');
-    
     // Parse the sample email
     const parsed = await simpleParser(sampleEmail);
     console.log('Parsed Email:');
     console.log('From:', parsed.from?.value?.[0]?.address);
     console.log('Subject:', parsed.subject);
-    console.log('\nEmail Content:');
-    console.log(parsed.text || parsed.html);
-    console.log('\n' + '='.repeat(50) + '\n');
+    
+    // Check if subject contains "New booking"
+    const subject = parsed.subject || '';
+    if (!subject.toLowerCase().includes('new booking')) {
+      console.log('❌ Email ignored - not a new booking notification');
+      console.log('Reason: Subject does not contain "New booking"');
+      return;
+    }
+    
+    console.log('✅ Email is a new booking notification - processing...\n');
     
     // Extract information
     const emailParser = new EmailParser(parsed.text || parsed.html || '');
@@ -152,33 +175,37 @@ async function testEmailParsing() {
     
     console.log('Extracted Information:');
     console.log(JSON.stringify(extractedInfo, null, 2));
-    console.log('\n' + '='.repeat(50) + '\n');
     
-    // Build pax string conditionally
-    let paxString = `${extractedInfo.adult} adult`;
-    if (extractedInfo.child !== '0') {
-      paxString += ` , ${extractedInfo.child} child`;
-    }
-    if (extractedInfo.infant !== '0') {
-      paxString += ` , ${extractedInfo.infant} infant`;
+  } catch (error) {
+    console.error('Error testing email parsing:', error);
+  }
+
+  console.log('\n' + '='.repeat(50) + '\n');
+  console.log('=== TEST 2: Non-Booking Email ===\n');
+  
+  try {
+    // Parse the non-booking email
+    const parsed = await simpleParser(nonBookingEmail);
+    console.log('Parsed Email:');
+    console.log('From:', parsed.from?.value?.[0]?.address);
+    console.log('Subject:', parsed.subject);
+    
+    // Check if subject contains "New booking"
+    const subject = parsed.subject || '';
+    if (!subject.toLowerCase().includes('new booking')) {
+      console.log('❌ Email ignored - not a new booking notification');
+      console.log('Reason: Subject does not contain "New booking"');
+      return;
     }
     
-    // Generate response template
-    const responseTemplate = `Please confirm the *pickup time* for this booking:
-
-Booking no : ${extractedInfo.bookingNumber}
-Tour date : ${extractedInfo.tourDate}
-Program : ${extractedInfo.program}
-Name : ${extractedInfo.name}
-Pax : ${paxString}
-Hotel : ${extractedInfo.hotel}
-Phone Number : ${extractedInfo.phoneNumber}
-Cash on tour : None
-
-Please mentioned if there is any additional charge for transfer collect from customer`;
-
-    console.log('Generated Response:');
-    console.log(responseTemplate);
+    console.log('✅ Email is a new booking notification - processing...\n');
+    
+    // Extract information
+    const emailParser = new EmailParser(parsed.text || parsed.html || '');
+    const extractedInfo = emailParser.extractAll();
+    
+    console.log('Extracted Information:');
+    console.log(JSON.stringify(extractedInfo, null, 2));
     
   } catch (error) {
     console.error('Error testing email parsing:', error);

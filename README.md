@@ -35,10 +35,10 @@ Please confirm the *pickup time* for this booking:
 Booking no : 1275699329
 Tour date : 8.Jan '26
 Program : Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
-Name : Giroud, Marie-Caroline
+Name : Orc, Majid
 Pax : 2 adult, 1 child, 1 infant
 Hotel : Access Resort & Villas
-Phone Number : 330666962682
+Phone Number : +66 123456
 Cash on tour : None
 
 Please mentioned if there is any additional charge for transfer collect from customer
@@ -106,12 +106,12 @@ Receives email content and sends automated response.
     "bookingNumber": "1275699329",
     "tourDate": "8.Jan '26",
     "program": "Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat",
-    "name": "Giroud, Marie-Caroline",
+    "name": "Orc, Majid",
     "adult": "2",
     "child": "1",
     "infant": "1",
     "hotel": "Access Resort & Villas",
-    "phoneNumber": "330666962682"
+    "phoneNumber": "+66 123456"
   }
 }
 ```

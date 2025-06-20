@@ -6,16 +6,45 @@ An automated email processing system that extracts booking information from inco
 
 - **Automatic Email Processing**: Receives emails via webhook and extracts booking information
 - **Smart Information Extraction**: Uses regex patterns to find booking details like:
-  - Booking number
-  - Tour date
-  - Program/tour name
-  - Customer name
-  - Passenger counts (adult, child, infant)
-  - Hotel information
-  - Phone number
+  - Booking number (from Ext. booking ref)
+  - Tour date (just day, month, year from subject or Date field)
+  - Program/tour name (from Product field)
+  - Customer name (removes any email address)
+  - Passenger counts (adult, child, infant; omits child/infant if 0)
+  - Hotel information (from Pick-up field)
+  - Phone number (digits only)
 - **Automated Response**: Sends formatted confirmation emails with extracted information
 - **Sender Authorization**: Only processes emails from authorized senders
 - **Vercel Ready**: Deploy directly to Vercel with serverless functions
+
+## Field Extraction & Formatting Rules
+
+- **Booking no**: Extracted from `Ext. booking ref` (e.g., `1275699329`)
+- **Tour date**: Extracted as just the day, month, and year (e.g., `8.Jan '26`) from either the subject or the `Date` field
+- **Program**: Extracted from the `Product` field (removes product code prefix)
+- **Name**: Extracted from the `Customer` field, with any email address removed
+- **Pax**: If there are no children or infants, those parts are omitted (e.g., `2 adult` or `2 adult, 1 child, 1 infant`)
+- **Hotel**: Extracted from the `Pick-up` field
+- **Phone Number**: Only digits (e.g., `330666962682`)
+
+## Example Output
+
+```
+Please confirm the *pickup time* for this booking:
+
+Booking no : 1275699329
+Tour date : 8.Jan '26
+Program : Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
+Name : Giroud, Marie-Caroline
+Pax : 2 adult, 1 child, 1 infant
+Hotel : Access Resort & Villas
+Phone Number : 330666962682
+Cash on tour : None
+
+Please mentioned if there is any additional charge for transfer collect from customer
+```
+
+If there are no children or infants, the Pax line will be just `2 adult`.
 
 ## Setup Instructions
 
@@ -53,24 +82,7 @@ vercel --prod
 
 ### 4. Configure Email Webhook
 
-To receive emails automatically, you'll need to set up an email-to-webhook service. Here are some options:
-
-#### Option A: Using Zapier
-1. Create a Zapier account
-2. Set up a trigger for new emails in Gmail
-3. Add a webhook action pointing to your Vercel endpoint: `https://your-app.vercel.app/api/webhook`
-4. Configure the webhook to send the email content in the request body
-
-#### Option B: Using Integromat/Make
-1. Create a scenario for email processing
-2. Add Gmail trigger for new emails
-3. Add HTTP request to your webhook endpoint
-4. Map email content to the request body
-
-#### Option C: Using Email Service Providers
-- **SendGrid Inbound Parse**: Configure to forward emails to your webhook
-- **Mailgun Routes**: Set up routes to forward emails to your webhook
-- **Postmark Inbound**: Configure webhook for incoming emails
+To receive emails automatically, set up a free Google Apps Script to forward emails from Gmail to your webhook. See `email-forwarder.gs` for details.
 
 ## API Endpoint
 
@@ -91,15 +103,15 @@ Receives email content and sends automated response.
   "success": true,
   "message": "Automated response sent successfully",
   "extractedInfo": {
-    "bookingNumber": "BK123456",
-    "tourDate": "15/12/2024",
-    "program": "City Tour",
-    "name": "John Doe",
+    "bookingNumber": "1275699329",
+    "tourDate": "8.Jan '26",
+    "program": "Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat",
+    "name": "Giroud, Marie-Caroline",
     "adult": "2",
     "child": "1",
-    "infant": "0",
-    "hotel": "Grand Hotel",
-    "phoneNumber": "+1234567890"
+    "infant": "1",
+    "hotel": "Access Resort & Villas",
+    "phoneNumber": "330666962682"
   }
 }
 ```
@@ -235,3 +247,10 @@ For issues and questions:
 2. Review Vercel function logs
 3. Test with sample email content
 4. Verify environment variables are set correctly 
+
+## Changelog
+
+See `CHANGELOG.md` for recent updates.
+
+## License
+MIT 

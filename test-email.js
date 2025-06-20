@@ -7,17 +7,17 @@ Subject: New booking: 8.Jan '26 @ 07:00 (TT-T98893827) Ext. booking ref: 1275699
 
 The following booking was just created.
 
-Booking ref.     VIA-68941697
-Product booking ref.  TT-T98893827
-Ext. booking ref  1275699329
+Booking ref.     VIA-122345678
+Product booking ref.  TT-T122345678
+Ext. booking ref  122345678
 Product     HKT0041 - Phi Phi , Khai & Maya : Unforgettable Island Hopping by Speedboat
 Supplier    Tours.co.th
 Sold by     Viator.com
 Booking channel   Viator.com
 
-Customer    Giroud, Marie-Caroline S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
+Customer    Orc, Majid S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
 Customer email    S-7f97c8c8268b4170a01a497bdac5132f+1275699329-9spw235pfaj9n@evpmessaging.tripadvisor.com
-Customer phone    FR+33 0666962682
+Customer phone    FR+66 1234567890
 Date    Thu 8.Jan '26 @ 07:00
 Rate    Included transfer (Inzone)
 PAX     2 Adult, 1 Child, 1 Infant

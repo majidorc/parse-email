@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/webhook?cron_job=true",
-      "schedule": "0 1 * * *"
+      "schedule": "0 18 * * *"
     }
   ]
 } 

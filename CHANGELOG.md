@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The core logic now distinguishes between initial booking processing (via webhook) and daily reminders (via cron job).
 - The daily reminder query is now timezone-aware to correctly identify bookings in the `Asia/Bangkok` timezone.
-- The cron job schedule has been adjusted to run at 8:00 AM local Bangkok time.
+- The cron job schedule has been adjusted to run at 1:00 AM local Bangkok time.
 
 ### Fixed
 - Corrected the cron job path in `vercel.json` to point to the correct function (`api/webhook`).

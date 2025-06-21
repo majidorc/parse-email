@@ -5,6 +5,21 @@ const axios = require('axios');
 const { sql } = require('@vercel/postgres');
 const configData = require('../config.json');
 
+// Utility function to clean HTML and extract text content
+function cleanupHtml(html) {
+    if (!html) return '';
+    // Use cheerio to load and extract text, which also handles entity decoding
+    const $ = cheerio.load(html);
+    // Replace <br> tags with newlines before getting the text
+    $('br').replaceWith('\n');
+    return $('body').text()
+        .replace(/=\s*\r?\n/g, '') // Remove soft line breaks
+        .replace(/=3D/g, '=') // Decode quoted-printable equals sign
+        .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+        .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
+        .trim();
+}
+
 // All classes and managers removed for this test.
 // Hardcoding the BokunParser logic directly in the handler.
 
@@ -297,112 +312,14 @@ class ThailandToursParser extends BaseEmailParser {
     }
 }
 
-class EmailParser {
-    constructor(htmlContent) {
-        this.html = htmlContent;
-        this.text = this.cleanupHtml(htmlContent);
-    }
-
-    cleanupHtml(html) {
-        if (!html) return '';
-        // Use cheerio to load and extract text, which also handles entity decoding
-        const $ = cheerio.load(html);
-        // Replace <br> tags with newlines before getting the text
-        $('br').replaceWith('\n');
-        return $('body').text()
-            .replace(/=\s*\r?\n/g, '') // Remove soft line breaks
-            .replace(/=3D/g, '=') // Decode quoted-printable equals sign
-            .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-            .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
-            .trim();
-    }
-    
-    _getParser() {
-        if (this.text.includes("Ext. booking ref")) {
-            console.log("Using BokunParser");
-            return new BokunParser(this.html); // BokunParser expects full HTML
-        }
-        if (this.text.includes("Order number:")) {
-            console.log("Using ThailandToursParser");
-            return new ThailandToursParser(this.text);
-        }
-        console.log("Using Fallback Text Parser");
-        // A new fallback parser for plain text emails if no specific one matches
-        return new FallbackParser(this.text);
-    }
-
-    extractAll() {
-        const parser = this._getParser();
-        return parser.extractAll();
-    }
-
-    formatBookingDetails() {
-        const parser = this._getParser();
-        return parser.formatBookingDetails();
-    }
-}
-
-class FallbackParser extends BaseEmailParser {
-    constructor(textContent) {
-        super(textContent);
-        this.text = textContent;
-    }
-
-    _findValue(regex, content) {
-        const match = content.match(regex);
-        return match?.[1]?.trim() ?? 'N/A';
-    }
-
-    extractBookingNumber() { return this._findValue(/Booking no\s*:\s*([A-Z0-9\-]+)/i, this.text); }
-    extractTourDate() {
-        const dateStr = this._findValue(/Tour date\s*:\s*(\d{2}\s[A-Za-z]{3}\s\d{4})/i, this.text);
-        if (dateStr === 'N/A') return 'N/A';
-        const date = new Date(dateStr);
-        return `${date.getDate()}.${date.toLocaleString('en-US', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
-    }
-    extractProgram() { return this._findValue(/Program\s*:\s*(.+)/i, this.text); }
-    extractName() { return this._findValue(/Name\s*:\s*(.+)/i, this.text); }
-    extractPassengers() {
-        const pax = { adult: '0', child: '0', infant: '0' };
-        const paxLine = this.text.match(/Pax\s*:\s*(.+)/i)?.[1] || '';
-        
-        const adultMatch = paxLine.match(/(\d+)\s*Adult/i);
-        if (adultMatch) pax.adult = adultMatch[1];
-        
-        const childMatch = paxLine.match(/(\d+)\s*Child/i);
-        if (childMatch) pax.child = childMatch[1];
-
-        const infantMatch = paxLine.match(/(\d+)\s*Infant/i);
-        if (infantMatch) pax.infant = infantMatch[1];
-
-        return pax;
-    }
-    extractHotel() { return this._findValue(/Hotel\s*:\s*(.+)/i, this.text); }
-    extractPhone() { return this._findValue(/Phone Number\s*:\s*(\d+)/i, this.text); }
-
-    extractAll() {
-        const passengers = this.extractPassengers();
-        const tourDate = this.extractTourDate();
-        return {
-            bookingNumber: this.extractBookingNumber(),
-            tourDate: tourDate,
-            program: this.extractProgram(),
-            name: this.extractName(),
-            adult: passengers.adult,
-            child: passengers.child,
-            infant: passengers.infant,
-            hotel: this.extractHotel(),
-            phoneNumber: this.extractPhone(),
-            isoDate: this._getISODate(tourDate)
-        };
-    }
-    formatBookingDetails() { return this._formatBaseBookingDetails(this.extractAll()); }
-}
-
 class EmailParserFactory {
   static create(parsedEmail) {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
+
+    console.log(`--- New Email Received for Parsing ---`);
+    console.log(`Subject: "${subject}"`);
+    console.log(`From: ${fromAddress}`);
 
     // Filter out emails that are not new booking notifications
     if (!subject || !subject.toLowerCase().includes('new booking:')) {
@@ -424,13 +341,13 @@ class EmailParserFactory {
     if (fromAddress && fromAddress.includes('tours.co.th')) {
         console.log('Selected ThailandToursParser.');
         // This parser expects cleaned text
-        const textContent = new EmailParser(content).text;
+        const textContent = cleanupHtml(content);
         return new ThailandToursParser(textContent);
     }
     
     // If sender is not recognized, use the general-purpose parser
     console.log("Using Fallback Text Parser as sender was not recognized.");
-    const textContent = new EmailParser(content).text;
+    const textContent = cleanupHtml(content);
     return new FallbackParser(textContent);
   }
 }
@@ -443,24 +360,19 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    console.log('Webhook invoked.');
+
     const rawBody = await getRawBody(req);
-    if (rawBody.length === 0) {
-      console.log('Received request with empty body.');
-      return res.status(400).send('Bad Request: Empty body.');
-    }
-    
     const parsedEmail = await simpleParser(rawBody);
-    console.log('Successfully parsed email. Subject:', parsedEmail.subject);
-    console.log('Email text content snippet:', parsedEmail.text?.substring(0, 500));
 
     const parser = EmailParserFactory.create(parsedEmail);
 
     if (!parser) {
-      console.error('Could not find a suitable parser for the email.');
-      return res.status(400).send('Email format not supported.');
+        console.log('No suitable parser found or email did not meet criteria. Skipping.');
+        return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
     }
 
-    const extractedInfo = parser.extractAll();
+    const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
     console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
 
     // --- Save to Database ---

@@ -255,33 +255,42 @@ class ThailandToursParser extends BaseEmailParser {
         }
         return pax;
     }
-    
-    extractName() {
+
+    _getBillingAddressLines() {
         const addressBlockMatch = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
-        if (addressBlockMatch) {
-            const lines = addressBlockMatch[1].trim().split(/\r?\n/);
-            return lines[0].trim();
+        if (addressBlockMatch && addressBlockMatch[1]) {
+            return addressBlockMatch[1].trim().split(/\r?\n/).map(l => l.trim());
+        }
+        return [];
+    }
+
+    extractName() {
+        const lines = this._getBillingAddressLines();
+        return lines.length > 0 ? lines[0] : 'N/A';
+    }
+
+    extractHotel() {
+        const lines = this._getBillingAddressLines();
+        if (lines.length > 1) {
+            // Take all lines except the first (name)
+            const addressLines = lines.slice(1);
+            // Filter out lines that are emails or phone numbers
+            const filteredLines = addressLines.filter(line => {
+                const isEmail = line.includes('@');
+                const isPhone = /^\+?\d[\d\s-]{5,}/.test(line); // Simple check for a phone-like pattern
+                return !isEmail && !isPhone;
+            });
+            return filteredLines.join(', ');
         }
         return 'N/A';
     }
 
-    extractHotel() {
-        const addressBlockMatch = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
-        if (addressBlockMatch) {
-            const lines = addressBlockMatch[1].trim().split(/\r?\n/);
-            // Join all lines except the first (name) and last (email)
-            return lines.slice(1, -1).join(', ').trim();
-        }
-        return 'N/A';
-    }
-    
     extractPhone() {
-        const addressBlockMatch = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
-        if (addressBlockMatch) {
-            const phoneMatch = addressBlockMatch[1].match(/\+?\d+/g);
-            if (phoneMatch) {
-                // Find the longest number, which is likely the phone number
-                return phoneMatch.reduce((a, b) => a.length > b.length ? a : b).replace(/\D/g, '');
+        const lines = this._getBillingAddressLines();
+        if (lines.length > 0) {
+            const phoneLine = lines.find(line => /^\+?\d[\d\s-]{5,}/.test(line));
+            if (phoneLine) {
+                return phoneLine.replace(/\D/g, '');
             }
         }
         return 'N/A';

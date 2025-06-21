@@ -292,29 +292,128 @@ class ThailandToursParser extends BaseEmailParser {
             isoDate: this._getISODate(tourDate)
         };
     }
+    formatBookingDetails() {
+        return this._formatBaseBookingDetails(this.extractAll());
+    }
+}
+
+class EmailParser {
+    constructor(htmlContent) {
+        this.html = htmlContent;
+        this.text = this.cleanupHtml(htmlContent);
+    }
+
+    cleanupHtml(html) {
+        if (!html) return '';
+        // Use cheerio to load and extract text, which also handles entity decoding
+        const $ = cheerio.load(html);
+        // Replace <br> tags with newlines before getting the text
+        $('br').replaceWith('\n');
+        return $('body').text()
+            .replace(/=\s*\r?\n/g, '') // Remove soft line breaks
+            .replace(/=3D/g, '=') // Decode quoted-printable equals sign
+            .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+            .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
+            .trim();
+    }
+    
+    _getParser() {
+        if (this.text.includes("Ext. booking ref")) {
+            console.log("Using BokunParser");
+            return new BokunParser(this.html); // BokunParser expects full HTML
+        }
+        if (this.text.includes("Order number:")) {
+            console.log("Using ThailandToursParser");
+            return new ThailandToursParser(this.text);
+        }
+        console.log("Using Fallback Text Parser");
+        // A new fallback parser for plain text emails if no specific one matches
+        return new FallbackParser(this.text);
+    }
+
+    extractAll() {
+        const parser = this._getParser();
+        return parser.extractAll();
+    }
+
+    formatBookingDetails() {
+        const parser = this._getParser();
+        return parser.formatBookingDetails();
+    }
+}
+
+class FallbackParser extends BaseEmailParser {
+    constructor(textContent) {
+        super(textContent);
+        this.text = textContent;
+    }
+
+    _findValue(regex, content) {
+        const match = content.match(regex);
+        return match?.[1]?.trim() ?? 'N/A';
+    }
+
+    extractBookingNumber() { return this._findValue(/Booking no\s*:\s*([A-Z0-9\-]+)/i, this.text); }
+    extractTourDate() {
+        const dateStr = this._findValue(/Tour date\s*:\s*(\d{2}\s[A-Za-z]{3}\s\d{4})/i, this.text);
+        if (dateStr === 'N/A') return 'N/A';
+        const date = new Date(dateStr);
+        return `${date.getDate()}.${date.toLocaleString('en-US', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
+    }
+    extractProgram() { return this._findValue(/Program\s*:\s*(.+)/i, this.text); }
+    extractName() { return this._findValue(/Name\s*:\s*(.+)/i, this.text); }
+    extractPassengers() {
+        const pax = { adult: '0', child: '0', infant: '0' };
+        const paxLine = this.text.match(/Pax\s*:\s*(.+)/i)?.[1] || '';
+        
+        const adultMatch = paxLine.match(/(\d+)\s*Adult/i);
+        if (adultMatch) pax.adult = adultMatch[1];
+        
+        const childMatch = paxLine.match(/(\d+)\s*Child/i);
+        if (childMatch) pax.child = childMatch[1];
+
+        const infantMatch = paxLine.match(/(\d+)\s*Infant/i);
+        if (infantMatch) pax.infant = infantMatch[1];
+
+        return pax;
+    }
+    extractHotel() { return this._findValue(/Hotel\s*:\s*(.+)/i, this.text); }
+    extractPhone() { return this._findValue(/Phone Number\s*:\s*(\d+)/i, this.text); }
+
+    extractAll() {
+        const passengers = this.extractPassengers();
+        const tourDate = this.extractTourDate();
+        return {
+            bookingNumber: this.extractBookingNumber(),
+            tourDate: tourDate,
+            program: this.extractProgram(),
+            name: this.extractName(),
+            adult: passengers.adult,
+            child: passengers.child,
+            infant: passengers.infant,
+            hotel: this.extractHotel(),
+            phoneNumber: this.extractPhone(),
+            isoDate: this._getISODate(tourDate)
+        };
+    }
+    formatBookingDetails() { return this._formatBaseBookingDetails(this.extractAll()); }
 }
 
 class EmailParserFactory {
   static create(parsedEmail) {
-    const fromAddress = parsedEmail.from.value[0].address.toLowerCase();
-    const subject = parsedEmail.subject.toLowerCase();
-    const htmlContent = parsedEmail.html;
-    const textContent = parsedEmail.text;
+    const { subject, html, text } = parsedEmail;
 
-    console.log(`Attempting to find parser for email from: ${fromAddress} with subject: ${subject}`);
+    // Filter out emails that are not new booking notifications
+    if (!subject || !subject.toLowerCase().includes('new booking:')) {
+      console.log('Email subject does not indicate a new booking. Skipping.');
+      return null;
+    }
 
-    if (fromAddress.includes('bokun.io') && subject.includes('booking')) {
-      console.log('Selected BokunParser.');
-      return new BokunParser(htmlContent);
-    }
-    
-    if (fromAddress.includes('tours.co.th')) {
-        console.log('Selected ThailandToursParser.');
-        return new ThailandToursParser(textContent);
-    }
-    
-    console.log('No suitable parser found.');
-    return null;
+    // Give preference to HTML content if it exists, otherwise use plain text.
+    const content = html || text;
+
+    // The new unified EmailParser will handle routing to the correct sub-parser.
+    return new EmailParser(content);
   }
 }
 

@@ -322,7 +322,7 @@ class EmailParserFactory {
     console.log(`From: ${fromAddress}`);
 
     // Filter out emails that are not new booking notifications
-    if (!subject || !subject.toLowerCase().includes('new booking:')) {
+    if (!subject || !subject.toLowerCase().includes('new booking')) {
       console.log('Email subject does not indicate a new booking. Skipping.');
       return null;
     }

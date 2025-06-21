@@ -250,7 +250,7 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractProgram() {
         // The program name is the line right before the line with the product code, e.g., "(#HKT0022)"
-        const codeIndex = this.lines.findIndex(line => /\\(#([A-Z0-9]+)\\)/.test(line));
+        const codeIndex = this.lines.findIndex(line => /\(#([A-Z0-9]+)\)/.test(line));
         if (codeIndex > 0) {
             // Check the line immediately before the code; it might be blank.
             const lineBefore = this.lines[codeIndex - 1].trim();

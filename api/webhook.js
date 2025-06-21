@@ -13,12 +13,24 @@ class BaseEmailParser {
   formatBookingDetails() { throw new Error("Not implemented"); }
 
   _formatBaseBookingDetails(extractedInfo) {
-    let paxString = `${extractedInfo.adult} adult`;
-    if (extractedInfo.child && extractedInfo.child !== '0') {
-      paxString += ` , ${extractedInfo.child} child`;
+    const adult = parseInt(extractedInfo.adult, 10) || 0;
+    const child = parseInt(extractedInfo.child, 10) || 0;
+    const infant = parseInt(extractedInfo.infant, 10) || 0;
+
+    const parts = [];
+    if (adult > 0) {
+        parts.push(`${adult} ${adult > 1 ? 'Adults' : 'Adult'}`);
     }
-    if (extractedInfo.infant && extractedInfo.infant !== '0') {
-      paxString += ` , ${extractedInfo.infant} infant`;
+    if (child > 0) {
+        parts.push(`${child} ${child > 1 ? 'Children' : 'Child'}`);
+    }
+    if (infant > 0) {
+        parts.push(`${infant} ${infant > 1 ? 'Infants' : 'Infant'}`);
+    }
+
+    let paxString = parts.join(' , ');
+    if (!paxString) {
+      paxString = "0 Adults"; // Fallback if all are 0
     }
 
     const responseTemplate = `Please confirm the *pickup time* for this booking:
@@ -202,7 +214,11 @@ class ThailandToursParser extends BaseEmailParser {
     
     extractProgram() {
         const productMatch = this.text.match(/Product\s+Price\s+([\s\S]+?)\s+Booking/);
-        return productMatch && productMatch[1] ? productMatch[1].replace(/\s+/g, ' ').trim() : 'N/A';
+        if (productMatch && productMatch[1]) {
+            // Take only the first line as the product name
+            return productMatch[1].trim().split(/\r?\n/)[0].trim();
+        }
+        return 'N/A';
     }
 
     extractTourDate() {
@@ -224,8 +240,17 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        const paxMatch = this.text.match(/Adults\s\(\+(\d+)\)/);
-        if (paxMatch) {
+
+        // Try "Person: 7" format
+        let paxMatch = this.text.match(/Person:\s*(\d+)/i);
+        if (paxMatch && paxMatch[1]) {
+            pax.adult = paxMatch[1];
+            return pax;
+        }
+
+        // Fallback to "Adults (+1)" format
+        paxMatch = this.text.match(/Adults\s\(\+(\d+)\)/);
+        if (paxMatch && paxMatch[1]) {
             pax.adult = paxMatch[1];
         }
         return pax;

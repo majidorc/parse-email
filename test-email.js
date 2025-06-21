@@ -84,6 +84,85 @@ Congratulations on the sale
 `;
 
 
+// ######################################################
+// #### SAMPLE EMAIL 4: Thailand Tours / Full Moon ######
+// ######################################################
+const thailandToursEmail_FullMoon = `
+From: "Thailand Tours" <info@tours.co.th>
+Subject: New Order: #6861011371
+Content-Type: text/plain; charset=UTF-8
+
+New Order: #6861011371
+
+Order Details
+Order number: 6861011371
+Order date: June 10, 2025
+
+Product Price
+Full Moon Party by Speedboat Transfer
+(JLFMN001)
+Quantity: 1
+Ticket Option: Roundtrip
+Pickup time: 01:00 till 01:30 pm
+
+Booking #11772 Paid
+- June 11, 2025
+- Person: 7
+
+Subtotal: $2,793
+Payment method: MasterCard
+Total: $2,793
+
+Billing address
+Tom Grylls
+Samui Natien Resort
+Thailand
++447788199382
+tom.g@live.co.uk
+
+Congratulations on the sale
+`;
+
+// ######################################################
+// #### SAMPLE EMAIL 5: Thailand Tours / Full Moon V2 ###
+// ######################################################
+const thailandToursEmail_FullMoon_V2 = `
+From: "Thailand Tours" <info@tours.co.th>
+Subject: New Order: #6861011371
+Content-Type: text/plain; charset=UTF-8
+
+New Order: #6861011371
+
+Order Details
+Order number: 6861011371
+Order date: June 10, 2025
+
+Product Price
+Full Moon Party by Speedboat Transfer
+(#USM0013)
+Quantity: 1
+Ticket Option: Roundtrip
+Pickup time: 08:00-08:30 pm
+
+Booking #33772 Paid
+- June 10, 2025
+- Person: 2
+
+Subtotal: B2,798
+Payment method: MasterCard
+Total: B2,798
+
+Billing address
+Tom Grylls
+Samui Natien Resort
+Thailand
++447825199282
+t.grylls@live.co.uk
+
+Congratulations on the sale
+`;
+
+
 async function testParser(emailType, emailContent, ParserClass) {
     console.log(`\n=================================================`);
     console.log(`========= TESTING: ${emailType} ===============`);
@@ -123,6 +202,8 @@ async function runAllTests() {
     await testParser("Bokun / GetYourGuide", getYourGuideEmail, BokunParser);
     await testParser("Bokun / Viator", viatorEmail, BokunParser);
     await testParser("Thailand Tours", thailandToursEmail, ThailandToursParser);
+    await testParser("Thailand Tours / Full Moon", thailandToursEmail_FullMoon, ThailandToursParser);
+    await testParser("Thailand Tours / Full Moon V2", thailandToursEmail_FullMoon_V2, ThailandToursParser);
 }
 
 runAllTests(); 

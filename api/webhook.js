@@ -508,6 +508,7 @@ module.exports = async (req, res) => {
 module.exports.config = { api: { bodyParser: false } };
 module.exports.BokunParser = BokunParser;
 module.exports.ThailandToursParser = ThailandToursParser;
+module.exports.sendDailyReminders = sendDailyReminders;
 
 async function sendDailyReminders() {
   const notificationManager = new NotificationManager();

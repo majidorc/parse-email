@@ -8,16 +8,25 @@ const configData = require('../config.json');
 // Utility function to clean HTML and extract text content
 function cleanupHtml(html) {
     if (!html) return '';
-    // Use cheerio to load and extract text, which also handles entity decoding
     const $ = cheerio.load(html);
-    // Replace <br> tags with newlines before getting the text
-    $('br').replaceWith('\n');
-    return $('body').text()
-        .replace(/=\s*\r?\n/g, '') // Remove soft line breaks
+
+    // Add newlines after block-level elements to preserve structure
+    $('p, div, tr, li, h1, h2, h3, h4, h5, h6').after('\\n');
+    $('br').replaceWith('\\n');
+
+    // Now get the text, which should have newlines
+    let text = $('body').text();
+
+    // Post-processing to clean up
+    text = text
+        .replace(/=\\s*\\r?\\n/g, '') // Remove soft line breaks from quoted-printable
         .replace(/=3D/g, '=') // Decode quoted-printable equals sign
         .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-        .replace(/\s{2,}/g, ' ') // Collapse multiple spaces
+        .replace(/[ \\t]+/g, ' ') // Collapse horizontal whitespace
+        .replace(/\\n\\s*\\n/g, '\\n') // Collapse multiple newlines
         .trim();
+
+    return text;
 }
 
 // All classes and managers removed for this test.

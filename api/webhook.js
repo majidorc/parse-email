@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 const cheerio = require('cheerio');
+const axios = require('axios');
 const config = require('../config.json');
 
 // Base Parser Class (Interface)
@@ -50,6 +51,83 @@ Please mentioned if there is any additional charge for transfer collect from cus
       responseTemplate,
       extractedInfo
     };
+  }
+}
+
+// Notification Manager
+class NotificationManager {
+  constructor() {
+    this.notificationConfig = config.notifications;
+  }
+
+  async sendEmail(extractedInfo) {
+    if (!this.notificationConfig.email || !this.notificationConfig.email.enabled) {
+      console.log('Email notifications are disabled.');
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.FROM_EMAIL,
+      to: 'o0dr.orc0o@gmail.com',
+      subject: `Booking Confirmation - ${extractedInfo.extractedInfo.bookingNumber}`,
+      text: extractedInfo.responseTemplate,
+      html: extractedInfo.responseTemplate.replace(/\n/g, '<br>'),
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Email notification sent successfully.');
+    } catch (error) {
+      console.error('Error sending email notification:', error);
+    }
+  }
+
+  async sendTelegram(extractedInfo) {
+    if (!this.notificationConfig.telegram || !this.notificationConfig.telegram.enabled) {
+      console.log('Telegram notifications are disabled.');
+      return;
+    }
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      console.error('Telegram bot token or chat ID is missing from environment variables.');
+      return;
+    }
+    
+    // Telegram's markdown parser is picky, so we escape a few special characters.
+    const message = extractedInfo.responseTemplate
+        .replace(/\*/g, '\\*') // Escape asterisks
+        .replace(/_/g, '\\_'); // Escape underscores
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+    try {
+      await axios.post(url, {
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'MarkdownV2',
+      });
+      console.log('Telegram notification sent successfully.');
+    } catch (error) {
+      console.error('Error sending Telegram notification:', error.response ? error.response.data : error.message);
+    }
+  }
+
+  async sendAll(extractedInfo) {
+    await this.sendEmail(extractedInfo);
+    await this.sendTelegram(extractedInfo);
   }
 }
 
@@ -360,41 +438,6 @@ class EmailParserFactory {
   }
 }
 
-// Email sender utility
-class EmailSender {
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-  }
-
-  async sendResponse(extractedInfo) {
-    const responseTemplate = extractedInfo.responseTemplate;
-
-    const mailOptions = {
-      from: process.env.FROM_EMAIL,
-      to: 'o0dr.orc0o@gmail.com', // Your email address
-      subject: `Booking Confirmation - ${extractedInfo.extractedInfo.bookingNumber}`,
-      text: responseTemplate,
-      html: responseTemplate.replace(/\n/g, '<br>')
-    };
-
-    try {
-      await this.transporter.sendMail(mailOptions);
-      return true;
-    } catch (error) {
-      console.error('Error sending email:', error);
-      return false;
-    }
-  }
-}
-
 // Main webhook handler
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -429,18 +472,12 @@ module.exports = async (req, res) => {
     }
 
     const extractedInfo = parser.formatBookingDetails();
+    
+    const notificationManager = new NotificationManager();
+    await notificationManager.sendAll(extractedInfo);
 
-    const emailSender = new EmailSender();
-    const responseSent = await emailSender.sendResponse(extractedInfo);
-
-    if (responseSent) {
-      console.log('Automated response sent successfully.');
-      return res.status(200).send('Automated response sent successfully.');
-    } else {
-      console.error('Error sending email:');
-      return res.status(500).send('Error sending email.');
-    }
-
+    console.log('All notifications processed.');
+    return res.status(200).send('Notifications processed.');
   } catch (error) {
     console.error('Error processing email:', error);
     return res.status(500).send('Error processing email.');

@@ -45,17 +45,36 @@ This file is the heart of the system's flexibility. It maps a sender's email add
 ```
 To support a new sender, simply add a new object to this array with their `fromAddress` and the `parserName` you want to use.
 
-### 2. Environment Variables
+### 2. Notification Channels
 
-Set up the following environment variables in your Vercel project for sending emails:
+You can enable or disable different notification channels in `config.json`.
+
+```json
+"notifications": {
+  "email": {
+    "enabled": true
+  },
+  "telegram": {
+    "enabled": true
+  }
+}
+```
+
+### 3. Environment Variables
+
+Set up the following environment variables in your Vercel project.
 
 ```bash
-# SMTP Configuration for sending the final formatted email
+# SMTP Configuration for sending emails
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-business-email@gmail.com
 SMTP_PASS=your-google-app-password
 FROM_EMAIL=your-business-email@gmail.com
+
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
 ```
 
 ## Setup & Deployment

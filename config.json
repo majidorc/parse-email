@@ -1,10 +1,20 @@
-[
-  {
-    "fromAddress": "no-reply@bokun.io",
-    "parserName": "BokunParser"
-  },
-  {
-    "fromAddress": "info@tours.co.th",
-    "parserName": "ThailandToursParser"
+{
+  "parserRules": [
+    {
+      "fromAddress": "no-reply@bokun.io",
+      "parserName": "BokunParser"
+    },
+    {
+      "fromAddress": "info@tours.co.th",
+      "parserName": "ThailandToursParser"
+    }
+  ],
+  "notifications": {
+    "email": {
+      "enabled": true
+    },
+    "telegram": {
+      "enabled": true
+    }
   }
-] 
+} 

@@ -240,93 +240,63 @@ class BokunParser extends BaseEmailParser {
 class ThailandToursParser extends BaseEmailParser {
     constructor(textContent) {
         super(textContent);
-        this.text = textContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
-        this.lines = this.text.split('\n').map(line => line.trim());
+        this.lines = textContent.split('\\n').map(line => line.trim());
     }
 
-    _findValue(regex, content) {
-        const source = content || this.text;
-        const match = source.match(regex);
-        return match?.[1]?.trim() ?? 'N/A';
+    _findLineValue(label) {
+        const line = this.lines.find(l => l.toLowerCase().startsWith(label.toLowerCase()));
+        return line ? line.substring(label.length).trim() : 'N/A';
     }
-
+    
     extractBookingNumber() {
-        return this._findValue(/Order number:\s*(\d+)/);
+        return this._findLineValue('Order number:');
     }
 
     extractProgram() {
-        const productHeaderIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('product price'));
-        if (productHeaderIndex !== -1 && productHeaderIndex + 1 < this.lines.length) {
-            // The product name is the next non-empty line
-            for (let i = productHeaderIndex + 1; i < this.lines.length; i++) {
-                if (this.lines[i]) {
-                    // Stop at the next major section like "Quantity" or "Booking #"
-                    if (this.lines[i].toLowerCase().startsWith('quantity:') || this.lines[i].toLowerCase().startsWith('booking #')) {
-                        return 'N/A';
-                    }
-                    return this.lines[i];
-                }
-            }
-        }
-        return 'N/A';
+        // Find the line containing a product code like (#...some code...)
+        const programLine = this.lines.find(line => /\\(#[A-Z0-9]+\\)/.test(line));
+        return programLine ? programLine.trim() : 'N/A';
     }
 
     extractTourDate() {
-        // Look for lines that start with a hyphen and contain a parsable date
-        const dateLine = this.lines.find(line => line.startsWith('-') && !isNaN(new Date(line.slice(1).trim().split('\n')[0]).getTime()));
-        if (dateLine) {
-            const dateStr = dateLine.slice(1).trim().split('\n')[0];
-            const date = new Date(dateStr);
-            if (!isNaN(date.getTime())) {
-                 return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
-            }
-        }
-        return 'N/A';
+        // The date is on a line like "Order date: June 21, 2025"
+        return this._findLineValue('Order date:');
     }
-    
+
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        
-        // Pattern 1: "Adults (+1), TTL 1" or "Adults (+6): 1"
-        const adultMatch = this.text.match(/Adults\s\([^)]+\):\s*(\d+)/i);
-        if (adultMatch) {
-            pax.adult = adultMatch[1];
-            return pax;
+        const adultLine = this.lines.find(line => line.toLowerCase().includes('adults'));
+        if (adultLine) {
+            const match = adultLine.match(/(\\d+)/);
+            if (match) pax.adult = match[1];
         }
-
-        // Pattern 2: "- Person: 7"
-        const personMatch = this.text.match(/-\s*Person:\s*(\d+)/i);
-        if (personMatch) {
-            pax.adult = personMatch[1];
-        }
-
         return pax;
     }
 
     extractName() {
-        const addressIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
-        if (addressIndex !== -1 && addressIndex + 1 < this.lines.length) {
-            return this.lines[addressIndex + 1];
+        // Name is usually the first line under "Billing address"
+        const billingIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('billing address'));
+        if (billingIndex !== -1 && this.lines[billingIndex + 1]) {
+            return this.lines[billingIndex + 1].trim();
         }
         return 'N/A';
     }
-
+    
     extractHotel() {
-        const addressIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
-        if (addressIndex !== -1 && addressIndex + 2 < this.lines.length) {
-            // Assumes hotel is the second line of the address, if it exists and isn't a number (like a street number)
-            const potentialHotel = this.lines[addressIndex + 2];
-            // Simple check to see if it's not just a number, which might be a street number
-            if (potentialHotel && isNaN(potentialHotel)) {
-                return potentialHotel;
+        // Hotel is usually the second line under "Billing address"
+        const billingIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('billing address'));
+        if (billingIndex !== -1 && this.lines[billingIndex + 2]) {
+            // Check if it's not the phone/email line
+            if (!this.lines[billingIndex + 2].includes('@') && !/\\+\\d+/.test(this.lines[billingIndex + 2])) {
+                 return this.lines[billingIndex + 2].trim();
             }
         }
         return 'N/A';
     }
 
     extractPhone() {
-        const phoneMatch = this.text.match(/(\+\d{10,})/);
-        return phoneMatch ? phoneMatch[1].replace(/\D/g, '') : 'N/A';
+        const phoneLine = this.lines.find(line => /\\+\\d+/.test(line));
+        return phoneLine ? phoneLine.replace(/\\D/g, '') : 'N/A';
     }
 
     extractAll() {
@@ -347,12 +317,14 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     formatBookingDetails() {
-        const details = this.extractAll();
-        // Critical check to ensure we have a date before formatting
-        if (details.tourDate === 'N/A') {
-            throw new Error(`Could not extract a valid tour date for booking ${details.bookingNumber}. Aborting.`);
+        const extractedInfo = this.extractAll();
+
+        // Final validation to ensure a date was actually found
+        if (extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+            throw new Error(`Could not extract a valid tour date for booking ${extractedInfo.bookingNumber}. Aborting.`);
         }
-        return this._formatBaseBookingDetails(details);
+        
+        return this._formatBaseBookingDetails(extractedInfo);
     }
 }
 

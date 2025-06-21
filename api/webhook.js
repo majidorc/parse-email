@@ -454,9 +454,12 @@ module.exports = async (req, res) => {
     } else {
         console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
         try {
+            const adult = parseInt(extractedInfo.adult, 10) || 0;
+            const child = parseInt(extractedInfo.child, 10) || 0;
+            const infant = parseInt(extractedInfo.infant, 10) || 0;
             await sql`
-              INSERT INTO bookings (booking_number, tour_date, program, customer_name, pax, hotel, phone_number, notification_sent, iso_date)
-              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.tourDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${extractedInfo.pax}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.isoDate});
+              INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, iso_date)
+              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.tourDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.isoDate});
             `;
             console.log(`Booking ${extractedInfo.bookingNumber} saved successfully.`);
         } catch (error) {
@@ -512,7 +515,7 @@ async function sendDailyReminders() {
         infant: booking.infant,
         hotel: booking.hotel,
         phoneNumber: booking.phone_number,
-        isoDate: booking.tour_date
+        isoDate: booking.iso_date
       };
 
       await notificationManager.sendAll(extractedInfo);

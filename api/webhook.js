@@ -458,8 +458,8 @@ module.exports = async (req, res) => {
             const child = parseInt(extractedInfo.child, 10) || 0;
             const infant = parseInt(extractedInfo.infant, 10) || 0;
             await sql`
-              INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, iso_date)
-              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.tourDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.isoDate});
+              INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
+              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate});
             `;
             console.log(`Booking ${extractedInfo.bookingNumber} saved successfully.`);
         } catch (error) {
@@ -489,6 +489,7 @@ module.exports.ThailandToursParser = ThailandToursParser;
 async function sendDailyReminders() {
   const notificationManager = new NotificationManager();
   const todayInAsia = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+  const dummyParser = new BaseEmailParser('');
 
   console.log(`Running daily reminder job for date: ${todayInAsia}`);
 
@@ -507,18 +508,18 @@ async function sendDailyReminders() {
     for (const booking of bookings) {
       const extractedInfo = {
         bookingNumber: booking.booking_number,
-        tourDate: booking.tour_date,
+        tourDate: booking.raw_tour_date,
         program: booking.program,
         name: booking.customer_name,
         adult: booking.adult,
         child: booking.child,
         infant: booking.infant,
         hotel: booking.hotel,
-        phoneNumber: booking.phone_number,
-        isoDate: booking.iso_date
+        phoneNumber: booking.phone_number
       };
-
-      await notificationManager.sendAll(extractedInfo);
+      
+      const bookingDataForNotification = dummyParser._formatBaseBookingDetails(extractedInfo);
+      await notificationManager.sendAll(bookingDataForNotification);
 
       // Mark the booking as notified
       await sql`

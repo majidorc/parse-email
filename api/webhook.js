@@ -243,21 +243,27 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractProgram() {
         // Find the line containing a product code like (#...some code...)
-        const programLine = this.lines.find(line => /\\(#[A-Z0-9]+\\)/.test(line));
+        const programLine = this.lines.find(line => /\(#([A-Z0-9]+)\)/.test(line));
         return programLine ? programLine.trim() : 'N/A';
     }
 
     extractTourDate() {
-        // The date is on a line like "Order date: June 21, 2025"
-        return this._findLineValue('Order date:');
+        // The date is on a line like "Order date: June 21, 2025" or "Tour date: ..."
+        let date = this._findLineValue('Order date:');
+        if (date === 'N/A') {
+            date = this._findLineValue('Tour date:');
+        }
+        return date;
     }
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
         const adultLine = this.lines.find(line => line.toLowerCase().includes('adults'));
         if (adultLine) {
-            const match = adultLine.match(/(\\d+)/);
-            if (match) pax.adult = match[1];
+            const match = adultLine.match(/adults(?: \\(\\+\\d+\\))?:\\s*(\\d+)/i);
+            if (match && match[1]) {
+                pax.adult = match[1];
+            }
         }
         return pax;
     }
@@ -310,7 +316,7 @@ class ThailandToursParser extends BaseEmailParser {
 
         // Final validation to ensure a date was actually found
         if (extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
-            throw new Error(`Could not extract a valid tour date for booking ${extractedInfo.bookingNumber}. Aborting.`);
+            console.error(`Could not extract a valid tour date for booking ${extractedInfo.bookingNumber}. Aborting.`);
         }
         
         return this._formatBaseBookingDetails(extractedInfo);
@@ -358,6 +364,57 @@ class EmailParserFactory {
     const textContent = cleanupHtml(content);
     return new FallbackParser(textContent);
   }
+}
+
+class FallbackParser extends BaseEmailParser {
+    constructor(textContent) {
+        super(textContent);
+        this.lines = textContent.split('\\n').map(line => line.trim());
+    }
+
+    _findLineValue(label) {
+        const line = this.lines.find(l => l.toLowerCase().startsWith(label.toLowerCase()));
+        return line ? line.substring(label.length).trim() : 'N/A';
+    }
+    
+    extractBookingNumber() { return this._findLineValue('booking no :'); }
+    extractTourDate() { return this._findLineValue('tour date :'); }
+    extractProgram() { return this._findLineValue('program :'); }
+    extractName() { return this._findLineValue('name :'); }
+    extractPassengers() {
+      const paxLine = this._findLineValue('pax :');
+      const adults = paxLine.match(/(\d+)\s*Adult/i);
+      const children = paxLine.match(/(\d+)\s*Child/i);
+      const infants = paxLine.match(/(\d+)\s*Infant/i);
+      return {
+        adult: adults ? adults[1] : '0',
+        child: children ? children[1] : '0',
+        infant: infants ? infants[1] : '0'
+      };
+    }
+    extractHotel() { return this._findLineValue('hotel :'); }
+    extractPhone() { return this._findLineValue('phone number :'); }
+
+    extractAll() {
+        const passengers = this.extractPassengers();
+        const tourDate = this.extractTourDate();
+        return {
+            bookingNumber: this.extractBookingNumber(),
+            tourDate: tourDate,
+            program: this.extractProgram(),
+            name: this.extractName(),
+            adult: passengers.adult,
+            child: passengers.child,
+            infant: passengers.infant,
+            hotel: this.extractHotel(),
+            phoneNumber: this.extractPhone(),
+            isoDate: this._getISODate(tourDate)
+        };
+    }
+
+    formatBookingDetails() {
+        return this._formatBaseBookingDetails(this.extractAll());
+    }
 }
 
 module.exports = async (req, res) => {
@@ -427,7 +484,7 @@ async function sendDailyReminders() {
   try {
     const { rows: bookings } = await sql`
       SELECT * FROM bookings 
-      WHERE DATE(tour_date AT TIME ZONE 'Asia/Bangkok') = ${todayInAsia}
+      WHERE (tour_date AT TIME ZONE 'Asia/Bangkok')::date = ${todayInAsia}
       AND notification_sent = FALSE;
     `;
 

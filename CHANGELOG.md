@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected the cron job path in `vercel.json` to point to the correct function (`api/webhook`).
 - Resolved a critical timezone bug that prevented the reminder system from finding today's bookings.
 
-## [1.3.0] - 2025-06-21
+## [1.3.0] - 2025-06-22
 
 ### Added
 - **Configuration-Driven Parsing**: Added `config.json` to allow defining email parsing rules without code changes. The system now maps sender emails to specific parsers.
@@ -44,6 +44,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Address Cleaning**: Corrected the `ThailandToursParser` to exclude the phone number and email from the final `Hotel` address string.
 - **Date Formatting**: Standardized date output across all parsers to `dd.Mmm 'yy`.
 - Fixed various regex patterns for more reliable data extraction.
+- **Webhook Stability**: The webhook is now more resilient. It will no longer crash and return a 500 error if it receives an email it cannot parse or if it fails to extract a tour date. Instead, it will log the error and gracefully skip the email.
+- **Database Query**: Corrected a syntax error in the SQL query for the daily reminder service (`sendDailyReminders`).
+- **ThailandToursParser**:
+    - Improved the reliability of extracting the tour program name.
+    - Made passenger number extraction more precise.
+    - Added flexibility to find the tour date under different labels.
+- **Error Handling**: Introduced a `FallbackParser` to handle emails from unrecognized senders, preventing potential crashes.
+
+### Changed
+- **Error Logging**: Enhanced logging for date extraction failures to make future debugging easier.
 
 ## [1.2.0] - 2025-01-XX
 

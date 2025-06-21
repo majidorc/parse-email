@@ -236,37 +236,32 @@ class BokunParser extends BaseEmailParser {
 class ThailandToursParser extends BaseEmailParser {
     constructor(textContent) {
         super(textContent);
-        // Correctly split the text content into an array of lines
         this.lines = textContent.split('\n').map(line => line.trim());
     }
 
     _findLineValue(label) {
-        // Find the line that starts with the label (case-insensitive)
         const line = this.lines.find(l => l.toLowerCase().startsWith(label.toLowerCase()));
-        // If found, return the value part; otherwise, return 'N/A'
         return line ? line.substring(label.length).trim() : 'N/A';
     }
     
     extractBookingNumber() {
-        // The booking number is labeled as "ORDER NUMBER:"
         return this._findLineValue('ORDER NUMBER:');
     }
 
     extractProgram() {
         // The program name is the line right before the line with the product code, e.g., "(#HKT0022)"
-        const codeIndex = this.lines.findIndex(line => /^\\(#([A-Z0-9]+)\\)$/.test(line.trim()));
-        if (codeIndex > 0) {
+        const codeIndex = this.lines.findIndex(line => /\(#([A-Z0-9]+)\)/.test(line));
+        if (codeIndex > 0 && this.lines[codeIndex - 1]) {
             return this.lines[codeIndex - 1].trim();
         }
         return 'N/A';
     }
 
     extractTourDate() {
-        // The tour date appears on a line starting with an asterisk, e.g., "* June 22, 2025"
-        const dateLine = this.lines.find(line => line.startsWith('*'));
+        // The tour date is on a line like "* June 22, 2025"
+        const dateLine = this.lines.find(line => line.trim().startsWith('*') && /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(line));
         if (dateLine) {
-            // Find a date within that line, e.g. "June 22, 2025"
-            const dateMatch = dateLine.match(/[A-Z][a-z]{2,}\\s\\d{1,2},\\s\\d{4}/i);
+            const dateMatch = dateLine.match(/[A-Za-z]+ \d{1,2}, \d{4}/);
             if (dateMatch) return dateMatch[0];
         }
         return 'N/A';
@@ -274,12 +269,10 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        
-        // Find the line containing "Adults" and extract the number
+        // The passenger line is like "* Adults (+11): 3"
         const adultLine = this.lines.find(line => line.toLowerCase().includes('adults'));
         if (adultLine) {
-            // Regex to match "Adults (+11): 3" or similar formats
-            const match = adultLine.match(/adults(?:\\s\\(\\+\\d+\\))?:\\s*(\\d+)/i);
+            const match = adultLine.match(/adults(?: \(\+\d+\))?:\s*(\d+)/i);
             if (match && match[1]) {
                 pax.adult = match[1];
             }
@@ -288,27 +281,39 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractName() {
-        // The customer name is the first line after "BILLING ADDRESS"
-        const billingIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('billing address'));
-        if (billingIndex !== -1 && this.lines.length > billingIndex + 1) {
-            return this.lines[billingIndex + 1].trim();
-        }
-        return 'N/A';
-    }
-    
-    extractHotel() {
-        // The hotel name is the second line after "BILLING ADDRESS"
-        const billingIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('billing address'));
+        // The customer name is two lines after "BILLING ADDRESS" because of a blank line
+        const billingIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
         if (billingIndex !== -1 && this.lines.length > billingIndex + 2) {
             return this.lines[billingIndex + 2].trim();
         }
         return 'N/A';
     }
+    
+    extractHotel() {
+        // The hotel name is three lines after "BILLING ADDRESS"
+        const billingIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
+        if (billingIndex !== -1 && this.lines.length > billingIndex + 3) {
+            const line3 = this.lines[billingIndex + 3].trim();
+            const line4 = this.lines.length > billingIndex + 4 ? this.lines[billingIndex + 4].trim() : null;
+            
+            let hotel = line3;
+            if (line4 && !line4.startsWith('+') && !line4.includes('@')) {
+                hotel += `, ${line4}`;
+            }
+            return hotel;
+        }
+        return 'N/A';
+    }
 
     extractPhone() {
-        // The phone number is on a line that starts with a plus, e.g., "+66994266815"
-        const phoneLine = this.lines.find(line => line.startsWith('+'));
-        return phoneLine ? phoneLine.replace(/\\D/g, '') : 'N/A';
+        // The phone number is on a line that starts with a plus, and is inside the address block
+        const billingIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
+        if (billingIndex !== -1) {
+            const addressBlock = this.lines.slice(billingIndex);
+            const phoneLine = addressBlock.find(line => line.startsWith('+'));
+            return phoneLine ? phoneLine.replace(/\D/g, '') : 'N/A';
+        }
+        return 'N/A';
     }
 
     extractAll() {

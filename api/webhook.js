@@ -401,7 +401,8 @@ class FallbackParser extends BaseEmailParser {
 
 class EmailParserFactory {
   static create(parsedEmail) {
-    const { subject, html, text } = parsedEmail;
+    const { subject, html, text, from } = parsedEmail;
+    const fromAddress = from?.value?.[0]?.address?.toLowerCase();
 
     // Filter out emails that are not new booking notifications
     if (!subject || !subject.toLowerCase().includes('new booking:')) {
@@ -411,9 +412,26 @@ class EmailParserFactory {
 
     // Give preference to HTML content if it exists, otherwise use plain text.
     const content = html || text;
+    
+    console.log(`Attempting to find parser for email from: ${fromAddress}`);
 
-    // The new unified EmailParser will handle routing to the correct sub-parser.
-    return new EmailParser(content);
+    if (fromAddress && fromAddress.includes('bokun.io')) {
+      console.log('Selected BokunParser.');
+      // BokunParser is designed to handle the full HTML
+      return new BokunParser(content);
+    }
+    
+    if (fromAddress && fromAddress.includes('tours.co.th')) {
+        console.log('Selected ThailandToursParser.');
+        // This parser expects cleaned text
+        const textContent = new EmailParser(content).text;
+        return new ThailandToursParser(textContent);
+    }
+    
+    // If sender is not recognized, use the general-purpose parser
+    console.log("Using Fallback Text Parser as sender was not recognized.");
+    const textContent = new EmailParser(content).text;
+    return new FallbackParser(textContent);
   }
 }
 

@@ -1,0 +1,10 @@
+[
+  {
+    "fromAddress": "no-reply@bokun.io",
+    "parserName": "BokunParser"
+  },
+  {
+    "fromAddress": "info@tours.co.th",
+    "parserName": "ThailandToursParser"
+  }
+] 

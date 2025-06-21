@@ -241,8 +241,15 @@ class ThailandToursParser extends BaseEmailParser {
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
 
+        // Try "Adults (+6): 1" format
+        let paxMatch = this.text.match(/Adults\s\(\+\d+\):\s*(\d+)/i);
+        if (paxMatch && paxMatch[1]) {
+            pax.adult = paxMatch[1];
+            return pax;
+        }
+
         // Try "Person: 7" format
-        let paxMatch = this.text.match(/Person:\s*(\d+)/i);
+        paxMatch = this.text.match(/Person:\s*(\d+)/i);
         if (paxMatch && paxMatch[1]) {
             pax.adult = paxMatch[1];
             return pax;

@@ -162,6 +162,43 @@ t.grylls@live.co.uk
 Congratulations on the sale
 `;
 
+// ######################################################
+// #### SAMPLE EMAIL 6: Thailand Tours / Chiang Mai #####
+// ######################################################
+const thailandToursEmail_ChiangMai = `
+From: "Thailand Tours" <info@tours.co.th>
+Subject: New Order: #6853011366
+Content-Type: text/plain; charset=UTF-8
+
+New Order: #6853011366
+
+Order Details
+Order number: 6853011366
+Order date: May 30, 2025
+
+Product Price
+Chiang Mai: White & Blue Temples, Black Museum, Long Neck Village & Golden Triangle
+(#CNX0007)
+Quantity: 1
+Optional: Boat trip + Longneck
+
+Booking #33707 Paid
+- May 31, 2025
+- Adults (+6): 1
+
+Subtotal: B1,998
+Discount: -B100
+Payment method: Apple Pay
+Total: B1,898
+
+Billing address
+Steiphie Boulard
+28 Rue Beaubourg
+France
+steffybeipn@icloud.com
+
+Congratulations on the sale
+`;
 
 async function testParser(emailType, emailContent, ParserClass) {
     console.log(`\n=================================================`);
@@ -204,6 +241,7 @@ async function runAllTests() {
     await testParser("Thailand Tours", thailandToursEmail, ThailandToursParser);
     await testParser("Thailand Tours / Full Moon", thailandToursEmail_FullMoon, ThailandToursParser);
     await testParser("Thailand Tours / Full Moon V2", thailandToursEmail_FullMoon_V2, ThailandToursParser);
+    await testParser("Thailand Tours / Chiang Mai", thailandToursEmail_ChiangMai, ThailandToursParser);
 }
 
 runAllTests(); 

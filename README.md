@@ -1,28 +1,37 @@
-# Email Auto-Responder
+# Automated Email Parser and Notification System
 
-An automated email processing system that extracts booking information from incoming emails and sends formatted responses. Built for Vercel deployment.
-
-For a detailed history of changes, please see the [Changelog](CHANGELOG.md).
+This project is a Vercel serverless function that automates the processing of booking notification emails. It has evolved from a simple email parser to a more robust system with database persistence and scheduled reminders.
 
 ## Features
 
-- **Automatic Email Processing**: Receives emails via a webhook and forwards them for parsing.
-- **Config-Driven Parsing**: Uses a `config.json` file to map sender email addresses to specific parsers, allowing for easy customization without code changes.
-- **Multi-Format Support**: Comes with pre-built parsers for different email structures:
-  - `BokunParser`: For table-based emails (e.g., from GetYourGuide, Viator).
-  - `ThailandToursParser`: For plain-text emails with various formats.
-- **Smart Information Extraction**: Each parser is tailored to extract key booking details like booking number, tour date, program name, customer name, passenger count, and hotel/pickup location.
-- **Automated Response**: Sends a standardized, formatted confirmation email with the extracted information.
-- **Vercel Ready**: Designed for easy deployment with Vercel serverless functions.
+- **Email Parsing**: Receives raw email content via a webhook, identifies the sender, and uses the appropriate parser (`Bokun.io`, `ThailandTours.co.th`) to extract key booking details.
+- **Database Storage**: Saves all successfully parsed bookings into a Vercel Postgres database. This provides a persistent record of all tours.
+- **Dual Notifications**: Immediately sends a formatted confirmation request via both **Email** and **Telegram** upon receiving a new booking.
+- **Scheduled Daily Reminders**: A cron job runs automatically every morning at 8:00 AM (Asia/Bangkok time) to find all tours scheduled for the current day and sends a reminder notification.
 
 ## How It Works
 
-1.  An email is sent to your designated inbox (e.g., a Gmail account).
-2.  A **Google Apps Script** (see `email-forwarder.gs`) forwards the raw email content to the Vercel webhook (`/api/webhook`).
-3.  The webhook receives the email and identifies the sender's address.
-4.  It consults `config.json` to find the correct parser for that sender.
-5.  The selected parser extracts the booking information.
-6.  A formatted confirmation email is sent to your business address.
+1.  **Email Forwarding**: A companion Google Apps Script (`email-forwarder.gs`) monitors a Gmail account for unread emails from specified senders (e.g., `no-reply@bokun.io`).
+2.  **Webhook Trigger**: The script forwards the raw email content to the `/api/webhook` endpoint.
+3.  **Parsing & Storage**: The webhook parses the email, extracts the booking information, and saves it to the Postgres database.
+4.  **Initial Notification**: An immediate notification is sent via Email and Telegram.
+5.  **Daily Cron Job**: Vercel's cron service triggers the same `/api/webhook?cron_job=true` endpoint daily.
+6.  **Reminder Notification**: The function queries the database for bookings matching the current local date, and sends reminders for any that are found.
+
+## Environment Variables
+
+The following environment variables must be configured in your Vercel project:
+
+- `SMTP_HOST`: Host for your email sending service.
+- `SMTP_PORT`: Port for the email service.
+- `SMTP_USER`: Username for the email service.
+- `SMTP_PASS`: Password for the email service.
+- `FROM_EMAIL`: The email address to send notifications from.
+- `POSTGRES_URL`: The connection string for your Vercel Postgres database.
+- `TELEGRAM_BOT_TOKEN`: Your Telegram bot's API token.
+- `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where notifications should be sent.
+---
+*This README was last updated on June 22, 2025.*
 
 ## Configuration
 
@@ -58,23 +67,6 @@ You can enable or disable different notification channels in `config.json`.
     "enabled": true
   }
 }
-```
-
-### 3. Environment Variables
-
-Set up the following environment variables in your Vercel project.
-
-```bash
-# SMTP Configuration for sending emails
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-business-email@gmail.com
-SMTP_PASS=your-google-app-password
-FROM_EMAIL=your-business-email@gmail.com
-
-# Telegram Bot Configuration
-TELEGRAM_BOT_TOKEN=your-telegram-bot-token
-TELEGRAM_CHAT_ID=your-telegram-chat-id
 ```
 
 ## Setup & Deployment

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-06-22
+
+### Added
+- **Database Integration**: Bookings are now parsed from emails and stored in a Vercel Postgres database.
+- **Daily Reminders**: A scheduled cron job now runs daily to check for tours on the current date.
+- **Telegram Notifications**: Implemented a `NotificationManager` to send booking alerts via Telegram in addition to email.
+- New `ThailandToursParser` to handle emails from a different provider.
+
+### Changed
+- The core logic now distinguishes between initial booking processing (via webhook) and daily reminders (via cron job).
+- The daily reminder query is now timezone-aware to correctly identify bookings in the `Asia/Bangkok` timezone.
+- The cron job schedule has been adjusted to run at 8:00 AM local Bangkok time.
+
+### Fixed
+- Corrected the cron job path in `vercel.json` to point to the correct function (`api/webhook`).
+- Resolved a critical timezone bug that prevented the reminder system from finding today's bookings.
+
 ## [1.3.0] - 2025-06-21
 
 ### Added

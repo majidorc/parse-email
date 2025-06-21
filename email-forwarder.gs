@@ -1,9 +1,10 @@
-function forwardBokunEmails() {
-  // Search for emails from Bokun.io that are unread
-  var threads = GmailApp.search('from:no-reply@bokun.io is:unread');
+function forwardEmails() {
+  // Search for unread emails from either of our booking providers
+  var searchQuery = 'is:unread (from:no-reply@bokun.io OR from:info@tours.co.th)';
+  var threads = GmailApp.search(searchQuery);
   
   // Your Vercel webhook URL
-  var webhookUrl = 'https://parse-email-1nkoosjye-majidorcs-projects.vercel.app/api/webhook';
+  var webhookUrl = 'https://parse-email.vercel.app/api/webhook';
   
   for (var i = 0; i < threads.length; i++) {
     var messages = threads[i].getMessages();
@@ -11,27 +12,30 @@ function forwardBokunEmails() {
     for (var j = 0; j < messages.length; j++) {
       var message = messages[j];
       
-      // Get the raw email content
-      var raw = message.getRawContent();
-      
-      // Send to webhook
-      try {
-        var options = {
-          'method': 'post',
-          'contentType': 'application/json',
-          'payload': JSON.stringify({
-            'email': raw
-          })
-        };
+      // Check if the message is unread before processing
+      if (message.isUnread()) {
         
-        UrlFetchApp.fetch(webhookUrl, options);
+        // Get the raw email content
+        var rawContent = message.getRawContent();
         
-        // Mark as read after successful processing
-        message.markRead();
-        
-      } catch (error) {
-        console.error('Error processing email:', error);
+        // Send to webhook
+        try {
+          var options = {
+            'method': 'post',
+            'contentType': 'text/plain', // Set content type to plain text
+            'payload': rawContent        // Send the raw email content directly
+          };
+          
+          UrlFetchApp.fetch(webhookUrl, options);
+          
+          // Mark as read only after successful forwarding
+          message.markRead();
+          
+        } catch (error) {
+          // Log the error to the Apps Script console for debugging
+          console.error('Failed to forward email. Error: ' + error.toString());
+        }
       }
     }
   }
-} 
+}

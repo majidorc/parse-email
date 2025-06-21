@@ -2,80 +2,80 @@ const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 const cheerio = require('cheerio');
 const axios = require('axios');
-const config = require('../config.json');
+const { sql } = require('@vercel/postgres');
+const configData = require('../config.json');
 
-// Base Parser Class (Interface)
+// All classes and managers removed for this test.
+// Hardcoding the BokunParser logic directly in the handler.
+
+// Helper to read the raw request body from the stream
+async function getRawBody(readable) {
+  const chunks = [];
+  for await (const chunk of readable) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 class BaseEmailParser {
   constructor(content) {
     this.content = content;
   }
-
   extractAll() { throw new Error("Not implemented"); }
   formatBookingDetails() { throw new Error("Not implemented"); }
-
   _formatBaseBookingDetails(extractedInfo) {
     const adult = parseInt(extractedInfo.adult, 10) || 0;
     const child = parseInt(extractedInfo.child, 10) || 0;
     const infant = parseInt(extractedInfo.infant, 10) || 0;
-
     const parts = [];
-    if (adult > 0) {
-        parts.push(`${adult} ${adult > 1 ? 'Adults' : 'Adult'}`);
-    }
-    if (child > 0) {
-        parts.push(`${child} ${child > 1 ? 'Children' : 'Child'}`);
-    }
-    if (infant > 0) {
-        parts.push(`${infant} ${infant > 1 ? 'Infants' : 'Infant'}`);
-    }
-
+    if (adult > 0) parts.push(`${adult} ${adult > 1 ? 'Adults' : 'Adult'}`);
+    if (child > 0) parts.push(`${child} ${child > 1 ? 'Children' : 'Child'}`);
+    if (infant > 0) parts.push(`${infant} ${infant > 1 ? 'Infants' : 'Infant'}`);
     let paxString = parts.join(' , ');
-    if (!paxString) {
-      paxString = "0 Adults"; // Fallback if all are 0
-    }
+    if (!paxString) paxString = "0 Adults";
+    const responseTemplate = `Please confirm the *pickup time* for this booking:\n\nBooking no : ${extractedInfo.bookingNumber}\nTour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\nName : ${extractedInfo.name}\nPax : ${paxString}\nHotel : ${extractedInfo.hotel}\nPhone Number : ${extractedInfo.phoneNumber}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`;
+    return { responseTemplate, extractedInfo };
+  }
 
-    const responseTemplate = `Please confirm the *pickup time* for this booking:
+  // New method to convert parsed date to YYYY-MM-DD format for DB
+  _getISODate(dateString) {
+      if (!dateString || dateString === 'N/A') return null;
 
-Booking no : ${extractedInfo.bookingNumber}
-Tour date : ${extractedInfo.tourDate}
-Program : ${extractedInfo.program}
-Name : ${extractedInfo.name}
-Pax : ${paxString}
-Hotel : ${extractedInfo.hotel}
-Phone Number : ${extractedInfo.phoneNumber}
-Cash on tour : None
+      // Handle "dd.Mmm 'yy" format (e.g., 21.Jun '25)
+      const dotMatch = dateString.match(/(\d{1,2})\.([A-Za-z]{3})\s'(\d{2})/);
+      if (dotMatch) {
+          const day = dotMatch[1];
+          const month = dotMatch[2];
+          const year = `20${dotMatch[3]}`;
+          // new Date() can parse "21 Jun 2025"
+          return new Date(`${day} ${month} ${year}`).toISOString().split('T')[0];
+      }
 
-Please mentioned if there is any additional charge for transfer collect from customer`;
-
-    return {
-      responseTemplate,
-      extractedInfo
-    };
+      // Handle "Month Day, Year" format (e.g., May 6, 2026)
+      const commaMatch = new Date(dateString);
+      if (!isNaN(commaMatch.getTime())) {
+          return commaMatch.toISOString().split('T')[0];
+      }
+      
+      return null;
   }
 }
 
-// Notification Manager
 class NotificationManager {
   constructor() {
-    this.notificationConfig = config.notifications;
+    this.notificationConfig = configData.notifications;
   }
-
   async sendEmail(extractedInfo) {
-    if (!this.notificationConfig.email || !this.notificationConfig.email.enabled) {
+    if (!this.notificationConfig.email?.enabled) {
       console.log('Email notifications are disabled.');
       return;
     }
-
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
       secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
-
     const mailOptions = {
       from: process.env.FROM_EMAIL,
       to: 'o0dr.orc0o@gmail.com',
@@ -83,406 +83,353 @@ class NotificationManager {
       text: extractedInfo.responseTemplate,
       html: extractedInfo.responseTemplate.replace(/\n/g, '<br>'),
     };
-
     try {
       await transporter.sendMail(mailOptions);
       console.log('Email notification sent successfully.');
     } catch (error) {
-      console.error('Error sending email notification:', error);
+      console.error('Error sending email notification:', error.message);
+      throw new Error(`Failed to send email: ${error.message}`);
     }
   }
-
   async sendTelegram(extractedInfo) {
-    if (!this.notificationConfig.telegram || !this.notificationConfig.telegram.enabled) {
+    if (!this.notificationConfig.telegram?.enabled) {
       console.log('Telegram notifications are disabled.');
       return;
     }
-
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-
+    const { TELEGRAM_BOT_TOKEN: botToken, TELEGRAM_CHAT_ID: chatId } = process.env;
     if (!botToken || !chatId) {
       console.error('Telegram bot token or chat ID is missing from environment variables.');
       return;
     }
     
-    // Telegram's markdown parser is picky, so we escape a few special characters.
-    const message = extractedInfo.responseTemplate
-        .replace(/\*/g, '\\*') // Escape asterisks
-        .replace(/_/g, '\\_'); // Escape underscores
+    // To make the text easy to copy, we'll format it as a code block.
+    // The text inside the block doesn't need markdown escaping.
+    const plainTextForCopy = extractedInfo.responseTemplate.replace(/\*/g, ''); // Remove our own markdown
+    
+    const message = "Please confirm the pickup time for this booking\\. Details to copy are below:\n\n" +
+                    "```\n" +
+                    plainTextForCopy +
+                    "\n```";
+
+    const payload = {
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'MarkdownV2'
+    };
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
     try {
-      await axios.post(url, {
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'MarkdownV2',
-      });
+      await axios.post(url, payload);
       console.log('Telegram notification sent successfully.');
     } catch (error) {
-      console.error('Error sending Telegram notification:', error.response ? error.response.data : error.message);
+      const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
+      console.error('Error sending Telegram notification:', errorMessage);
+      throw new Error(`Failed to send Telegram: ${errorMessage}`);
     }
   }
-
   async sendAll(extractedInfo) {
     await this.sendEmail(extractedInfo);
     await this.sendTelegram(extractedInfo);
   }
 }
 
-// Email parser utility for Bokun.io notifications
 class BokunParser extends BaseEmailParser {
   constructor(htmlContent) {
     super(htmlContent);
-    // Pre-clean the HTML to remove weird encoding artifacts that cheerio might not handle well.
     const cleanedHtml = htmlContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
     this.$ = cheerio.load(cleanedHtml);
   }
-
   findValueByLabel(label) {
     let value = '';
-    const self = this;
-
-    this.$('td').each(function () {
-      const currentElement = self.$(this);
-      
-      // Look inside strong tags within the td for an exact match
-      const strongTag = currentElement.find('strong');
-      if (strongTag.length) {
-          const strongText = strongTag.text().trim();
-          if (strongText.toLowerCase() === label.toLowerCase()) {
-              value = currentElement.next('td').text().trim();
-              if (value) {
-                return false; // Found it, stop searching
-              }
-          }
+    this.$('td').each((i, el) => {
+      const strongText = this.$(el).find('strong').text().trim();
+      if (strongText.toLowerCase() === label.toLowerCase()) {
+        value = this.$(el).next('td').text().trim();
+        if (value) return false;
       }
     });
-
     return value.replace(/\s{2,}/g, ' ').trim();
   }
-  
-  extractBookingNumber() {
-    return this.findValueByLabel('Ext. booking ref');
-  }
-
+  extractBookingNumber() { return this.findValueByLabel('Ext. booking ref'); }
   extractTourDate() {
     const dateText = this.findValueByLabel('Date');
-    // Extract only the date part, remove day of week and time
-    // Matches "21 Jun '25" from "Sat 21 Jun '25 @ 09:00"
-    const dateMatch = dateText.match(/(\d{1,2}\s[A-Za-z]{3}\s'\d{2})/);
-    if (dateMatch && dateMatch[1]) {
-        // Format to "21.Jun '25" by replacing only the first space
-        return dateMatch[1].replace(' ', '.');
+    // More robust regex: handles optional day of week, and space or period after the day number.
+    const dateMatch = dateText.match(/(\d{1,2})[\.\s]([A-Za-z]{3}\s'\d{2})/);
+    if (dateMatch && dateMatch[1] && dateMatch[2]) {
+        // Reconstruct to "DD.Mmm 'YY" format for consistency.
+        return `${dateMatch[1]}.${dateMatch[2]}`;
     }
     return 'N/A';
   }
-
   extractProgram() {
-    let programText = this.findValueByLabel('Product');
-    // Remove product code and clean up text
-    programText = programText.replace(/^[A-Z0-9]+\s*-\s*/, '');
-    return programText.replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    return this.findValueByLabel('Product').replace(/^[A-Z0-9]+\s*-\s*/, '').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
   }
-
-  extractName() {
-    return this.findValueByLabel('Customer');
-  }
-
+  extractName() { return this.findValueByLabel('Customer'); }
   extractPassengers() {
     const pax = { adult: '0', child: '0', infant: '0' };
-    const paxHeader = this.$('strong').filter((i, el) => this.$(el).text().trim().toLowerCase() === 'pax').first();
-
-    if (paxHeader.length) {
-      const paxCell = paxHeader.closest('td').next('td');
-      const paxHtml = paxCell.html();
-
-      // Handle multi-line pax info first (Viator style)
-      if (paxHtml && paxHtml.includes('<br')) {
-        const lines = paxHtml.split(/<br\s*\/?>/i);
-        lines.forEach(line => {
-          const text = this.$(`<div>${line}</div>`).text().trim();
-          if (text) {
-            const parts = text.match(/(\d+)\s*(\w+)/);
-            if (parts) {
-              const quantity = parts[1];
-              const type = parts[2].toLowerCase();
-              if (type.includes('adult')) {
-                pax.adult = quantity;
-              } else if (type.includes('child')) {
-                pax.child = quantity;
-              } else if (type.includes('infant')) {
-                pax.infant = quantity;
-              }
-            }
-          }
-        });
-      } else if (paxCell.find('table').length) { // Handle table format
-        paxCell.find('table').find('tr').each((i, row) => {
-          const cells = this.$(row).find('td');
-          if (cells.length >= 2) {
-            const quantity = this.$(cells[0]).text().trim();
-            const type = this.$(cells[1]).text().trim().toLowerCase();
-            if (type.includes('adult')) {
-              pax.adult = quantity;
-            } else if (type.includes('child')) {
-              pax.child = quantity;
-            } else if (type.includes('infant')) {
-              pax.infant = quantity;
-            }
-          }
-        });
-      } else { // Handle simple text like "4 Adult"
-        const simpleText = paxCell.text().trim();
-        const match = simpleText.match(/(\d+)\s*Adult/i);
-        if (match) {
-          pax.adult = match[1];
+    const paxCell = this.$('strong').filter((i, el) => this.$(el).text().trim().toLowerCase() === 'pax').first().closest('td').next('td');
+    const paxHtml = paxCell.html();
+    if (paxHtml?.includes('<br')) {
+      paxHtml.split(/<br\s*\/?>/i).forEach(line => {
+        const parts = this.$(`<div>${line}</div>`).text().trim().match(/(\d+)\s*(\w+)/);
+        if (parts) {
+          if (parts[2].toLowerCase().includes('adult')) pax.adult = parts[1];
+          else if (parts[2].toLowerCase().includes('child')) pax.child = parts[1];
+          else if (parts[2].toLowerCase().includes('infant')) pax.infant = parts[1];
         }
-      }
+      });
+    } else if (paxCell.find('table').length) {
+      paxCell.find('tr').each((i, row) => {
+        const cells = this.$(row).find('td');
+        if (cells.length >= 2) {
+          const type = this.$(cells[1]).text().trim().toLowerCase();
+          if (type.includes('adult')) pax.adult = this.$(cells[0]).text().trim();
+          else if (type.includes('child')) pax.child = this.$(cells[0]).text().trim();
+          else if (type.includes('infant')) pax.infant = this.$(cells[0]).text().trim();
+        }
+      });
+    } else {
+      const match = paxCell.text().trim().match(/(\d+)\s*Adult/i);
+      if (match) pax.adult = match[1];
     }
     return pax;
   }
-
-  extractHotel() {
-    let hotelText = this.findValueByLabel('Pick-up');
-    return hotelText.replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  extractPhone() {
-    const phoneText = this.findValueByLabel('Customer phone');
-    return phoneText.replace(/\D/g, '');
-  }
-
+  extractHotel() { return this.findValueByLabel('Pick-up').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim(); }
+  extractPhone() { return this.findValueByLabel('Customer phone').replace(/\D/g, ''); }
   extractAll() {
     const passengers = this.extractPassengers();
+    const tourDate = this.extractTourDate();
     return {
-      bookingNumber: this.extractBookingNumber(),
-      tourDate: this.extractTourDate(),
-      program: this.extractProgram(),
-      name: this.extractName(),
-      adult: passengers.adult,
-      child: passengers.child,
-      infant: passengers.infant,
-      hotel: this.extractHotel(),
-      phoneNumber: this.extractPhone()
+      bookingNumber: this.extractBookingNumber(), tourDate: tourDate,
+      program: this.extractProgram(), name: this.extractName(),
+      adult: passengers.adult, child: passengers.child, infant: passengers.infant,
+      hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
+      isoDate: this._getISODate(tourDate)
     };
   }
-
   formatBookingDetails() {
-    const extractedInfo = this.extractAll();
-    return this._formatBaseBookingDetails(extractedInfo);
+    return this._formatBaseBookingDetails(this.extractAll());
   }
 }
 
 class ThailandToursParser extends BaseEmailParser {
     constructor(textContent) {
         super(textContent);
-        this.text = textContent;
+        this.text = textContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
     }
-
+    
     _findValue(regex) {
         const match = this.text.match(regex);
-        return match && match[1] ? match[1].trim() : 'N/A';
+        return match?.[1]?.trim() ?? 'N/A';
     }
 
     extractBookingNumber() {
-        return this._findValue(/Order number:\s*(\w+)/);
+        return this._findValue(/Order number:\s*(\d+)/);
     }
-    
+
     extractProgram() {
-        const productMatch = this.text.match(/Product\s+Price\s+([\s\S]+?)\s+Booking/);
-        if (productMatch && productMatch[1]) {
-            // Take only the first line as the product name
-            return productMatch[1].trim().split(/\r?\n/)[0].trim();
+        const match = this.text.match(/Product Price\s+\*([^\*]+)\*/);
+        return match ? match[1].trim() : 'N/A';
+    }
+
+    extractTourDate() {
+        const match = this.text.match(/Booking #\d+ Paid\s+\*\s+-\s+([A-Za-z]+\s\d{1,2},\s\d{4})/i);
+        if (match && match[1]) {
+            const date = new Date(match[1]);
+            // Format to dd.Mmm 'yy
+            return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
         }
         return 'N/A';
     }
 
-    extractTourDate() {
-        // Find date under "Booking #... Paid"
-        const bookingBlockMatch = this.text.match(/Booking #\d+ Paid\s+-\s*([A-Z]+\s\d{1,2},\s\d{4})/i);
-        if (bookingBlockMatch && bookingBlockMatch[1]) {
-            const dateStr = bookingBlockMatch[1];
-            const date = new Date(dateStr);
-            // Format to dd.Mmm 'yy
-            return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().substr(-2)}`;
-        }
-
-        // Fallback to original method if new one fails
-        const dateStr = this._findValue(/Order date:\s*(.+)/);
-        if (dateStr === 'N/A') return 'N/A';
-        const date = new Date(dateStr);
-        return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().substr(-2)}`;
-    }
-
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-
-        // Try "Adults (+6): 1" format
-        let paxMatch = this.text.match(/Adults\s\(\+\d+\):\s*(\d+)/i);
-        if (paxMatch && paxMatch[1]) {
-            pax.adult = paxMatch[1];
-            return pax;
-        }
-
-        // Try "Person: 7" format
-        paxMatch = this.text.match(/Person:\s*(\d+)/i);
-        if (paxMatch && paxMatch[1]) {
-            pax.adult = paxMatch[1];
-            return pax;
-        }
-
-        // Fallback to "Adults (+1)" format
-        paxMatch = this.text.match(/Adults\s\(\+(\d+)\)/);
-        if (paxMatch && paxMatch[1]) {
+        const paxMatch = this.text.match(/Adults \(\+\d+\):\s*(\d+)/i);
+        if (paxMatch) {
             pax.adult = paxMatch[1];
         }
         return pax;
     }
 
-    _getBillingAddressLines() {
-        const addressBlockMatch = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
-        if (addressBlockMatch && addressBlockMatch[1]) {
-            return addressBlockMatch[1].trim().split(/\r?\n/).map(l => l.trim());
-        }
-        return [];
+    _getBillingAddressBlock() {
+        const match = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
+        return match ? match[1].trim().split(/\r?\n/).map(l => l.trim()) : [];
     }
 
     extractName() {
-        const lines = this._getBillingAddressLines();
-        return lines.length > 0 ? lines[0] : 'N/A';
+        return this._getBillingAddressBlock()[0] || 'N/A';
     }
 
     extractHotel() {
-        const lines = this._getBillingAddressLines();
-        if (lines.length > 1) {
-            // Take all lines except the first (name)
-            const addressLines = lines.slice(1);
-            // Filter out lines that are emails or phone numbers
-            const filteredLines = addressLines.filter(line => {
-                const isEmail = line.includes('@');
-                const isPhone = /^\+?\d[\d\s-]{5,}/.test(line); // Simple check for a phone-like pattern
-                return !isEmail && !isPhone;
-            });
-            return filteredLines.join(', ');
+        const lines = this._getBillingAddressBlock();
+        // The hotel is likely the line after the name and before "Thailand"
+        if (lines.length > 2 && lines[2].toLowerCase() === 'thailand') {
+            return lines[1];
         }
         return 'N/A';
     }
 
     extractPhone() {
-        const lines = this._getBillingAddressLines();
-        if (lines.length > 0) {
-            const phoneLine = lines.find(line => /^\+?\d[\d\s-]{5,}/.test(line));
-            if (phoneLine) {
-                return phoneLine.replace(/\D/g, '');
-            }
-        }
-        return 'N/A';
+        const block = this._getBillingAddressBlock().join('\n');
+        const phoneMatch = block.match(/(\+?\d[\d\s-]{5,})/);
+        return phoneMatch ? phoneMatch[1].replace(/\D/g, '') : 'N/A';
     }
 
     extractAll() {
         const passengers = this.extractPassengers();
+        const tourDate = this.extractTourDate();
         return {
             bookingNumber: this.extractBookingNumber(),
-            tourDate: this.extractTourDate(),
+            tourDate: tourDate,
             program: this.extractProgram(),
             name: this.extractName(),
             adult: passengers.adult,
             child: passengers.child,
             infant: passengers.infant,
             hotel: this.extractHotel(),
-            phoneNumber: this.extractPhone()
+            phoneNumber: this.extractPhone(),
+            isoDate: this._getISODate(tourDate)
         };
-    }
-
-    formatBookingDetails() {
-        const extractedInfo = this.extractAll();
-        return this._formatBaseBookingDetails(extractedInfo);
     }
 }
 
 class EmailParserFactory {
-  static create(fromAddress, subject, content) {
-    const parsers = {
-        BokunParser,
-        ThailandToursParser
-    };
+  static create(parsedEmail) {
+    const fromAddress = parsedEmail.from.value[0].address.toLowerCase();
+    const subject = parsedEmail.subject.toLowerCase();
+    const htmlContent = parsedEmail.html;
+    const textContent = parsedEmail.text;
 
-    for (const rule of config) {
-        if (fromAddress === rule.fromAddress) {
-            const ParserClass = parsers[rule.parserName];
-            if (ParserClass) {
-                 // Additional check for ThailandToursParser which relies on text content
-                if (rule.parserName === 'ThailandToursParser') {
-                    const textContent = cheerio.load(content).text();
-                     if (textContent.includes('Order number:')) {
-                        return new ParserClass(textContent);
-                    }
-                } else {
-                    return new ParserClass(content);
-                }
-            }
-        }
+    console.log(`Attempting to find parser for email from: ${fromAddress} with subject: ${subject}`);
+
+    if (fromAddress.includes('bokun.io') && subject.includes('booking')) {
+      console.log('Selected BokunParser.');
+      return new BokunParser(htmlContent);
     }
     
-    // Fallback for original Thailand Tours subject-based logic if needed
-    if (subject && subject.toLowerCase().includes('new booking')) {
-        const textContent = cheerio.load(content).text();
-        if (textContent.includes('Order number:')) {
-             return new ThailandToursParser(textContent);
-        }
+    if (fromAddress.includes('tours.co.th')) {
+        console.log('Selected ThailandToursParser.');
+        return new ThailandToursParser(textContent);
     }
-
+    
+    console.log('No suitable parser found.');
     return null;
   }
 }
 
-// Main webhook handler
 module.exports = async (req, res) => {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const emailContent = req.body.toString();
-    const parsedEmail = await simpleParser(emailContent);
-
-    const fromAddress = parsedEmail.from.value[0].address;
-    const subject = parsedEmail.subject;
-    const contentToParse = parsedEmail.html || parsedEmail.textAsHtml || parsedEmail.text || '';
-
-    const parser = EmailParserFactory.create(fromAddress, subject, contentToParse);
+    const rawBody = await getRawBody(req);
+    if (rawBody.length === 0) {
+      console.log('Received request with empty body.');
+      return res.status(400).send('Bad Request: Empty body.');
+    }
     
+    const parsedEmail = await simpleParser(rawBody);
+    console.log('Successfully parsed email. Subject:', parsedEmail.subject);
+    console.log('Email text content snippet:', parsedEmail.text?.substring(0, 500));
+
+    const parser = EmailParserFactory.create(parsedEmail);
+
     if (!parser) {
-        let reason = `No suitable parser found for email from ${fromAddress} with subject "${subject}" based on config.`;
-        console.log(`Email ignored - ${reason}`);
-        return res.status(200).send(`Email ignored: ${reason}`);
+      console.error('Could not find a suitable parser for the email.');
+      return res.status(400).send('Email format not supported.');
     }
 
-    const extractedInfo = parser.formatBookingDetails();
-    
-    const notificationManager = new NotificationManager();
-    await notificationManager.sendAll(extractedInfo);
+    const extractedInfo = parser.extractAll();
+    console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
 
-    console.log('All notifications processed.');
-    return res.status(200).send('Notifications processed.');
+    // --- Save to Database ---
+    if (extractedInfo && extractedInfo.bookingNumber) {
+      try {
+        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
+        const adult = parseInt(extractedInfo.adult, 10) || 0;
+        const child = parseInt(extractedInfo.child, 10) || 0;
+        const infant = parseInt(extractedInfo.infant, 10) || 0;
+        let paxString = [
+            adult > 0 ? `${adult} Adult${adult > 1 ? 's' : ''}` : null,
+            child > 0 ? `${child} Child${child > 1 ? 'ren' : ''}` : null,
+            infant > 0 ? `${infant} Infant${infant > 1 ? 's' : ''}` : null,
+        ].filter(Boolean).join(' , ');
+        if (!paxString) paxString = "N/A";
+
+        await sql`
+          INSERT INTO bookings (booking_number, tour_date, program, customer_name, pax, hotel, phone_number)
+          VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${paxString}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber});
+        `;
+        console.log(`Successfully saved booking ${extractedInfo.bookingNumber} to the database.`);
+      } catch (dbError) {
+        console.error(`Database error while saving booking ${extractedInfo.bookingNumber}:`, dbError);
+        // We will still try to send a notification, so we don't block the flow.
+        // But we won't mark it as complete, so we know it failed to save.
+      }
+    } else {
+      console.log('No valid booking number found, skipping database insert.');
+    }
+
+    res.status(200).send('Webhook processed.');
+
   } catch (error) {
-    console.error('Error processing email:', error);
-    return res.status(500).send('Error processing email.');
+    console.error('Error in webhook processing:', error);
+    return res.status(500).json({ error: 'Error processing email.', details: error.message });
   }
 };
 
+module.exports.config = { api: { bodyParser: false } };
 module.exports.BokunParser = BokunParser;
-module.exports.ThailandToursParser = ThailandToursParser; 
+module.exports.ThailandToursParser = ThailandToursParser;
+
+async function sendDailyReminders() {
+  const notificationManager = new NotificationManager();
+  const todayInAsia = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+  console.log(`Running daily reminder job for date: ${todayInAsia}`);
+
+  try {
+    const { rows: bookings } = await sql`
+      SELECT * FROM bookings 
+      WHERE DATE(tour_date AT TIME ZONE 'Asia/Bangkok') = ${todayInAsia}
+      AND notification_sent = FALSE;
+    `;
+
+    if (bookings.length === 0) {
+      console.log('No bookings found for today that need a reminder.');
+      return;
+    }
+
+    for (const booking of bookings) {
+      const extractedInfo = {
+        bookingNumber: booking.booking_number,
+        tourDate: booking.tour_date,
+        program: booking.program,
+        name: booking.customer_name,
+        adult: booking.adult,
+        child: booking.child,
+        infant: booking.infant,
+        hotel: booking.hotel,
+        phoneNumber: booking.phone_number,
+        isoDate: booking.tour_date
+      };
+
+      await notificationManager.sendAll(extractedInfo);
+
+      // Mark the booking as notified
+      await sql`
+        UPDATE bookings
+        SET notification_sent = TRUE
+        WHERE booking_number = ${booking.booking_number};
+      `;
+    }
+
+    console.log('All reminders sent successfully.');
+  } catch (error) {
+    console.error('Error in sendDailyReminders:', error);
+  }
+} 

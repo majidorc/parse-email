@@ -232,10 +232,12 @@ class ThailandToursParser extends BaseEmailParser {
     constructor(textContent) {
         super(textContent);
         this.text = textContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
+        this.lines = this.text.split('\n').map(line => line.trim());
     }
-    
-    _findValue(regex) {
-        const match = this.text.match(regex);
+
+    _findValue(regex, content) {
+        const source = content || this.text;
+        const match = source.match(regex);
         return match?.[1]?.trim() ?? 'N/A';
     }
 
@@ -244,50 +246,77 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractProgram() {
-        const match = this.text.match(/Product Price\s+\*([^\*]+)\*/);
-        return match ? match[1].trim() : 'N/A';
-    }
-
-    extractTourDate() {
-        const match = this.text.match(/Booking #\d+ Paid\s+\*\s+-\s+([A-Za-z]+\s\d{1,2},\s\d{4})/i);
-        if (match && match[1]) {
-            const date = new Date(match[1]);
-            // Format to dd.Mmm 'yy
-            return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
+        const productHeaderIndex = this.lines.findIndex(line => line.toLowerCase().startsWith('product price'));
+        if (productHeaderIndex !== -1 && productHeaderIndex + 1 < this.lines.length) {
+            // The product name is the next non-empty line
+            for (let i = productHeaderIndex + 1; i < this.lines.length; i++) {
+                if (this.lines[i]) {
+                    // Stop at the next major section like "Quantity" or "Booking #"
+                    if (this.lines[i].toLowerCase().startsWith('quantity:') || this.lines[i].toLowerCase().startsWith('booking #')) {
+                        return 'N/A';
+                    }
+                    return this.lines[i];
+                }
+            }
         }
         return 'N/A';
     }
 
+    extractTourDate() {
+        // Look for lines that start with a hyphen and contain a parsable date
+        const dateLine = this.lines.find(line => line.startsWith('-') && !isNaN(new Date(line.slice(1).trim().split('\n')[0]).getTime()));
+        if (dateLine) {
+            const dateStr = dateLine.slice(1).trim().split('\n')[0];
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                 return `${date.getDate()}.${date.toLocaleString('default', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
+            }
+        }
+        return 'N/A';
+    }
+    
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        const paxMatch = this.text.match(/Adults \(\+\d+\):\s*(\d+)/i);
-        if (paxMatch) {
-            pax.adult = paxMatch[1];
+        
+        // Pattern 1: "Adults (+1), TTL 1" or "Adults (+6): 1"
+        const adultMatch = this.text.match(/Adults\s\([^)]+\):\s*(\d+)/i);
+        if (adultMatch) {
+            pax.adult = adultMatch[1];
+            return pax;
         }
+
+        // Pattern 2: "- Person: 7"
+        const personMatch = this.text.match(/-\s*Person:\s*(\d+)/i);
+        if (personMatch) {
+            pax.adult = personMatch[1];
+        }
+
         return pax;
     }
 
-    _getBillingAddressBlock() {
-        const match = this.text.match(/Billing address\s+([\s\S]+?)Congratulations/);
-        return match ? match[1].trim().split(/\r?\n/).map(l => l.trim()) : [];
-    }
-
     extractName() {
-        return this._getBillingAddressBlock()[0] || 'N/A';
+        const addressIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
+        if (addressIndex !== -1 && addressIndex + 1 < this.lines.length) {
+            return this.lines[addressIndex + 1];
+        }
+        return 'N/A';
     }
 
     extractHotel() {
-        const lines = this._getBillingAddressBlock();
-        // The hotel is likely the line after the name and before "Thailand"
-        if (lines.length > 2 && lines[2].toLowerCase() === 'thailand') {
-            return lines[1];
+        const addressIndex = this.lines.findIndex(line => line.toLowerCase() === 'billing address');
+        if (addressIndex !== -1 && addressIndex + 2 < this.lines.length) {
+            // Assumes hotel is the second line of the address, if it exists and isn't a number (like a street number)
+            const potentialHotel = this.lines[addressIndex + 2];
+            // Simple check to see if it's not just a number, which might be a street number
+            if (potentialHotel && isNaN(potentialHotel)) {
+                return potentialHotel;
+            }
         }
         return 'N/A';
     }
 
     extractPhone() {
-        const block = this._getBillingAddressBlock().join('\n');
-        const phoneMatch = block.match(/(\+?\d[\d\s-]{5,})/);
+        const phoneMatch = this.text.match(/(\+\d{10,})/);
         return phoneMatch ? phoneMatch[1].replace(/\D/g, '') : 'N/A';
     }
 
@@ -307,8 +336,14 @@ class ThailandToursParser extends BaseEmailParser {
             isoDate: this._getISODate(tourDate)
         };
     }
+
     formatBookingDetails() {
-        return this._formatBaseBookingDetails(this.extractAll());
+        const details = this.extractAll();
+        // Critical check to ensure we have a date before formatting
+        if (details.tourDate === 'N/A') {
+            throw new Error(`Could not extract a valid tour date for booking ${details.bookingNumber}. Aborting.`);
+        }
+        return this._formatBaseBookingDetails(details);
     }
 }
 
@@ -342,6 +377,9 @@ class EmailParserFactory {
         console.log('Selected ThailandToursParser.');
         // This parser expects cleaned text
         const textContent = cleanupHtml(content);
+        console.log('--- Cleaned Email Body for ThailandToursParser ---');
+        console.log(textContent);
+        console.log('--------------------------------------------------');
         return new ThailandToursParser(textContent);
     }
     
@@ -375,35 +413,30 @@ module.exports = async (req, res) => {
     const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
     console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
 
-    // --- Save to Database ---
-    if (extractedInfo && extractedInfo.bookingNumber) {
-      try {
-        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
-        const adult = parseInt(extractedInfo.adult, 10) || 0;
-        const child = parseInt(extractedInfo.child, 10) || 0;
-        const infant = parseInt(extractedInfo.infant, 10) || 0;
-        let paxString = [
-            adult > 0 ? `${adult} Adult${adult > 1 ? 's' : ''}` : null,
-            child > 0 ? `${child} Child${child > 1 ? 'ren' : ''}` : null,
-            infant > 0 ? `${infant} Infant${infant > 1 ? 's' : ''}` : null,
-        ].filter(Boolean).join(' , ');
-        if (!paxString) paxString = "N/A";
-
-        await sql`
-          INSERT INTO bookings (booking_number, tour_date, program, customer_name, pax, hotel, phone_number)
-          VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${paxString}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber});
-        `;
-        console.log(`Successfully saved booking ${extractedInfo.bookingNumber} to the database.`);
-      } catch (dbError) {
-        console.error(`Database error while saving booking ${extractedInfo.bookingNumber}:`, dbError);
-        // We will still try to send a notification, so we don't block the flow.
-        // But we won't mark it as complete, so we know it failed to save.
-      }
+    // Explicitly check for a valid tour date before attempting to save.
+    if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+        console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date.`);
     } else {
-      console.log('No valid booking number found, skipping database insert.');
+        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
+        try {
+            await sql`
+              INSERT INTO bookings (booking_number, tour_date, program, customer_name, pax, hotel, phone_number, notification_sent, iso_date)
+              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.tourDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${extractedInfo.pax}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.isoDate});
+            `;
+            console.log(`Booking ${extractedInfo.bookingNumber} saved successfully.`);
+        } catch (error) {
+            console.error(`Database error while saving booking ${extractedInfo.bookingNumber}:`, error);
+            // Return a 500 error but don't re-throw, so the email forwarder doesn't retry
+            return res.status(500).send('Database insertion failed.');
+        }
     }
 
-    res.status(200).send('Webhook processed.');
+    // Only send a response if a valid booking was processed
+    if (responseTemplate && responseTemplate !== 'Skipping: Missing Tour Date') {
+        res.status(200).send('Webhook processed.');
+    } else {
+        res.status(200).send('Webhook processed.');
+    }
 
   } catch (error) {
     console.error('Error in webhook processing:', error);

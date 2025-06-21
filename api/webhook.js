@@ -150,8 +150,15 @@ class NotificationManager {
 class BokunParser extends BaseEmailParser {
   constructor(htmlContent) {
     super(htmlContent);
-    const cleanedHtml = htmlContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
-    this.$ = cheerio.load(cleanedHtml);
+    console.log('BokunParser constructor called.');
+    try {
+        const cleanedHtml = htmlContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
+        this.$ = cheerio.load(cleanedHtml);
+        console.log('Cheerio loaded HTML successfully for BokunParser.');
+    } catch (error) {
+        console.error('Error loading HTML into Cheerio for BokunParser:', error);
+        throw new Error('BokunParser failed to load HTML.');
+    }
   }
   findValueByLabel(label) {
     let value = '';
@@ -297,6 +304,7 @@ class ThailandToursParser extends BaseEmailParser {
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
+        console.log(`ThailandToursParser: Extracted raw tour date string: "${tourDate}"`);
         return {
             bookingNumber: this.extractBookingNumber(),
             tourDate: tourDate,
@@ -442,7 +450,7 @@ module.exports = async (req, res) => {
 
     // Explicitly check for a valid tour date before attempting to save.
     if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
-        console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date.`);
+        console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date. Raw Date: "${extractedInfo.tourDate}", ISO Date: "${extractedInfo.isoDate}".`);
     } else {
         console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
         try {

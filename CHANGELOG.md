@@ -5,53 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-01-XX
+## [1.3.0] - 2025-06-21
 
 ### Added
-- Initial project setup with Vercel deployment
-- Email webhook endpoint (`/api/webhook`)
-- Email parser for Bokun.io booking notifications
-- Automated response system with SMTP integration
-- Google Apps Script email forwarder (`email-forwarder.gs`)
-- Test script for email parsing (`test-email.js`)
-- Comprehensive README documentation
-
-### Features
-- Extract booking number from "Ext. booking ref"
-- Extract tour date in DD.Month 'YY format from subject or Date field
-- Extract program name from Product field (removes product code prefix)
-- Extract customer name from Customer field (removes email addresses)
-- Extract passenger counts (adult, child, infant) with conditional display
-- Extract hotel information from Pick-up field
-- Extract phone number as digits only
-- Send formatted confirmation emails to specified address
-- Only process emails from `no-reply@bokun.io`
-
-### Technical
-- Node.js serverless function for Vercel
-- Nodemailer for SMTP email sending
-- Mailparser for email content parsing
-- Regex-based information extraction
-- Environment variable configuration
-- CORS support for webhook integration
-
-## [1.1.0] - 2025-01-XX
+- **Configuration-Driven Parsing**: Added `config.json` to allow defining email parsing rules without code changes. The system now maps sender emails to specific parsers.
+- **Multi-Format Support**:
+    - `BokunParser`: Handles table-based emails from `no-reply@bokun.io` (e.g., GetYourGuide, Viator).
+    - `ThailandToursParser`: Handles plain-text emails from `info@tours.co.th`.
+- **Enhanced Parser Logic**:
+    - The `ThailandToursParser` now supports multiple PAX formats: `Adults (+1)`, `Person: 7`, and `Adults (+6): 1`.
+    - It now correctly extracts the tour date from the booking details, not the order header.
+    - It extracts the phone number from the billing address section.
+- **Expanded Test Suite**: Added multiple new test cases to `test-email.js` to cover all supported email variations.
 
 ### Changed
-- Updated field extraction rules based on specific requirements
-- Modified booking number extraction to use "Ext. booking ref" only
-- Updated tour date extraction to show only DD.Month 'YY format
-- Enhanced program extraction to remove product code prefixes
-- Improved name extraction to remove email addresses
-- Updated passenger extraction to detect child and infant counts
-- Modified hotel extraction to use "Pick-up" field
-- Changed phone number extraction to digits only
+- Refactored `EmailParser` into a factory pattern (`EmailParserFactory`) that uses `config.json` to select the appropriate parser.
+- Improved the "PAX" string formatting to correctly pluralize "Adult", "Child", and "Infant".
+- Refined the program name extraction for `ThailandToursParser` to be less verbose.
 
 ### Fixed
-- Fixed regex patterns for better field extraction
-- Improved date parsing from subject and Date fields
-- Enhanced passenger count detection and conditional display
-- Fixed email address removal from customer names
+- **Address Cleaning**: Corrected the `ThailandToursParser` to exclude the phone number and email from the final `Hotel` address string.
+- **Date Formatting**: Standardized date output across all parsers to `dd.Mmm 'yy`.
+- Fixed various regex patterns for more reliable data extraction.
 
 ## [1.2.0] - 2025-01-XX
 

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2025-06-23
+
+### Changed
+- **Disabled Instant Notifications**: The workflow has been changed based on user feedback. The main webhook (`/api/webhook`) is now only responsible for parsing emails and saving them to the database. It no longer sends any notifications.
+- **Scheduler-Only Notifications**: All email and Telegram notifications are now sent exclusively by the daily scheduler (`/api/daily-scheduler`) on the morning of the tour date. This prevents duplicate or unwanted alerts.
+
 ## [2.2.2] - 2025-06-23
 
 ### Fixed
@@ -64,54 +70,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2025-06-22
 
 ### Added
-- **Configuration-Driven Parsing**: Added `config.json` to allow defining email parsing rules without code changes. The system now maps sender emails to specific parsers.
-- **Multi-Format Support**:
-    - `BokunParser`: Handles table-based emails from `no-reply@bokun.io` (e.g., GetYourGuide, Viator).
-    - `ThailandToursParser`: Handles plain-text emails from `info@tours.co.th`.
-- **Enhanced Parser Logic**:
-    - The `ThailandToursParser` now supports multiple PAX formats: `Adults (+1)`, `Person: 7`, and `Adults (+6): 1`.
-    - It now correctly extracts the tour date from the booking details, not the order header.
-    - It extracts the phone number from the billing address section.
-- **Expanded Test Suite**: Added multiple new test cases to `test-email.js` to cover all supported email variations.
-
-### Changed
-- Refactored `EmailParser` into a factory pattern (`EmailParserFactory`) that uses `config.json` to select the appropriate parser.
-- Improved the "PAX" string formatting to correctly pluralize "Adult", "Child", and "Infant".
-- Refined the program name extraction for `ThailandToursParser` to be less verbose.
-
-### Fixed
-- **Address Cleaning**: Corrected the `ThailandToursParser` to exclude the phone number and email from the final `Hotel` address string.
-- **Date Formatting**: Standardized date output across all parsers to `dd.Mmm 'yy`.
-- Fixed various regex patterns for more reliable data extraction.
-- **Webhook Stability**: The webhook is now more resilient. It will no longer crash and return a 500 error if it receives an email it cannot parse or if it fails to extract a tour date. Instead, it will log the error and gracefully skip the email.
-- **Database Query**: Corrected a syntax error in the SQL query for the daily reminder service (`sendDailyReminders`).
-- **ThailandToursParser**:
-    - Improved the reliability of extracting the tour program name.
-    - Made passenger number extraction more precise.
-    - Added flexibility to find the tour date under different labels.
-- **Error Handling**: Introduced a `FallbackParser` to handle emails from unrecognized senders, preventing potential crashes.
-
-### Changed
-- **Error Logging**: Enhanced logging for date extraction failures to make future debugging easier.
-
-## [1.2.0] - 2025-01-XX
-
-### Changed
-- Updated response template to conditionally show child/infant counts
-- Improved phone number formatting (digits only)
-- Enhanced name cleaning to remove email addresses
-- Updated example output in README with new format
-
-### Documentation
-- Updated README with detailed field extraction rules
-- Added example output showing new formatting
-- Updated API response examples
-- Added troubleshooting section
-
-## [Unreleased]
-
-### Planned
-- Additional email format support
-- Enhanced error handling
-- Performance optimizations
-- Additional customization options 
+- **Configuration-Driven Parsing**: Added `config.json`

@@ -6,17 +6,15 @@ This project is a Vercel serverless function that automates the processing of bo
 
 - **Email Parsing**: Receives raw email content via a webhook, identifies the sender, and uses the appropriate parser (`Bokun.io`, `ThailandTours.co.th`) to extract key booking details.
 - **Database Storage**: Saves all successfully parsed bookings into a Vercel Postgres database. This provides a persistent record of all tours.
-- **Immediate Notifications**: Sends a formatted confirmation request via both **Email** and **Telegram** as soon as a new booking is received and processed.
-- **Scheduled Daily Notifications**: A dedicated cron job (`/api/daily-scheduler`) runs automatically every morning. It finds all tours scheduled for that day and sends a reminder notification at the start of the day.
+- **Scheduled Daily Notifications**: A dedicated cron job (`/api/daily-scheduler`) runs automatically every morning. It finds all tours scheduled for that day and sends a notification via Email and Telegram. This is the **only** way notifications are sent.
 
 ## How It Works
 
 1.  **Email Forwarding**: A companion Google Apps Script (`email-forwarder.gs`) monitors a Gmail account for unread emails from specified senders.
 2.  **Webhook Trigger**: The script forwards the raw email content to the `/api/webhook` endpoint.
-3.  **Parsing & Storage**: The webhook parses the email, extracts booking information, and saves it to the Postgres database.
-4.  **Initial Notification**: An immediate notification is sent via Email and Telegram for the new booking.
-5.  **External Cron Job**: A third-party service like `cron-job.org` is configured to send a daily `POST` request to the `/api/daily-scheduler` endpoint.
-6.  **Reminder Notification**: This separate function queries the database for bookings matching the current date, sends the reminders, and updates a flag to prevent re-sending.
+3.  **Parsing & Storage**: The webhook parses the email, extracts booking information, and saves it to the Postgres database. No notification is sent at this stage.
+4.  **External Cron Job**: A third-party service like `cron-job.org` is configured to send a daily `POST` request to the `/api/daily-scheduler` endpoint.
+5.  **Reminder Notification**: This separate function queries the database for bookings matching the current date, sends the reminders, and updates a flag to prevent re-sending.
 
 ## Environment Variables
 

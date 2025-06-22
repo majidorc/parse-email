@@ -441,12 +441,13 @@ module.exports = async (req, res) => {
         
         console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
 
-        // Send notifications using the new manager, passing the complete booking object from the DB
-        const notificationManager = new NotificationManager();
-        await notificationManager.sendAll(newBooking);
+        // NOTIFICATIONS HAVE BEEN DISABLED FROM THE WEBHOOK.
+        // The daily scheduler is now responsible for all notifications.
+        // const notificationManager = new NotificationManager();
+        // await notificationManager.sendAll(newBooking);
 
-        console.log('Notifications sent successfully.');
-        return res.status(200).send('Webhook processed successfully.');
+        console.log('Webhook finished. Booking saved to database.');
+        return res.status(200).send('Webhook processed: Booking saved.');
 
     } catch (error) {
         // Catch any other unexpected database errors

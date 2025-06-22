@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2025-06-23
+
+### Changed
+- **Scheduler Sends Reminders for Tomorrow's Tours**: Updated the daily scheduler (`/api/daily-scheduler.js`) to query for tours scheduled for the *next* day (tomorrow) instead of the current day.
+
 ## [2.3.0] - 2025-06-23
 
 ### Changed

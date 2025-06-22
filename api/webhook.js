@@ -5,6 +5,7 @@ const axios = require('axios');
 const { sql } = require('@vercel/postgres');
 const { convert } = require('html-to-text');
 const configData = require('../config.json');
+const NotificationManager = require('./notificationManager');
 
 // Utility function to clean HTML and extract text content
 function cleanupHtml(html) {
@@ -71,79 +72,6 @@ class BaseEmailParser {
       }
       
       return null;
-  }
-}
-
-class NotificationManager {
-  constructor() {
-    this.notificationConfig = configData.notifications;
-  }
-  async sendEmail(extractedInfo) {
-    if (!this.notificationConfig.email?.enabled) {
-      console.log('Email notifications are disabled.');
-      return;
-    }
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_PORT === '465',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-    const mailOptions = {
-      from: process.env.FROM_EMAIL,
-      to: 'o0dr.orc0o@gmail.com',
-      subject: `Booking Confirmation - ${extractedInfo.extractedInfo.bookingNumber}`,
-      text: extractedInfo.responseTemplate,
-      html: extractedInfo.responseTemplate.replace(/\n/g, '<br>'),
-    };
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log('Email notification sent successfully.');
-    } catch (error) {
-      console.error('Error sending email notification:', error.message);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-  }
-  async sendTelegram(extractedInfo) {
-    if (!this.notificationConfig.telegram?.enabled) {
-      console.log('Telegram notifications are disabled.');
-      return;
-    }
-    const { TELEGRAM_BOT_TOKEN: botToken, TELEGRAM_CHAT_ID: chatId } = process.env;
-    if (!botToken || !chatId) {
-      console.error('Telegram bot token or chat ID is missing from environment variables.');
-      return;
-    }
-    
-    // To make the text easy to copy, we'll format it as a code block.
-    // The text inside the block doesn't need markdown escaping.
-    const plainTextForCopy = extractedInfo.responseTemplate.replace(/\*/g, ''); // Remove our own markdown
-    
-    const message = "Please confirm the pickup time for this booking\\. Details to copy are below:\n\n" +
-                    "```\n" +
-                    plainTextForCopy +
-                    "\n```";
-
-    const payload = {
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'MarkdownV2'
-    };
-
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-    try {
-      await axios.post(url, payload);
-      console.log('Telegram notification sent successfully.');
-    } catch (error) {
-      const errorMessage = error.response ? JSON.stringify(error.response.data) : error.message;
-      console.error('Error sending Telegram notification:', errorMessage);
-      throw new Error(`Failed to send Telegram: ${errorMessage}`);
-    }
-  }
-  async sendAll(extractedInfo) {
-    await this.sendEmail(extractedInfo);
-    await this.sendTelegram(extractedInfo);
   }
 }
 
@@ -480,23 +408,33 @@ module.exports = async (req, res) => {
             const adult = parseInt(extractedInfo.adult, 10) || 0;
             const child = parseInt(extractedInfo.child, 10) || 0;
             const infant = parseInt(extractedInfo.infant, 10) || 0;
-            await sql`
+            const { rows: [newBooking] } = await sql`
               INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
-              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate});
+              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
+              RETURNING *;
             `;
-            console.log(`Booking ${extractedInfo.bookingNumber} saved successfully.`);
+            console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
         } catch (error) {
             console.error(`Database error while saving booking ${extractedInfo.bookingNumber}:`, error);
             // Return a 500 error but don't re-throw, so the email forwarder doesn't retry
             return res.status(500).send('Database insertion failed.');
         }
-    }
 
-    // Only send a response if a valid booking was processed
-    if (responseTemplate && responseTemplate !== 'Skipping: Missing Tour Date') {
-        res.status(200).send('Webhook processed.');
-    } else {
-        res.status(200).send('Webhook processed.');
+        // Send notifications using the new manager
+        const notificationManager = new NotificationManager();
+        await notificationManager.sendAll({
+            booking_number: extractedInfo.bookingNumber,
+            tour_date: extractedInfo.tourDate,
+            program: extractedInfo.program,
+            customer_name: extractedInfo.name,
+            pax: `${adult} Adults, ${child} Children, ${infant} Infants`,
+            hotel: extractedInfo.hotel,
+            phone_number: extractedInfo.phoneNumber,
+        });
+
+        console.log('Notifications sent.');
+
+        return res.status(200).send('Webhook processed.');
     }
 
   } catch (error) {

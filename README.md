@@ -6,17 +6,17 @@ This project is a Vercel serverless function that automates the processing of bo
 
 - **Email Parsing**: Receives raw email content via a webhook, identifies the sender, and uses the appropriate parser (`Bokun.io`, `ThailandTours.co.th`) to extract key booking details.
 - **Database Storage**: Saves all successfully parsed bookings into a Vercel Postgres database. This provides a persistent record of all tours.
-- **Dual Notifications**: Immediately sends a formatted confirmation request via both **Email** and **Telegram** upon receiving a new booking.
-- **Scheduled Daily Reminders**: A cron job runs automatically every morning at 8:00 AM (Asia/Bangkok time) to find all tours scheduled for the current day and sends a reminder notification.
+- **Immediate Notifications**: Sends a formatted confirmation request via both **Email** and **Telegram** as soon as a new booking is received and processed.
+- **Scheduled Daily Notifications**: A dedicated cron job (`/api/daily-scheduler`) runs automatically every morning. It finds all tours scheduled for that day and sends a reminder notification at the start of the day.
 
 ## How It Works
 
-1.  **Email Forwarding**: A companion Google Apps Script (`email-forwarder.gs`) monitors a Gmail account for unread emails from specified senders (e.g., `no-reply@bokun.io`).
+1.  **Email Forwarding**: A companion Google Apps Script (`email-forwarder.gs`) monitors a Gmail account for unread emails from specified senders.
 2.  **Webhook Trigger**: The script forwards the raw email content to the `/api/webhook` endpoint.
-3.  **Parsing & Storage**: The webhook parses the email, extracts the booking information, and saves it to the Postgres database.
-4.  **Initial Notification**: An immediate notification is sent via Email and Telegram.
-5.  **Daily Cron Job**: Vercel's cron service triggers the same `/api/webhook?cron_job=true` endpoint daily.
-6.  **Reminder Notification**: The function queries the database for bookings matching the current local date, and sends reminders for any that are found.
+3.  **Parsing & Storage**: The webhook parses the email, extracts booking information, and saves it to the Postgres database.
+4.  **Initial Notification**: An immediate notification is sent via Email and Telegram for the new booking.
+5.  **Daily Cron Job**: Vercel's cron service triggers the `/api/daily-scheduler` endpoint at a configured time (e.g., 12:15 AM UTC).
+6.  **Reminder Notification**: This separate function queries the database for bookings matching the current date (and where `notification_sent` is false), sends the reminders, and updates the `notification_sent` flag to `true`.
 
 ## Environment Variables
 
@@ -30,8 +30,9 @@ The following environment variables must be configured in your Vercel project:
 - `POSTGRES_URL`: The connection string for your Vercel Postgres database.
 - `TELEGRAM_BOT_TOKEN`: Your Telegram bot's API token.
 - `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where notifications should be sent.
+- `CRON_SECRET`: A secret key to protect your cron job endpoint from unauthorized access.
 ---
-*This README was last updated on June 22, 2025.*
+*This README was last updated on June 23, 2025.*
 
 ## Configuration
 

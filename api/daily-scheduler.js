@@ -1,6 +1,5 @@
 const { sql } = require('@vercel/postgres');
-const nodemailer = require('nodemailer');
-const axios = require('axios');
+const NotificationManager = require('./notificationManager');
 
 // This is the main function for the daily cron job
 module.exports = async (req, res) => {
@@ -33,27 +32,22 @@ module.exports = async (req, res) => {
         let successCount = 0;
         let errorCount = 0;
 
+        const notificationManager = new NotificationManager();
+
         for (const booking of bookings) {
             try {
-                const notificationManager = new NotificationManager();
-                // We need to re-create the `extractedInfo` object shape
-                const extractedInfo = {
-                    responseTemplate: `Please confirm the *pickup time* for this booking:\n\nBooking no : ${booking.booking_number}\nTour date : ${new Date(booking.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit'}).replace(/ /g, '.')}\nProgram : ${booking.program}\nName : ${booking.customer_name}\nPax : ${booking.pax}\nHotel : ${booking.hotel}\nPhone Number : ${booking.phone_number}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`,
-                    extractedInfo: { bookingNumber: booking.booking_number }
-                };
-                
-                await notificationManager.sendAll(extractedInfo);
+                // The new NotificationManager takes the whole booking object
+                await notificationManager.sendAll(booking);
                 
                 // Mark as sent in the database
-                console.log(`Attempting to mark booking ID ${booking.id} as sent...`);
-                const updateResult = await sql`
+                await sql`
                     UPDATE bookings SET notification_sent = true WHERE id = ${booking.id};
                 `;
-                console.log(`Update command executed for booking ID ${booking.id}. Result:`, updateResult);
+                console.log(`Marked booking ID ${booking.id} as sent.`);
                 
                 successCount++;
             } catch (notificationError) {
-                console.error(`Failed to send notification for booking ${booking.booking_number}:`, notificationError);
+                console.error(`Failed to process notification for booking ${booking.id}:`, notificationError);
                 errorCount++;
             }
         }
@@ -66,45 +60,4 @@ module.exports = async (req, res) => {
         console.error('Database error in cron job:', dbError);
         return res.status(500).json({ error: 'Database error.', details: dbError.message });
     }
-};
-
-// --- Re-usable NotificationManager ---
-// We include this directly here to keep the file self-contained.
-class NotificationManager {
-  async sendEmail(extractedInfo) {
-    if (!process.env.SMTP_HOST) return; // Simple check
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_PORT === '465',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-    await transporter.sendMail({
-      from: process.env.FROM_EMAIL,
-      to: 'o0dr.orc0o@gmail.com',
-      subject: `Booking Confirmation - ${extractedInfo.extractedInfo.bookingNumber}`,
-      text: extractedInfo.responseTemplate,
-      html: extractedInfo.responseTemplate.replace(/\n/g, '<br>'),
-    });
-  }
-
-  async sendTelegram(extractedInfo) {
-    if (!process.env.TELEGRAM_BOT_TOKEN) return; // Simple check
-    const plainTextForCopy = extractedInfo.responseTemplate.replace(/\*/g, '');
-    const message = "Please confirm the pickup time for this booking\\. Details to copy are below:\n\n" +
-                    "```\n" + plainTextForCopy + "\n```";
-    const payload = {
-      chat_id: process.env.TELEGRAM_CHAT_ID,
-      text: message,
-      parse_mode: 'MarkdownV2'
-    };
-    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, payload);
-  }
-
-  async sendAll(extractedInfo) {
-    // In a real scenario, you might want to try both even if one fails.
-    // For simplicity, we run them in sequence.
-    await this.sendEmail(extractedInfo);
-    await this.sendTelegram(extractedInfo);
-  }
-} 
+}; 

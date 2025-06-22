@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-06-23
+
+### Added
+- **Scheduled Notifications**: Implemented a daily cron job (`/api/daily-scheduler`) that runs at a configurable time (e.g., 00:01 AM UTC).
+- The scheduler queries the database for bookings with a `tour_date` matching the current day and sends email and Telegram notifications.
+- Added a `notification_sent` boolean column to the `bookings` table to prevent duplicate notifications.
+
+### Changed
+- **Refactored NotificationManager**: The `NotificationManager` class has been moved into its own module (`api/notificationManager.js`) to be shared between the webhook and the scheduler.
+- The webhook (`/api/webhook`) is now solely responsible for parsing incoming emails, saving them to the database, and sending an *immediate* notification.
+- The daily scheduler (`/api/daily-scheduler`) now handles all *scheduled* notifications.
+- Updated `vercel.json` to define the schedule for the new cron job.
+- The `NotificationManager` now accepts a full booking object, simplifying the logic in both the webhook and the scheduler.
+
+### Fixed
+- Removed redundant `NotificationManager` code from both the webhook and scheduler files.
+
 ## [2.0.0] - 2025-06-22
 
 ### Added

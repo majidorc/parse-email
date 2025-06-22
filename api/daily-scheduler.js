@@ -15,20 +15,23 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date in Asia/Bangkok timezone, formatted as YYYY-MM-DD
+        const todayInBangkok = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
-        // Find all bookings for today that haven't had a notification sent yet
+        console.log(`Scheduler running for Bangkok date: ${todayInBangkok}`);
+
+        // Find all bookings for today in Bangkok that haven't had a notification sent yet
         const { rows: bookings } = await sql`
             SELECT * FROM bookings 
-            WHERE tour_date::date = CURRENT_DATE AND notification_sent = false;
+            WHERE tour_date = ${todayInBangkok} AND notification_sent = false;
         `;
 
         if (bookings.length === 0) {
-            console.log('No bookings scheduled for today.');
+            console.log('No bookings scheduled for today in Bangkok.');
             return res.status(200).send('No bookings for today.');
         }
 
-        console.log(`Found ${bookings.length} bookings for today. Sending notifications...`);
+        console.log(`Found ${bookings.length} bookings for today in Bangkok. Sending notifications...`);
         let successCount = 0;
         let errorCount = 0;
 

@@ -26,12 +26,27 @@ class NotificationManager {
    */
   constructNotificationMessage(booking) {
     const tourDate = new Date(booking.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+
+    let paxString = booking.pax;
+    if (!paxString) {
+        const parts = [];
+        const adult = parseInt(booking.adult, 10) || 0;
+        const child = parseInt(booking.child, 10) || 0;
+        const infant = parseInt(booking.infant, 10) || 0;
+
+        if (adult > 0) parts.push(`${adult} Adult${adult > 1 ? 's' : ''}`);
+        if (child > 0) parts.push(`${child} Child${child > 1 ? 'ren' : ''}`);
+        if (infant > 0) parts.push(`${infant} Infant${infant > 1 ? 's' : ''}`);
+        
+        paxString = parts.join(', ') || 'N/A';
+    }
+
     const responseTemplate = `Please confirm the *pickup time* for this booking:\n\n` +
                              `Booking no : ${booking.booking_number}\n` +
                              `Tour date : ${tourDate}\n` +
                              `Program : ${booking.program}\n` +
                              `Name : ${booking.customer_name}\n` +
-                             `Pax : ${booking.pax}\n` +
+                             `Pax : ${paxString}\n` +
                              `Hotel : ${booking.hotel}\n` +
                              `Phone Number : ${booking.phone_number}\n` +
                              `Cash on tour : None\n\n` +
@@ -43,7 +58,7 @@ class NotificationManager {
       tourDate,
       program: booking.program,
       customerName: booking.customer_name,
-      pax: booking.pax,
+      pax: paxString,
       hotel: booking.hotel,
       phoneNumber: booking.phone_number,
     };

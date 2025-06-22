@@ -205,14 +205,25 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        // The passenger line is like "* Adults (+11): 3"
+        
+        // Find and parse the adult line
         const adultLine = this.lines.find(line => line.toLowerCase().includes('adults'));
         if (adultLine) {
-            const match = adultLine.match(/adults(?: \(\+\d+\))?:\s*(\d+)/i);
-            if (match && match[1]) {
-                pax.adult = match[1];
+            const adultMatch = adultLine.match(/adults(?: \(.+\))?:\s*(\d+)/i);
+            if (adultMatch && adultMatch[1]) {
+                pax.adult = adultMatch[1];
             }
         }
+
+        // Find and parse the child line
+        const childLine = this.lines.find(line => line.toLowerCase().includes('childs'));
+        if (childLine) {
+            const childMatch = childLine.match(/childs(?: \(.+\))?:\s*(\d+)/i);
+            if (childMatch && childMatch[1]) {
+                pax.child = childMatch[1];
+            }
+        }
+        
         return pax;
     }
 
@@ -402,39 +413,45 @@ module.exports = async (req, res) => {
     // Explicitly check for a valid tour date before attempting to save.
     if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
         console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date. Raw Date: "${extractedInfo.tourDate}", ISO Date: "${extractedInfo.isoDate}".`);
-    } else {
-        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
-        try {
-            const adult = parseInt(extractedInfo.adult, 10) || 0;
-            const child = parseInt(extractedInfo.child, 10) || 0;
-            const infant = parseInt(extractedInfo.infant, 10) || 0;
-            const { rows: [newBooking] } = await sql`
-              INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
-              VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
-              RETURNING *;
-            `;
-            console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
-        } catch (error) {
-            console.error(`Database error while saving booking ${extractedInfo.bookingNumber}:`, error);
-            // Return a 500 error but don't re-throw, so the email forwarder doesn't retry
-            return res.status(500).send('Database insertion failed.');
+        // Even if skipped, we should return a success response to prevent retries.
+        return res.status(200).send('Webhook processed: Skipped due to invalid date.');
+    }
+
+    console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
+    try {
+        // First, check if the booking already exists to prevent duplicate errors
+        const { rows: existingBookings } = await sql`
+            SELECT id FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
+        `;
+
+        if (existingBookings.length > 0) {
+            console.log(`Booking ${extractedInfo.bookingNumber} already exists. Skipping insertion.`);
+            return res.status(200).send('Webhook processed: Booking already exists.');
         }
 
-        // Send notifications using the new manager
+        const adult = parseInt(extractedInfo.adult, 10) || 0;
+        const child = parseInt(extractedInfo.child, 10) || 0;
+        const infant = parseInt(extractedInfo.infant, 10) || 0;
+
+        const { rows: [newBooking] } = await sql`
+            INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
+            VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
+            RETURNING *;
+        `;
+        
+        console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
+
+        // Send notifications using the new manager, passing the complete booking object from the DB
         const notificationManager = new NotificationManager();
-        await notificationManager.sendAll({
-            booking_number: extractedInfo.bookingNumber,
-            tour_date: extractedInfo.tourDate,
-            program: extractedInfo.program,
-            customer_name: extractedInfo.name,
-            pax: `${adult} Adults, ${child} Children, ${infant} Infants`,
-            hotel: extractedInfo.hotel,
-            phone_number: extractedInfo.phoneNumber,
-        });
+        await notificationManager.sendAll(newBooking);
 
-        console.log('Notifications sent.');
+        console.log('Notifications sent successfully.');
+        return res.status(200).send('Webhook processed successfully.');
 
-        return res.status(200).send('Webhook processed.');
+    } catch (error) {
+        // Catch any other unexpected database errors
+        console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
+        return res.status(500).send({ error: 'Database processing failed.', details: error.message });
     }
 
   } catch (error) {

@@ -156,6 +156,10 @@ class NotificationManager {
    * @param {object} booking - The raw booking object from the database.
    */
   async sendAll(booking) {
+    console.log('--- NOTIFICATION MANAGER: INCOMING DATA ---');
+    console.log(JSON.stringify(booking, null, 2));
+    console.log('-------------------------------------------');
+    
     const messageData = this.constructNotificationMessage(booking);
     
     const promises = [

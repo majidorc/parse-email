@@ -1,5 +1,7 @@
 # Automated Email Parser and Notification System
 
+> [View Changelog](CHANGELOG.md)
+
 This project is a Vercel serverless function that automates the processing of booking notification emails. It has evolved from a simple email parser to a more robust system with database persistence and scheduled reminders.
 
 ## Features

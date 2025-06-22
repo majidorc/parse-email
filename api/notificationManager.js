@@ -25,14 +25,19 @@ class NotificationManager {
    * @returns {object} - An object containing the response template and individual fields.
    */
   constructNotificationMessage(booking) {
-    const tourDate = new Date(booking.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+    // Robustly find the core booking data, whether it's nested or not.
+    const details = booking.extractedInfo ? booking.extractedInfo : booking;
 
-    let paxString = booking.pax;
+    // Use the raw_tour_date for display if available, otherwise format the tour_date.
+    const tourDate = details.raw_tour_date || 
+                     (details.tour_date ? new Date(details.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A');
+
+    let paxString = details.pax;
     if (!paxString) {
         const parts = [];
-        const adult = parseInt(booking.adult, 10) || 0;
-        const child = parseInt(booking.child, 10) || 0;
-        const infant = parseInt(booking.infant, 10) || 0;
+        const adult = parseInt(details.adult, 10) || 0;
+        const child = parseInt(details.child, 10) || 0;
+        const infant = parseInt(details.infant, 10) || 0;
 
         if (adult > 0) parts.push(`${adult} Adult${adult > 1 ? 's' : ''}`);
         if (child > 0) parts.push(`${child} Child${child > 1 ? 'ren' : ''}`);
@@ -41,26 +46,34 @@ class NotificationManager {
         paxString = parts.join(', ') || 'N/A';
     }
 
+    // Use a consistent source for all properties
+    const bookingNumber = details.bookingNumber || details.booking_number;
+    const program = details.program;
+    const customerName = details.name || details.customer_name;
+    const hotel = details.hotel;
+    const phoneNumber = details.phoneNumber || details.phone_number;
+
+
     const responseTemplate = `Please confirm the *pickup time* for this booking:\n\n` +
-                             `Booking no : ${booking.booking_number}\n` +
+                             `Booking no : ${bookingNumber}\n` +
                              `Tour date : ${tourDate}\n` +
-                             `Program : ${booking.program}\n` +
-                             `Name : ${booking.customer_name}\n` +
+                             `Program : ${program}\n` +
+                             `Name : ${customerName}\n` +
                              `Pax : ${paxString}\n` +
-                             `Hotel : ${booking.hotel}\n` +
-                             `Phone Number : ${booking.phone_number}\n` +
+                             `Hotel : ${hotel}\n` +
+                             `Phone Number : ${phoneNumber}\n` +
                              `Cash on tour : None\n\n` +
                              `Please mentioned if there is any additional charge for transfer collect from customer`;
 
     return {
       responseTemplate,
-      bookingNumber: booking.booking_number,
+      bookingNumber,
       tourDate,
-      program: booking.program,
-      customerName: booking.customer_name,
+      program,
+      customerName,
       pax: paxString,
-      hotel: booking.hotel,
-      phoneNumber: booking.phone_number,
+      hotel,
+      phoneNumber,
     };
   }
 

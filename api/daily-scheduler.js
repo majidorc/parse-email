@@ -19,11 +19,14 @@ module.exports = async (req, res) => {
 
         console.log(`Scheduler running for Bangkok date: ${todayInBangkok}`);
 
-        // This query correctly casts the stored timestamp to the Asia/Bangkok timezone before comparing the date.
+        // This query creates a precise 24-hour window for "today" in the Bangkok timezone.
+        // This is the most robust method for handling daily timezone-based queries.
         const { rows: bookings } = await sql`
-            SELECT * FROM bookings 
-            WHERE (tour_date AT TIME ZONE 'Asia/Bangkok')::date = ${todayInBangkok}
-            AND notification_sent = false;
+            SELECT * FROM bookings
+            WHERE
+                tour_date >= date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') AND
+                tour_date <  date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') + interval '1 day' AND
+                notification_sent = false;
         `;
 
         if (bookings.length === 0) {

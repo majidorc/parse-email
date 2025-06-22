@@ -23,7 +23,8 @@ module.exports = async (req, res) => {
         // Find all bookings for today in Bangkok that haven't had a notification sent yet
         const { rows: bookings } = await sql`
             SELECT * FROM bookings 
-            WHERE tour_date = ${todayInBangkok} AND notification_sent = false;
+            WHERE (tour_date AT TIME ZONE 'Asia/Bangkok')::date = ${todayInBangkok}
+            AND notification_sent = false;
         `;
 
         if (bookings.length === 0) {

@@ -14,27 +14,28 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Get today's date in Asia/Bangkok timezone, formatted as YYYY-MM-DD
-        const todayInBangkok = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+        // Get tomorrow's date in Asia/Bangkok timezone for logging purposes
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowInBangkok = tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
-        console.log(`Scheduler running for Bangkok date: ${todayInBangkok}`);
+        console.log(`Scheduler running for Bangkok date: ${tomorrowInBangkok} (Tomorrow)`);
 
-        // This query creates a precise 24-hour window for "today" in the Bangkok timezone.
-        // This is the most robust method for handling daily timezone-based queries.
+        // This query creates a precise 24-hour window for "tomorrow" in the Bangkok timezone.
         const { rows: bookings } = await sql`
             SELECT * FROM bookings
             WHERE
-                tour_date >= date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') AND
-                tour_date <  date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') + interval '1 day' AND
+                tour_date >= date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') + interval '1 day' AND
+                tour_date <  date_trunc('day', now() AT TIME ZONE 'Asia/Bangkok') + interval '2 day' AND
                 notification_sent = false;
         `;
 
         if (bookings.length === 0) {
-            console.log('No bookings scheduled for today in Bangkok.');
-            return res.status(200).send('No bookings for today.');
+            console.log('No bookings scheduled for tomorrow in Bangkok.');
+            return res.status(200).send('No bookings for tomorrow.');
         }
 
-        console.log(`Found ${bookings.length} bookings for today in Bangkok. Sending notifications...`);
+        console.log(`Found ${bookings.length} bookings for tomorrow in Bangkok. Sending notifications...`);
         let successCount = 0;
         let errorCount = 0;
 

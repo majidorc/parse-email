@@ -8,7 +8,6 @@ module.exports = async (req, res) => {
     }
 
     // Basic security: check for a secret to prevent unauthorized runs.
-    // This should be set as an environment variable in Vercel.
     const cronSecret = req.headers['authorization'];
     if (cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
         return res.status(401).send({ error: 'Unauthorized' });
@@ -20,10 +19,10 @@ module.exports = async (req, res) => {
 
         console.log(`Scheduler running for Bangkok date: ${todayInBangkok}`);
 
-        // Find all bookings for today in Bangkok that haven't had a notification sent yet
+        // This query correctly casts the stored timestamp to the Asia/Bangkok timezone before comparing the date.
         const { rows: bookings } = await sql`
-            SELECT * FROM bookings
-            WHERE DATE(tour_date AT TIME ZONE 'Asia/Bangkok') = CURRENT_DATE AT TIME ZONE 'Asia/Bangkok'
+            SELECT * FROM bookings 
+            WHERE (tour_date AT TIME ZONE 'Asia/Bangkok')::date = ${todayInBangkok}
             AND notification_sent = false;
         `;
 

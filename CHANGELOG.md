@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-06-23
+
+### Changed
+- **Switched to External Cron Job**: Replaced the Vercel cron system (`vercel.json`) with instructions for a more reliable external provider (`cron-job.org`). The internal Vercel cron configuration has been removed.
+
+### Fixed
+- **Vercel Function Registration**: Resolved a critical bug where the `/api/daily-scheduler` endpoint was not being created because it was missing from the `functions` block in `vercel.json`. This was the root cause of the 404 errors.
+- **Missing Environment Variables**: Corrected an issue where the scheduler would fail silently because the `ENABLE_EMAIL_NOTIFICATIONS` and `ENABLE_TELEGRAM_NOTIFICATIONS` environment variables were not configured in the Vercel Production environment.
+- **Robust Timezone Query**: The daily scheduler's database query has been made more robust to correctly handle timezones, ensuring it finds the correct bookings for the local day.
+- **Duplicate Booking Errors**: The main webhook now checks if a booking already exists before attempting to insert it into the database, preventing crashes from duplicate emails.
+- **Notification Crash**: Fixed a reference error that occurred after a successful booking insertion, which was preventing immediate notifications from being sent.
+
 ## [2.1.0] - 2025-06-23
 
 ### Added

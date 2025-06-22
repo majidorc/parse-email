@@ -15,22 +15,20 @@ This project is a Vercel serverless function that automates the processing of bo
 2.  **Webhook Trigger**: The script forwards the raw email content to the `/api/webhook` endpoint.
 3.  **Parsing & Storage**: The webhook parses the email, extracts booking information, and saves it to the Postgres database.
 4.  **Initial Notification**: An immediate notification is sent via Email and Telegram for the new booking.
-5.  **Daily Cron Job**: Vercel's cron service triggers the `/api/daily-scheduler` endpoint at a configured time (e.g., 12:15 AM UTC).
-6.  **Reminder Notification**: This separate function queries the database for bookings matching the current date (and where `notification_sent` is false), sends the reminders, and updates the `notification_sent` flag to `true`.
+5.  **External Cron Job**: A third-party service like `cron-job.org` is configured to send a daily `POST` request to the `/api/daily-scheduler` endpoint.
+6.  **Reminder Notification**: This separate function queries the database for bookings matching the current date, sends the reminders, and updates a flag to prevent re-sending.
 
 ## Environment Variables
 
-The following environment variables must be configured in your Vercel project:
+The following environment variables must be configured in your Vercel project for **all environments (Production, Preview, and Development)**:
 
-- `SMTP_HOST`: Host for your email sending service.
-- `SMTP_PORT`: Port for the email service.
-- `SMTP_USER`: Username for the email service.
-- `SMTP_PASS`: Password for the email service.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: Your email sending credentials.
 - `FROM_EMAIL`: The email address to send notifications from.
 - `POSTGRES_URL`: The connection string for your Vercel Postgres database.
-- `TELEGRAM_BOT_TOKEN`: Your Telegram bot's API token.
-- `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where notifications should be sent.
-- `CRON_SECRET`: A secret key to protect your cron job endpoint from unauthorized access.
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`: Your Telegram bot credentials.
+- `CRON_SECRET`: A secret key to protect your cron job endpoint. This is sent as a Bearer token in the `Authorization` header.
+- `ENABLE_EMAIL_NOTIFICATIONS`: Set to `true` to enable email sending.
+- `ENABLE_TELEGRAM_NOTIFICATIONS`: Set to `true` to enable Telegram sending.
 ---
 *This README was last updated on June 23, 2025.*
 
@@ -70,16 +68,6 @@ You can enable or disable different notification channels in `config.json`.
 }
 ```
 
-## Setup & Deployment
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Configure Your Parsers
-Modify `config.json` to match the sender emails you want to process.
-
 ### 3. Deploy to Vercel
 ```bash
 # Install Vercel CLI
@@ -90,7 +78,20 @@ vercel --prod
 ```
 
 ### 4. Set Up the Email Forwarder
-Follow the instructions in `email-forwarder.gs` to set up a Google Apps Script that forwards emails from your monitoring inbox (e.g., Gmail) to your new Vercel webhook URL.
+Follow the instructions in `email-forwarder.gs` to set up the script that forwards emails to your Vercel webhook URL.
+
+### 5. Set Up the Daily Scheduler
+This project uses an external cron job provider for reliability.
+1.  Go to a service like [cron-job.org](https://cron-job.org/) and create an account.
+2.  Create a new cronjob with the following settings:
+    -   **URL:** Your full scheduler URL (e.g., `https://your-project.vercel.app/api/daily-scheduler`).
+    -   **Method:** `POST`.
+    -   **Schedule:** Set your desired local time, making sure to convert it to UTC. For example, to run at 12:15 AM Bangkok time (UTC+7), set the schedule to 5:15 PM UTC (hour `17`, minute `15`).
+3.  **Add Security Header:**
+    -   Under "Advanced" settings, add a "Request Header".
+    -   **Name:** `Authorization`
+    -   **Value:** `Bearer YOUR_CRON_SECRET` (Use the same value as your `CRON_SECRET` environment variable).
+4.  Save the cronjob.
 
 ## Customization
 

@@ -7,8 +7,8 @@
   },
   "crons": [
     {
-      "path": "/api/daily-scheduler",
-      "schedule": "30 18 * * *"
+      "path": "/api/daily-scheduler.js",
+      "schedule": "45 18 * * *"
     }
   ]
 } 

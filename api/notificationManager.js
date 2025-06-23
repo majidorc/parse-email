@@ -122,7 +122,8 @@ class NotificationManager {
     }
     
     try {
-      const messageBodyForCopy = `Booking no : ${messageData.bookingNumber}\n` +
+      const messageBodyForCopy = `Please confirm the *pickup time* for this booking:\n\n` +
+                                 `Booking no : ${messageData.bookingNumber}\n` +
                                  `Tour date : ${messageData.tourDate}\n` +
                                  `Program : ${messageData.program}\n` +
                                  `Name : ${messageData.customerName}\n` +

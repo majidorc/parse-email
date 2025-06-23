@@ -1,11 +1,11 @@
-const nodemailer = require('nodemailer');
-const { simpleParser } = require('mailparser');
-const cheerio = require('cheerio');
-const axios = require('axios');
-const { sql } = require('@vercel/postgres');
-const { convert } = require('html-to-text');
-const configData = require('../config.json');
-const NotificationManager = require('./notificationManager');
+import nodemailer from 'nodemailer';
+import { simpleParser } from 'mailparser';
+import cheerio from 'cheerio';
+import axios from 'axios';
+import { sql } from '@vercel/postgres';
+import { convert } from 'html-to-text';
+import configData from '../config.json';
+import NotificationManager from './notificationManager';
 
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;
@@ -512,6 +512,5 @@ export default async function handler(req, res) {
     }
 }
 
-module.exports.config = { api: { bodyParser: false } };
-module.exports.BokunParser = BokunParser;
-module.exports.ThailandToursParser = ThailandToursParser; 
+export const config = { api: { bodyParser: false } };
+export { BokunParser, ThailandToursParser }; 

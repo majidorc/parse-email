@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
 
     // Get paginated bookings
     const { rows: bookings } = await sql`
-      SELECT booking_number, tour_date, customer_name, sku, program, op, customer, hotel, adult, child, infant
+      SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant
       FROM bookings
       ORDER BY tour_date DESC
       LIMIT ${limit} OFFSET ${offset}

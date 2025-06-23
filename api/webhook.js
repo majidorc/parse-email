@@ -20,70 +20,60 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
 
-    if (action !== 'toggle' || !['op', 'customer'].includes(buttonType)) {
+    if (action !== 'toggle' || !['op', 'ri', 'customer'].includes(buttonType)) {
         console.error('Invalid callback data:', data);
         return res.status(400).send('Invalid callback data');
     }
 
     try {
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
-        let buttonIndex = buttonType === 'op' ? 0 : 1;
+        let buttonIndex = buttonType === 'op' ? 0 : buttonType === 'ri' ? 1 : 2;
         const button = newKeyboard[0][buttonIndex];
         if (button) {
             const isChecked = button.text.endsWith('✓');
-            button.text = buttonType.charAt(0).toUpperCase() + buttonType.slice(1) + (isChecked ? ' X' : ' ✓');
+            button.text = buttonType.toUpperCase() + (isChecked ? ' X' : ' ✓');
             // Update the database
             let column;
             if (buttonType === 'op') column = 'op';
+            else if (buttonType === 'ri') column = 'ri';
             else if (buttonType === 'customer') column = 'customer';
             else return res.status(400).send('Invalid column');
-            console.log(`Preparing to update DB: booking_number=${bookingId} (type: ${typeof bookingId}), column=${column}, value=${!isChecked}`);
-            try {
-                if (buttonType === 'customer' && !isChecked) {
-                    // Only allow setting customer to true if op is true
-                    const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
-                    if (!rows.length || !rows[0].op) {
-                        // Send error to Telegram with a short message and log the response
-                        const popupText = 'OP must be ✓ first.';
-                        try {
-                            const popupResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-                                callback_query_id: callbackQuery.id,
-                                text: popupText,
-                                show_alert: true
-                            });
-                            console.log('Sent Telegram popup alert:', popupResp.data);
-                        } catch (popupErr) {
-                            console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
-                        }
-                        return res.status(200).send('OP not send yet');
+            if (buttonType === 'customer' && !isChecked) {
+                // Only allow setting customer to true if op is true
+                const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
+                if (!rows.length || !rows[0].op) {
+                    // Send error to Telegram with a short message and log the response
+                    const popupText = 'OP must be ✓ first.';
+                    try {
+                        const popupResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                            callback_query_id: callbackQuery.id,
+                            text: popupText,
+                            show_alert: true
+                        });
+                        console.log('Sent Telegram popup alert:', popupResp.data);
+                    } catch (popupErr) {
+                        console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
                     }
+                    return res.status(200).send('OP not send yet');
                 }
-                const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
-                const result = await sql.query(query, [!isChecked, bookingId]);
-                console.log('DB update result:', result);
-                if (result.rowCount !== undefined) {
-                  console.log('Rows affected:', result.rowCount);
-                }
-            } catch (sqlError) {
-                console.error('DB update error:', sqlError);
+            }
+            const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
+            const result = await sql.query(query, [!isChecked, bookingId]);
+            if (result.rowCount !== undefined) {
+              console.log('Rows affected:', result.rowCount);
             }
         } else {
             console.error(`Button at index ${buttonIndex} not found in keyboard.`);
         }
-
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: { inline_keyboard: newKeyboard }
         });
-
-        // Send a blank answerCallbackQuery at the end for all other cases
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id
         });
-
         return res.status(200).send('OK');
-
     } catch (error) {
         console.error('Callback handler error:', error);
         return res.status(200).send('Error processing callback');

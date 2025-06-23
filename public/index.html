@@ -152,7 +152,6 @@
                         if (!res.ok) {
                             showToast(data.error || 'Error updating');
                         } else {
-                            // Update the row visually
                             fetchBookings(currentPage);
                         }
                     } catch (err) {
@@ -176,7 +175,6 @@
             currentPage = page;
             fetchBookings(page);
         }
-        // Toast function
         function showToast(msg) {
             let toast = document.getElementById('toast-msg');
             if (!toast) {

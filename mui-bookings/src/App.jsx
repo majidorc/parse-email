@@ -26,9 +26,9 @@ export default function App() {
   }, []);
 
   return (
-    <div>
+    <div style={{ width: '100vw' }}>
       <h1>Bookings</h1>
-      <Table>
+      <Table style={{ width: '100%' }}>
         <TableHead>
           <TableRow>
             {columns.map(col => (

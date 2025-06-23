@@ -84,7 +84,7 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', padding: 24, background: '#f8f9fa' }}>
       <h1 style={{ textAlign: 'center', fontWeight: 700, marginBottom: 30, fontSize: '2.25rem' }}>Bookings</h1>
-      <Paper elevation={3} style={{ borderRadius: 15, overflow: 'hidden', maxWidth: 1200, width: 'auto' }}>
+      <Paper elevation={3} style={{ borderRadius: 15, overflow: 'hidden', maxWidth: 1200, width: '80vw', margin: '0 auto' }}>
         <TableContainer>
           <Table stickyHeader>
             <TableHead>

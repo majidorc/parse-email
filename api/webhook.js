@@ -225,12 +225,21 @@ class BokunParser extends BaseEmailParser {
   }
   extractHotel() { return this.findValueByLabel('Pick-up').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim(); }
   extractPhone() { return this.findValueByLabel('Customer phone').replace(/\D/g, ''); }
+  extractSKU() {
+    // Product field: e.g., 'HKT0041 - ...'
+    const product = this.findValueByLabel('Product');
+    const match = product.match(/^([A-Z0-9]+)\s*-/);
+    return match ? match[1] : '';
+  }
   extractAll() {
     const passengers = this.extractPassengers();
     const tourDate = this.extractTourDate();
     return {
-      bookingNumber: this.extractBookingNumber(), tourDate: tourDate,
-      program: this.extractProgram(), name: this.extractName(),
+      bookingNumber: this.extractBookingNumber(),
+      tourDate: tourDate,
+      sku: this.extractSKU(),
+      program: this.extractProgram(),
+      name: this.extractName(),
       adult: passengers.adult, child: passengers.child, infant: passengers.infant,
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
       isoDate: this._getISODate(tourDate)
@@ -343,12 +352,23 @@ class ThailandToursParser extends BaseEmailParser {
         return 'N/A';
     }
 
+    extractSKU() {
+        // Find first #CODE in the email
+        const line = this.lines.find(l => /#([A-Z0-9]+)/.test(l));
+        if (line) {
+          const match = line.match(/#([A-Z0-9]+)/);
+          return match ? match[1] : '';
+        }
+        return '';
+    }
+
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
         return {
             bookingNumber: this.extractBookingNumber(),
             tourDate: tourDate,
+            sku: this.extractSKU(),
             program: this.extractProgram(),
             name: this.extractName(),
             adult: passengers.adult,
@@ -494,8 +514,8 @@ async function handler(req, res) {
             const infant = parseInt(extractedInfo.infant, 10) || 0;
 
             const { rows: [newBooking] } = await sql`
-                INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
                 RETURNING *;
             `;
             

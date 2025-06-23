@@ -203,11 +203,11 @@ class NotificationManager {
       return;
     }
     try {
-      // 1. Send full details as a plain text message
+      // Only send full details as a plain text message (no button template)
       await axios.post('https://api.line.me/v2/bot/message/push', {
         to: process.env.LINE_USER_ID,
         messages: [
-          { type: 'text', text: messageData.responseTemplate.substring(0, 2000) } // LINE text limit is 2000 chars
+          { type: 'text', text: messageData.responseTemplate.substring(0, 2000) }
         ]
       }, {
         headers: {
@@ -215,41 +215,9 @@ class NotificationManager {
           'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
         }
       });
-      // 2. Send button template with a short summary (max 160 chars)
-      const summary = `Booking: ${messageData.bookingNumber} | ${messageData.tourDate} | ${messageData.customerName}`.substring(0, 160);
-      await axios.post('https://api.line.me/v2/bot/message/push', {
-        to: process.env.LINE_USER_ID,
-        messages: [
-          {
-            type: 'template',
-            altText: 'Booking Confirmation',
-            template: {
-              type: 'buttons',
-              text: summary,
-              actions: [
-                {
-                  type: 'postback',
-                  label: `OP ${opChecked ? '✓' : 'X'}`,
-                  data: `toggle:op:${messageData.bookingNumber}`
-                },
-                {
-                  type: 'postback',
-                  label: `Customer ${customerChecked ? '✓' : 'X'}`,
-                  data: `toggle:customer:${messageData.bookingNumber}`
-                }
-              ]
-            }
-          }
-        ]
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
-        }
-      });
-      console.log('LINE button template sent for booking', messageData.bookingNumber);
+      console.log('LINE notification sent for booking', messageData.bookingNumber);
     } catch (err) {
-      console.error('Failed to send LINE button template:', err.response ? err.response.data : err.message);
+      console.error('Failed to send LINE notification:', err.response ? err.response.data : err.message);
     }
   }
 

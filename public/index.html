@@ -127,11 +127,42 @@
                     <td title="${b.adult ?? ''}">${b.adult ?? ''}</td>
                     <td class="md:table-cell hidden-md" title="${b.child ?? ''}">${b.child ?? ''}</td>
                     <td class="lg:table-cell hidden-lg" title="${b.infant ?? ''}">${b.infant ?? ''}</td>
-                    <td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td>
-                    <td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td>
+                    <td><button class='op-btn' data-booking='${b.booking_number}' data-type='op' aria-label='Toggle OP' style='background:none;border:none;cursor:pointer;'>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</button></td>
+                    <td><button class='customer-btn' data-booking='${b.booking_number}' data-type='customer' aria-label='Toggle Customer' style='background:none;border:none;cursor:pointer;'>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</button></td>
                 `;
                 tbody.appendChild(tr);
             }
+            // Add event listeners for toggle buttons
+            tbody.querySelectorAll('button.op-btn, button.customer-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const booking_number = this.getAttribute('data-booking');
+                    const type = this.getAttribute('data-type');
+                    const icon = this.querySelector('span.material-icons');
+                    const origIcon = icon.innerHTML;
+                    icon.innerHTML = 'hourglass_top';
+                    icon.style.color = '#1976d2';
+                    try {
+                        const res = await fetch('/api/toggle-op-customer', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ booking_number, type })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                            showToast(data.error || 'Error updating');
+                        } else {
+                            // Update the row visually
+                            fetchBookings(currentPage);
+                        }
+                    } catch (err) {
+                        showToast('Network error');
+                    } finally {
+                        icon.innerHTML = origIcon;
+                        icon.style.color = '';
+                    }
+                });
+            });
         }
         function renderPagination(page, limit, total) {
             const totalPages = Math.ceil(total / limit);
@@ -144,6 +175,28 @@
         function gotoPage(page) {
             currentPage = page;
             fetchBookings(page);
+        }
+        // Toast function
+        function showToast(msg) {
+            let toast = document.getElementById('toast-msg');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-msg';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '32px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.background = '#323232';
+                toast.style.color = '#fff';
+                toast.style.padding = '12px 24px';
+                toast.style.borderRadius = '8px';
+                toast.style.fontSize = '1.1em';
+                toast.style.zIndex = 9999;
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, 2200);
         }
         fetchBookings();
     </script>

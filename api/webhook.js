@@ -26,10 +26,6 @@ async function handleTelegramCallback(callbackQuery, res) {
     }
 
     try {
-        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-            callback_query_id: callbackQuery.id
-        });
-
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
         let buttonIndex = buttonType === 'op' ? 0 : 1;
         const button = newKeyboard[0][buttonIndex];
@@ -47,12 +43,18 @@ async function handleTelegramCallback(callbackQuery, res) {
                     // Only allow setting customer to true if op is true
                     const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
                     if (!rows.length || !rows[0].op) {
-                        // Send error to Telegram
-                        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-                            callback_query_id: callbackQuery.id,
-                            text: 'OP not send yet.',
-                            show_alert: true
-                        });
+                        // Send error to Telegram with a short message and log the response
+                        const popupText = 'OP must be ✓ first.';
+                        try {
+                            const popupResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                                callback_query_id: callbackQuery.id,
+                                text: popupText,
+                                show_alert: true
+                            });
+                            console.log('Sent Telegram popup alert:', popupResp.data);
+                        } catch (popupErr) {
+                            console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
+                        }
                         return res.status(200).send('OP not send yet');
                     }
                 }
@@ -73,6 +75,11 @@ async function handleTelegramCallback(callbackQuery, res) {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: { inline_keyboard: newKeyboard }
+        });
+
+        // Send a blank answerCallbackQuery at the end for all other cases
+        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callbackQuery.id
         });
 
         return res.status(200).send('OK');

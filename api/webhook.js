@@ -353,10 +353,16 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractSKU() {
-        // Find first #CODE in the email
-        const line = this.lines.find(l => /#([A-Z0-9]+)/.test(l));
+        // Find a line with (#CODE) and extract CODE
+        const line = this.lines.find(l => /\(#([A-Z0-9]+)\)/.test(l));
         if (line) {
-          const match = line.match(/#([A-Z0-9]+)/);
+          const match = line.match(/\(#([A-Z0-9]+)\)/);
+          return match ? match[1] : '';
+        }
+        // Fallback: first #CODE in the email
+        const hashLine = this.lines.find(l => /#([A-Z0-9]+)/.test(l));
+        if (hashLine) {
+          const match = hashLine.match(/#([A-Z0-9]+)/);
           return match ? match[1] : '';
         }
         return '';

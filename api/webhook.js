@@ -43,6 +43,19 @@ async function handleTelegramCallback(callbackQuery, res) {
             else return res.status(400).send('Invalid column');
             console.log(`Preparing to update DB: booking_number=${bookingId} (type: ${typeof bookingId}), column=${column}, value=${!isChecked}`);
             try {
+                if (buttonType === 'customer' && !isChecked) {
+                    // Only allow setting customer to true if op is true
+                    const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
+                    if (!rows.length || !rows[0].op) {
+                        // Send error to Telegram
+                        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                            callback_query_id: callbackQuery.id,
+                            text: 'OP not send yet.',
+                            show_alert: true
+                        });
+                        return res.status(200).send('OP not send yet');
+                    }
+                }
                 const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
                 const result = await sql.query(query, [!isChecked, bookingId]);
                 console.log('DB update result:', result);

@@ -27,7 +27,7 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw' }}>
-      <h1 style={{ color: '#1976d2' }}>Bookings</h1>
+      <h1 style={{ color: '#d32f2f' }}>Bookings</h1>
       <Table style={{ width: '100%' }}>
         <TableHead>
           <TableRow>

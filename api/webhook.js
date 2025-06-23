@@ -8,18 +8,11 @@ const configData = require('../config.json');
 const NotificationManager = require('./notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
-    console.log('--- Inside handleTelegramCallback ---');
-    console.log('Received callbackQuery:', JSON.stringify(callbackQuery, null, 2));
-
     const { data, message } = callbackQuery;
     if (!data || !message) {
-        console.error('Callback query is missing `data` or `message` field.');
         return res.status(400).send('Invalid callback query format');
     }
 
-    console.log(`Callback data: ${data}`);
-
-    // Use split with a limit to handle booking numbers that might contain ':'
     const parts = data.split(':');
     const action = parts[0];
     const buttonIndexStr = parts[1];
@@ -28,43 +21,32 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonIndex = parseInt(buttonIndexStr, 10) - 1;
 
     if (action !== 'toggle' || isNaN(buttonIndex)) {
-        console.error('Invalid callback data received');
         return res.status(400).send('Invalid callback data');
     }
 
     try {
-        console.log('Acknowledging callback to Telegram...');
-        // Acknowledge the callback immediately to improve UX
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id
         });
-        console.log('Callback acknowledged.');
 
-        // Create a deep copy of the keyboard to modify it
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
         const button = newKeyboard[0][buttonIndex];
 
         if (button) {
-            console.log(`Toggling button ${buttonIndex + 1}. Current text: "${button.text}"`);
             button.text = button.text === 'X' ? '✓' : 'X';
-            console.log(`New text: "${button.text}"`);
         } else {
             console.error(`Button at index ${buttonIndex} not found in keyboard.`);
         }
 
-        console.log('Sending request to edit message reply markup...');
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: { inline_keyboard: newKeyboard }
         });
-        console.log('Successfully edited message markup.');
 
         return res.status(200).send('OK');
 
     } catch (error) {
-        console.error('Error handling Telegram callback:', error.response ? error.response.data : error.message);
-        // Return 200 to prevent Telegram from resending the callback
         return res.status(200).send('Error processing callback');
     }
 }
@@ -140,13 +122,10 @@ class BaseEmailParser {
 class BokunParser extends BaseEmailParser {
   constructor(htmlContent) {
     super(htmlContent);
-    console.log('BokunParser constructor called.');
     try {
         const cleanedHtml = htmlContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
         this.$ = cheerio.load(cleanedHtml);
-        console.log('Cheerio loaded HTML successfully for BokunParser.');
     } catch (error) {
-        console.error('Error loading HTML into Cheerio for BokunParser:', error);
         throw new Error('BokunParser failed to load HTML.');
     }
   }
@@ -328,7 +307,6 @@ class ThailandToursParser extends BaseEmailParser {
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
-        console.log(`ThailandToursParser: Extracted raw tour date string: "${tourDate}"`);
         return {
             bookingNumber: this.extractBookingNumber(),
             tourDate: tourDate,
@@ -346,7 +324,6 @@ class ThailandToursParser extends BaseEmailParser {
     formatBookingDetails() {
         const extractedInfo = this.extractAll();
 
-        // Final validation to ensure a date was actually found
         if (extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
             console.error(`Could not extract a valid tour date for booking ${extractedInfo.bookingNumber}. Aborting.`);
         }
@@ -360,39 +337,21 @@ class EmailParserFactory {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
 
-    console.log(`--- New Email Received for Parsing ---`);
-    console.log(`Subject: "${subject}"`);
-    console.log(`From: ${fromAddress}`);
-
-    // Filter out emails that are not new booking notifications
     if (!subject || !subject.toLowerCase().includes('new booking')) {
-      console.log('Email subject does not indicate a new booking. Skipping.');
       return null;
     }
 
-    // Give preference to HTML content if it exists, otherwise use plain text.
     const content = html || text;
     
-    console.log(`Attempting to find parser for email from: ${fromAddress}`);
-
     if (fromAddress && fromAddress.includes('bokun.io')) {
-      console.log('Selected BokunParser.');
-      // BokunParser is designed to handle the full HTML
       return new BokunParser(content);
     }
     
     if (fromAddress && fromAddress.includes('tours.co.th')) {
-        console.log('Selected ThailandToursParser.');
-        // This parser expects cleaned text
         const textContent = cleanupHtml(content);
-        console.log('--- Cleaned Email Body for ThailandToursParser ---');
-        console.log(textContent);
-        console.log('--------------------------------------------------');
         return new ThailandToursParser(textContent);
     }
     
-    // If sender is not recognized, use the general-purpose parser
-    console.log("Using Fallback Text Parser as sender was not recognized.");
     const textContent = cleanupHtml(content);
     return new FallbackParser(textContent);
   }
@@ -455,63 +414,38 @@ async function handler(req, res) {
     }
 
     try {
-        console.log('Webhook invoked.');
-
         const rawBody = await getRawBody(req);
-        const bodyString = rawBody.toString('utf-8');
-        console.log('--- Raw Request Body ---');
-        console.log(bodyString);
-        console.log('------------------------');
-
         let jsonData;
         try {
-            jsonData = JSON.parse(bodyString);
-            console.log('--- Parsed JSON Body ---');
-            console.log(JSON.stringify(jsonData, null, 2));
-            console.log('------------------------');
+            jsonData = JSON.parse(rawBody.toString('utf-8'));
         } catch (error) {
-            console.log('--- JSON Parsing Failed ---');
-            console.log(error.message);
-            console.log('---------------------------');
             jsonData = null;
         }
 
-        // If it's a Telegram callback, handle it and exit.
         if (jsonData && jsonData.callback_query) {
-            console.log('--- Handling Telegram Callback ---');
             return handleTelegramCallback(jsonData.callback_query, res);
         }
         
-        // Otherwise, proceed with email parsing logic.
-        console.log('--- Handling Email Forward ---');
         const parsedEmail = await simpleParser(rawBody);
 
         const parser = EmailParserFactory.create(parsedEmail);
 
         if (!parser) {
-            console.log('No suitable parser found or email did not meet criteria. Skipping.');
             return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
         }
 
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
-        console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
 
-        // Explicitly check for a valid tour date before attempting to save.
         if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
-            console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date. Raw Date: "${extractedInfo.tourDate}", ISO Date: "${extractedInfo.isoDate}".`);
-            // Even if skipped, we should return a success response to prevent retries.
             return res.status(200).send('Webhook processed: Skipped due to invalid date.');
         }
 
-        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
         try {
-            // First, check if the booking already exists to prevent duplicate errors
             const { rows: existingBookings } = await sql`
                 SELECT id FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
             `;
 
             if (existingBookings.length > 0) {
-                console.log(`Booking ${extractedInfo.bookingNumber} already exists. Skipping insertion.`);
                 return res.status(200).send('Webhook processed: Booking already exists.');
             }
 
@@ -525,18 +459,9 @@ async function handler(req, res) {
                 RETURNING *;
             `;
             
-            console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
-
-            // NOTIFICATIONS HAVE BEEN DISABLED FROM THE WEBHOOK.
-            // The daily scheduler is now responsible for all notifications.
-            // const notificationManager = new NotificationManager();
-            // await notificationManager.sendAll(newBooking);
-
-            console.log('Webhook finished. Booking saved to database.');
             return res.status(200).send('Webhook processed: Booking saved.');
 
         } catch (error) {
-            // Catch any other unexpected database errors
             console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
             return res.status(500).send({ error: 'Database processing failed.', details: error.message });
         }

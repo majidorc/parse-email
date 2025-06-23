@@ -129,9 +129,12 @@ class NotificationManager {
                                  `Pax : ${messageData.pax}\n` +
                                  `Hotel : ${messageData.hotel}\n` +
                                  `Phone Number : ${messageData.phoneNumber}\n` +
-                                 `Cash on tour : None`;
+                                 `Cash on tour : None\n\n` +
+                                 `Please mentioned if there is any additional charge for transfer collect from customer`;
       
-      const escapedIntro = this.escapeTelegramMarkdown("Please confirm the *pickup time* for this booking:");
+      const introText = `New Booking For ${messageData.tourDate}`;
+      const escapedIntro = this.escapeTelegramMarkdown(introText);
+
       const message = `${escapedIntro}\n\n` +
                       "Details to copy:\n" +
                       "```\n" +

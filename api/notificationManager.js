@@ -192,6 +192,54 @@ class NotificationManager {
   }
 
   /**
+   * Sends a LINE button template with OP/Customer buttons.
+   * @param {object} messageData - The message data from constructNotificationMessage.
+   * @param {boolean} opChecked - Whether OP is checked.
+   * @param {boolean} customerChecked - Whether Customer is checked.
+   */
+  async sendLineButton(messageData, opChecked, customerChecked) {
+    if (process.env.ENABLE_LINE_NOTIFICATIONS !== 'true' || !process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_USER_ID) {
+      console.log('LINE notifications are disabled or not configured.');
+      return;
+    }
+    try {
+      await axios.post('https://api.line.me/v2/bot/message/push', {
+        to: process.env.LINE_USER_ID,
+        messages: [
+          {
+            type: 'template',
+            altText: 'Booking Confirmation',
+            template: {
+              type: 'buttons',
+              text: messageData.responseTemplate.substring(0, 400), // LINE limit
+              actions: [
+                {
+                  type: 'postback',
+                  label: `OP ${opChecked ? '✓' : 'X'}`,
+                  data: `toggle:op:${messageData.bookingNumber}`
+                },
+                {
+                  type: 'postback',
+                  label: `Customer ${customerChecked ? '✓' : 'X'}`,
+                  data: `toggle:customer:${messageData.bookingNumber}`
+                }
+              ]
+            }
+          }
+        ]
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+        }
+      });
+      console.log('LINE button template sent for booking', messageData.bookingNumber);
+    } catch (err) {
+      console.error('Failed to send LINE button template:', err.response ? err.response.data : err.message);
+    }
+  }
+
+  /**
    * Sends all configured notifications.
    * @param {object} booking - The raw booking object from the database.
    */
@@ -205,7 +253,7 @@ class NotificationManager {
     const promises = [
       this.sendEmail(messageData),
       this.sendTelegram(messageData),
-      this.sendLine(messageData)
+      this.sendLineButton(messageData, booking.op, booking.customer)
     ];
     
     await Promise.allSettled(promises);

@@ -1,44 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Email Auto-Responder</title>
+    <title>Bookings</title>
+    <!-- Google Fonts Roboto -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Material UI 3 (M3) CSS via CDN (using Materialize as closest static option) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 32px 24px 24px 24px;
+      }
+      h2 {
+        font-weight: 500;
+        color: #1976d2;
+        margin-bottom: 24px;
+      }
+      table.striped > tbody > tr:nth-child(odd) {
+        background-color: #f2f2f2;
+      }
+      th {
+        background: #1976d2;
+        color: #fff;
+        font-weight: 500;
+      }
+      .pagination-controls {
+        margin-top: 24px;
+        text-align: right;
+      }
+      .material-icons {
+        vertical-align: middle;
+      }
+      .btn-flat {
+        color: #1976d2;
+        font-weight: 500;
+        background: none;
+        box-shadow: none;
+      }
+      .btn-flat:disabled {
+        color: #bdbdbd;
+      }
+    </style>
 </head>
 <body>
-    <h1>Email Auto-Responder</h1>
-    <p>This is a webhook endpoint for processing Bokun.io booking notifications.</p>
-    <h2>Bookings</h2>
+  <div class="container">
+    <h2><span class="material-icons" style="font-size:32px;vertical-align:middle;">table_chart</span> Bookings</h2>
     <div id="bookings-table"></div>
-    <div id="pagination-controls"></div>
-    <script>
-      let currentPage = 1;
-      const limit = 20;
-      async function fetchBookings(page = 1) {
-        const res = await fetch(`/api/bookings?page=${page}&limit=${limit}`);
-        const data = await res.json();
-        renderTable(data.bookings);
-        renderPagination(data.page, data.limit, data.total);
+    <div class="pagination-controls" id="pagination-controls"></div>
+  </div>
+  <script>
+    let currentPage = 1;
+    const limit = 20;
+    async function fetchBookings(page = 1) {
+      const res = await fetch(`/api/bookings?page=${page}&limit=${limit}`);
+      const data = await res.json();
+      renderTable(data.bookings);
+      renderPagination(data.page, data.limit, data.total);
+    }
+    function renderTable(bookings) {
+      let html = '<table class="striped highlight responsive-table"><thead><tr><th>Booking #</th><th>Tour Date</th><th>Customer Name</th><th>Program</th><th>OP</th><th>Customer</th></tr></thead><tbody>';
+      for (const b of bookings) {
+        html += `<tr><td>${b.booking_number}</td><td>${b.tour_date ? b.tour_date.substring(0,10) : ''}</td><td>${b.customer_name || ''}</td><td>${b.program || ''}</td><td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td><td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td></tr>`;
       }
-      function renderTable(bookings) {
-        let html = '<table border="1" cellpadding="5"><tr><th>Booking #</th><th>Tour Date</th><th>Customer Name</th><th>Program</th><th>OP</th><th>Customer</th></tr>';
-        for (const b of bookings) {
-          html += `<tr><td>${b.booking_number}</td><td>${b.tour_date ? b.tour_date.substring(0,10) : ''}</td><td>${b.customer_name || ''}</td><td>${b.program || ''}</td><td>${b.op ? '✓' : 'X'}</td><td>${b.customer ? '✓' : 'X'}</td></tr>`;
-        }
-        html += '</table>';
-        document.getElementById('bookings-table').innerHTML = html;
-      }
-      function renderPagination(page, limit, total) {
-        const totalPages = Math.ceil(total / limit);
-        let html = '';
-        if (page > 1) html += `<button onclick="gotoPage(${page-1})">Previous</button>`;
-        html += ` Page ${page} of ${totalPages} `;
-        if (page < totalPages) html += `<button onclick="gotoPage(${page+1})">Next</button>`;
-        document.getElementById('pagination-controls').innerHTML = html;
-      }
-      function gotoPage(page) {
-        currentPage = page;
-        fetchBookings(page);
-      }
-      fetchBookings();
-    </script>
+      html += '</tbody></table>';
+      document.getElementById('bookings-table').innerHTML = html;
+    }
+    function renderPagination(page, limit, total) {
+      const totalPages = Math.ceil(total / limit);
+      let html = '';
+      html += `<button class="btn-flat" ${page <= 1 ? 'disabled' : ''} onclick="gotoPage(${page-1})"><span class="material-icons">chevron_left</span> Previous</button>`;
+      html += `<span style="margin:0 16px;vertical-align:middle;">Page ${page} of ${totalPages}</span>`;
+      html += `<button class="btn-flat" ${page >= totalPages ? 'disabled' : ''} onclick="gotoPage(${page+1})">Next <span class="material-icons">chevron_right</span></button>`;
+      document.getElementById('pagination-controls').innerHTML = html;
+    }
+    function gotoPage(page) {
+      currentPage = page;
+      fetchBookings(page);
+    }
+    fetchBookings();
+  </script>
 </body>
 </html> 

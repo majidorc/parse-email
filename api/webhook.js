@@ -7,6 +7,50 @@ const { convert } = require('html-to-text');
 const configData = require('../config.json');
 const NotificationManager = require('./notificationManager');
 
+async function handleTelegramCallback(callbackQuery, res) {
+    const { data, message } = callbackQuery;
+    // Use split with a limit to handle booking numbers that might contain ':'
+    const parts = data.split(':');
+    const action = parts[0];
+    const buttonIndexStr = parts[1];
+    const bookingId = parts.slice(2).join(':');
+
+    const buttonIndex = parseInt(buttonIndexStr, 10) - 1;
+
+    if (action !== 'toggle' || isNaN(buttonIndex)) {
+        console.log(`Invalid callback data received: ${data}`);
+        return res.status(400).send('Invalid callback data');
+    }
+
+    try {
+        // Acknowledge the callback immediately to improve UX
+        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callbackQuery.id
+        });
+
+        // Create a deep copy of the keyboard to modify it
+        const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
+        const button = newKeyboard[0][buttonIndex];
+
+        if (button) {
+            button.text = button.text === 'X' ? '✓' : 'X';
+        }
+
+        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
+            chat_id: message.chat.id,
+            message_id: message.message_id,
+            reply_markup: { inline_keyboard: newKeyboard }
+        });
+
+        return res.status(200).send('OK');
+
+    } catch (error) {
+        console.error('Error handling Telegram callback:', error.response ? error.response.data : error.message);
+        // Return 200 to prevent Telegram from resending the callback
+        return res.status(200).send('Error processing callback');
+    }
+}
+
 // Utility function to clean HTML and extract text content
 function cleanupHtml(html) {
     if (!html) return '';
@@ -387,79 +431,86 @@ class FallbackParser extends BaseEmailParser {
     }
 }
 
-module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  try {
-    console.log('Webhook invoked.');
-
-    const rawBody = await getRawBody(req);
-    const parsedEmail = await simpleParser(rawBody);
-
-    const parser = EmailParserFactory.create(parsedEmail);
-
-    if (!parser) {
-        console.log('No suitable parser found or email did not meet criteria. Skipping.');
-        return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).send('Method Not Allowed');
     }
 
-    const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
-    console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
-
-    // Explicitly check for a valid tour date before attempting to save.
-    if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
-        console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date. Raw Date: "${extractedInfo.tourDate}", ISO Date: "${extractedInfo.isoDate}".`);
-        // Even if skipped, we should return a success response to prevent retries.
-        return res.status(200).send('Webhook processed: Skipped due to invalid date.');
+    // Handle Telegram button callbacks
+    if (req.body && req.body.callback_query) {
+        return handleTelegramCallback(req.body.callback_query, res);
     }
+    
+    // Handle the daily cron job for sending reminders
+    const cronJob = req.query.cron_job === 'true';
+    const cronSecret = req.headers.authorization?.split(" ")[1];
 
-    console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
     try {
-        // First, check if the booking already exists to prevent duplicate errors
-        const { rows: existingBookings } = await sql`
-            SELECT id FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
-        `;
+        console.log('Webhook invoked.');
 
-        if (existingBookings.length > 0) {
-            console.log(`Booking ${extractedInfo.bookingNumber} already exists. Skipping insertion.`);
-            return res.status(200).send('Webhook processed: Booking already exists.');
+        const rawBody = await getRawBody(req);
+        const parsedEmail = await simpleParser(rawBody);
+
+        const parser = EmailParserFactory.create(parsedEmail);
+
+        if (!parser) {
+            console.log('No suitable parser found or email did not meet criteria. Skipping.');
+            return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
         }
 
-        const adult = parseInt(extractedInfo.adult, 10) || 0;
-        const child = parseInt(extractedInfo.child, 10) || 0;
-        const infant = parseInt(extractedInfo.infant, 10) || 0;
+        const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+        console.log('Extracted Info:', JSON.stringify(extractedInfo, null, 2));
 
-        const { rows: [newBooking] } = await sql`
-            INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
-            VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
-            RETURNING *;
-        `;
-        
-        console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
+        // Explicitly check for a valid tour date before attempting to save.
+        if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+            console.log(`Skipping database insertion for booking ${extractedInfo.bookingNumber} due to missing or invalid tour date. Raw Date: "${extractedInfo.tourDate}", ISO Date: "${extractedInfo.isoDate}".`);
+            // Even if skipped, we should return a success response to prevent retries.
+            return res.status(200).send('Webhook processed: Skipped due to invalid date.');
+        }
 
-        // NOTIFICATIONS HAVE BEEN DISABLED FROM THE WEBHOOK.
-        // The daily scheduler is now responsible for all notifications.
-        // const notificationManager = new NotificationManager();
-        // await notificationManager.sendAll(newBooking);
+        console.log(`Attempting to save booking ${extractedInfo.bookingNumber} to the database...`);
+        try {
+            // First, check if the booking already exists to prevent duplicate errors
+            const { rows: existingBookings } = await sql`
+                SELECT id FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
+            `;
 
-        console.log('Webhook finished. Booking saved to database.');
-        return res.status(200).send('Webhook processed: Booking saved.');
+            if (existingBookings.length > 0) {
+                console.log(`Booking ${extractedInfo.bookingNumber} already exists. Skipping insertion.`);
+                return res.status(200).send('Webhook processed: Booking already exists.');
+            }
+
+            const adult = parseInt(extractedInfo.adult, 10) || 0;
+            const child = parseInt(extractedInfo.child, 10) || 0;
+            const infant = parseInt(extractedInfo.infant, 10) || 0;
+
+            const { rows: [newBooking] } = await sql`
+                INSERT INTO bookings (booking_number, tour_date, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
+                RETURNING *;
+            `;
+            
+            console.log(`Successfully inserted booking ${extractedInfo.bookingNumber} with ID ${newBooking.id}.`);
+
+            // NOTIFICATIONS HAVE BEEN DISABLED FROM THE WEBHOOK.
+            // The daily scheduler is now responsible for all notifications.
+            // const notificationManager = new NotificationManager();
+            // await notificationManager.sendAll(newBooking);
+
+            console.log('Webhook finished. Booking saved to database.');
+            return res.status(200).send('Webhook processed: Booking saved.');
+
+        } catch (error) {
+            // Catch any other unexpected database errors
+            console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
+            return res.status(500).send({ error: 'Database processing failed.', details: error.message });
+        }
 
     } catch (error) {
-        // Catch any other unexpected database errors
-        console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
-        return res.status(500).send({ error: 'Database processing failed.', details: error.message });
+        console.error('Error in webhook processing:', error);
+        return res.status(500).json({ error: 'Error processing email.', details: error.message });
     }
-
-  } catch (error) {
-    console.error('Error in webhook processing:', error);
-    return res.status(500).json({ error: 'Error processing email.', details: error.message });
-  }
-};
+}
 
 module.exports.config = { api: { bodyParser: false } };
 module.exports.BokunParser = BokunParser;

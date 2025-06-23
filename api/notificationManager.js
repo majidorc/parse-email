@@ -142,10 +142,22 @@ class NotificationManager {
                       messageBodyForCopy +
                       "\n```";
 
+      const bookingNumber = messageData.bookingNumber;
+      const reply_markup = {
+        inline_keyboard: [
+          [
+            { text: 'X', callback_data: `toggle:1:${bookingNumber}` },
+            { text: 'X', callback_data: `toggle:2:${bookingNumber}` },
+            { text: 'X', callback_data: `toggle:3:${bookingNumber}` }
+          ]
+        ]
+      };
+
       const payload = {
         chat_id: process.env.TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'MarkdownV2'
+        parse_mode: 'MarkdownV2',
+        reply_markup: reply_markup
       };
       
       await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, payload);

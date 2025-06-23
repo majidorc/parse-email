@@ -167,6 +167,31 @@ class NotificationManager {
   }
 
   /**
+   * Sends a LINE notification.
+   * @param {object} messageData - The message data from constructNotificationMessage.
+   */
+  async sendLine(messageData) {
+    if (process.env.ENABLE_LINE_NOTIFICATIONS !== 'true' || !process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_USER_ID) {
+      console.log('LINE notifications are disabled or not configured.');
+      return;
+    }
+    try {
+      await axios.post('https://api.line.me/v2/bot/message/push', {
+        to: process.env.LINE_USER_ID,
+        messages: [{ type: 'text', text: messageData.responseTemplate }]
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+        }
+      });
+      console.log('LINE notification sent for booking', messageData.bookingNumber);
+    } catch (err) {
+      console.error('Failed to send LINE notification:', err.response ? err.response.data : err.message);
+    }
+  }
+
+  /**
    * Sends all configured notifications.
    * @param {object} booking - The raw booking object from the database.
    */
@@ -179,7 +204,8 @@ class NotificationManager {
     
     const promises = [
       this.sendEmail(messageData),
-      this.sendTelegram(messageData)
+      this.sendTelegram(messageData),
+      this.sendLine(messageData)
     ];
     
     await Promise.allSettled(promises);

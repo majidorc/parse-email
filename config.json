@@ -15,6 +15,9 @@
     },
     "telegram": {
       "enabled": true
+    },
+    "line": {
+      "enabled": true
     }
   }
 } 

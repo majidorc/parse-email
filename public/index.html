@@ -1,126 +1,153 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bookings</title>
-    <!-- Google Fonts Roboto -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Material UI 3 (M3) CSS via CDN (using Materialize as closest static option) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <!-- Inter font for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body {
-        font-family: 'Roboto', Arial, sans-serif;
-        background: #f5f5f5;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 900px;
-        margin: 40px auto;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        padding: 32px 24px 24px 24px;
-      }
-      h2 {
-        font-weight: 500;
-        color: #1976d2;
-        margin-bottom: 24px;
-      }
-      .responsive-table-wrapper {
-        width: 100%;
-        overflow-x: auto;
-      }
-      table.striped > tbody > tr:nth-child(odd) {
-        background-color: #f2f2f2;
-      }
-      th {
-        background: #1976d2;
-        color: #fff;
-        font-weight: 500;
-      }
-      .pagination-controls {
-        margin-top: 24px;
-        text-align: right;
-      }
-      .material-icons {
-        vertical-align: middle;
-      }
-      .btn-flat {
-        color: #1976d2;
-        font-weight: 500;
-        background: none;
-        box-shadow: none;
-        min-width: 44px;
-        min-height: 44px;
-        font-size: 1.1em;
-        border-radius: 6px;
-      }
-      .btn-flat:disabled {
-        color: #bdbdbd;
-      }
-      @media (max-width: 600px) {
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
         .container {
-          margin: 0;
-          border-radius: 0;
-          padding: 12px 2px 16px 2px;
+            padding: 20px;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
         }
-        h2 {
-          font-size: 1.3em;
-          margin-bottom: 16px;
+        .table-title {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.25rem;
+            line-height: 2.5rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .pagination-controls {
-          font-size: 1em;
-          margin-top: 12px;
-        }
-        .btn-flat {
-          font-size: 1em;
-          min-width: 36px;
-          min-height: 36px;
+        .table-wrapper {
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: white;
+            padding: 1rem;
         }
         table {
-          font-size: 0.95em;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
-      }
+        th, td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th {
+            background-color: #e0e0e0;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #ccc;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .hidden-md { display: none; }
+        @media (min-width: 768px) {
+            .md\:table-cell { display: table-cell; }
+        }
+        .hidden-lg { display: none; }
+        @media (min-width: 1024px) {
+            .lg\:table-cell { display: table-cell; }
+        }
     </style>
 </head>
 <body>
-  <div class="container">
-    <h2><span class="material-icons" style="font-size:32px;vertical-align:middle;">table_chart</span> Bookings</h2>
-    <div class="responsive-table-wrapper"><div id="bookings-table"></div></div>
-    <div class="pagination-controls" id="pagination-controls"></div>
-  </div>
-  <script>
-    let currentPage = 1;
-    const limit = 20;
-    async function fetchBookings(page = 1) {
-      const res = await fetch(`/api/bookings?page=${page}&limit=${limit}`);
-      const data = await res.json();
-      renderTable(data.bookings);
-      renderPagination(data.page, data.limit, data.total);
-    }
-    function renderTable(bookings) {
-      let html = '<table class="striped highlight responsive-table"><thead><tr><th>Booking #</th><th>Tour Date</th><th>Customer Name</th><th>SKU</th><th>Program</th><th>Hotel</th><th>Adult</th><th>Child</th><th>Infant</th><th>OP</th><th>Customer</th></tr></thead><tbody>';
-      for (const b of bookings) {
-        html += `<tr><td>${b.booking_number}</td><td>${b.tour_date ? b.tour_date.substring(0,10) : ''}</td><td>${b.customer_name || ''}</td><td>${b.sku || ''}</td><td>${b.program || ''}</td><td>${b.hotel || ''}</td><td>${b.adult ?? ''}</td><td>${b.child ?? ''}</td><td>${b.infant ?? ''}</td><td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td><td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td></tr>`;
-      }
-      html += '</tbody></table>';
-      document.getElementById('bookings-table').innerHTML = html;
-    }
-    function renderPagination(page, limit, total) {
-      const totalPages = Math.ceil(total / limit);
-      let html = '';
-      html += `<button class="btn-flat" ${page <= 1 ? 'disabled' : ''} onclick="gotoPage(${page-1})"><span class="material-icons">chevron_left</span> Previous</button>`;
-      html += `<span style="margin:0 16px;vertical-align:middle;">Page ${page} of ${totalPages}</span>`;
-      html += `<button class="btn-flat" ${page >= totalPages ? 'disabled' : ''} onclick="gotoPage(${page+1})">Next <span class="material-icons">chevron_right</span></button>`;
-      document.getElementById('pagination-controls').innerHTML = html;
-    }
-    function gotoPage(page) {
-      currentPage = page;
-      fetchBookings(page);
-    }
-    fetchBookings();
-  </script>
+    <div class="container">
+        <h1 class="table-title">Bookings</h1>
+        <div class="table-wrapper">
+            <table id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>Booking #</th>
+                        <th>Tour Date</th>
+                        <th>Customer Name</th>
+                        <th>SKU</th>
+                        <th class="md:table-cell hidden-md">Program</th>
+                        <th class="md:table-cell hidden-md">Hotel</th>
+                        <th>Adult</th>
+                        <th class="md:table-cell hidden-md">Child</th>
+                        <th class="lg:table-cell hidden-lg">Infant</th>
+                        <th>OP</th>
+                        <th>Customer</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingsTableBody"></tbody>
+            </table>
+        </div>
+        <div class="flex justify-end items-center mt-4" id="pagination-controls"></div>
+    </div>
+    <script>
+        let currentPage = 1;
+        const limit = 20;
+        async function fetchBookings(page = 1) {
+            const res = await fetch(`/api/bookings?page=${page}&limit=${limit}`);
+            const data = await res.json();
+            renderTable(data.bookings);
+            renderPagination(data.page, data.limit, data.total);
+        }
+        function renderTable(bookings) {
+            const tbody = document.getElementById('bookingsTableBody');
+            tbody.innerHTML = '';
+            for (const b of bookings) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td title="${b.booking_number}">${b.booking_number}</td>
+                    <td title="${b.tour_date ? b.tour_date.substring(0,10) : ''}">${b.tour_date ? b.tour_date.substring(0,10) : ''}</td>
+                    <td title="${b.customer_name || ''}">${b.customer_name || ''}</td>
+                    <td title="${b.sku || ''}">${b.sku || ''}</td>
+                    <td class="md:table-cell hidden-md" title="${b.program || ''}">${b.program || ''}</td>
+                    <td class="md:table-cell hidden-md" title="${b.hotel || ''}">${b.hotel || ''}</td>
+                    <td title="${b.adult ?? ''}">${b.adult ?? ''}</td>
+                    <td class="md:table-cell hidden-md" title="${b.child ?? ''}">${b.child ?? ''}</td>
+                    <td class="lg:table-cell hidden-lg" title="${b.infant ?? ''}">${b.infant ?? ''}</td>
+                    <td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td>
+                    <td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+        function renderPagination(page, limit, total) {
+            const totalPages = Math.ceil(total / limit);
+            let html = '';
+            html += `<button class="px-3 py-1 rounded border mr-2 ${page <= 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600'}" ${page <= 1 ? 'disabled' : ''} onclick="gotoPage(${page-1})">&lt; Prev</button>`;
+            html += `<span class="mx-2">Page ${page} of ${totalPages}</span>`;
+            html += `<button class="px-3 py-1 rounded border ml-2 ${page >= totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600'}" ${page >= totalPages ? 'disabled' : ''} onclick="gotoPage(${page+1})">Next &gt;</button>`;
+            document.getElementById('pagination-controls').innerHTML = html;
+        }
+        function gotoPage(page) {
+            currentPage = page;
+            fetchBookings(page);
+        }
+        fetchBookings();
+    </script>
+    <!-- Material Icons for check/cancel -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </body>
 </html> 

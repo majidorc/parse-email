@@ -11,22 +11,15 @@ const columns = [
   { id: 'tour_date', label: 'Tour Date' },
   { id: 'customer_name', label: 'Customer Name' },
   { id: 'sku', label: 'SKU' },
-  { id: 'program', label: 'Program', hideOnMobile: true },
-  { id: 'hotel', label: 'Hotel', hideOnMobile: true },
+  { id: 'program', label: 'Program' },
+  { id: 'hotel', label: 'Hotel' },
   { id: 'adult', label: 'Adult' },
-  { id: 'child', label: 'Child', hideOnMobile: true },
-  { id: 'infant', label: 'Infant', hideOnDesktop: true },
+  { id: 'child', label: 'Child' },
+  { id: 'infant', label: 'Infant' },
   { id: 'op', label: 'OP', isToggle: true },
   { id: 'ri', label: 'RI', isToggle: true },
   { id: 'customer', label: 'Customer', isToggle: true },
 ];
-
-function isMobile() {
-  return window.innerWidth < 768;
-}
-function isDesktop() {
-  return window.innerWidth >= 1024;
-}
 
 export default function App() {
   const [bookings, setBookings] = useState([]);
@@ -53,10 +46,6 @@ export default function App() {
 
   useEffect(() => {
     fetchBookings(page, rowsPerPage);
-    // Responsive re-render
-    const handleResize = () => setBookings(b => [...b]);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
     // eslint-disable-next-line
   }, [page, rowsPerPage]);
 
@@ -82,26 +71,22 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', padding: 24, background: '#f8f9fa', maxWidth: 1200, width: '100%', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', fontWeight: 700, marginBottom: 30, fontSize: '2.25rem' }}>Bookings</h1>
-      <Paper elevation={3} style={{ borderRadius: 15, overflow: 'hidden', width: '100%' }}>
+    <div>
+      <h1>Bookings</h1>
+      <Paper>
         <TableContainer>
-          <Table stickyHeader>
+          <Table>
             <TableHead>
               <TableRow>
-                {columns.map(col => {
-                  if (col.hideOnMobile && isMobile()) return null;
-                  if (col.hideOnDesktop && !isDesktop()) return null;
-                  return <TableCell key={col.id}>{col.label}</TableCell>;
-                })}
+                {columns.map(col => (
+                  <TableCell key={col.id}>{col.label}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
               {bookings.map((b) => (
-                <TableRow key={b.booking_number} hover>
+                <TableRow key={b.booking_number}>
                   {columns.map(col => {
-                    if (col.hideOnMobile && isMobile()) return null;
-                    if (col.hideOnDesktop && !isDesktop()) return null;
                     if (col.isToggle) {
                       const value = b[col.id];
                       const loadingKey = `${b.booking_number}_${col.id}`;

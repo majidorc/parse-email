@@ -436,19 +436,26 @@ async function handler(req, res) {
         return res.status(405).send('Method Not Allowed');
     }
 
-    // Handle Telegram button callbacks
-    if (req.body && req.body.callback_query) {
-        return handleTelegramCallback(req.body.callback_query, res);
-    }
-    
-    // Handle the daily cron job for sending reminders
-    const cronJob = req.query.cron_job === 'true';
-    const cronSecret = req.headers.authorization?.split(" ")[1];
-
     try {
         console.log('Webhook invoked.');
 
         const rawBody = await getRawBody(req);
+        let jsonData;
+        try {
+            jsonData = JSON.parse(rawBody.toString('utf-8'));
+        } catch (error) {
+            // Not a JSON body, so it must be an email.
+            jsonData = null;
+        }
+
+        // If it's a Telegram callback, handle it and exit.
+        if (jsonData && jsonData.callback_query) {
+            console.log('--- Handling Telegram Callback ---');
+            return handleTelegramCallback(jsonData.callback_query, res);
+        }
+        
+        // Otherwise, proceed with email parsing logic.
+        console.log('--- Handling Email Forward ---');
         const parsedEmail = await simpleParser(rawBody);
 
         const parser = EmailParserFactory.create(parsedEmail);

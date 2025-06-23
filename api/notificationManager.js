@@ -146,9 +146,8 @@ class NotificationManager {
       const reply_markup = {
         inline_keyboard: [
           [
-            { text: 'X', callback_data: `toggle:1:${bookingNumber}` },
-            { text: 'X', callback_data: `toggle:2:${bookingNumber}` },
-            { text: 'X', callback_data: `toggle:3:${bookingNumber}` }
+            { text: 'OP X', callback_data: `toggle:op:${bookingNumber}` },
+            { text: 'Customer X', callback_data: `toggle:customer:${bookingNumber}` }
           ]
         ]
       };

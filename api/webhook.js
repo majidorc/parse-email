@@ -15,12 +15,10 @@ async function handleTelegramCallback(callbackQuery, res) {
 
     const parts = data.split(':');
     const action = parts[0];
-    const buttonIndexStr = parts[1];
+    const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
 
-    const buttonIndex = parseInt(buttonIndexStr, 10) - 1;
-
-    if (action !== 'toggle' || isNaN(buttonIndex)) {
+    if (action !== 'toggle' || !['op', 'customer'].includes(buttonType)) {
         return res.status(400).send('Invalid callback data');
     }
 
@@ -29,11 +27,16 @@ async function handleTelegramCallback(callbackQuery, res) {
             callback_query_id: callbackQuery.id
         });
 
+        // Find the button and toggle its state
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
+        let buttonIndex = buttonType === 'op' ? 0 : 1;
         const button = newKeyboard[0][buttonIndex];
-
         if (button) {
-            button.text = button.text === 'X' ? '✓' : 'X';
+            const isChecked = button.text.endsWith('✓');
+            button.text = buttonType.charAt(0).toUpperCase() + buttonType.slice(1) + (isChecked ? ' X' : ' ✓');
+            // Update the database
+            const column = buttonType;
+            await sql`UPDATE bookings SET ${sql.raw(column)} = ${!isChecked} WHERE booking_number = ${bookingId};`;
         } else {
             console.error(`Button at index ${buttonIndex} not found in keyboard.`);
         }

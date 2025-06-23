@@ -92,3 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Configuration-Driven Parsing**: Added `config.json`
+
+## [Unreleased]
+### Added
+- Telegram notifications now include two inline toggle buttons: `OP X`/`OP ✓` and `Customer X`/`Customer ✓`.
+- Toggling a button updates the corresponding `op` or `customer` boolean column in the `bookings` table.
+- Business rule: `Customer` cannot be toggled to ✓ unless `OP` is already ✓. If violated, a popup alert is shown in Telegram ("OP not send yet.").
+- Database schema updated: added `op` and `customer` boolean columns to `bookings`.

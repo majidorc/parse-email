@@ -9,6 +9,11 @@ This project is a Vercel serverless function that automates the processing of bo
 - **Email Parsing**: Receives raw email content via a webhook, identifies the sender, and uses the appropriate parser (`Bokun.io`, `ThailandTours.co.th`) to extract key booking details.
 - **Database Storage**: Saves all successfully parsed bookings into a Vercel Postgres database. This provides a persistent record of all tours.
 - **Scheduled Daily Notifications**: A dedicated cron job (`/api/daily-scheduler`) runs automatically every morning. It finds all tours scheduled for that day and sends a notification via Email and Telegram. This is the **only** way notifications are sent.
+- **Telegram Interactive Buttons**: Each booking notification in Telegram now includes two inline buttons:
+  - `OP X` (toggles to `OP ✓`)
+  - `Customer X` (toggles to `Customer ✓`)
+- **Business Rule**: The Customer button cannot be toggled to ✓ unless OP is already ✓. If attempted, a popup alert will appear in Telegram: "OP not send yet."
+- **Database Columns**: The `bookings` table now includes two new boolean columns: `op` and `customer`, which are updated when the buttons are toggled.
 
 ## How It Works
 

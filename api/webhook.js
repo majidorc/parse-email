@@ -37,11 +37,18 @@ async function handleTelegramCallback(callbackQuery, res) {
             const isChecked = button.text.endsWith('✓');
             button.text = buttonType.charAt(0).toUpperCase() + buttonType.slice(1) + (isChecked ? ' X' : ' ✓');
             // Update the database
-            const column = buttonType;
-            console.log(`Updating DB: booking_number=${bookingId}, column=${column}, value=${!isChecked}`);
+            let column;
+            if (buttonType === 'op') column = 'op';
+            else if (buttonType === 'customer') column = 'customer';
+            else return res.status(400).send('Invalid column');
+            console.log(`Preparing to update DB: booking_number=${bookingId} (type: ${typeof bookingId}), column=${column}, value=${!isChecked}`);
             try {
-                await sql`UPDATE bookings SET ${sql.raw(column)} = ${!isChecked} WHERE booking_number = ${bookingId};`;
-                console.log('DB update success');
+                const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
+                const result = await sql.query(query, [!isChecked, bookingId]);
+                console.log('DB update result:', result);
+                if (result.rowCount !== undefined) {
+                  console.log('Rows affected:', result.rowCount);
+                }
             } catch (sqlError) {
                 console.error('DB update error:', sqlError);
             }

@@ -10,6 +10,8 @@ All notable changes to this project are documented here. This project follows [K
 - Database schema updated: added `op` and `customer` boolean columns to `bookings`.
 - Improved error handling and logging for all Telegram and database actions.
 
+---
+
 ## [2.4.0] - 2025-06-23
 ### Added
 - Interactive Telegram Buttons: Added inline buttons to every Telegram notification for OP and Customer confirmation.
@@ -56,4 +58,33 @@ All notable changes to this project are documented here. This project follows [K
 
 ---
 
-*For earlier changes, see previous versions in version control.*
+## [1.3.0] - 2025-06-21
+### Added
+- Configuration-driven parser selection via `config.json`.
+- Test suite for email parsing.
+- Multi-channel notification system (Email, Telegram).
+- Improved field extraction and formatting rules.
+- Initial CHANGELOG and semantic versioning.
+
+## [1.2.0] - 2025-06-21
+### Added
+- Support for ThailandTours.co.th email format.
+- Robust HTML email parsing and conversion to text.
+- Improved phone number and hotel extraction logic.
+
+## [1.1.0] - 2025-06-20
+### Added
+- Initial support for Bokun.io booking notification parsing.
+- Google Apps Script for forwarding emails to webhook.
+- Basic field extraction: booking number, date, program, name, pax, hotel, phone.
+- Simple test runner for parser validation.
+
+## [1.0.0] - 2025-06-20
+### Added
+- First release: Automated email parser for Bokun.io notifications.
+- Webhook endpoint for receiving and parsing emails.
+- Basic README and project structure.
+
+---
+
+*For more granular details, see the git commit history.*

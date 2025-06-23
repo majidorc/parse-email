@@ -9,7 +9,9 @@ const NotificationManager = require('./notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;
+    console.log('TELEGRAM CALLBACK DATA:', data);
     if (!data || !message) {
+        console.error('Invalid callback query format');
         return res.status(400).send('Invalid callback query format');
     }
 
@@ -19,6 +21,7 @@ async function handleTelegramCallback(callbackQuery, res) {
     const bookingId = parts.slice(2).join(':');
 
     if (action !== 'toggle' || !['op', 'customer'].includes(buttonType)) {
+        console.error('Invalid callback data:', data);
         return res.status(400).send('Invalid callback data');
     }
 
@@ -27,7 +30,6 @@ async function handleTelegramCallback(callbackQuery, res) {
             callback_query_id: callbackQuery.id
         });
 
-        // Find the button and toggle its state
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
         let buttonIndex = buttonType === 'op' ? 0 : 1;
         const button = newKeyboard[0][buttonIndex];
@@ -36,7 +38,13 @@ async function handleTelegramCallback(callbackQuery, res) {
             button.text = buttonType.charAt(0).toUpperCase() + buttonType.slice(1) + (isChecked ? ' X' : ' ✓');
             // Update the database
             const column = buttonType;
-            await sql`UPDATE bookings SET ${sql.raw(column)} = ${!isChecked} WHERE booking_number = ${bookingId};`;
+            console.log(`Updating DB: booking_number=${bookingId}, column=${column}, value=${!isChecked}`);
+            try {
+                await sql`UPDATE bookings SET ${sql.raw(column)} = ${!isChecked} WHERE booking_number = ${bookingId};`;
+                console.log('DB update success');
+            } catch (sqlError) {
+                console.error('DB update error:', sqlError);
+            }
         } else {
             console.error(`Button at index ${buttonIndex} not found in keyboard.`);
         }
@@ -50,6 +58,7 @@ async function handleTelegramCallback(callbackQuery, res) {
         return res.status(200).send('OK');
 
     } catch (error) {
+        console.error('Callback handler error:', error);
         return res.status(200).send('Error processing callback');
     }
 }
@@ -412,6 +421,7 @@ class FallbackParser extends BaseEmailParser {
 }
 
 async function handler(req, res) {
+    console.log('WEBHOOK REQUEST RECEIVED:', req.method, new Date().toISOString());
     if (req.method !== 'POST') {
         return res.status(405).send('Method Not Allowed');
     }

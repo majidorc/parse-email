@@ -95,6 +95,7 @@
                         <th class="md:table-cell hidden-md">Child</th>
                         <th class="lg:table-cell hidden-lg">Infant</th>
                         <th>OP</th>
+                        <th>RI</th>
                         <th>Customer</th>
                     </tr>
                 </thead>
@@ -128,12 +129,13 @@
                     <td class="md:table-cell hidden-md" title="${b.child ?? ''}">${b.child ?? ''}</td>
                     <td class="lg:table-cell hidden-lg" title="${b.infant ?? ''}">${b.infant ?? ''}</td>
                     <td><button class='op-btn' data-booking='${b.booking_number}' data-type='op' aria-label='Toggle OP' style='background:none;border:none;cursor:pointer;'>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</button></td>
+                    <td><button class='ri-btn' data-booking='${b.booking_number}' data-type='ri' aria-label='Toggle RI' style='background:none;border:none;cursor:pointer;'>${b.ri ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</button></td>
                     <td><button class='customer-btn' data-booking='${b.booking_number}' data-type='customer' aria-label='Toggle Customer' style='background:none;border:none;cursor:pointer;'>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</button></td>
                 `;
                 tbody.appendChild(tr);
             }
             // Add event listeners for toggle buttons
-            tbody.querySelectorAll('button.op-btn, button.customer-btn').forEach(btn => {
+            tbody.querySelectorAll('button.op-btn, button.ri-btn, button.customer-btn').forEach(btn => {
                 btn.addEventListener('click', async function(e) {
                     e.preventDefault();
                     const booking_number = this.getAttribute('data-booking');

@@ -440,11 +440,21 @@ async function handler(req, res) {
         console.log('Webhook invoked.');
 
         const rawBody = await getRawBody(req);
+        const bodyString = rawBody.toString('utf-8');
+        console.log('--- Raw Request Body ---');
+        console.log(bodyString);
+        console.log('------------------------');
+
         let jsonData;
         try {
-            jsonData = JSON.parse(rawBody.toString('utf-8'));
+            jsonData = JSON.parse(bodyString);
+            console.log('--- Parsed JSON Body ---');
+            console.log(JSON.stringify(jsonData, null, 2));
+            console.log('------------------------');
         } catch (error) {
-            // Not a JSON body, so it must be an email.
+            console.log('--- JSON Parsing Failed ---');
+            console.log(error.message);
+            console.log('---------------------------');
             jsonData = null;
         }
 

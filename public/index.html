@@ -101,9 +101,9 @@
       renderPagination(data.page, data.limit, data.total);
     }
     function renderTable(bookings) {
-      let html = '<table class="striped highlight responsive-table"><thead><tr><th>Booking #</th><th>Tour Date</th><th>Customer Name</th><th>Program</th><th>Hotel</th><th>Adult</th><th>Child</th><th>Infant</th><th>OP</th><th>Customer</th></tr></thead><tbody>';
+      let html = '<table class="striped highlight responsive-table"><thead><tr><th>Booking #</th><th>Tour Date</th><th>Customer Name</th><th>SKU</th><th>Program</th><th>Hotel</th><th>Adult</th><th>Child</th><th>Infant</th><th>OP</th><th>Customer</th></tr></thead><tbody>';
       for (const b of bookings) {
-        html += `<tr><td>${b.booking_number}</td><td>${b.tour_date ? b.tour_date.substring(0,10) : ''}</td><td>${b.customer_name || ''}</td><td>${b.program || ''}</td><td>${b.hotel || ''}</td><td>${b.adult ?? ''}</td><td>${b.child ?? ''}</td><td>${b.infant ?? ''}</td><td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td><td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td></tr>`;
+        html += `<tr><td>${b.booking_number}</td><td>${b.tour_date ? b.tour_date.substring(0,10) : ''}</td><td>${b.customer_name || ''}</td><td>${b.sku || ''}</td><td>${b.program || ''}</td><td>${b.hotel || ''}</td><td>${b.adult ?? ''}</td><td>${b.child ?? ''}</td><td>${b.infant ?? ''}</td><td>${b.op ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td><td>${b.customer ? '<span class=\'material-icons\' style=\'color:#388e3c\'>check_circle</span>' : '<span class=\'material-icons\' style=\'color:#bdbdbd\'>cancel</span>'}</td></tr>`;
       }
       html += '</tbody></table>';
       document.getElementById('bookings-table').innerHTML = html;

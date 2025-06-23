@@ -8,7 +8,17 @@ const configData = require('../config.json');
 const NotificationManager = require('./notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
+    console.log('--- Inside handleTelegramCallback ---');
+    console.log('Received callbackQuery:', JSON.stringify(callbackQuery, null, 2));
+
     const { data, message } = callbackQuery;
+    if (!data || !message) {
+        console.error('Callback query is missing `data` or `message` field.');
+        return res.status(400).send('Invalid callback query format');
+    }
+
+    console.log(`Callback data: ${data}`);
+
     // Use split with a limit to handle booking numbers that might contain ':'
     const parts = data.split(':');
     const action = parts[0];
@@ -18,29 +28,37 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonIndex = parseInt(buttonIndexStr, 10) - 1;
 
     if (action !== 'toggle' || isNaN(buttonIndex)) {
-        console.log(`Invalid callback data received: ${data}`);
+        console.error('Invalid callback data received');
         return res.status(400).send('Invalid callback data');
     }
 
     try {
+        console.log('Acknowledging callback to Telegram...');
         // Acknowledge the callback immediately to improve UX
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id
         });
+        console.log('Callback acknowledged.');
 
         // Create a deep copy of the keyboard to modify it
         const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
         const button = newKeyboard[0][buttonIndex];
 
         if (button) {
+            console.log(`Toggling button ${buttonIndex + 1}. Current text: "${button.text}"`);
             button.text = button.text === 'X' ? '✓' : 'X';
+            console.log(`New text: "${button.text}"`);
+        } else {
+            console.error(`Button at index ${buttonIndex} not found in keyboard.`);
         }
 
+        console.log('Sending request to edit message reply markup...');
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: { inline_keyboard: newKeyboard }
         });
+        console.log('Successfully edited message markup.');
 
         return res.status(200).send('OK');
 

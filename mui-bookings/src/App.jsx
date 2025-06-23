@@ -26,9 +26,9 @@ export default function App() {
   }, []);
 
   return (
-    <div style={{ width: '100vw' }}>
-      <h1 style={{ color: '#d32f2f' }}>Bookings</h1>
-      <Table style={{ width: '100%' }}>
+    <div style={{ maxWidth: 1200, margin: '40px auto', padding: 24, background: 'none' }}>
+      <h1 style={{ color: '#d32f2f', textAlign: 'center' }}>Bookings</h1>
+      <Table>
         <TableHead>
           <TableRow>
             {columns.map(col => (

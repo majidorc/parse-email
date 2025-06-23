@@ -203,6 +203,20 @@ class NotificationManager {
       return;
     }
     try {
+      // 1. Send full details as a plain text message
+      await axios.post('https://api.line.me/v2/bot/message/push', {
+        to: process.env.LINE_USER_ID,
+        messages: [
+          { type: 'text', text: messageData.responseTemplate.substring(0, 2000) } // LINE text limit is 2000 chars
+        ]
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
+        }
+      });
+      // 2. Send button template with a short summary (max 160 chars)
+      const summary = `Booking: ${messageData.bookingNumber} | ${messageData.tourDate} | ${messageData.customerName}`.substring(0, 160);
       await axios.post('https://api.line.me/v2/bot/message/push', {
         to: process.env.LINE_USER_ID,
         messages: [
@@ -211,7 +225,7 @@ class NotificationManager {
             altText: 'Booking Confirmation',
             template: {
               type: 'buttons',
-              text: messageData.responseTemplate.substring(0, 400), // LINE limit
+              text: summary,
               actions: [
                 {
                   type: 'postback',

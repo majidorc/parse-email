@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node api/webhook.js",
     "test": "node test-email.js",
-    "build": "echo 'No build step required'"
+    "build": "echo 'No build step required'",
+    "postinstall": "npm uninstall bufferutil utf-8-validate || true"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",

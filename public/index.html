@@ -1,14 +1,205 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-    <script type="module" crossorigin src="/assets/index-BkAJP2ao.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Dtn62Xmo.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material Web Components Styled Table</title>
+  <!-- Roboto font for Material Design -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Import Map for Material Web Components -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+  </script>
+  <!-- Import Material Web Components and Typoscale Styles -->
+  <script type="module">
+    import '@material/web/all.js';
+    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+  </script>
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #F8F9FA;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      box-sizing: border-box;
+      color: #1A1A1A;
+    }
+    .container {
+      padding: 24px;
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .table-title {
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0em;
+      line-height: 36px;
+      color: rgba(0, 0, 0, 0.87);
+      text-align: center;
+      margin-bottom: 24px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .table-wrapper {
+      background-color: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      overflow-x: hidden;
+      padding: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.87);
+    }
+    th {
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      background-color: #F3F6F9;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    tr:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+    .hidden-sm { display: none; }
+    @media (min-width: 600px) {
+      .sm\:table-cell { display: table-cell; }
+    }
+    .hidden-md { display: none; }
+    @media (min-width: 840px) {
+      .md\:table-cell { display: table-cell; }
+    }
+    .hidden-lg { display: none; }
+    @media (min-width: 1200px) {
+      .lg\:table-cell { display: table-cell; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="table-title">Customer Data Table</h1>
+    <div class="table-wrapper">
+      <table id="customerDataTable">
+        <thead>
+          <tr id="tableHeadRow"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px; align-items: flex-start;">
+        <p class="md-typescale-body-medium">Other Material Web Components:</p>
+        <md-checkbox touch-target="wrapper"></md-checkbox>
+        <div>
+            <md-radio name="group" checked></md-radio>
+            <md-radio name="group"></md-radio>
+            <md-radio name="group"></md-radio>
+        </div>
+        <md-outlined-text-field label="Search" value=""></md-outlined-text-field>
+        <md-filled-button>Submit</md-filled-button>
+    </div>
+  </div>
+  <script type="module">
+    const columns = [
+      { id: 'id', label: 'ID', minWidth: 50, responsive: 'always' },
+      { id: 'firstName', label: 'First Name', minWidth: 100, responsive: 'always' },
+      { id: 'lastName', label: 'Last Name', minWidth: 100, responsive: 'always' },
+      { id: 'email', label: 'Email', minWidth: 150, responsive: 'always' },
+      { id: 'phone', label: 'Phone', minWidth: 120, responsive: 'sm' },
+      { id: 'address', label: 'Address', minWidth: 180, responsive: 'lg' },
+      { id: 'city', label: 'City', minWidth: 100, responsive: 'sm' },
+      { id: 'state', label: 'State', minWidth: 80, responsive: 'md' },
+      { id: 'zip', label: 'ZIP', minWidth: 70, responsive: 'sm' },
+      { id: 'country', label: 'Country', minWidth: 100, responsive: 'lg' },
+      { id: 'status', label: 'Status', minWidth: 80, responsive: 'always' },
+    ];
+    function createData(id, firstName, lastName, email, phone, address, city, state, zip, country, status) {
+      return { id, firstName, lastName, email, phone, address, city, state, zip, country, status };
+    }
+    const rows = [
+      createData(1, 'John', 'Doe', 'john.doe@example.com', '123-456-7890', '123 Main St', 'Anytown', 'CA', '90210', 'USA', 'Active'),
+      createData(2, 'Jane', 'Smith', 'jane.smith@example.com', '098-765-4321', '456 Oak Ave', 'Otherville', 'NY', '10001', 'USA', 'Pending'),
+      createData(3, 'Peter', 'Jones', 'peter.j@example.com', '555-123-4567', '789 Pine Ln', 'Another City', 'TX', '75001', 'USA', 'Active'),
+      createData(4, 'Alice', 'Williams', 'alice.w@example.com', '111-222-3333', '321 Elm Rd', 'Green Acres', 'FL', '33101', 'USA', 'Inactive'),
+      createData(5, 'Bob', 'Brown', 'bob.b@example.com', '444-555-6666', '654 Birch Ct', 'Lake View', 'WA', '98101', 'USA', 'Active'),
+      createData(6, 'Charlie', 'Davis', 'charlie.d@example.com', '777-888-9999', '987 Cedar Dr', 'Rivertown', 'GA', '30303', 'USA', 'Pending'),
+      createData(7, 'Diana', 'Miller', 'diana.m@example.com', '222-333-4444', '101 Maple St', 'Hillside', 'IL', '60606', 'USA', 'Active'),
+      createData(8, 'Eve', 'Wilson', 'eve.w@example.com', '666-777-8888', '202 Spruce Ave', 'Valley Forge', 'PA', '19406', 'USA', 'Inactive'),
+      createData(9, 'Frank', 'Moore', 'frank.m@example.com', '999-000-1111', '303 Willow Ln', 'Sunnyside', 'AZ', '85001', 'USA', 'Active'),
+      createData(10, 'Grace', 'Taylor', 'grace.t@example.com', '333-444-5555', '404 Poplar Rd', 'Oceanfront', 'CA', '92054', 'USA', 'Pending'),
+    ];
+    function renderTable() {
+      const tableHeadRow = document.getElementById('tableHeadRow');
+      const tableBody = document.getElementById('tableBody');
+      tableHeadRow.innerHTML = '';
+      tableBody.innerHTML = '';
+      columns.forEach(column => {
+        const th = document.createElement('th');
+        th.textContent = column.label;
+        if (column.responsive === 'sm') {
+          th.classList.add('hidden-sm', 'sm:table-cell');
+        } else if (column.responsive === 'md') {
+          th.classList.add('hidden-md', 'md:table-cell');
+        } else if (column.responsive === 'lg') {
+          th.classList.add('hidden-lg', 'lg:table-cell');
+        }
+        const totalVisibleColumns = columns.filter(col => {
+            const viewportWidth = window.innerWidth;
+            return col.responsive === 'always' ||
+                   (col.responsive === 'sm' && viewportWidth >= 600) ||
+                   (col.responsive === 'md' && viewportWidth >= 840) ||
+                   (col.responsive === 'lg' && viewportWidth >= 1200);
+        }).length;
+        th.style.width = `${100 / (totalVisibleColumns || 1)}%`;
+        tableHeadRow.appendChild(th);
+      });
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('tabindex', '-1');
+        columns.forEach(column => {
+          const td = document.createElement('td');
+          td.textContent = row[column.id];
+          if (column.responsive === 'sm') {
+            td.classList.add('hidden-sm', 'sm:table-cell');
+          } else if (column.responsive === 'md') {
+            td.classList.add('hidden-md', 'md:table-cell');
+          } else if (column.responsive === 'lg') {
+            td.classList.add('hidden-lg', 'lg:table-cell');
+          }
+          tr.appendChild(td);
+        });
+        tableBody.appendChild(tr);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', renderTable);
+    window.addEventListener('resize', renderTable);
+  </script>
+</body>
 </html>

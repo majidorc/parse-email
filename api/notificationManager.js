@@ -74,6 +74,9 @@ class NotificationManager {
       pax: paxString,
       hotel,
       phoneNumber,
+      op: details.op,
+      ri: details.ri,
+      customer: details.customer
     };
   }
 
@@ -146,9 +149,9 @@ class NotificationManager {
       const reply_markup = {
         inline_keyboard: [
           [
-            { text: `OP ${booking.op ? '✓' : 'X'}`, callback_data: `toggle:op:${bookingNumber}` },
-            { text: `RI ${booking.ri ? '✓' : 'X'}`, callback_data: `toggle:ri:${bookingNumber}` },
-            { text: `Customer ${booking.customer ? '✓' : 'X'}`, callback_data: `toggle:customer:${bookingNumber}` }
+            { text: `OP ${messageData.op ? '✓' : 'X'}`, callback_data: `toggle:op:${bookingNumber}` },
+            { text: `RI ${messageData.ri ? '✓' : 'X'}`, callback_data: `toggle:ri:${bookingNumber}` },
+            { text: `Customer ${messageData.customer ? '✓' : 'X'}`, callback_data: `toggle:customer:${bookingNumber}` }
           ]
         ]
       };

@@ -1,119 +1,93 @@
-# Automated Email Parser and Notification System
+# Automated Booking Email Parser & Notification System
 
 > [View Changelog](CHANGELOG.md)
 
-This project is a Vercel serverless function that automates the processing of booking notification emails. It has evolved from a simple email parser to a more robust system with database persistence and scheduled reminders.
+This project is a modern, serverless system for automating the processing of booking notification emails, storing them in a database, and sending scheduled reminders via Email and Telegram—with interactive business logic for operations teams.
 
 ## Features
 
-- **Email Parsing**: Receives raw email content via a webhook, identifies the sender, and uses the appropriate parser (`Bokun.io`, `ThailandTours.co.th`) to extract key booking details.
-- **Database Storage**: Saves all successfully parsed bookings into a Vercel Postgres database. This provides a persistent record of all tours.
-- **Scheduled Daily Notifications**: A dedicated cron job (`/api/daily-scheduler`) runs automatically every morning. It finds all tours scheduled for that day and sends a notification via Email and Telegram. This is the **only** way notifications are sent.
-- **Telegram Interactive Buttons**: Each booking notification in Telegram now includes two inline buttons:
+- **Automated Email Parsing**: Receives raw booking emails via webhook, identifies the sender, and uses a configurable parser to extract all key details.
+- **Database Storage**: All bookings are saved in a Vercel Postgres database for persistence and reporting.
+- **Scheduled Daily Reminders**: A daily cron job (via `/api/daily-scheduler`) queries for bookings scheduled for the next day and sends notifications via Email and Telegram.
+- **Telegram Interactive Buttons**: Each Telegram notification includes two inline buttons:
   - `OP X` (toggles to `OP ✓`)
   - `Customer X` (toggles to `Customer ✓`)
-- **Business Rule**: The Customer button cannot be toggled to ✓ unless OP is already ✓. If attempted, a popup alert will appear in Telegram: "OP not send yet."
-- **Database Columns**: The `bookings` table now includes two new boolean columns: `op` and `customer`, which are updated when the buttons are toggled.
+- **Business Rule Enforcement**: The Customer button cannot be toggled to ✓ unless OP is already ✓. If attempted, a popup alert appears in Telegram.
+- **Safe, Auditable State**: Button toggles update the `op` and `customer` boolean columns in the `bookings` table, ensuring a reliable audit trail.
+- **Configurable Parsers**: Easily add new email formats by creating a parser and mapping it in `config.json`.
+- **Robust Logging & Error Handling**: All actions are logged for traceability and debugging.
 
 ## How It Works
 
-1.  **Email Forwarding**: A companion Google Apps Script (`email-forwarder.gs`) monitors a Gmail account for unread emails from specified senders.
-2.  **Webhook Trigger**: The script forwards the raw email content to the `/api/webhook` endpoint.
-3.  **Parsing & Storage**: The webhook parses the email, extracts booking information, and saves it to the Postgres database. No notification is sent at this stage.
-4.  **External Cron Job**: A third-party service like `cron-job.org` is configured to send a daily `POST` request to the `/api/daily-scheduler` endpoint.
-5.  **Reminder Notification**: This separate function queries the database for bookings matching the current date, sends the reminders, and updates a flag to prevent re-sending.
+1. **Email Forwarding**: A Google Apps Script (`email-forwarder.gs`) monitors a Gmail inbox and forwards new booking emails to the `/api/webhook` endpoint.
+2. **Webhook Processing**: The webhook parses the email, extracts booking details, and saves them to the database. No notifications are sent at this stage.
+3. **Scheduled Notification**: An external cron job (e.g., cron-job.org) triggers `/api/daily-scheduler` every morning. It finds bookings for the next day and sends reminders via Email and Telegram.
+4. **Telegram Button Logic**: Inline buttons in Telegram allow OP and Customer confirmation. Toggling updates the database and enforces business rules (Customer ✓ only if OP ✓).
 
-## Environment Variables
+## Setup & Configuration
 
-The following environment variables must be configured in your Vercel project for **all environments (Production, Preview, and Development)**:
+### 1. Environment Variables
+Set these in your Vercel project:
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: Email sending credentials
+- `FROM_EMAIL`: Sender address for notifications
+- `POSTGRES_URL`: Vercel Postgres connection string
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`: Telegram bot credentials
+- `CRON_SECRET`: Secret for securing the scheduler endpoint
+- `ENABLE_EMAIL_NOTIFICATIONS`: `true` to enable email
+- `ENABLE_TELEGRAM_NOTIFICATIONS`: `true` to enable Telegram
 
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`: Your email sending credentials.
-- `FROM_EMAIL`: The email address to send notifications from.
-- `POSTGRES_URL`: The connection string for your Vercel Postgres database.
-- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`: Your Telegram bot credentials.
-- `CRON_SECRET`: A secret key to protect your cron job endpoint. This is sent as a Bearer token in the `Authorization` header.
-- `ENABLE_EMAIL_NOTIFICATIONS`: Set to `true` to enable email sending.
-- `ENABLE_TELEGRAM_NOTIFICATIONS`: Set to `true` to enable Telegram sending.
----
-*This README was last updated on June 23, 2025.*
-
-## Configuration
-
-### 1. `config.json`
-
-This file is the heart of the system's flexibility. It maps a sender's email address to a specific parser class.
-
-**Example `config.json`:**
+### 2. `config.json`
+Configure which parser to use for each sender, and enable/disable notification channels:
 ```json
-[
-  {
-    "fromAddress": "no-reply@bokun.io",
-    "parserName": "BokunParser"
-  },
-  {
-    "fromAddress": "info@tours.co.th",
-    "parserName": "ThailandToursParser"
-  }
-]
-```
-To support a new sender, simply add a new object to this array with their `fromAddress` and the `parserName` you want to use.
-
-### 2. Notification Channels
-
-You can enable or disable different notification channels in `config.json`.
-
-```json
-"notifications": {
-  "email": {
-    "enabled": true
-  },
-  "telegram": {
-    "enabled": true
+{
+  "parserRules": [
+    { "fromAddress": "no-reply@bokun.io", "parserName": "BokunParser" },
+    { "fromAddress": "info@tours.co.th", "parserName": "ThailandToursParser" }
+  ],
+  "notifications": {
+    "email": { "enabled": true },
+    "telegram": { "enabled": true }
   }
 }
 ```
 
 ### 3. Deploy to Vercel
 ```bash
-# Install Vercel CLI
 npm i -g vercel
-
-# Deploy to production
 vercel --prod
 ```
 
-### 4. Set Up the Email Forwarder
-Follow the instructions in `email-forwarder.gs` to set up the script that forwards emails to your Vercel webhook URL.
+### 4. Set Up Gmail Forwarding
+- Copy `email-forwarder.gs` to Google Apps Script in your Gmail account.
+- Set your webhook URL in the script.
+- Deploy as a time-based trigger (e.g., every 5 minutes).
 
 ### 5. Set Up the Daily Scheduler
-This project uses an external cron job provider for reliability.
-1.  Go to a service like [cron-job.org](https://cron-job.org/) and create an account.
-2.  Create a new cronjob with the following settings:
-    -   **URL:** Your full scheduler URL (e.g., `https://your-project.vercel.app/api/daily-scheduler`).
-    -   **Method:** `POST`.
-    -   **Schedule:** Set your desired local time, making sure to convert it to UTC. For example, to run at 12:15 AM Bangkok time (UTC+7), set the schedule to 5:15 PM UTC (hour `17`, minute `15`).
-3.  **Add Security Header:**
-    -   Under "Advanced" settings, add a "Request Header".
-    -   **Name:** `Authorization`
-    -   **Value:** `Bearer YOUR_CRON_SECRET` (Use the same value as your `CRON_SECRET` environment variable).
-4.  Save the cronjob.
+- Use a service like [cron-job.org](https://cron-job.org/) to POST to `/api/daily-scheduler` daily.
+- Add an `Authorization: Bearer <CRON_SECRET>` header for security.
+- Schedule for your local morning time (convert to UTC as needed).
+
+## Usage
+- **Bookings**: Forwarded emails are parsed and stored automatically.
+- **Reminders**: Sent daily for next-day bookings only.
+- **Telegram Buttons**: Tap to toggle OP/Customer status. Customer ✓ is only allowed if OP ✓; otherwise, a popup alert is shown.
+- **Database**: All toggles are saved for audit and reporting.
 
 ## Customization
-
-To support a completely new email layout, you can create a new parser class.
-
-1.  **Create the Parser**: Add a new class in `api/webhook.js` that extends `BaseEmailParser`.
-2.  **Implement Methods**: Implement the required extraction methods (`extractAll`, `formatBookingDetails`, etc.).
-3.  **Update Factory**: Add the new parser to the `parsers` object in the `EmailParserFactory`.
-4.  **Update Config**: Add a rule to `config.json` to map a sender's email to your new parser's name.
+- **Add a New Parser**: Create a new class in `api/webhook.js` extending `BaseEmailParser`, implement extraction methods, and map it in `config.json`.
+- **Notification Channels**: Enable/disable email or Telegram in `config.json`.
+- **Change Business Rules**: Update the logic in the Telegram callback handler in `api/webhook.js`.
 
 ## Testing
+- Run `node test-email.js` to test all parsers with sample emails.
+- Use the Telegram bot to test button toggling and business rule enforcement.
 
-The project includes a comprehensive test suite. To run it:
-```bash
-node test-email.js
-```
-This script uses the sample emails defined within it to test each parser directly, allowing you to quickly verify that changes work as expected.
+## Troubleshooting & FAQ
+- **No notifications?** Check your environment variables and cron job setup.
+- **Telegram popup not showing?** Only one popup per button click is allowed; use the official Telegram mobile app for best results.
+- **Database not updating?** Ensure your Vercel Postgres connection is correct and the schema includes `op` and `customer` columns.
+
+*Last updated: June 2025*
 
 ## Field Extraction & Formatting Rules
 

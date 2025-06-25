@@ -6,12 +6,52 @@
   <title>Bookings Table</title>
   <link rel="stylesheet" href="/assets/index-Dtn62Xmo.css">
   <style>
-    table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    th { background: #f4f4f4; }
-    tr:nth-child(even) { background: #fafafa; }
-    .container { max-width: 1200px; margin: 40px auto; padding: 24px; background: #fff; border-radius: 10px; }
-    h1 { text-align: center; margin-bottom: 2rem; }
+    body {
+      background: #f5f7fa;
+      color: #222;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #1a237e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+      background: #fff;
+      color: #222;
+      font-size: 1rem;
+    }
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 0.6rem 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: #e3f0fb;
+      color: #0d47a1;
+      font-weight: 600;
+    }
+    tr:nth-child(even) td {
+      background: #f7fbff;
+    }
+    tr:hover td {
+      background: #bbdefb;
+      color: #0d47a1;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 8px; }
+      table, th, td { font-size: 0.92rem; }
+    }
   </style>
 </head>
 <body>

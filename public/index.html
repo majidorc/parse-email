@@ -189,7 +189,6 @@
           va = isBoolLike(va) ? (iconCell(va).includes('✓') ? 1 : 0) : 0;
           vb = isBoolLike(vb) ? (iconCell(vb).includes('✓') ? 1 : 0) : 0;
         } else if (def.type === 'mixed') {
-          // Try to sort icons first, then text
           if (isBoolLike(va) && isBoolLike(vb)) {
             va = iconCell(va).includes('✓') ? 1 : 0;
             vb = iconCell(vb).includes('✓') ? 1 : 0;
@@ -231,7 +230,6 @@
       }
     }
 
-    // Add click listeners to headers after DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
       const ths = document.querySelectorAll('thead th');
       ths.forEach((th, i) => {

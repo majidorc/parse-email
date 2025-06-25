@@ -119,6 +119,12 @@
         return '<span class="icon-false" title="No">✗</span>';
       }
     }
+    function isBoolLike(val) {
+      if (typeof val === 'boolean') return true;
+      if (typeof val === 'number') return val === 0 || val === 1;
+      if (typeof val === 'string') return ['0','1','true','false'].includes(val.toLowerCase());
+      return false;
+    }
     async function fetchBookings() {
       const tbody = document.getElementById('bookings-body');
       try {
@@ -137,7 +143,7 @@
             <td class="program">${b.program || ''}</td>
             <td class="op">${iconCell(b.op)}</td>
             <td class="ri">${iconCell(b.ri)}</td>
-            <td class="customer">${iconCell(b.customer)}</td>
+            <td class="customer">${isBoolLike(b.customer) ? iconCell(b.customer) : (b.customer || '')}</td>
             <td class="hotel">${b.hotel || ''}</td>
             <td class="adult">${b.adult || ''}</td>
             <td class="child">${b.child || ''}</td>

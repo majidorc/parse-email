@@ -125,36 +125,121 @@
       if (typeof val === 'string') return ['0','1','true','false'].includes(val.toLowerCase());
       return false;
     }
+
+    let bookingsData = [];
+    let sortCol = null;
+    let sortDir = 1; // 1 = asc, -1 = desc
+
+    const colDefs = [
+      { key: 'booking_number', label: 'Booking #', type: 'string' },
+      { key: 'tour_date', label: 'Tour Date', type: 'date' },
+      { key: 'customer_name', label: 'Customer Name', type: 'string' },
+      { key: 'sku', label: 'SKU', type: 'string' },
+      { key: 'program', label: 'Program', type: 'string' },
+      { key: 'op', label: 'OP', type: 'bool' },
+      { key: 'ri', label: 'RI', type: 'bool' },
+      { key: 'customer', label: 'Customer', type: 'mixed' },
+      { key: 'hotel', label: 'Hotel', type: 'string' },
+      { key: 'adult', label: 'Adult', type: 'number' },
+      { key: 'child', label: 'Child', type: 'number' },
+      { key: 'infant', label: 'Infant', type: 'number' },
+    ];
+
+    function renderTable(data) {
+      const tbody = document.getElementById('bookings-body');
+      if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(b => `
+        <tr>
+          <td class="booking">${b.booking_number || ''}</td>
+          <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+          <td class="customername">${b.customer_name || ''}</td>
+          <td class="sku">${b.sku || ''}</td>
+          <td class="program">${b.program || ''}</td>
+          <td class="op">${iconCell(b.op)}</td>
+          <td class="ri">${iconCell(b.ri)}</td>
+          <td class="customer">${isBoolLike(b.customer) ? iconCell(b.customer) : (b.customer || '')}</td>
+          <td class="hotel">${b.hotel || ''}</td>
+          <td class="adult">${b.adult || ''}</td>
+          <td class="child">${b.child || ''}</td>
+          <td class="infant">${b.infant || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    function sortBookings(colKey) {
+      if (sortCol === colKey) {
+        sortDir *= -1;
+      } else {
+        sortCol = colKey;
+        sortDir = 1;
+      }
+      const def = colDefs.find(c => c.key === colKey);
+      let sorted = [...bookingsData];
+      sorted.sort((a, b) => {
+        let va = a[colKey], vb = b[colKey];
+        if (def.type === 'number') {
+          va = Number(va) || 0; vb = Number(vb) || 0;
+        } else if (def.type === 'date') {
+          va = va ? new Date(va) : new Date(0);
+          vb = vb ? new Date(vb) : new Date(0);
+        } else if (def.type === 'bool') {
+          va = isBoolLike(va) ? (iconCell(va).includes('✓') ? 1 : 0) : 0;
+          vb = isBoolLike(vb) ? (iconCell(vb).includes('✓') ? 1 : 0) : 0;
+        } else if (def.type === 'mixed') {
+          // Try to sort icons first, then text
+          if (isBoolLike(va) && isBoolLike(vb)) {
+            va = iconCell(va).includes('✓') ? 1 : 0;
+            vb = iconCell(vb).includes('✓') ? 1 : 0;
+          } else {
+            va = (va || '').toString().toLowerCase();
+            vb = (vb || '').toString().toLowerCase();
+          }
+        } else {
+          va = (va || '').toString().toLowerCase();
+          vb = (vb || '').toString().toLowerCase();
+        }
+        if (va < vb) return -1 * sortDir;
+        if (va > vb) return 1 * sortDir;
+        return 0;
+      });
+      renderTable(sorted);
+      updateSortIndicators();
+    }
+
+    function updateSortIndicators() {
+      const ths = document.querySelectorAll('thead th');
+      ths.forEach((th, i) => {
+        th.innerHTML = colDefs[i].label;
+        if (colDefs[i].key === sortCol) {
+          th.innerHTML += sortDir === 1 ? ' <span style="font-size:0.9em">▲</span>' : ' <span style="font-size:0.9em">▼</span>';
+        }
+      });
+    }
+
     async function fetchBookings() {
       const tbody = document.getElementById('bookings-body');
       try {
         const res = await fetch('/api/bookings');
         const data = await res.json();
-        if (!data.bookings || !data.bookings.length) {
-          tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = data.bookings.map(b => `
-          <tr>
-            <td class="booking">${b.booking_number || ''}</td>
-            <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-            <td class="customername">${b.customer_name || ''}</td>
-            <td class="sku">${b.sku || ''}</td>
-            <td class="program">${b.program || ''}</td>
-            <td class="op">${iconCell(b.op)}</td>
-            <td class="ri">${iconCell(b.ri)}</td>
-            <td class="customer">${isBoolLike(b.customer) ? iconCell(b.customer) : (b.customer || '')}</td>
-            <td class="hotel">${b.hotel || ''}</td>
-            <td class="adult">${b.adult || ''}</td>
-            <td class="child">${b.child || ''}</td>
-            <td class="infant">${b.infant || ''}</td>
-          </tr>
-        `).join('');
+        bookingsData = data.bookings || [];
+        renderTable(bookingsData);
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load bookings.</td></tr>';
       }
     }
-    fetchBookings();
+
+    // Add click listeners to headers after DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const ths = document.querySelectorAll('thead th');
+      ths.forEach((th, i) => {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', () => sortBookings(colDefs[i].key));
+      });
+      fetchBookings();
+    });
   </script>
 </body>
 </html>

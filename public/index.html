@@ -11,12 +11,13 @@
       color: #222;
     }
     .container {
-      max-width: 1200px;
+      max-width: 100vw;
       margin: 40px auto;
       padding: 24px;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow-x: auto;
     }
     h1 {
       text-align: center;
@@ -25,21 +26,48 @@
     }
     table {
       width: 100%;
+      min-width: 1100px;
       border-collapse: collapse;
       margin: 2rem 0;
       background: #fff;
       color: #222;
       font-size: 1rem;
+      table-layout: fixed;
     }
     th, td {
       border: 1px solid #e0e0e0;
       padding: 0.6rem 0.5rem;
       text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     th {
       background: #e3f0fb;
       color: #0d47a1;
       font-weight: 600;
+    }
+    th.booking { min-width: 90px; width: 90px; }
+    th.tourdate { min-width: 110px; width: 110px; }
+    th.customername { min-width: 160px; width: 160px; }
+    th.sku { min-width: 80px; width: 80px; }
+    th.program { min-width: 120px; width: 120px; }
+    th.hotel { min-width: 120px; width: 120px; }
+    th.op, th.ri, th.customer, th.adult, th.child, th.infant {
+      min-width: 50px; width: 50px; text-align: center;
+    }
+    td.op, td.ri, td.customer, td.adult, td.child, td.infant {
+      text-align: center;
+    }
+    .icon-true {
+      color: #388e3c;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .icon-false {
+      color: #d32f2f;
+      font-weight: bold;
+      font-size: 1.2em;
     }
     tr:nth-child(even) td {
       background: #f7fbff;
@@ -48,9 +76,13 @@
       background: #bbdefb;
       color: #0d47a1;
     }
+    @media (max-width: 1200px) {
+      table { min-width: 900px; }
+    }
     @media (max-width: 700px) {
       .container { padding: 8px; }
       table, th, td { font-size: 0.92rem; }
+      table { min-width: 700px; }
     }
   </style>
 </head>
@@ -60,18 +92,18 @@
     <table id="bookings-table">
       <thead>
         <tr>
-          <th>Booking #</th>
-          <th>Tour Date</th>
-          <th>Customer Name</th>
-          <th>SKU</th>
-          <th>Program</th>
-          <th>OP</th>
-          <th>RI</th>
-          <th>Customer</th>
-          <th>Hotel</th>
-          <th>Adult</th>
-          <th>Child</th>
-          <th>Infant</th>
+          <th class="booking">Booking #</th>
+          <th class="tourdate">Tour Date</th>
+          <th class="customername">Customer Name</th>
+          <th class="sku">SKU</th>
+          <th class="program">Program</th>
+          <th class="op">OP</th>
+          <th class="ri">RI</th>
+          <th class="customer">Customer</th>
+          <th class="hotel">Hotel</th>
+          <th class="adult">Adult</th>
+          <th class="child">Child</th>
+          <th class="infant">Infant</th>
         </tr>
       </thead>
       <tbody id="bookings-body">
@@ -80,6 +112,13 @@
     </table>
   </div>
   <script>
+    function iconCell(val) {
+      if (val === true || val === 1 || val === '1' || val === 'true') {
+        return '<span class="icon-true" title="Yes">✓</span>';
+      } else {
+        return '<span class="icon-false" title="No">✗</span>';
+      }
+    }
     async function fetchBookings() {
       const tbody = document.getElementById('bookings-body');
       try {
@@ -91,18 +130,18 @@
         }
         tbody.innerHTML = data.bookings.map(b => `
           <tr>
-            <td>${b.booking_number || ''}</td>
-            <td>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-            <td>${b.customer_name || ''}</td>
-            <td>${b.sku || ''}</td>
-            <td>${b.program || ''}</td>
-            <td>${b.op || ''}</td>
-            <td>${b.ri || ''}</td>
-            <td>${b.customer || ''}</td>
-            <td>${b.hotel || ''}</td>
-            <td>${b.adult || ''}</td>
-            <td>${b.child || ''}</td>
-            <td>${b.infant || ''}</td>
+            <td class="booking">${b.booking_number || ''}</td>
+            <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+            <td class="customername">${b.customer_name || ''}</td>
+            <td class="sku">${b.sku || ''}</td>
+            <td class="program">${b.program || ''}</td>
+            <td class="op">${iconCell(b.op)}</td>
+            <td class="ri">${iconCell(b.ri)}</td>
+            <td class="customer">${iconCell(b.customer)}</td>
+            <td class="hotel">${b.hotel || ''}</td>
+            <td class="adult">${b.adult || ''}</td>
+            <td class="child">${b.child || ''}</td>
+            <td class="infant">${b.infant || ''}</td>
           </tr>
         `).join('');
       } catch (err) {

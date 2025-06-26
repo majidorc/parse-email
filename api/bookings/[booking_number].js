@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
     `;
     res.status(200).json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update booking', details: err.message });
+    console.error('Failed to update booking:', err); // Log full error to Vercel logs
+    res.status(500).json({ error: 'Failed to update booking', details: err.message, stack: err.stack });
   }
 }; 

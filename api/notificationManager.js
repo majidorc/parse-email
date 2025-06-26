@@ -32,19 +32,17 @@ class NotificationManager {
     const tourDate = details.raw_tour_date || 
                      (details.tour_date ? new Date(details.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A');
 
-    let paxString = details.pax;
-    if (!paxString) {
-        const parts = [];
-        const adult = parseInt(details.adult, 10) || 0;
-        const child = parseInt(details.child, 10) || 0;
-        const infant = parseInt(details.infant, 10) || 0;
-
-        if (adult > 0) parts.push(`${adult} Adult${adult > 1 ? 's' : ''}`);
-        if (child > 0) parts.push(`${child} Child${child > 1 ? 'ren' : ''}`);
-        if (infant > 0) parts.push(`${infant} Infant${infant > 1 ? 's' : ''}`);
-        
-        paxString = parts.join(', ') || 'N/A';
-    }
+    // Always show all pax types, defaulting to 0 if missing
+    const adult = parseInt(details.adult, 10) || 0;
+    const child = parseInt(details.child, 10) || 0;
+    const infant = parseInt(details.infant, 10) || 0;
+    // Always show Adult, only show Child/Infant if > 0
+    const parts = [];
+    parts.push(`${adult} Adult${adult === 1 ? '' : 's'}`);
+    if (child > 0) parts.push(`${child} Child${child === 1 ? '' : 'ren'}`);
+    if (infant > 0) parts.push(`${infant} Infant${infant === 1 ? '' : 's'}`);
+    const paxString = parts.join(', ');
+    const totalPax = adult + child + infant;
 
     // Use a consistent source for all properties
     const bookingNumber = details.bookingNumber || details.booking_number;
@@ -53,13 +51,12 @@ class NotificationManager {
     const hotel = details.hotel;
     const phoneNumber = details.phoneNumber || details.phone_number;
 
-
     const responseTemplate = `Please confirm the *pickup time* for this booking:\n\n` +
                              `Booking no : ${bookingNumber}\n` +
                              `Tour date : ${tourDate}\n` +
                              `Program : ${program}\n` +
                              `Name : ${customerName}\n` +
-                             `Pax : ${paxString}\n` +
+                             `Pax : ${paxString} (Total: ${totalPax})\n` +
                              `Hotel : ${hotel}\n` +
                              `Phone Number : ${phoneNumber}\n` +
                              `Cash on tour : None\n\n` +
@@ -72,6 +69,7 @@ class NotificationManager {
       program,
       customerName,
       pax: paxString,
+      totalPax,
       hotel,
       phoneNumber,
       op: details.op,

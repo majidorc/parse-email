@@ -23,11 +23,13 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: "Cannot set Customer ✓ unless OP is already ✓." });
       }
     }
-    await sql`
+    // Build the query string with the validated column name
+    const query = `
       UPDATE bookings
-      SET ${sql.identifier([column])} = ${value}
-      WHERE booking_number = ${booking_number}
+      SET ${column} = $1
+      WHERE booking_number = $2
     `;
+    await sql.query(query, [value, booking_number]);
     res.status(200).json({ success: true });
   } catch (err) {
     console.error('Failed to update booking:', err); // Log full error to Vercel logs

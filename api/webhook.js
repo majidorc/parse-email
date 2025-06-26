@@ -495,6 +495,19 @@ async function handler(req, res) {
         
         const parsedEmail = await simpleParser(rawBody);
 
+        // Handle cancellation emails
+        if (parsedEmail.subject && parsedEmail.subject.startsWith('Cancelled booking:')) {
+            // Extract booking number from 'Ext. booking ref: ...' in the subject
+            const match = parsedEmail.subject.match(/Ext\. booking ref: ([A-Z0-9]+)/);
+            if (match && match[1]) {
+                const bookingNumber = match[1];
+                await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
+                return res.status(200).send(`Webhook processed: Booking ${bookingNumber} removed (cancelled).`);
+            } else {
+                return res.status(400).send('Webhook processed: Cancelled booking email, but booking number not found in subject.');
+            }
+        }
+
         const parser = EmailParserFactory.create(parsedEmail);
 
         if (!parser) {

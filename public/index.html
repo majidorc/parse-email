@@ -89,6 +89,9 @@
 <body>
   <div class="container">
     <h1>Bookings</h1>
+    <div style="text-align:center; margin-bottom: 1rem;">
+      <input id="search-bar" type="text" placeholder="Search bookings..." style="width: 320px; max-width: 90vw; padding: 0.5em 1em; border: 1px solid #bbb; border-radius: 6px; font-size: 1em;">
+    </div>
     <div id="table-summary" style="text-align:center; margin-bottom: 0.5rem; color: #444; font-size: 1.05em;"></div>
     <table id="bookings-table">
       <thead>
@@ -98,10 +101,10 @@
           <th class="customername" data-col="customer_name">Customer Name</th>
           <th class="sku" data-col="sku">SKU</th>
           <th class="program" data-col="program">Program</th>
+          <th class="hotel" data-col="hotel">Hotel</th>
           <th class="op" data-col="op">OP</th>
           <th class="ri" data-col="ri">RI</th>
           <th class="customer" data-col="customer">Customer</th>
-          <th class="hotel" data-col="hotel">Hotel</th>
           <th class="adult" data-col="adult">Adult</th>
           <th class="child" data-col="child">Child</th>
           <th class="infant" data-col="infant">Infant</th>
@@ -134,6 +137,7 @@
     let bookingsData = [];
     let currentSort = 'tour_date';
     let currentDir = 'desc';
+    let searchTerm = '';
 
     async function fetchBookings(page = 1, sort = currentSort, dir = currentDir) {
       const tbody = document.getElementById('bookings-body');
@@ -163,8 +167,15 @@
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       const startIdx = (currentPage - 1) * rowsPerPage;
-      const endIdx = Math.min(startIdx + bookingsData.length, totalRows);
-      tbody.innerHTML = bookingsData.map(b => `
+      let filtered = bookingsData;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filtered = bookingsData.filter(b =>
+          Object.values(b).some(val => (val + '').toLowerCase().includes(term))
+        );
+      }
+      const endIdx = Math.min(startIdx + filtered.length, totalRows);
+      tbody.innerHTML = filtered.length ? filtered.map(b => `
         <tr>
           <td class="booking">${b.booking_number || ''}</td>
           <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
@@ -179,8 +190,8 @@
           <td class="child">${b.child || ''}</td>
           <td class="infant">${b.infant || ''}</td>
         </tr>
-      `).join('');
-      summaryDiv.textContent = `Showing ${(startIdx + 1)}-${(startIdx + bookingsData.length)} of ${totalRows} results (Page ${currentPage})`;
+      `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+      summaryDiv.textContent = filtered.length ? `Showing ${filtered.length} of ${bookingsData.length} results (Page ${currentPage})` : 'No results.';
     }
 
     function renderPagination() {
@@ -279,6 +290,10 @@
         }
         fetchBookings(1, currentSort, currentDir);
       });
+    });
+    document.getElementById('search-bar').addEventListener('input', function(e) {
+      searchTerm = e.target.value;
+      renderTable();
     });
     // Initial fetch
     fetchBookings();

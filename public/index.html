@@ -211,17 +211,44 @@
     }
 
     // Toggle and call function
-    window.handleToggle = function(column, bookingId, btn) {
-      // Toggle value visually
-      const current = btn.textContent === '✓';
+    window.handleToggle = async function(column, bookingId, btn) {
+      // Find the booking row data
+      const booking = bookingsData.find(b => b.booking_number == bookingId);
+      if (!booking) return alert('Booking not found.');
+
+      const current = (btn.textContent === '✓');
       const newValue = !current;
-      btn.textContent = newValue ? '✓' : '❌';
-      btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
-      btn.title = newValue ? 'Yes' : 'No';
-      // Call your backend update logic here
-      console.log(`Toggled ${column} for booking ${bookingId} to`, newValue);
-      // Example: send API request to update value
-      // fetch(`/api/bookings/${bookingId}/toggle`, { method: 'POST', body: JSON.stringify({ column, value: newValue }) })
+
+      // Business rule: Customer can only be set to true if OP is true
+      if (column === 'customer' && newValue === true && !(booking.op === true || booking.op === 1 || booking.op === '1' || booking.op === 'true')) {
+        alert('Cannot set Customer ✓ unless OP is already ✓.');
+        return;
+      }
+
+      // Optionally, add similar rules for other columns if needed
+
+      // Send PATCH request to backend
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ column, value: newValue })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to update');
+        }
+        // Update local data and UI
+        booking[column] = newValue;
+        btn.textContent = newValue ? '✓' : '❌';
+        btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
+        btn.title = newValue ? 'Yes' : 'No';
+      } catch (err) {
+        alert('Failed to update: ' + (err.message || 'Unknown error'));
+      } finally {
+        btn.disabled = false;
+      }
     }
     // Add button styles
     const style = document.createElement('style');

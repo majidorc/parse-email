@@ -15,6 +15,14 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Business rule: 'customer' can only be set to true if 'op' is already true
+    if (column === 'customer' && (value === true || value === 1 || value === '1' || value === 'true')) {
+      const { rows } = await sql`SELECT op FROM bookings WHERE booking_number = ${booking_number}`;
+      const opValue = rows[0]?.op;
+      if (!(opValue === true || opValue === 1 || opValue === '1' || opValue === 'true')) {
+        return res.status(400).json({ error: "Cannot set Customer ✓ unless OP is already ✓." });
+      }
+    }
     await sql`
       UPDATE bookings
       SET ${sql.identifier([column])} = ${value}

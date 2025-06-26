@@ -139,16 +139,25 @@
     let currentDir = 'desc';
     let searchTerm = '';
 
-    async function fetchBookings(page = 1, sort = currentSort, dir = currentDir) {
+    async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       try {
-        const res = await fetch(`/api/bookings?page=${page}&limit=${rowsPerPage}&sort=${sort}&dir=${dir}`);
+        const params = new URLSearchParams({
+          page,
+          limit: rowsPerPage,
+          sort,
+          dir
+        });
+        if (search) params.append('search', search);
+        const res = await fetch(`/api/bookings?${params.toString()}`);
         const data = await res.json();
         if (!data.bookings || !data.bookings.length) {
           tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
           summaryDiv.textContent = 'No results.';
           document.getElementById('pagination-controls').innerHTML = '';
+          bookingsData = [];
+          totalRows = 0;
           return;
         }
         bookingsData = data.bookings;
@@ -166,16 +175,7 @@
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
-      const startIdx = (currentPage - 1) * rowsPerPage;
-      let filtered = bookingsData;
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filtered = bookingsData.filter(b =>
-          Object.values(b).some(val => (val + '').toLowerCase().includes(term))
-        );
-      }
-      const endIdx = Math.min(startIdx + filtered.length, totalRows);
-      tbody.innerHTML = filtered.length ? filtered.map(b => `
+      tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
         <tr>
           <td class="booking">${b.booking_number || ''}</td>
           <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
@@ -191,7 +191,7 @@
           <td class="infant">${b.infant || ''}</td>
         </tr>
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
-      summaryDiv.textContent = filtered.length ? `Showing ${filtered.length} of ${bookingsData.length} results (Page ${currentPage})` : 'No results.';
+      summaryDiv.textContent = bookingsData.length ? `Showing ${bookingsData.length} of ${totalRows} results (Page ${currentPage})` : 'No results.';
     }
 
     function renderPagination() {
@@ -218,7 +218,7 @@
     function gotoPage(page) {
       const totalPages = Math.ceil(totalRows / rowsPerPage);
       if (page < 1 || page > totalPages) return;
-      fetchBookings(page, currentSort, currentDir);
+      fetchBookings(page, currentSort, currentDir, searchTerm);
     }
 
     // Toggle and call function
@@ -288,12 +288,12 @@
           currentSort = col;
           currentDir = 'asc';
         }
-        fetchBookings(1, currentSort, currentDir);
+        fetchBookings(1, currentSort, currentDir, searchTerm);
       });
     });
     document.getElementById('search-bar').addEventListener('input', function(e) {
       searchTerm = e.target.value;
-      renderTable();
+      fetchBookings(1, currentSort, currentDir, searchTerm);
     });
     // Initial fetch
     fetchBookings();

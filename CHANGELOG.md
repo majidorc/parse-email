@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-06-23
+### Added
+- Multi-channel notification support: Email, Telegram, and optional Line integration.
+- Improved documentation: Modernized and clarified README, setup, and usage instructions.
+- Version alignment: Updated package version to 2.4.0 to match latest features.
+
+### Changed
+- Telegram and Line notifications now support interactive buttons for OP and Customer confirmation, enforcing business rules.
+- Notification channels are now configurable in `config.json`.
+
+### Fixed
+- Minor documentation and configuration fixes for clarity and ease of use.
+
 ## [Unreleased]
 ### Added
 - Telegram notifications now include two inline toggle buttons: `OP X`/`OP ✓` and `Customer X`/`Customer ✓`.
@@ -12,7 +25,7 @@ All notable changes to this project are documented here. This project follows [K
 
 ---
 
-## [2.4.0] - 2025-06-23
+## [2.4.0]
 ### Added
 - Interactive Telegram Buttons: Added inline buttons to every Telegram notification for OP and Customer confirmation.
 - Button Click Handler: Telegram button clicks now update the database and toggle button state in the chat.

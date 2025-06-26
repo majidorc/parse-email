@@ -284,25 +284,36 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        
-        // Find and parse the adult line
-        const adultLine = this.lines.find(line => line.toLowerCase().includes('adults'));
-        if (adultLine) {
-            const adultMatch = adultLine.match(/adults(?: \(.+\))?:\s*(\d+)/i);
+        // Match lines like 'Adult (11+) 1399: 1', 'Adults: 1', 'Child: 0', etc.
+        for (const line of this.lines) {
+            // Adult
+            const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
             if (adultMatch && adultMatch[1]) {
                 pax.adult = adultMatch[1];
             }
-        }
-
-        // Find and parse the child line
-        const childLine = this.lines.find(line => line.toLowerCase().includes('childs'));
-        if (childLine) {
-            const childMatch = childLine.match(/childs(?: \(.+\))?:\s*(\d+)/i);
+            // Child
+            const childMatch = line.match(/child[ren|s]?[^\d]*(\d+)\s*$/i) || line.match(/child[ren|s]?.*?:\s*(\d+)/i);
             if (childMatch && childMatch[1]) {
                 pax.child = childMatch[1];
             }
+            // Infant
+            const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
+            if (infantMatch && infantMatch[1]) {
+                pax.infant = infantMatch[1];
+            }
         }
-        
+        // If no explicit adult/child/infant found, fallback to 'Person: N'
+        if (pax.adult === '0' && pax.child === '0' && pax.infant === '0') {
+            const personLine = this.lines.find(line => /person\s*:\s*\d+/i.test(line));
+            if (personLine) {
+                const personMatch = personLine.match(/person\s*:\s*(\d+)/i);
+                if (personMatch && personMatch[1]) {
+                    pax.adult = personMatch[1];
+                    pax.child = '0';
+                    pax.infant = '0';
+                }
+            }
+        }
         return pax;
     }
 
@@ -514,6 +525,11 @@ async function handler(req, res) {
                 VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
                 RETURNING *;
             `;
+            
+            if (adult === 0) {
+                await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
+                return res.status(200).send('Webhook processed: Booking removed (adult=0).');
+            }
             
             return res.status(200).send('Webhook processed: Booking saved.');
 

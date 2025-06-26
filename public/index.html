@@ -93,34 +93,32 @@
     <table id="bookings-table">
       <thead>
         <tr>
-          <th class="booking">Booking #</th>
-          <th class="tourdate">Tour Date</th>
-          <th class="customername">Customer Name</th>
-          <th class="sku">SKU</th>
-          <th class="program">Program</th>
-          <th class="hotel">Hotel</th>
-          <th class="op">OP</th>
-          <th class="ri">RI</th>
-          <th class="customer">Customer</th>
-          <th class="adult">Adult</th>
-          <th class="child">Child</th>
-          <th class="infant">Infant</th>
+          <th class="booking" data-col="booking_number">Booking #</th>
+          <th class="tourdate" data-col="tour_date">Tour Date</th>
+          <th class="customername" data-col="customer_name">Customer Name</th>
+          <th class="sku" data-col="sku">SKU</th>
+          <th class="program" data-col="program">Program</th>
+          <th class="op" data-col="op">OP</th>
+          <th class="ri" data-col="ri">RI</th>
+          <th class="customer" data-col="customer">Customer</th>
+          <th class="hotel" data-col="hotel">Hotel</th>
+          <th class="adult" data-col="adult">Adult</th>
+          <th class="child" data-col="child">Child</th>
+          <th class="infant" data-col="infant">Infant</th>
         </tr>
       </thead>
       <tbody id="bookings-body">
         <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
       </tbody>
     </table>
+    <div id="pagination-controls" style="text-align:center; margin: 1.5rem 0 0.5rem 0;"></div>
   </div>
-  <div id="pagination-controls" style="text-align:center; margin-bottom:2rem; margin-top:-1.5rem;"></div>
   <script>
-    function iconCell(val) {
-      const v = (typeof val === 'string') ? val.toLowerCase() : val;
-      if (v === true || v === 1 || v === '1' || v === 'true') {
-        return '<span class="icon-true" title="Yes">✓</span>';
-      } else {
-        return '<span class="icon-false" title="No">✗</span>';
-      }
+    function iconButton(column, bookingId, value) {
+      const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✓' : '❌';
+      const title = (value === true || value === 1 || value === '1' || value === 'true') ? 'Yes' : 'No';
+      const btnClass = (icon === '✓') ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      return `<button class="${btnClass}" title="${title}" onclick="handleToggle('${column}', '${bookingId}', this)">${icon}</button>`;
     }
     function isBoolLike(val) {
       if (typeof val === 'boolean') return true;
@@ -129,149 +127,134 @@
       return false;
     }
 
-    let bookingsData = [];
-    let sortCol = null;
-    let sortDir = 1; // 1 = asc, -1 = desc
+    // Pagination variables
     let currentPage = 1;
     const rowsPerPage = 20;
+    let totalRows = 0;
+    let bookingsData = [];
+    let currentSort = 'tour_date';
+    let currentDir = 'desc';
 
-    const colDefs = [
-      { key: 'booking_number', label: 'Booking #', type: 'string' },
-      { key: 'tour_date', label: 'Tour Date', type: 'date' },
-      { key: 'customer_name', label: 'Customer Name', type: 'string' },
-      { key: 'sku', label: 'SKU', type: 'string' },
-      { key: 'program', label: 'Program', type: 'string' },
-      { key: 'op', label: 'OP', type: 'bool' },
-      { key: 'ri', label: 'RI', type: 'bool' },
-      { key: 'customer', label: 'Customer', type: 'bool' },
-      { key: 'hotel', label: 'Hotel', type: 'string' },
-      { key: 'adult', label: 'Adult', type: 'number' },
-      { key: 'child', label: 'Child', type: 'number' },
-      { key: 'infant', label: 'Infant', type: 'number' },
-    ];
-
-    function renderTable(data) {
+    async function fetchBookings(page = 1, sort = currentSort, dir = currentDir) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
-      if (!data || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
-        summaryDiv.textContent = 'No results.';
-        return;
+      try {
+        const res = await fetch(`/api/bookings?page=${page}&limit=${rowsPerPage}&sort=${sort}&dir=${dir}`);
+        const data = await res.json();
+        if (!data.bookings || !data.bookings.length) {
+          tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+          summaryDiv.textContent = 'No results.';
+          document.getElementById('pagination-controls').innerHTML = '';
+          return;
+        }
+        bookingsData = data.bookings;
+        totalRows = data.total || bookingsData.length;
+        currentPage = data.page || 1;
+        renderTable();
+        renderPagination();
+        updateSortIndicators();
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load bookings.</td></tr>';
+        document.getElementById('pagination-controls').innerHTML = '';
       }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('bookings-body');
+      const summaryDiv = document.getElementById('table-summary');
       const startIdx = (currentPage - 1) * rowsPerPage;
-      const endIdx = Math.min(startIdx + rowsPerPage, data.length);
-      const pageData = data.slice(startIdx, endIdx);
-      tbody.innerHTML = pageData.map(b => `
+      const endIdx = Math.min(startIdx + bookingsData.length, totalRows);
+      tbody.innerHTML = bookingsData.map(b => `
         <tr>
           <td class="booking">${b.booking_number || ''}</td>
           <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
           <td class="customername">${b.customer_name || ''}</td>
           <td class="sku">${b.sku || ''}</td>
           <td class="program">${b.program || ''}</td>
-          <td class="op">${iconCell(b.op)}</td>
-          <td class="ri">${iconCell(b.ri)}</td>
-          <td class="customer">${iconCell(b.customer)}</td>
+          <td class="op">${iconButton('op', b.booking_number, b.op)}</td>
+          <td class="ri">${iconButton('ri', b.booking_number, b.ri)}</td>
+          <td class="customer">${iconButton('customer', b.booking_number, b.customer)}</td>
           <td class="hotel">${b.hotel || ''}</td>
           <td class="adult">${b.adult || ''}</td>
           <td class="child">${b.child || ''}</td>
           <td class="infant">${b.infant || ''}</td>
         </tr>
       `).join('');
-      summaryDiv.textContent = `Showing ${startIdx + 1}-${endIdx} of ${data.length} results (Page ${currentPage})`;
-      renderPagination(data.length);
+      summaryDiv.textContent = `Showing ${(startIdx + 1)}-${(startIdx + bookingsData.length)} of ${totalRows} results (Page ${currentPage})`;
     }
 
-    function renderPagination(totalRows) {
-      let totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
-      if (currentPage > totalPages) currentPage = totalPages;
-      const pagDiv = document.getElementById('pagination-controls');
-      if (!pagDiv) return;
-      pagDiv.innerHTML = `
-        <button ${currentPage === 1 ? 'disabled' : ''} onclick="gotoPage(1)">&laquo; First</button>
-        <button ${currentPage === 1 ? 'disabled' : ''} onclick="gotoPage(${currentPage - 1})">&lsaquo; Prev</button>
-        <span>Page ${currentPage} of ${totalPages}</span>
-        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="gotoPage(${currentPage + 1})">Next &rsaquo;</button>
-        <button ${currentPage === totalPages ? 'disabled' : ''} onclick="gotoPage(${totalPages})">Last &raquo;</button>
-      `;
-    }
-
-    window.gotoPage = function(page) {
-      let totalPages = Math.ceil(bookingsData.length / rowsPerPage) || 1;
-      if (page < 1) page = 1;
-      if (page > totalPages) page = totalPages;
-      currentPage = page;
-      renderTable(getSortedData());
-    }
-
-    function sortBookings(colKey) {
-      if (sortCol === colKey) {
-        sortDir *= -1;
-      } else {
-        sortCol = colKey;
-        sortDir = 1;
+    function renderPagination() {
+      const controls = document.getElementById('pagination-controls');
+      const totalPages = Math.ceil(totalRows / rowsPerPage);
+      if (totalPages <= 1) {
+        controls.innerHTML = '';
+        return;
       }
-      currentPage = 1;
-      renderTable(getSortedData());
-      updateSortIndicators();
+      let html = '';
+      html += `<button ${currentPage === 1 ? 'disabled' : ''} onclick="gotoPage(${currentPage - 1})">Prev</button> `;
+      // Show up to 5 page numbers, centered on current page
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, currentPage + 2);
+      if (currentPage <= 3) end = Math.min(5, totalPages);
+      if (currentPage >= totalPages - 2) start = Math.max(1, totalPages - 4);
+      for (let i = start; i <= end; i++) {
+        html += `<button ${i === currentPage ? 'disabled style="font-weight:bold;background:#bbdefb;color:#0d47a1;"' : ''} onclick="gotoPage(${i})">${i}</button> `;
+      }
+      html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="gotoPage(${currentPage + 1})">Next</button>`;
+      controls.innerHTML = html;
     }
 
-    function getSortedData() {
-      if (!sortCol) return bookingsData;
-      const def = colDefs.find(c => c.key === sortCol);
-      let sorted = [...bookingsData];
-      sorted.sort((a, b) => {
-        let va = a[sortCol], vb = b[sortCol];
-        if (def.type === 'number') {
-          va = Number(va) || 0; vb = Number(vb) || 0;
-        } else if (def.type === 'date') {
-          va = va ? new Date(va) : new Date(0);
-          vb = vb ? new Date(vb) : new Date(0);
-        } else if (def.type === 'bool') {
-          va = (typeof va === 'string') ? va.toLowerCase() : va;
-          vb = (typeof vb === 'string') ? vb.toLowerCase() : vb;
-          va = (va === true || va === 1 || va === '1' || va === 'true') ? 1 : 0;
-          vb = (vb === true || vb === 1 || vb === '1' || vb === 'true') ? 1 : 0;
-        } else {
-          va = (va || '').toString().toLowerCase();
-          vb = (vb || '').toString().toLowerCase();
-        }
-        if (va < vb) return -1 * sortDir;
-        if (va > vb) return 1 * sortDir;
-        return 0;
-      });
-      return sorted;
+    function gotoPage(page) {
+      const totalPages = Math.ceil(totalRows / rowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      fetchBookings(page, currentSort, currentDir);
     }
 
+    // Toggle and call function
+    window.handleToggle = function(column, bookingId, btn) {
+      // Toggle value visually
+      const current = btn.textContent === '✓';
+      const newValue = !current;
+      btn.textContent = newValue ? '✓' : '❌';
+      btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      btn.title = newValue ? 'Yes' : 'No';
+      // Call your backend update logic here
+      console.log(`Toggled ${column} for booking ${bookingId} to`, newValue);
+      // Example: send API request to update value
+      // fetch(`/api/bookings/${bookingId}/toggle`, { method: 'POST', body: JSON.stringify({ column, value: newValue }) })
+    }
+    // Add button styles
+    const style = document.createElement('style');
+    style.innerHTML = `.icon-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0; margin: 0; }
+    .icon-btn.icon-true { color: #388e3c; }
+    .icon-btn.icon-false { color: #d32f2f; }
+    .icon-btn:focus { outline: 2px solid #1976d2; }`;
+    document.head.appendChild(style);
     function updateSortIndicators() {
-      const ths = document.querySelectorAll('thead th');
-      ths.forEach((th, i) => {
-        th.innerHTML = colDefs[i].label;
-        if (colDefs[i].key === sortCol) {
-          th.innerHTML += sortDir === 1 ? ' <span style="font-size:0.9em">▲</span>' : ' <span style="font-size:0.9em">▼</span>';
+      const ths = document.querySelectorAll('#bookings-table th[data-col]');
+      ths.forEach(th => {
+        const col = th.getAttribute('data-col');
+        th.textContent = th.textContent.replace(/\s*[▲▼]$/, ''); // Remove old arrow
+        if (col === currentSort) {
+          th.textContent += currentDir === 'asc' ? ' ▲' : ' ▼';
         }
       });
     }
-
-    async function fetchBookings() {
-      const tbody = document.getElementById('bookings-body');
-      try {
-        const res = await fetch('/api/bookings');
-        const data = await res.json();
-        bookingsData = data.bookings || [];
-        renderTable(getSortedData());
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load bookings.</td></tr>';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const ths = document.querySelectorAll('thead th');
-      ths.forEach((th, i) => {
-        th.style.cursor = 'pointer';
-        th.addEventListener('click', () => sortBookings(colDefs[i].key));
+    document.querySelectorAll('#bookings-table th[data-col]').forEach(th => {
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', function() {
+        const col = th.getAttribute('data-col');
+        if (col === currentSort) {
+          currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort = col;
+          currentDir = 'asc';
+        }
+        fetchBookings(1, currentSort, currentDir);
       });
-      fetchBookings();
     });
+    // Initial fetch
+    fetchBookings();
   </script>
 </body>
 </html>

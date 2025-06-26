@@ -46,6 +46,6 @@ export default function App() {
           ))}
         </TableBody>
       </Table>
-    </div>
+      </div>
   );
 }

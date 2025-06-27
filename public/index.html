@@ -6,10 +6,24 @@
   <title>Bookings Table</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/assets/index-Dtn62Xmo.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background: #f5f7fa;
-      color: #222;
+      font-family: 'Inter', sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+    .icon-check {
+      color: #10B981;
+      font-size: 1.25rem;
+    }
+    .icon-cross {
+      color: #EF4444;
+      font-size: 1.25rem;
     }
     .container {
       max-width: 100vw;
@@ -90,35 +104,49 @@
     .row-today td { color: #fbc02d !important; }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Bookings</h1>
-    <div style="text-align:center; margin-bottom: 1rem;">
-      <input id="search-bar" type="text" placeholder="Search bookings..." style="width: 320px; max-width: 90vw; padding: 0.5em 1em; border: 1px solid #bbb; border-radius: 6px; font-size: 1em;">
+<body class="antialiased">
+  <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
+    <!-- Search Bar Section -->
+    <div class="mb-6">
+      <label for="search-bar" class="sr-only">Search bookings</label>
+      <div class="relative">
+        <input id="search-bar" type="text" placeholder="Search bookings..." class="w-full px-5 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-700 placeholder-gray-400 text-base">
+        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-blue-600 focus:outline-none">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
+    <!-- Results Summary Section -->
     <div id="table-summary" class="text-center mb-6"></div>
-    <table id="bookings-table">
-      <thead>
-        <tr>
-          <th class="booking" data-col="booking_number">Booking #</th>
-          <th class="tourdate" data-col="tour_date">Tour Date</th>
-          <th class="customername" data-col="customer_name">Customer Name</th>
-          <th class="sku" data-col="sku">SKU</th>
-          <th class="program" data-col="program">Program</th>
-          <th class="hotel" data-col="hotel">Hotel</th>
-          <th class="op" data-col="op">OP</th>
-          <th class="ri" data-col="ri">RI</th>
-          <th class="customer" data-col="customer">Customer</th>
-          <th class="adult" data-col="adult">Adult</th>
-          <th class="child" data-col="child">Child</th>
-          <th class="infant" data-col="infant">Infant</th>
-        </tr>
-      </thead>
-      <tbody id="bookings-body">
-        <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
-      </tbody>
-    </table>
-    <div id="pagination-controls" style="text-align:center; margin: 1.5rem 0 0.5rem 0;"></div>
+    <hr class="border-gray-200 mb-6">
+    <!-- Bookings Table Section -->
+    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+      <table id="bookings-table" class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OP</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">RI</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
+          </tr>
+        </thead>
+        <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
+          <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <hr class="border-gray-200 mt-6 mb-6">
+    <div id="pagination-controls" class="flex justify-center items-center space-x-2 text-base"></div>
   </div>
   <script>
     function iconButton(column, bookingId, value) {
@@ -212,43 +240,43 @@
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
-        <tr class="${getRowClass(b.tour_date)}">
-          <td class="booking">${b.booking_number || ''}</td>
-          <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-          <td class="customername">${b.customer_name || ''}</td>
-          <td class="sku">${b.sku || ''}</td>
-          <td class="program">${b.program || ''}</td>
-          <td class="hotel">${b.hotel || ''}</td>
-          <td class="op">${iconButton('op', b.booking_number, b.op)}</td>
-          <td class="ri">${iconButton('ri', b.booking_number, b.ri)}</td>
-          <td class="customer">${iconButton('customer', b.booking_number, b.customer)}</td>
-          <td class="adult">${b.adult || ''}</td>
-          <td class="child">${b.child || ''}</td>
-          <td class="infant">${b.infant || ''}</td>
+        <tr>
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">${b.booking_number || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.customer_name || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.sku || ''}</td>
+          <td class="px-4 py-3 text-sm text-gray-800">${b.program || ''}</td>
+          <td class="px-4 py-3 text-sm text-gray-800">${b.hotel || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.adult || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.child || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.infant || ''}</td>
         </tr>
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
 
       // Tailwind-styled summary
-      function statSpan(label, value, isGreen) {
-        return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
+      function statSpan(label, value, isGreen, extraClass = '') {
+        return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
-      function statCard(day, total, opNotSent, customerNotSent, color, bg, border) {
+      function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass) {
         return `
         <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center">
           <p class="${color} font-semibold mb-2 text-lg">${day}</p>
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
-            <span class="font-medium">Total: <span class="font-bold ${color.replace('text-', 'text-')}">${total}</span></span>
+            <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
             <span>|</span>
             ${statSpan('Not sent to OP:', opNotSent, opNotSent == 0)}
             <span>|</span>
-            ${statSpan('Not sent to Customer:', customerNotSent, customerNotSent == 0)}
+            ${statSpan('Not sent to Customer:', customerNotSent, customerNotSent == 0, customerNotSent == 0 ? 'font-medium' : 'font-bold')}
           </div>
         </div>`;
       }
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100')}
-          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100')}
+          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800')}
+          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800')}
         </div>
         <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
           Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results

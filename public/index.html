@@ -228,10 +228,13 @@
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
 
       if (bookingsData.length) {
+        function colorCount(val) {
+          return `<span style='color:${val == 0 ? '#388e3c' : '#d32f2f'};font-weight:bold;'>${val}</span>`;
+        }
         summaryDiv.innerHTML =
           `Showing ${bookingsData.length} of ${totalRows} results (Page ${currentPage})` +
-          `<br>Today: ${todayCount} | Not sent to OP (today): ${todayOpNotSent} | Not sent to Customer (today): ${todayCustomerNotSent}` +
-          `<br>Tomorrow: ${tomorrowCount} | Not sent to OP (tomorrow): ${tomorrowOpNotSent} | Not sent to Customer (tomorrow): ${tomorrowCustomerNotSent}`;
+          `<br>Today: ${todayCount} | Not sent to OP (today): ${colorCount(todayOpNotSent)} | Not sent to Customer (today): ${colorCount(todayCustomerNotSent)}` +
+          `<br>Tomorrow: ${tomorrowCount} | Not sent to OP (tomorrow): ${colorCount(tomorrowOpNotSent)} | Not sent to Customer (tomorrow): ${colorCount(tomorrowCustomerNotSent)}`;
       } else {
         summaryDiv.textContent = 'No results.';
       }

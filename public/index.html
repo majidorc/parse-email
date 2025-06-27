@@ -242,17 +242,17 @@
       tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
         <tr class="${getRowClass(b.tour_date)}">
           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">${b.booking_number || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.customer_name || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.sku || ''}</td>
-          <td class="px-4 py-3 text-sm text-gray-800">${b.program || ''}</td>
-          <td class="px-4 py-3 text-sm text-gray-800">${b.hotel || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
+          <td class="px-4 py-3 text-sm">${b.program || ''}</td>
+          <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
           <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
           <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.adult || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.child || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800 text-center">${b.infant || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
         </tr>
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
 

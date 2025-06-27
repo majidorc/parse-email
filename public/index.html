@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bookings Table</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/assets/index-Dtn62Xmo.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -241,7 +240,7 @@
       const summaryDiv = document.getElementById('table-summary');
       tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
         <tr class="${getRowClass(b.tour_date)}">
-          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">${b.booking_number || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>

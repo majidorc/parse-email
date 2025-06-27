@@ -95,7 +95,7 @@
     <div style="text-align:center; margin-bottom: 1rem;">
       <input id="search-bar" type="text" placeholder="Search bookings..." style="width: 320px; max-width: 90vw; padding: 0.5em 1em; border: 1px solid #bbb; border-radius: 6px; font-size: 1em;">
     </div>
-    <div id="table-summary" style="text-align:center; margin-bottom: 0.5rem; color: #444; font-size: 1.05em;"></div>
+    <div id="table-summary" class="text-center mb-6"></div>
     <table id="bookings-table">
       <thead>
         <tr>
@@ -227,19 +227,33 @@
         </tr>
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
 
-      if (bookingsData.length) {
-        function daySummary(label, count, opNotSent, customerNotSent, opLabel, customerLabel) {
-          const isGreen = opNotSent == 0 && customerNotSent == 0;
-          const color = isGreen ? '#388e3c' : '#d32f2f';
-          return `<span style='color:${color};font-weight:bold;'>${label} ${count} | ${opLabel} ${opNotSent} | ${customerLabel} ${customerNotSent}</span>`;
-        }
-        summaryDiv.innerHTML =
-          `Showing ${bookingsData.length} of ${totalRows} results (Page ${currentPage})` +
-          `<br>${daySummary('Today:', todayCount, todayOpNotSent, todayCustomerNotSent, 'Not sent to OP (today):', 'Not sent to Customer (today):')}` +
-          `<br>${daySummary('Tomorrow:', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'Not sent to OP (tomorrow):', 'Not sent to Customer (tomorrow):')}`;
-      } else {
-        summaryDiv.textContent = 'No results.';
+      // Tailwind-styled summary
+      function statSpan(label, value, isGreen) {
+        return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
+      function statCard(day, total, opNotSent, customerNotSent, color, bg, border) {
+        return `
+        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center">
+          <p class="${color} font-semibold mb-2 text-lg">${day}</p>
+          <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
+            <span class="font-medium">Total: <span class="font-bold ${color.replace('text-', 'text-')}">${total}</span></span>
+            <span>|</span>
+            ${statSpan('Not sent to OP:', opNotSent, opNotSent == 0)}
+            <span>|</span>
+            ${statSpan('Not sent to Customer:', customerNotSent, customerNotSent == 0)}
+          </div>
+        </div>`;
+      }
+      summaryDiv.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
+          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100')}
+          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100')}
+        </div>
+        <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
+          Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results
+          <span class="text-sm text-gray-500 ml-2">(Page ${currentPage})</span>
+        </p>
+      `;
     }
 
     function renderPagination() {

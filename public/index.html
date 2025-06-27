@@ -121,9 +121,9 @@
   </div>
   <script>
     function iconButton(column, bookingId, value) {
-      const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✓' : '❌';
+      const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✅' : '❌';
       const title = (value === true || value === 1 || value === '1' || value === 'true') ? 'Yes' : 'No';
-      const btnClass = (icon === '✓') ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      const btnClass = (icon === '✅') ? 'icon-btn icon-true' : 'icon-btn icon-false';
       return `<button class="${btnClass}" title="${title}" onclick="handleToggle('${column}', '${bookingId}', this)">${icon}</button>`;
     }
     function isBoolLike(val) {
@@ -244,12 +244,12 @@
       const booking = bookingsData.find(b => b.booking_number == bookingId);
       if (!booking) return alert('Booking not found.');
 
-      const current = (btn.textContent === '✓');
+      const current = (btn.textContent === '✅');
       const newValue = !current;
 
       // Business rule: Customer can only be set to true if OP is true
       if (column === 'customer' && newValue === true && !(booking.op === true || booking.op === 1 || booking.op === '1' || booking.op === 'true')) {
-        alert('Cannot set Customer ✓ unless OP is already ✓.');
+        alert('Cannot set Customer ✅ unless OP is already ✅.');
         return;
       }
 
@@ -269,7 +269,7 @@
         }
         // Update local data and UI
         booking[column] = newValue;
-        btn.textContent = newValue ? '✓' : '❌';
+        btn.textContent = newValue ? '✅' : '❌';
         btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
         btn.title = newValue ? 'Yes' : 'No';
       } catch (err) {

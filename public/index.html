@@ -240,7 +240,7 @@
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
-        <tr>
+        <tr class="${getRowClass(b.tour_date)}">
           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">${b.booking_number || ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${b.customer_name || ''}</td>

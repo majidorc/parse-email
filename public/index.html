@@ -176,16 +176,15 @@
 
     function getRowClass(tourDateStr) {
       if (!tourDateStr) return '';
-      // Try to parse YYYY-MM-DD
+      // Parse as local date (not UTC)
       let d = tourDateStr.length >= 10 ? tourDateStr.substring(0, 10) : '';
       if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return '';
-      const date = new Date(d);
+      const [year, month, day] = d.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // local date
       const today = new Date();
       today.setHours(0,0,0,0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
       if (date < today) return 'row-past';
-      if (date.getTime() === today.getTime()) return 'row-today';
+      if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) return 'row-today';
       return '';
     }
 

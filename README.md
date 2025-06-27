@@ -34,7 +34,7 @@ A full-stack automated email processing and bookings management system, designed
 ---
 
 ## Configuration
-- **config.json**
+- **[config.json](./config.json)**
   - `parserRules`: Maps sender addresses to parser classes.
   - `notifications`: Enable/disable email, Telegram, and LINE notifications.
 - **Environment Variables:**
@@ -61,7 +61,7 @@ A full-stack automated email processing and bookings management system, designed
 ---
 
 ## Frontend Usage
-- Open `public/index.html` in your browser (or deploy as static frontend).
+- Open [`public/index.html`](./public/index.html) in your browser (or deploy as static frontend).
 - Features:
   - Search, sort, and paginate bookings
   - Toggle OP/RI/Customer status with one click
@@ -73,7 +73,7 @@ A full-stack automated email processing and bookings management system, designed
 ## Deployment
 - **Vercel:**
   - All API endpoints are serverless functions under `/api`.
-  - Configure `vercel.json` for function timeouts.
+  - Configure [`vercel.json`](./vercel.json) for function timeouts.
   - Deploy with `vercel --prod`.
 - **Local:**
   - Run `npm start` for local development (requires Node.js 18+).
@@ -82,3 +82,7 @@ A full-stack automated email processing and bookings management system, designed
 
 ## License
 ISC 
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a full version history and recent updates. 

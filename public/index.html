@@ -84,6 +84,8 @@
       table, th, td { font-size: 0.92rem; }
       table { min-width: 700px; }
     }
+    .row-past td { color: #d32f2f !important; }
+    .row-today td { color: #fbc02d !important; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -172,11 +174,26 @@
       }
     }
 
+    function getRowClass(tourDateStr) {
+      if (!tourDateStr) return '';
+      // Try to parse YYYY-MM-DD
+      let d = tourDateStr.length >= 10 ? tourDateStr.substring(0, 10) : '';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return '';
+      const date = new Date(d);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      if (date < today) return 'row-past';
+      if (date.getTime() === today.getTime()) return 'row-today';
+      return '';
+    }
+
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
-        <tr>
+        <tr class="${getRowClass(b.tour_date)}">
           <td class="booking">${b.booking_number || ''}</td>
           <td class="tourdate">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
           <td class="customername">${b.customer_name || ''}</td>

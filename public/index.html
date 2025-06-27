@@ -228,13 +228,15 @@
       `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
 
       if (bookingsData.length) {
-        function colorLabel(label, val) {
-          return `<span style='color:${val == 0 ? '#388e3c' : '#d32f2f'};font-weight:bold;'>${label} ${val}</span>`;
+        function daySummary(label, count, opNotSent, customerNotSent, opLabel, customerLabel) {
+          const isGreen = opNotSent == 0 && customerNotSent == 0;
+          const color = isGreen ? '#388e3c' : '#d32f2f';
+          return `<span style='color:${color};font-weight:bold;'>${label} ${count} | ${opLabel} ${opNotSent} | ${customerLabel} ${customerNotSent}</span>`;
         }
         summaryDiv.innerHTML =
           `Showing ${bookingsData.length} of ${totalRows} results (Page ${currentPage})` +
-          `<br>Today: ${todayCount} | ${colorLabel('Not sent to OP (today):', todayOpNotSent)} | ${colorLabel('Not sent to Customer (today):', todayCustomerNotSent)}` +
-          `<br>Tomorrow: ${tomorrowCount} | ${colorLabel('Not sent to OP (tomorrow):', tomorrowOpNotSent)} | ${colorLabel('Not sent to Customer (tomorrow):', tomorrowCustomerNotSent)}`;
+          `<br>${daySummary('Today:', todayCount, todayOpNotSent, todayCustomerNotSent, 'Not sent to OP (today):', 'Not sent to Customer (today):')}` +
+          `<br>${daySummary('Tomorrow:', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'Not sent to OP (tomorrow):', 'Not sent to Customer (tomorrow):')}`;
       } else {
         summaryDiv.textContent = 'No results.';
       }

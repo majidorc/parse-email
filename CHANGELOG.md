@@ -2,10 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.4.0] - 2024-05-18
+## [1.1.0] - 2025-06-21
 ### Added
-- Automated email parsing for Bokun.io and Thailand Tours
-- Responsive bookings table UI with search, sort, pagination, and status toggles
 - Summary stats for today and tomorrow (total, not sent to OP, not sent to Customer)
 - Multi-channel notifications: Email, Telegram, LINE
 - Timezone-aware logic (Asia/Bangkok)
@@ -24,14 +22,11 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [2.3.0] - 2024-04-01
-### Added
-- Initial bookings ingestion and notification logic
-- Basic table UI and backend endpoints
-
----
-
-## [2.0.0] - 2024-03-01
+## [1.0.0] - 2025-06-20
 ### Added
 - Project initialization
+- Automated email parsing for Bokun.io and Thailand Tours
+- Responsive bookings table UI with search, sort, pagination, and status toggles
+- Initial bookings ingestion and notification logic
+- Basic table UI and backend endpoints
 - Email parsing and database integration 

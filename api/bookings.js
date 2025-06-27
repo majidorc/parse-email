@@ -20,25 +20,27 @@ module.exports = async (req, res) => {
 
   try {
     let whereClause = '';
-    let params = [limit, offset];
+    let params = [];
     if (search) {
-      whereClause = `WHERE booking_number ILIKE $3 OR customer_name ILIKE $3 OR sku ILIKE $3 OR program ILIKE $3 OR hotel ILIKE $3`;
-      params = [limit, offset, `%${search}%`];
+      whereClause = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
+      params = [`%${search}%`];
     }
+
     // Get total count
     const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause}`;
-    const { rows: countRows } = await sql.query(countQuery, search ? [params[2]] : []);
+    const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
 
     // Use string interpolation for ORDER BY direction
-    const query = `
+    let dataQuery = `
       SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant
       FROM bookings
       ${whereClause}
       ORDER BY ${sort} ${dirStr}
-      LIMIT $1 OFFSET $2
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
-    const { rows: bookings } = await sql.query(query, params);
+    const dataParams = [...params, limit, offset];
+    const { rows: bookings } = await sql.query(dataQuery, dataParams);
 
     res.status(200).json({
       bookings,

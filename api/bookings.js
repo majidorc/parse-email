@@ -31,6 +31,68 @@ module.exports = async (req, res) => {
     const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
 
+    // Use Bangkok time for today
+    const todayBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date";
+    let todayWhere = '';
+    let todayParams = [];
+    let hasSearch = !!search;
+    if (hasSearch) {
+      todayWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date = ${todayBangkokSql}`;
+      todayParams = [`%${search}%`];
+    } else {
+      todayWhere = `WHERE tour_date = ${todayBangkokSql}`;
+      todayParams = [];
+    }
+    // Count today's bookings
+    const todayCountQuery = `SELECT COUNT(*) AS count FROM bookings ${todayWhere}`;
+    const { rows: todayRows } = hasSearch
+      ? await sql.query(todayCountQuery, todayParams)
+      : await sql.query(todayCountQuery);
+    const todayCount = parseInt(todayRows[0].count, 10);
+    // Count not sent to OP today (strict boolean check)
+    const todayOpNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${todayWhere} AND (op IS NULL OR op = FALSE)`;
+    const { rows: opNotSentRows } = hasSearch
+      ? await sql.query(todayOpNotSentQuery, todayParams)
+      : await sql.query(todayOpNotSentQuery);
+    const todayOpNotSent = parseInt(opNotSentRows[0].count, 10);
+    // Count not sent to Customer today (strict boolean check)
+    const todayCustomerNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${todayWhere} AND (customer IS NULL OR customer = FALSE)`;
+    const { rows: customerNotSentRows } = hasSearch
+      ? await sql.query(todayCustomerNotSentQuery, todayParams)
+      : await sql.query(todayCustomerNotSentQuery);
+    const todayCustomerNotSent = parseInt(customerNotSentRows[0].count, 10);
+
+    // --- Tomorrow's stats (Bangkok time) ---
+    const tomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '1 day'";
+    let tomorrowWhere = '';
+    let tomorrowParams = [];
+    if (hasSearch) {
+      tomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date = ${tomorrowBangkokSql}`;
+      tomorrowParams = [`%${search}%`];
+    } else {
+      tomorrowWhere = `WHERE tour_date = ${tomorrowBangkokSql}`;
+      tomorrowParams = [];
+    }
+    // Count tomorrow's bookings
+    const tomorrowCountQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere}`;
+    const { rows: tomorrowRows } = hasSearch
+      ? await sql.query(tomorrowCountQuery, tomorrowParams)
+      : await sql.query(tomorrowCountQuery);
+    const tomorrowCount = parseInt(tomorrowRows[0].count, 10);
+    // Count not sent to OP tomorrow
+    const tomorrowOpNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere} AND (op IS NULL OR op = FALSE)`;
+    const { rows: opNotSentTomorrowRows } = hasSearch
+      ? await sql.query(tomorrowOpNotSentQuery, tomorrowParams)
+      : await sql.query(tomorrowOpNotSentQuery);
+    const tomorrowOpNotSent = parseInt(opNotSentTomorrowRows[0].count, 10);
+    // Count not sent to Customer tomorrow
+    const tomorrowCustomerNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere} AND (customer IS NULL OR customer = FALSE)`;
+    const { rows: customerNotSentTomorrowRows } = hasSearch
+      ? await sql.query(tomorrowCustomerNotSentQuery, tomorrowParams)
+      : await sql.query(tomorrowCustomerNotSentQuery);
+    const tomorrowCustomerNotSent = parseInt(customerNotSentTomorrowRows[0].count, 10);
+    // --- End tomorrow's stats ---
+
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
       SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant
@@ -46,9 +108,16 @@ module.exports = async (req, res) => {
       bookings,
       total,
       page,
-      limit
+      limit,
+      todayCount,
+      todayOpNotSent,
+      todayCustomerNotSent,
+      tomorrowCount,
+      tomorrowOpNotSent,
+      tomorrowCustomerNotSent
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch bookings', details: err.message });
+    console.error('Bookings API error:', err);
+    res.status(500).json({ error: 'Failed to fetch bookings', details: err.message, stack: err.stack });
   }
 }; 

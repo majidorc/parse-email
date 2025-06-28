@@ -250,24 +250,27 @@
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
-      tbody.innerHTML = bookingsData.length ? bookingsData.map(b => `
-        <tr class="${getRowClass(b.tour_date)}">
-          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
-          <td class="px-4 py-3 text-sm">${b.program || ''}</td>
-          <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
-        </tr>
-      `).join('') : '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
-
-      // Tailwind-styled summary
+      if (!bookingsData.length) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+      } else {
+        tbody.innerHTML = bookingsData.map(b => `
+          <tr class="${getRowClass(b.tour_date)}">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.program || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
+          </tr>
+        `).join('');
+      }
+      // Always render summary and pagination
       function statSpan(label, value, isGreen, extraClass = '') {
         return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
@@ -294,7 +297,7 @@
           <span class="text-sm text-gray-500 ml-2">(Page ${currentPage})</span>
         </p>
       `;
-
+      renderPagination();
       // Attach click event to Tomorrow card
       const tomorrowCard = document.getElementById('tomorrow-card');
       if (tomorrowCard) {

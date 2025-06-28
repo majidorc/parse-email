@@ -12,6 +12,7 @@
     "@vercel/postgres": "^0.9.0",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
+    "css-select": "^5.2.1",
     "dotenv": "^16.0.0",
     "html-to-text": "^9.0.5",
     "mailparser": "^3.7.1",

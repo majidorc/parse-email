@@ -273,9 +273,9 @@
       function statSpan(label, value, isGreen, extraClass = '') {
         return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
-      function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass) {
+      function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
         return `
-        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center">
+        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
           <p class="${color} font-semibold mb-2 text-lg">${day}</p>
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
             <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
@@ -288,8 +288,8 @@
       }
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800')}
-          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800')}
+          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
+          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
         </div>
         <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
           Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results
@@ -401,6 +401,24 @@
     });
     // Initial fetch
     fetchBookings();
+    // Helper to get tomorrow's date in YYYY-MM-DD
+    function getTomorrowDateStr() {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().slice(0, 10);
+    }
+    // Add click event to Tomorrow card
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => { // Wait for summary to render
+        const tomorrowCard = document.getElementById('tomorrow-card');
+        if (tomorrowCard) {
+          tomorrowCard.addEventListener('click', function() {
+            document.getElementById('search-bar').value = getTomorrowDateStr();
+            searchTerm = getTomorrowDateStr();
+            fetchBookings(1, currentSort, currentDir, searchTerm);
+          });
+        }
+      }, 500);
   </script>
 </body>
 </html>

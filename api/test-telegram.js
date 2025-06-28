@@ -1,13 +1,13 @@
 export default async function handler(req, res) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  const token = process.env.TELEGRAM_TOKEN;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
   try {
     const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: "This is a test notification from your Vercel app!"
+        text: "Hello, this is a test from /api/test-telegram"
       })
     });
     const data = await response.json();

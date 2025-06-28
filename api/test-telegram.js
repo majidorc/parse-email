@@ -7,7 +7,7 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: "Hello, this is a test from /api/test-telegram"
+        text: "Hello! TEST"
       })
     });
     const data = await response.json();

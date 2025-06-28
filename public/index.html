@@ -407,14 +407,29 @@
       tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toISOString().slice(0, 10);
     }
-    // Add click event to Tomorrow card
+    // Helper to get today's date in YYYY-MM-DD
+    function getTodayDateStr() {
+      const today = new Date();
+      return today.toISOString().slice(0, 10);
+    }
+    // Add click event to Tomorrow and Today cards
     document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => { // Wait for summary to render
         const tomorrowCard = document.getElementById('tomorrow-card');
         if (tomorrowCard) {
           tomorrowCard.addEventListener('click', function() {
-            document.getElementById('search-bar').value = getTomorrowDateStr();
-            searchTerm = getTomorrowDateStr();
+            const tomorrowStr = getTomorrowDateStr();
+            document.getElementById('search-bar').value = tomorrowStr;
+            searchTerm = tomorrowStr;
+            fetchBookings(1, currentSort, currentDir, searchTerm);
+          });
+        }
+        const todayCard = document.getElementById('today-card');
+        if (todayCard) {
+          todayCard.addEventListener('click', function() {
+            const todayStr = getTodayDateStr();
+            document.getElementById('search-bar').value = todayStr;
+            searchTerm = todayStr;
             fetchBookings(1, currentSort, currentDir, searchTerm);
           });
         }

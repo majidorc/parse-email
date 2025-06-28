@@ -6,11 +6,10 @@
   "scripts": {
     "start": "node api/webhook.js",
     "test": "node test-email.js",
-    "build": "echo 'No build step required'",
-    "postinstall": "npm uninstall bufferutil utf-8-validate || true"
+    "build": "echo 'No build step required'"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
+    "@vercel/postgres": "^0.9.0",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.0.0",

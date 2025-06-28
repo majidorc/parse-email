@@ -28,8 +28,7 @@ function forwardEmails() {
           
           UrlFetchApp.fetch(webhookUrl, options);
           
-          // Mark as read only after successful forwarding
-          message.markRead();
+          // message.markRead(); // Keep email unread after forwarding
           
         } catch (error) {
           // Log the error to the Apps Script console for debugging

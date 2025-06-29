@@ -281,14 +281,14 @@
               <span class="font-bold ml-4">📅 Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
             </div>
             <hr class="my-2">
-            <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span>&nbsp;${b.customer_name || ''}</div>
-            <div class="mb-1 flex items-center"><span class="font-bold">📝 Program:</span>&nbsp;${b.program || ''}</div>
-            <div class="mb-1 flex items-center"><span class="font-bold">🏨 Hotel:</span>&nbsp;${b.hotel || ''}</div>
+            <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span> <span>${b.customer_name || ''}</span></div>
+            <div class="mb-1 flex items-center"><span class="font-bold">📝Program:</span> <span>${b.program || ''}</span></div>
+            <div class="mb-1 flex items-center"><span class="font-bold">🏨Hotel:</span> <span>${b.hotel || ''}</span></div>
             <hr class="my-2">
             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
-              <span class="font-bold">🟢 OP:</span> ${iconButton('op', b.booking_number, b.op)}
-              <span class="font-bold">🔄 RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
-              <span class="font-bold">👥 Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
+              <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
+              <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
+              <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
             </div>
             <hr class="my-2">
             <div class="flex flex-wrap gap-x-4 gap-y-1 items-center">

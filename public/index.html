@@ -94,58 +94,14 @@
     @media (max-width: 1200px) {
       table { min-width: 900px; }
     }
-    @media (max-width: 700px), (max-width: 768px) {
+    @media (max-width: 700px) {
       .container { padding: 8px; }
       table, th, td { font-size: 0.92rem; }
-      table { min-width: unset; }
-      .overflow-x-auto {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        width: 100%;
-        display: block;
-        scrollbar-width: thin;
-        scrollbar-color: #bdbdbd #f0f2f5;
-      }
-      .overflow-x-auto::-webkit-scrollbar {
-        height: 8px;
-        background: #f0f2f5;
-      }
-      .overflow-x-auto::-webkit-scrollbar-thumb {
-        background: #bdbdbd;
-        border-radius: 4px;
-      }
-      thead th {
-        position: sticky;
-        top: 0;
-        background: #e3f0fb;
-        z-index: 2;
-      }
-      table tr.row-today td {
-        color: #fff !important;
-        background: #43a047 !important;
-      }
-      /* Allow text to wrap in key columns on small screens */
-      th.program, td.program,
-      th.hotel, td.hotel,
-      th.customername, td.customername {
-        white-space: normal !important;
-        word-wrap: break-word;
-        min-width: 120px;
-        width: auto;
-      }
-      /* Keep nowrap for short, fixed-data columns */
-      th.booking, td.booking,
-      th.tourdate, td.tourdate,
-      th.sku, td.sku,
-      th.op, td.op,
-      th.ri, td.ri,
-      th.customer, td.customer,
-      th.adult, td.adult,
-      th.child, td.child,
-      th.infant, td.infant {
-        white-space: nowrap !important;
-      }
+      table { min-width: unset; display: none; }
+      .overflow-x-auto { display: none; }
+      .booking-cards { display: block; }
     }
+    .booking-cards { display: none; }
     table tr.row-past td { color: #d32f2f !important; }
     table tr.row-today td { color: #388e3c !important; background: #e8f5e9 !important; }
   </style>
@@ -290,8 +246,19 @@
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
+      const cardsContainerId = 'booking-cards-container';
+      let cardsContainer = document.getElementById(cardsContainerId);
+      if (!cardsContainer) {
+        cardsContainer = document.createElement('div');
+        cardsContainer.id = cardsContainerId;
+        cardsContainer.className = 'booking-cards';
+        tbody.parentNode.parentNode.appendChild(cardsContainer);
+      }
+      // Hide cards by default
+      cardsContainer.style.display = 'none';
       if (!bookingsData.length) {
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+        cardsContainer.innerHTML = '';
       } else {
         tbody.innerHTML = bookingsData.map(b => `
           <tr class="${getRowClass(b.tour_date)}">
@@ -309,7 +276,36 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
           </tr>
         `).join('');
+        // Render cards for mobile
+        cardsContainer.innerHTML = bookingsData.map(b => `
+          <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)}">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2">
+              <span class="font-bold">Booking #:</span> <span>${b.booking_number || ''}</span>
+              <span class="font-bold ml-4">Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
+            </div>
+            <div class="mb-1"><span class="font-bold">Customer:</span> ${b.customer_name || ''}</div>
+            <div class="mb-1"><span class="font-bold">Program:</span> ${b.program || ''}</div>
+            <div class="mb-1"><span class="font-bold">Hotel:</span> ${b.hotel || ''}</div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1">
+              <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
+              <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
+              <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1">
+              <span class="font-bold">Adult:</span> ${b.adult || ''}
+              <span class="font-bold">Child:</span> ${b.child || ''}
+              <span class="font-bold">Infant:</span> ${b.infant || ''}
+            </div>
+          </div>
+        `).join('');
       }
+      // Show cards on mobile only
+      if (window.innerWidth <= 700) {
+        cardsContainer.style.display = 'block';
+      } else {
+        cardsContainer.style.display = 'none';
+      }
+      renderPagination();
       // Always render summary and pagination
       function statSpan(label, value, isGreen, extraClass = '') {
         return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
@@ -483,6 +479,12 @@
       const today = new Date();
       return today.toISOString().slice(0, 10);
     }
+    window.addEventListener('resize', () => {
+      const cardsContainer = document.getElementById('booking-cards-container');
+      if (cardsContainer) {
+        cardsContainer.style.display = window.innerWidth <= 700 ? 'block' : 'none';
+      }
+    });
   </script>
 </body>
 </html>

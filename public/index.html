@@ -127,6 +127,7 @@
     </div>
     <!-- Results Summary Section -->
     <div id="table-summary" class="text-center mb-6"></div>
+    <div id="booking-cards-container" class="booking-cards"></div>
     <hr class="border-gray-200 mb-6">
     <!-- Bookings Table Section -->
     <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
@@ -246,14 +247,7 @@
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
-      const cardsContainerId = 'booking-cards-container';
-      let cardsContainer = document.getElementById(cardsContainerId);
-      if (!cardsContainer) {
-        cardsContainer = document.createElement('div');
-        cardsContainer.id = cardsContainerId;
-        cardsContainer.className = 'booking-cards';
-        tbody.parentNode.parentNode.appendChild(cardsContainer);
-      }
+      const cardsContainer = document.getElementById('booking-cards-container');
       // Hide cards by default
       cardsContainer.style.display = 'none';
       if (!bookingsData.length) {

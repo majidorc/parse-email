@@ -271,27 +271,34 @@
           </tr>
         `).join('');
         // Render cards for mobile
-        cardsContainer.innerHTML = bookingsData.map(b => `
+        cardsContainer.innerHTML = bookingsData.map(b => {
+          const showChild = b.child && Number(b.child) > 0;
+          const showInfant = b.infant && Number(b.infant) > 0;
+          return `
           <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)}">
-            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2">
-              <span class="font-bold">Booking #:</span> <span>${b.booking_number || ''}</span>
-              <span class="font-bold ml-4">Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
+              <span class="font-bold">🆔 Booking #:</span> <span>${b.booking_number || ''}</span>
+              <span class="font-bold ml-4">📅 Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
             </div>
-            <div class="mb-1"><span class="font-bold">Customer:</span> ${b.customer_name || ''}</div>
-            <div class="mb-1"><span class="font-bold">Program:</span> ${b.program || ''}</div>
-            <div class="mb-1"><span class="font-bold">Hotel:</span> ${b.hotel || ''}</div>
-            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1">
-              <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
-              <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
-              <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
+            <hr class="my-2">
+            <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span>&nbsp;${b.customer_name || ''}</div>
+            <div class="mb-1 flex items-center"><span class="font-bold">📝 Program:</span>&nbsp;${b.program || ''}</div>
+            <div class="mb-1 flex items-center"><span class="font-bold">🏨 Hotel:</span>&nbsp;${b.hotel || ''}</div>
+            <hr class="my-2">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
+              <span class="font-bold">🟢 OP:</span> ${iconButton('op', b.booking_number, b.op)}
+              <span class="font-bold">🔄 RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
+              <span class="font-bold">👥 Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
             </div>
-            <div class="flex flex-wrap gap-x-4 gap-y-1">
-              <span class="font-bold">Adult:</span> ${b.adult || ''}
-              <span class="font-bold">Child:</span> ${b.child || ''}
-              <span class="font-bold">Infant:</span> ${b.infant || ''}
+            <hr class="my-2">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 items-center">
+              <span class="font-bold">🧑 Adult:</span> ${b.adult || ''}
+              ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
+              ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
             </div>
           </div>
-        `).join('');
+          `;
+        }).join('');
       }
       // Show cards on mobile only
       if (window.innerWidth <= 700) {

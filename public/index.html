@@ -103,6 +103,16 @@
         -webkit-overflow-scrolling: touch;
         width: 100%;
         display: block;
+        scrollbar-width: thin;
+        scrollbar-color: #bdbdbd #f0f2f5;
+      }
+      .overflow-x-auto::-webkit-scrollbar {
+        height: 8px;
+        background: #f0f2f5;
+      }
+      .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #bdbdbd;
+        border-radius: 4px;
       }
       thead th {
         position: sticky;

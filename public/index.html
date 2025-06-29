@@ -94,10 +94,10 @@
     @media (max-width: 1200px) {
       table { min-width: 900px; }
     }
-    @media (max-width: 700px) {
+    @media (max-width: 700px), (max-width: 768px) {
       .container { padding: 8px; }
       table, th, td { font-size: 0.92rem; }
-      table { min-width: 700px; }
+      table { min-width: unset; }
       .overflow-x-auto {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
@@ -123,6 +123,27 @@
       table tr.row-today td {
         color: #fff !important;
         background: #43a047 !important;
+      }
+      /* Allow text to wrap in key columns on small screens */
+      th.program, td.program,
+      th.hotel, td.hotel,
+      th.customername, td.customername {
+        white-space: normal !important;
+        word-wrap: break-word;
+        min-width: 120px;
+        width: auto;
+      }
+      /* Keep nowrap for short, fixed-data columns */
+      th.booking, td.booking,
+      th.tourdate, td.tourdate,
+      th.sku, td.sku,
+      th.op, td.op,
+      th.ri, td.ri,
+      th.customer, td.customer,
+      th.adult, td.adult,
+      th.child, td.child,
+      th.infant, td.infant {
+        white-space: nowrap !important;
       }
     }
     table tr.row-past td { color: #d32f2f !important; }

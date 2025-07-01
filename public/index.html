@@ -103,6 +103,7 @@
     .booking-cards { display: none; }
     table tr.row-past td { color: #d32f2f !important; }
     table tr.row-today td { color: #1b5e20 !important; background: #e8f5e9 !important; }
+    table tr.row-tomorrow td { color: #b59b00 !important; background: #fffde7 !important; }
   </style>
 </head>
 <body class="antialiased">
@@ -239,8 +240,11 @@
       const date = new Date(year, month - 1, day); // local date
       const today = new Date();
       today.setHours(0,0,0,0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
       if (date < today) return 'row-past';
       if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) return 'row-today';
+      if (date.getFullYear() === tomorrow.getFullYear() && date.getMonth() === tomorrow.getMonth() && date.getDate() === tomorrow.getDate()) return 'row-tomorrow';
       return '';
     }
 

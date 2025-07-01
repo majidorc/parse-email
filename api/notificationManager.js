@@ -101,7 +101,7 @@ class NotificationManager {
 
       await transporter.sendMail({
         from: `"${process.env.FROM_NAME || 'Booking Notification'}" <${process.env.FROM_EMAIL}>`,
-        to: 'o0dr.orc0o@gmail.com',
+        to: process.env.NOTIFICATION_EMAIL_TO,
         subject: `Booking Confirmation - ${messageData.bookingNumber}`,
         text: messageData.responseTemplate,
         html: messageData.responseTemplate.replace(/\n/g, '<br>'),
@@ -133,15 +133,17 @@ class NotificationManager {
                                  `Phone Number : ${messageData.phoneNumber}\n` +
                                  `Cash on tour : None\n\n` +
                                  `Please mentioned if there is any additional charge for transfer collect from customer`;
-      
       const introText = `New Booking For ${messageData.tourDate}`;
       const escapedIntro = this.escapeTelegramMarkdown(introText);
-
+      const baseUrl = process.env.PUBLIC_BASE_URL || 'https://parse-email.vercel.app';
+      const bookingLink = `${baseUrl}/booking/${messageData.bookingNumber}`;
+      const escapedLink = bookingLink.replace(/\./g, '\\.'); // Escape dots for MarkdownV2
       const message = `${escapedIntro}\n\n` +
                       "Details to copy:\n" +
                       "```\n" +
                       messageBodyForCopy +
-                      "\n```";
+                      "\n```\n" +
+                      `[View Instant Booking Details](${escapedLink})`;
 
       const bookingNumber = messageData.bookingNumber;
       const reply_markup = {

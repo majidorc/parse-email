@@ -104,6 +104,7 @@
     .booking-cards { display: none; }
     table tr.row-past td { color: #d32f2f !important; }
     table tr.row-today td { color: #388e3c !important; background: #e8f5e9 !important; }
+    table tr.row-today td { color: #1b5e20 !important; background: #e8f5e9 !important; }
   </style>
 </head>
 <body class="antialiased">
@@ -146,6 +147,7 @@
             <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Copy</th>
           </tr>
         </thead>
         <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
@@ -268,6 +270,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></td>
           </tr>
         `).join('');
         // Render cards for mobile
@@ -296,6 +299,7 @@
               ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
               ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
             </div>
+            <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></div>
           </div>
           `;
         }).join('');
@@ -486,6 +490,43 @@
         cardsContainer.style.display = window.innerWidth <= 700 ? 'block' : 'none';
       }
     });
+    // Copy notification text logic
+    window.handleCopy = function(btn) {
+      const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
+      const text = generateNotificationText(booking);
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+      });
+    }
+    // Notification text generator (matches NotificationManager.constructNotificationMessage)
+    function generateNotificationText(b) {
+      const tourDate = b.tour_date ? new Date(b.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A';
+      const adult = parseInt(b.adult, 10) || 0;
+      const child = parseInt(b.child, 10) || 0;
+      const infant = parseInt(b.infant, 10) || 0;
+      const parts = [];
+      parts.push(`${adult} Adult${adult === 1 ? '' : 's'}`);
+      if (child > 0) parts.push(`${child} Child${child === 1 ? '' : 'ren'}`);
+      if (infant > 0) parts.push(`${infant} Infant${infant === 1 ? '' : 's'}`);
+      const paxString = parts.join(', ');
+      const totalPax = adult + child + infant;
+      const bookingNumber = b.booking_number;
+      const program = b.program;
+      const customerName = b.customer_name;
+      const hotel = b.hotel;
+      const phoneNumber = b.phone_number || '';
+      return `Please confirm the *pickup time* for this booking:\n\n` +
+        `Booking no : ${bookingNumber}\n` +
+        `Tour date : ${tourDate}\n` +
+        `Program : ${program}\n` +
+        `Name : ${customerName}\n` +
+        `Pax : ${paxString} (Total: ${totalPax})\n` +
+        `Hotel : ${hotel}\n` +
+        `Phone Number : ${phoneNumber}\n` +
+        `Cash on tour : None\n\n` +
+        `Please mentioned if there is any additional charge for transfer collect from customer`;
+    }
   </script>
 </body>
 </html>

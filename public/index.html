@@ -104,6 +104,9 @@
     table tr.row-past td { color: #d32f2f !important; }
     table tr.row-today td { color: #1b5e20 !important; background: #e8f5e9 !important; }
     table tr.row-tomorrow td { color: #b59b00 !important; background: #fffde7 !important; }
+    .card-row-past { color: #d32f2f !important; background: #ffebee !important; }
+    .card-row-today { color: #1b5e20 !important; background: #e8f5e9 !important; }
+    .card-row-tomorrow { color: #b59b00 !important; background: #fffde7 !important; }
   </style>
 </head>
 <body class="antialiased">
@@ -279,8 +282,13 @@
         cardsContainer.innerHTML = bookingsData.map(b => {
           const showChild = b.child && Number(b.child) > 0;
           const showInfant = b.infant && Number(b.infant) > 0;
+          let cardClass = '';
+          const rowClass = getRowClass(b.tour_date);
+          if (rowClass === 'row-past') cardClass = 'card-row-past';
+          else if (rowClass === 'row-today') cardClass = 'card-row-today';
+          else if (rowClass === 'row-tomorrow') cardClass = 'card-row-tomorrow';
           return `
-          <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)}">
+          <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)} ${cardClass}">
             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
               <span class="font-bold">🆔 Booking #:</span> <span>${b.booking_number || ''}</span>
               <span class="font-bold ml-4">📅 Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>

@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
 
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
-      SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant
+      SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number
       FROM bookings
       ${whereClause}
       ORDER BY ${sort} ${dirStr}

@@ -66,7 +66,9 @@ A full-stack automated email processing and bookings management system, designed
   - Search, sort, and paginate bookings
   - Toggle OP/RI/Customer status with one click
   - See summary stats for today and tomorrow
-  - Color-coded rows for past (red) and today (yellow)
+  - Color-coded rows for past (red), today (green), and tomorrow (yellow) — applies to both desktop table and mobile cards
+  - All rows are bold for better readability
+  - Copy button copies all booking details, including phone number
 
 ---
 

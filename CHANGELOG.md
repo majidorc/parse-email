@@ -14,6 +14,15 @@ All notable changes to this project will be documented in this file.
 - Highlight today's row using local date comparison.
 - All table row fonts are now bold.
 
+## [1.4.0] - 2025-06-28
+### Added
+- Phone number is now included in the copy button for each booking row/card.
+- Mobile booking cards now have row color styling (red for past, green for today, yellow for tomorrow) matching the desktop table.
+- Tomorrow's tour date is highlighted yellow in both desktop and mobile views.
+
+### Changed
+- All rows (desktop and mobile) are now bold for better readability.
+
 ---
 
 ## [1.2.0] - 2025-06-27

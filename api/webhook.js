@@ -519,28 +519,56 @@ async function handler(req, res) {
 
         try {
             const { rows: existingBookings } = await sql`
-                SELECT id FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
+                SELECT * FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
             `;
-
-            if (existingBookings.length > 0) {
-                return res.status(200).send('Webhook processed: Booking already exists.');
-            }
 
             const adult = parseInt(extractedInfo.adult, 10) || 0;
             const child = parseInt(extractedInfo.child, 10) || 0;
             const infant = parseInt(extractedInfo.infant, 10) || 0;
+
+            if (existingBookings.length > 0) {
+                // Compare all relevant fields
+                const existing = existingBookings[0];
+                let changed = false;
+                const fields = [
+                  ['tour_date', extractedInfo.isoDate],
+                  ['sku', extractedInfo.sku],
+                  ['program', extractedInfo.program],
+                  ['customer_name', extractedInfo.name],
+                  ['adult', adult],
+                  ['child', child],
+                  ['infant', infant],
+                  ['hotel', extractedInfo.hotel],
+                  ['phone_number', extractedInfo.phoneNumber],
+                  ['raw_tour_date', extractedInfo.tourDate]
+                ];
+                for (const [key, value] of fields) {
+                  // Compare as string for all
+                  if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
+                    changed = true;
+                    break;
+                  }
+                }
+                if (changed) {
+                  await sql`
+                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}
+                    WHERE booking_number = ${extractedInfo.bookingNumber}
+                  `;
+                  return res.status(200).send('Webhook processed: Booking updated.');
+                } else {
+                  return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
+                }
+            }
 
             const { rows: [newBooking] } = await sql`
                 INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
                 VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
                 RETURNING *;
             `;
-            
             if (adult === 0) {
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
-            
             return res.status(200).send('Webhook processed: Booking saved.');
 
         } catch (error) {

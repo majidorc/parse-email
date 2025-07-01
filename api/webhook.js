@@ -187,30 +187,27 @@ class BokunParser extends BaseEmailParser {
   extractPassengers() {
     const pax = { adult: '0', child: '0', infant: '0' };
     const paxCell = this.$('strong').filter((i, el) => this.$(el).text().trim().toLowerCase() === 'pax').first().closest('td').next('td');
+    let lines = [];
     const paxHtml = paxCell.html();
-    if (paxHtml?.includes('<br')) {
-      paxHtml.split(/<br\s*\/?>/i).forEach(line => {
-        const parts = this.$(`<div>${line}</div>`).text().trim().match(/(\d+)\s*(\w+)/);
-        if (parts) {
-          if (parts[2].toLowerCase().includes('adult')) pax.adult = parts[1];
-          else if (parts[2].toLowerCase().includes('child')) pax.child = parts[1];
-          else if (parts[2].toLowerCase().includes('infant')) pax.infant = parts[1];
-        }
-      });
-    } else if (paxCell.find('table').length) {
-      paxCell.find('tr').each((i, row) => {
-        const cells = this.$(row).find('td');
-        if (cells.length >= 2) {
-          const type = this.$(cells[1]).text().trim().toLowerCase();
-          if (type.includes('adult')) pax.adult = this.$(cells[0]).text().trim();
-          else if (type.includes('child')) pax.child = this.$(cells[0]).text().trim();
-          else if (type.includes('infant')) pax.infant = this.$(cells[0]).text().trim();
-        }
-      });
+    if (paxHtml) {
+      // Split by <br>, then by \n, then flatten
+      lines = paxHtml.split(/<br\s*\/?>/i).map(l => this.$(`<div>${l}</div>`).text()).join('\n').split(/\n|\r/).map(l => l.trim()).filter(Boolean);
     } else {
-      const match = paxCell.text().trim().match(/(\d+)\s*Adult/i);
-      if (match) pax.adult = match[1];
+      lines = paxCell.text().split(/\n|\r/).map(l => l.trim()).filter(Boolean);
     }
+    if (lines.length === 0) {
+      // fallback: try to parse whole text
+      lines = [paxCell.text().trim()];
+    }
+    lines.forEach(line => {
+      let m;
+      m = line.match(/(\d+)\s*Adult/i);
+      if (m) pax.adult = m[1];
+      m = line.match(/(\d+)\s*Child/i);
+      if (m) pax.child = m[1];
+      m = line.match(/(\d+)\s*Infant/i);
+      if (m) pax.infant = m[1];
+    });
     return pax;
   }
   extractHotel() { return this.findValueByLabel('Pick-up').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim(); }

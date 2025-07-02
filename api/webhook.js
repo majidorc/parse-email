@@ -378,13 +378,20 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractPaid() {
-      // Look for 'Total: 1234' in the lines
-      const totalLine = this.lines.find(line => /^Total:/i.test(line));
+      // Look for 'Total:' followed by optional whitespace, optional Baht symbol, and a number (with or without commas)
+      const totalLine = this.lines.find(line => /Total:/i.test(line));
       if (totalLine) {
-        const match = totalLine.match(/Total:\s*([\d,.]+)/i);
+        // Match Total: [optional Baht symbol or encoding] [number]
+        const match = totalLine.match(/Total:\s*[฿=E0=B8=BF]?\s*([\d,\.]+)/i);
         if (match && match[1]) {
           return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
         }
+      }
+      // Fallback: try to find in the whole text (for HTML emails or encoded lines)
+      const text = this.lines.join(' ');
+      const match = text.match(/Total:\s*[฿=E0=B8=BF]?\s*([\d,\.]+)/i);
+      if (match && match[1]) {
+        return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
       }
       return null;
     }

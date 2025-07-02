@@ -18,21 +18,6 @@ module.exports = async (req, res) => {
 
   const search = req.query.search ? req.query.search.trim() : '';
 
-  // PATCH: /api/accounting/[booking_number]
-  if (req.method === 'PATCH' && req.query && req.query.booking_number) {
-    const bookingNumber = req.query.booking_number;
-    const { paid } = req.body;
-    if (!bookingNumber || paid === undefined) {
-      return res.status(400).json({ success: false, error: 'Missing booking_number or paid' });
-    }
-    try {
-      await sql.query('UPDATE bookings SET paid = $1 WHERE booking_number = $2', [paid, bookingNumber]);
-      return res.status(200).json({ success: true });
-    } catch (err) {
-      return res.status(500).json({ success: false, error: err.message });
-    }
-  }
-
   try {
     let whereClause = '';
     let params = [];

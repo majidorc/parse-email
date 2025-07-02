@@ -222,6 +222,21 @@
     async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
+      // Always fetch summary stats for all bookings (unfiltered)
+      fetch('/api/bookings?page=1&limit=1')
+        .then(res => res.json())
+        .then(summaryData => {
+          bookingsSummaryData = {
+            todayCount: summaryData.todayCount || 0,
+            todayOpNotSent: summaryData.todayOpNotSent || 0,
+            todayCustomerNotSent: summaryData.todayCustomerNotSent || 0,
+            tomorrowCount: summaryData.tomorrowCount || 0,
+            tomorrowOpNotSent: summaryData.tomorrowOpNotSent || 0,
+            tomorrowCustomerNotSent: summaryData.tomorrowCustomerNotSent || 0
+          };
+          // If table already rendered, re-render summary
+          renderTable();
+        });
       try {
         const params = new URLSearchParams({
           page,
@@ -238,51 +253,11 @@
           document.getElementById('pagination-controls').innerHTML = '';
           bookingsData = [];
           totalRows = 0;
-          if (bookingsSummaryData) {
-            todayCount = bookingsSummaryData.todayCount;
-            todayOpNotSent = bookingsSummaryData.todayOpNotSent;
-            todayCustomerNotSent = bookingsSummaryData.todayCustomerNotSent;
-            tomorrowCount = bookingsSummaryData.tomorrowCount;
-            tomorrowOpNotSent = bookingsSummaryData.tomorrowOpNotSent;
-            tomorrowCustomerNotSent = bookingsSummaryData.tomorrowCustomerNotSent;
-          } else {
-            todayCount = 0;
-            todayOpNotSent = 0;
-            todayCustomerNotSent = 0;
-            tomorrowCount = 0;
-            tomorrowOpNotSent = 0;
-            tomorrowCustomerNotSent = 0;
-          }
           return;
         }
         bookingsData = data.bookings;
         totalRows = data.total || bookingsData.length;
         currentPage = data.page || 1;
-        if (bookingsSummaryData === null && page === 1 && !search && !keepSummary) {
-          bookingsSummaryData = {
-            todayCount: data.todayCount || 0,
-            todayOpNotSent: data.todayOpNotSent || 0,
-            todayCustomerNotSent: data.todayCustomerNotSent || 0,
-            tomorrowCount: data.tomorrowCount || 0,
-            tomorrowOpNotSent: data.tomorrowOpNotSent || 0,
-            tomorrowCustomerNotSent: data.tomorrowCustomerNotSent || 0
-          };
-        }
-        if (bookingsSummaryData) {
-          todayCount = bookingsSummaryData.todayCount;
-          todayOpNotSent = bookingsSummaryData.todayOpNotSent;
-          todayCustomerNotSent = bookingsSummaryData.todayCustomerNotSent;
-          tomorrowCount = bookingsSummaryData.tomorrowCount;
-          tomorrowOpNotSent = bookingsSummaryData.tomorrowOpNotSent;
-          tomorrowCustomerNotSent = bookingsSummaryData.tomorrowCustomerNotSent;
-        } else {
-          todayCount = data.todayCount || 0;
-          todayOpNotSent = data.todayOpNotSent || 0;
-          todayCustomerNotSent = data.todayCustomerNotSent || 0;
-          tomorrowCount = data.tomorrowCount || 0;
-          tomorrowOpNotSent = data.tomorrowOpNotSent || 0;
-          tomorrowCustomerNotSent = data.tomorrowCustomerNotSent || 0;
-        }
         renderTable();
         renderPagination();
         updateSortIndicators();
@@ -396,10 +371,12 @@
           </div>
         </div>`;
       }
+      // Use summary data from unfiltered fetch
+      const summary = bookingsSummaryData || { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Today', todayCount, todayOpNotSent, todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
-          ${statCard('Tomorrow', tomorrowCount, tomorrowOpNotSent, tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
+          ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
+          ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
         </div>
         <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
           Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results

@@ -586,7 +586,7 @@
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
             <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
             <span>|</span>
-            <span class="text-indigo-700 font-medium">PAID: <span class="font-bold text-indigo-800">${opNotSentPaid.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></span>
+            <span class="text-indigo-700 font-medium">PAID: <span class="font-bold text-indigo-800">${Number(opNotSentPaid).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></span>
           </div>
         </div>`;
       }
@@ -600,6 +600,35 @@
           <span class="text-sm text-gray-500 ml-2">(Page ${accountingCurrentPage})</span>
         </p>
       `;
+      // Add click handlers for filtering
+      setTimeout(() => {
+        const lastMonthCard = document.getElementById('last-month-card');
+        const thisMonthCard = document.getElementById('this-month-card');
+        if (lastMonthCard) {
+          lastMonthCard.onclick = function() {
+            const now = new Date();
+            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
+            const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
+            accountingSearch = '';
+            document.getElementById('search-bar').value = '';
+            fetchAccounting(1, accountingSort, accountingDir, `date:${lastMonthStartStr},${thisMonthStartStr}`);
+          };
+        }
+        if (thisMonthCard) {
+          thisMonthCard.onclick = function() {
+            const now = new Date();
+            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
+            const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
+            accountingSearch = '';
+            document.getElementById('search-bar').value = '';
+            fetchAccounting(1, accountingSort, accountingDir, `date:${thisMonthStartStr},${nextMonthStartStr}`);
+          };
+        }
+      }, 0);
     }
 
     async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch) {

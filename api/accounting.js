@@ -22,13 +22,19 @@ module.exports = async (req, res) => {
     let whereClause = '';
     let params = [];
     // Date-only search support
-    const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
-    if (dateSearchMatch) {
-      whereClause = `WHERE tour_date::date = $1`;
-      params = [search];
-    } else if (search) {
-      whereClause = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
-      params = [`%${search}%`];
+    const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
+    if (dateRangeMatch) {
+      whereClause = `WHERE tour_date >= $1 AND tour_date < $2`;
+      params = [dateRangeMatch[1], dateRangeMatch[2]];
+    } else {
+      const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
+      if (dateSearchMatch) {
+        whereClause = `WHERE tour_date::date = $1`;
+        params = [search];
+      } else if (search) {
+        whereClause = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
+        params = [`%${search}%`];
+      }
     }
 
     // Get total count

@@ -238,7 +238,7 @@
           document.getElementById('pagination-controls').innerHTML = '';
           bookingsData = [];
           totalRows = 0;
-          if (!keepSummary && bookingsSummaryData) {
+          if (bookingsSummaryData) {
             todayCount = bookingsSummaryData.todayCount;
             todayOpNotSent = bookingsSummaryData.todayOpNotSent;
             todayCustomerNotSent = bookingsSummaryData.todayCustomerNotSent;
@@ -258,7 +258,7 @@
         bookingsData = data.bookings;
         totalRows = data.total || bookingsData.length;
         currentPage = data.page || 1;
-        if (page === 1 && !search && !keepSummary) {
+        if (bookingsSummaryData === null && page === 1 && !search && !keepSummary) {
           bookingsSummaryData = {
             todayCount: data.todayCount || 0,
             todayOpNotSent: data.todayOpNotSent || 0,

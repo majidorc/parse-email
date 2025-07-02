@@ -122,6 +122,8 @@ module.exports = async (req, res) => {
       tomorrowOpNotSent,
       tomorrowCustomerNotSent
     });
+    // Edge cache for 60s
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
   } catch (err) {
     console.error('Bookings API error:', err);
     res.status(500).json({ error: 'Failed to fetch bookings', details: err.message, stack: err.stack });

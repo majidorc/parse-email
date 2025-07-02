@@ -224,6 +224,7 @@
     let bookingsSummaryData = null;
     let bookingsSummaryDataUnfiltered = null;
     let bookingsSummaryLoading = false;
+    let currentBangkokDate = null;
 
     async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
       const tbody = document.getElementById('bookings-body');
@@ -572,21 +573,19 @@
     });
     // Initial fetch
     fetchBookings();
-    // Helper to get tomorrow's date in YYYY-MM-DD (Bangkok time)
+    // Helper to get tomorrow's date in YYYY-MM-DD (Bangkok time, always based on currentBangkokDate)
     function getTomorrowDateStr() {
-      const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const bangkok = new Date(utc + 7 * 60 * 60000);
-      bangkok.setDate(bangkok.getDate() + 1);
-      return bangkok.toISOString().slice(0, 10);
+      if (!currentBangkokDate) updateBangkokDateTime();
+      const tomorrow = new Date(currentBangkokDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().slice(0, 10);
     }
-    // Helper to get day after tomorrow's date in YYYY-MM-DD (Bangkok time)
+    // Helper to get day after tomorrow's date in YYYY-MM-DD (Bangkok time, always based on currentBangkokDate)
     function getDayAfterTomorrowDateStr() {
-      const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const bangkok = new Date(utc + 7 * 60 * 60000);
-      bangkok.setDate(bangkok.getDate() + 2);
-      return bangkok.toISOString().slice(0, 10);
+      if (!currentBangkokDate) updateBangkokDateTime();
+      const dayAfterTomorrow = new Date(currentBangkokDate);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+      return dayAfterTomorrow.toISOString().slice(0, 10);
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');
@@ -916,6 +915,7 @@
       const now = new Date();
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       const bangkok = new Date(utc + 7 * 60 * 60000);
+      currentBangkokDate = new Date(bangkok.getFullYear(), bangkok.getMonth(), bangkok.getDate()); // midnight Bangkok
       const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
       const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       document.getElementById('bangkok-datetime').textContent = `${dateStr} — ${timeStr} (Bangkok Time)`;

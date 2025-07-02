@@ -73,58 +73,64 @@ module.exports = async (req, res) => {
     // --- Tomorrow's stats (Bangkok time) ---
     let tomorrowWhere = '';
     let tomorrowParams = [];
-    if (hasSearch) {
+    let dayAfterTomorrowWhere = '';
+    let dayAfterTomorrowParams = [];
+    if (dateSearchMatch) {
+      // If searching by date, use that date for summary
+      tomorrowWhere = `WHERE tour_date::date = $1`;
+      tomorrowParams = [search];
+      // Calculate day after tomorrow date string
+      const searchDate = new Date(search);
+      const dayAfterTomorrowDate = new Date(searchDate.getTime() + 24 * 60 * 60 * 1000);
+      const dayAfterTomorrowStr = dayAfterTomorrowDate.toISOString().slice(0, 10);
+      dayAfterTomorrowWhere = `WHERE tour_date::date = $1`;
+      dayAfterTomorrowParams = [dayAfterTomorrowStr];
+    } else if (search) {
       tomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${tomorrowBangkokSql} AND tour_date < ${dayAfterTomorrowBangkokSql}`;
       tomorrowParams = [`%${search}%`];
+      dayAfterTomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
+      dayAfterTomorrowParams = [`%${search}%`];
     } else {
       tomorrowWhere = `WHERE tour_date >= ${tomorrowBangkokSql} AND tour_date < ${dayAfterTomorrowBangkokSql}`;
       tomorrowParams = [];
+      dayAfterTomorrowWhere = `WHERE tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
+      dayAfterTomorrowParams = [];
     }
     // Count tomorrow's bookings
     const tomorrowCountQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere}`;
-    const { rows: tomorrowRows } = hasSearch
+    const { rows: tomorrowRows } = tomorrowParams.length
       ? await sql.query(tomorrowCountQuery, tomorrowParams)
       : await sql.query(tomorrowCountQuery);
     const tomorrowCount = parseInt(tomorrowRows[0].count, 10);
     // Count not sent to OP tomorrow
     const tomorrowOpNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere} AND (op IS NULL OR op = FALSE)`;
-    const { rows: opNotSentTomorrowRows } = hasSearch
+    const { rows: opNotSentTomorrowRows } = tomorrowParams.length
       ? await sql.query(tomorrowOpNotSentQuery, tomorrowParams)
       : await sql.query(tomorrowOpNotSentQuery);
     const tomorrowOpNotSent = parseInt(opNotSentTomorrowRows[0].count, 10);
     // Count not sent to Customer tomorrow
     const tomorrowCustomerNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${tomorrowWhere} AND (customer IS NULL OR customer = FALSE)`;
-    const { rows: customerNotSentTomorrowRows } = hasSearch
+    const { rows: customerNotSentTomorrowRows } = tomorrowParams.length
       ? await sql.query(tomorrowCustomerNotSentQuery, tomorrowParams)
       : await sql.query(tomorrowCustomerNotSentQuery);
     const tomorrowCustomerNotSent = parseInt(customerNotSentTomorrowRows[0].count, 10);
     // --- End tomorrow's stats ---
 
     // --- Day After Tomorrow's stats (Bangkok time) ---
-    let dayAfterTomorrowWhere = '';
-    let dayAfterTomorrowParams = [];
-    if (hasSearch) {
-      dayAfterTomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
-      dayAfterTomorrowParams = [`%${search}%`];
-    } else {
-      dayAfterTomorrowWhere = `WHERE tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
-      dayAfterTomorrowParams = [];
-    }
-    // Count day after tomorrow's bookings
     const dayAfterTomorrowCountQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere}`;
-    const { rows: dayAfterTomorrowRows } = hasSearch
+    const { rows: dayAfterTomorrowRows } = dayAfterTomorrowParams.length
       ? await sql.query(dayAfterTomorrowCountQuery, dayAfterTomorrowParams)
       : await sql.query(dayAfterTomorrowCountQuery);
     const dayAfterTomorrowCount = parseInt(dayAfterTomorrowRows[0].count, 10);
     // Count not sent to OP day after tomorrow
     const dayAfterTomorrowOpNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere} AND (op IS NULL OR op = FALSE)`;
-    const { rows: opNotSentDayAfterTomorrowRows } = hasSearch
+    const { rows: opNotSentDayAfterTomorrowRows } = dayAfterTomorrowParams.length
       ? await sql.query(dayAfterTomorrowOpNotSentQuery, dayAfterTomorrowParams)
       : await sql.query(dayAfterTomorrowOpNotSentQuery);
     const dayAfterTomorrowOpNotSent = parseInt(opNotSentDayAfterTomorrowRows[0].count, 10);
     // Count not sent to Customer day after tomorrow
     const dayAfterTomorrowCustomerNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere} AND (customer IS NULL OR customer = FALSE)`;
-    const { rows: customerNotSentDayAfterTomorrowRows } = hasSearch
+    const { rows: customerNotSentDayAfterTomorrowRows } = dayAfterTomorrowParams.length
       ? await sql.query(dayAfterTomorrowCustomerNotSentQuery, dayAfterTomorrowParams)
       : await sql.query(dayAfterTomorrowCustomerNotSentQuery);
     const dayAfterTomorrowCustomerNotSent = parseInt(customerNotSentDayAfterTomorrowRows[0].count, 10);

@@ -623,10 +623,9 @@
           ${statCard('Last Month', data.lastMonthCount, data.lastMonthOpNotSentPaid, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'last-month-card')}
           ${statCard('This Month', data.thisMonthCount, data.thisMonthOpNotSentPaid, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'this-month-card')}
         </div>
-        <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
-          Showing <span class="font-semibold text-gray-800">${accountingData.length}</span> of <span class="font-semibold text-gray-800">${accountingTotalRows}</span> results
-          <span class="text-sm text-gray-500 ml-2">(Page ${accountingCurrentPage})</span>
-        </p>
+        <div class="flex justify-end mt-4">
+          <span class="text-xs text-gray-500">Showing <span class="font-semibold text-gray-800">${accountingData.length}</span> of <span class="font-semibold text-gray-800">${accountingTotalRows}</span> results <span class="text-xs text-gray-400 ml-1">(Page ${accountingCurrentPage})</span></span>
+        </div>
       `;
       // Add click handlers for filtering (only filter table, not summary)
       setTimeout(() => {

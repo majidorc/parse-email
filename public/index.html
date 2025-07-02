@@ -510,6 +510,10 @@
       searchTerm = '';
       fetchBookings(1, currentSort, currentDir, '');
       this.style.display = 'none';
+      if (accountingTableContainer.style.display !== 'none') {
+        accountingSearch = '';
+        fetchAccounting(1, accountingSort, accountingDir, '');
+      }
     });
     // Initial fetch
     fetchBookings();

@@ -389,10 +389,9 @@
           ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'tomorrow-card')}
           ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}
         </div>
-        <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
-          Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results
-          <span class="text-sm text-gray-500 ml-2">(Page ${currentPage})</span>
-        </p>
+        <div class="flex justify-end mt-4">
+          <span class="text-xs text-gray-500">Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results <span class="text-xs text-gray-400 ml-1">(Page ${currentPage})</span></span>
+        </div>
       `;
       renderPagination();
       // Attach click event to Tomorrow card (Bangkok time)

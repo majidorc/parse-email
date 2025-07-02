@@ -64,6 +64,22 @@ All notable changes to this project will be documented in this file.
 - Basic table UI and backend endpoints.
 - Email parsing and database integration
 
+## [1.5.0] - 2025-07-03
+### Added
+- Live Bangkok date and time display at the top of the main card (UI).
+- /api/server-time endpoint for debugging server time and timezone (shows UTC and formatted Bangkok time).
+- Bookings/Accounting toggle buttons moved inside the main card for a cleaner UI.
+
+### Changed
+- All summary card logic and table/search are now robustly synced to Bangkok time, both frontend and backend.
+- Clicking summary cards always uses the Bangkok date shown at the top as reference.
+- All date filtering and summary logic in backend uses `AT TIME ZONE 'Asia/Bangkok'` for accuracy on Vercel (UTC server).
+- UI and summary cards always reflect the correct Bangkok date, even across time changes.
+
+### Fixed
+- Multiple timezone and summary card bugs: summary cards and table are always in sync, no more off-by-one errors after midnight or on timezone boundaries.
+- Summary cards never show wrong stats after clicking or searching.
+
 ## [Unreleased]
 - Add accounting table view with toggle (shows only relevant columns and paid value)
 - Add summary cards for Last Month and This Month (total bookings and total paid)

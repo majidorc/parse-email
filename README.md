@@ -7,9 +7,9 @@ A full-stack automated email processing and bookings management system, designed
 ## Features
 - **Automated Email Parsing:** Extracts booking details from Bokun.io and Thailand Tours emails.
 - **Bookings Table UI:** Modern, responsive table with search, sort, pagination, and status toggles.
-- **Summary Stats:** Shows total, today, and tomorrow's bookings, including unsent notifications.
+- **Summary Stats:** Shows total, tomorrow, and day after tomorrow's bookings (Bangkok time), including unsent notifications. Summary cards always in sync with table and time.
 - **Multi-Channel Notifications:** Sends booking notifications via Email, Telegram, and LINE.
-- **Timezone-Aware:** All date logic uses Asia/Bangkok timezone for accuracy.
+- **Timezone-Aware:** All date logic uses Asia/Bangkok timezone for accuracy, both in backend (Postgres SQL, Node.js) and frontend (UI, summary, search). Robust handling ensures summary cards, table, and search are always in sync with Bangkok time.
 - **API Endpoints:** RESTful endpoints for bookings, toggles, and notifications.
 - **Daily Scheduler:** Endpoint for scheduled notification jobs (e.g., via Vercel cron or external scheduler).
 - **Accounting table:**
@@ -19,6 +19,7 @@ A full-stack automated email processing and bookings management system, designed
   - **Inline edit**: Click the Paid cell to add or update the value, saved instantly
   - Click summary cards to filter table by month
   - Search, sort, and pagination supported
+- **Server Time Debug Endpoint:** `/api/server-time` returns current server time, UTC, and formatted Bangkok time for debugging timezone issues on Vercel.
 
 ---
 
@@ -73,10 +74,12 @@ A full-stack automated email processing and bookings management system, designed
 - Features:
   - Search, sort, and paginate bookings
   - Toggle OP/RI/Customer status with one click
-  - See summary stats for today and tomorrow
+  - See summary stats for tomorrow and day after tomorrow (Bangkok time)
   - Color-coded rows for past (red), today (green), and tomorrow (yellow) — applies to both desktop table and mobile cards
   - All rows are bold for better readability
   - Copy button copies all booking details, including phone number
+  - Live Bangkok date and time is shown at the top of the main card for reference
+  - Bookings/Accounting toggle buttons are inside the main card for a cleaner UI
 
 ---
 

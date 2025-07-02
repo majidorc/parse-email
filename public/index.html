@@ -97,7 +97,7 @@
       .container { padding: 8px; }
       table, th, td { font-size: 0.92rem; }
       #bookings-table { min-width: unset; display: none; }
-      .overflow-x-auto { display: none; }
+      .bookings-table-container .overflow-x-auto { display: none; }
       .booking-cards { display: block; }
       .accounting-table { display: table !important; min-width: 700px; }
     }
@@ -139,7 +139,7 @@
     <div id="booking-cards-container" class="booking-cards"></div>
     <hr class="border-gray-200 mb-6">
     <!-- Bookings Table Section -->
-    <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+    <div class="bookings-table-container overflow-x-auto rounded-lg shadow-md border border-gray-200">
       <table id="bookings-table" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -648,7 +648,7 @@
     // Toggle logic
     const bookingsBtn = document.getElementById('toggle-bookings');
     const accountingBtn = document.getElementById('toggle-accounting');
-    const bookingsTableSection = document.querySelector('.overflow-x-auto');
+    const bookingsTableSection = document.querySelector('.bookings-table-container');
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
     function setTableMode(mode) {

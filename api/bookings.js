@@ -24,7 +24,8 @@ module.exports = async (req, res) => {
     // Date-only search support
     const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
     if (dateSearchMatch) {
-      whereClause = `WHERE tour_date::date = $1`;
+      // Use Bangkok time for date search
+      whereClause = `WHERE (tour_date AT TIME ZONE 'Asia/Bangkok')::date = $1`;
       params = [search];
     } else if (search) {
       whereClause = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;

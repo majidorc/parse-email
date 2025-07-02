@@ -223,10 +223,12 @@
     async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
-      // Always fetch summary stats for all bookings (unfiltered)
+      // Always fetch summary stats for the current filter/search
       bookingsSummaryLoading = true;
       renderTable(); // Show loading spinner in summary
-      fetch('/api/bookings?page=1&limit=1')
+      const summaryParams = new URLSearchParams({ page: 1, limit: 1 });
+      if (search) summaryParams.append('search', search);
+      fetch(`/api/bookings?${summaryParams.toString()}`)
         .then(res => res.json())
         .then(summaryData => {
           bookingsSummaryData = {

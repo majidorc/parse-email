@@ -218,11 +218,14 @@
     let tomorrowOpNotSent = 0;
     let tomorrowCustomerNotSent = 0;
     let bookingsSummaryData = null;
+    let bookingsSummaryLoading = false;
 
     async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       // Always fetch summary stats for all bookings (unfiltered)
+      bookingsSummaryLoading = true;
+      renderTable(); // Show loading spinner in summary
       fetch('/api/bookings?page=1&limit=1')
         .then(res => res.json())
         .then(summaryData => {
@@ -234,8 +237,8 @@
             tomorrowOpNotSent: summaryData.tomorrowOpNotSent || 0,
             tomorrowCustomerNotSent: summaryData.tomorrowCustomerNotSent || 0
           };
-          // If table already rendered, re-render summary
-          renderTable();
+          bookingsSummaryLoading = false;
+          renderTable(); // Re-render summary with real data
         });
       try {
         const params = new URLSearchParams({
@@ -372,7 +375,12 @@
         </div>`;
       }
       // Use summary data from unfiltered fetch
-      const summary = bookingsSummaryData || { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
+      let summary = bookingsSummaryData;
+      if (bookingsSummaryLoading) {
+        summaryDiv.innerHTML = `<div class='flex justify-center items-center py-8'><span class='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700'></span> <span class='ml-3 text-gray-500 text-lg'>Loading summary...</span></div>`;
+        return;
+      }
+      if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
           ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}

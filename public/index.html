@@ -112,7 +112,11 @@
 </head>
 <body class="antialiased">
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
-    <!-- Table Toggle Section (moved inside main card) -->
+    <!-- Today's Date and Time (Bangkok) -->
+    <div class="flex justify-center mb-2">
+      <span id="bangkok-datetime" class="text-base md:text-lg font-semibold text-indigo-700 bg-indigo-50 rounded px-4 py-1 shadow-sm"></span>
+    </div>
+    <!-- Table Toggle Section -->
     <div class="mb-4 flex justify-center gap-4">
       <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
       <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
@@ -908,6 +912,16 @@
         fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
       });
     });
+    function updateBangkokDateTime() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60000);
+      const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+      const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('bangkok-datetime').textContent = `${dateStr} — ${timeStr} (Bangkok Time)`;
+    }
+    setInterval(updateBangkokDateTime, 1000);
+    updateBangkokDateTime();
   </script>
 </body>
 </html>

@@ -12,6 +12,13 @@ A full-stack automated email processing and bookings management system, designed
 - **Timezone-Aware:** All date logic uses Asia/Bangkok timezone for accuracy.
 - **API Endpoints:** RESTful endpoints for bookings, toggles, and notifications.
 - **Daily Scheduler:** Endpoint for scheduled notification jobs (e.g., via Vercel cron or external scheduler).
+- **Accounting table:**
+  - Toggle between Bookings and Accounting views
+  - Shows only relevant columns (booking number, date, customer, program, hotel, paid)
+  - **Summary cards** for Last Month and This Month: total bookings and total paid
+  - **Inline edit**: Click the Paid cell to add or update the value, saved instantly
+  - Click summary cards to filter table by month
+  - Search, sort, and pagination supported
 
 ---
 
@@ -49,6 +56,7 @@ A full-stack automated email processing and bookings management system, designed
 - `POST /api/webhook` — Main email parser and booking ingester
 - `POST /api/daily-scheduler` — Run daily notification job (requires secret)
 - `POST /api/line-webhook` — Handle LINE bot postbacks for toggles
+- `/api/accounting` supports GET (with search, sort, pagination) and PATCH (to update paid value)
 
 ---
 
@@ -88,3 +96,13 @@ ISC
 ## Changelog
 
 See [CHANGELOG.md](./CHANGELOG.md) for a full version history and recent updates. 
+
+## Usage
+- Deploy backend (Node.js/Express, PostgreSQL)
+- Deploy frontend (static HTML/JS in `public/`)
+- Use the toggle to switch between Bookings and Accounting
+- In Accounting view:
+  - Click the Paid cell to edit/add a value
+  - Click Last Month/This Month cards to filter
+  - Use the search bar to filter by customer, program, etc.
+  - Clear search to reset results 

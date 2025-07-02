@@ -62,4 +62,14 @@ All notable changes to this project will be documented in this file.
 - Responsive bookings table UI with search, sort, pagination, and status toggles.
 - Initial bookings ingestion and notification logic.
 - Basic table UI and backend endpoints.
-- Email parsing and database integration 
+- Email parsing and database integration
+
+## [Unreleased]
+- Add accounting table view with toggle (shows only relevant columns and paid value)
+- Add summary cards for Last Month and This Month (total bookings and total paid)
+- Click summary cards to filter table by month
+- Inline edit for Paid value in accounting table (click cell to edit, saves instantly)
+- Search, sort, and pagination for accounting table
+- Bugfix: accounting table and summary always visible on mobile
+- Bugfix: summary cards show correct paid value for all bookings in month
+- Bugfix: clearing search bar refreshes accounting table 

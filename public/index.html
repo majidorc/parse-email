@@ -217,8 +217,9 @@
     let tomorrowCount = 0;
     let tomorrowOpNotSent = 0;
     let tomorrowCustomerNotSent = 0;
+    let bookingsSummaryData = null;
 
-    async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm) {
+    async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       try {
@@ -237,23 +238,51 @@
           document.getElementById('pagination-controls').innerHTML = '';
           bookingsData = [];
           totalRows = 0;
-          todayCount = 0;
-          todayOpNotSent = 0;
-          todayCustomerNotSent = 0;
-          tomorrowCount = 0;
-          tomorrowOpNotSent = 0;
-          tomorrowCustomerNotSent = 0;
+          if (!keepSummary && bookingsSummaryData) {
+            todayCount = bookingsSummaryData.todayCount;
+            todayOpNotSent = bookingsSummaryData.todayOpNotSent;
+            todayCustomerNotSent = bookingsSummaryData.todayCustomerNotSent;
+            tomorrowCount = bookingsSummaryData.tomorrowCount;
+            tomorrowOpNotSent = bookingsSummaryData.tomorrowOpNotSent;
+            tomorrowCustomerNotSent = bookingsSummaryData.tomorrowCustomerNotSent;
+          } else {
+            todayCount = 0;
+            todayOpNotSent = 0;
+            todayCustomerNotSent = 0;
+            tomorrowCount = 0;
+            tomorrowOpNotSent = 0;
+            tomorrowCustomerNotSent = 0;
+          }
           return;
         }
         bookingsData = data.bookings;
         totalRows = data.total || bookingsData.length;
         currentPage = data.page || 1;
-        todayCount = data.todayCount || 0;
-        todayOpNotSent = data.todayOpNotSent || 0;
-        todayCustomerNotSent = data.todayCustomerNotSent || 0;
-        tomorrowCount = data.tomorrowCount || 0;
-        tomorrowOpNotSent = data.tomorrowOpNotSent || 0;
-        tomorrowCustomerNotSent = data.tomorrowCustomerNotSent || 0;
+        if (page === 1 && !search && !keepSummary) {
+          bookingsSummaryData = {
+            todayCount: data.todayCount || 0,
+            todayOpNotSent: data.todayOpNotSent || 0,
+            todayCustomerNotSent: data.todayCustomerNotSent || 0,
+            tomorrowCount: data.tomorrowCount || 0,
+            tomorrowOpNotSent: data.tomorrowOpNotSent || 0,
+            tomorrowCustomerNotSent: data.tomorrowCustomerNotSent || 0
+          };
+        }
+        if (bookingsSummaryData) {
+          todayCount = bookingsSummaryData.todayCount;
+          todayOpNotSent = bookingsSummaryData.todayOpNotSent;
+          todayCustomerNotSent = bookingsSummaryData.todayCustomerNotSent;
+          tomorrowCount = bookingsSummaryData.tomorrowCount;
+          tomorrowOpNotSent = bookingsSummaryData.tomorrowOpNotSent;
+          tomorrowCustomerNotSent = bookingsSummaryData.tomorrowCustomerNotSent;
+        } else {
+          todayCount = data.todayCount || 0;
+          todayOpNotSent = data.todayOpNotSent || 0;
+          todayCustomerNotSent = data.todayCustomerNotSent || 0;
+          tomorrowCount = data.tomorrowCount || 0;
+          tomorrowOpNotSent = data.tomorrowOpNotSent || 0;
+          tomorrowCustomerNotSent = data.tomorrowCustomerNotSent || 0;
+        }
         renderTable();
         renderPagination();
         updateSortIndicators();
@@ -386,7 +415,7 @@
           document.getElementById('search-bar').value = tomorrowStr;
           document.getElementById('clear-search-btn').style.display = '';
           searchTerm = tomorrowStr;
-          fetchBookings(1, currentSort, currentDir, searchTerm);
+          fetchBookings(1, currentSort, currentDir, searchTerm, true);
         };
       }
       // Attach click event to Today card
@@ -397,7 +426,7 @@
           document.getElementById('search-bar').value = todayStr;
           document.getElementById('clear-search-btn').style.display = '';
           searchTerm = todayStr;
-          fetchBookings(1, currentSort, currentDir, searchTerm);
+          fetchBookings(1, currentSort, currentDir, searchTerm, true);
         };
       }
     }
@@ -501,7 +530,7 @@
     });
     document.getElementById('search-bar').addEventListener('input', function(e) {
       searchTerm = e.target.value;
-      fetchBookings(1, currentSort, currentDir, searchTerm);
+      fetchBookings(1, currentSort, currentDir, searchTerm, true);
       // Show/hide clear button
       document.getElementById('clear-search-btn').style.display = e.target.value ? '' : 'none';
     });
@@ -509,7 +538,7 @@
     document.getElementById('clear-search-btn').addEventListener('click', function() {
       document.getElementById('search-bar').value = '';
       searchTerm = '';
-      fetchBookings(1, currentSort, currentDir, '');
+      fetchBookings(1, currentSort, currentDir, '', false);
       this.style.display = 'none';
       if (accountingTableContainer.style.display !== 'none') {
         accountingSearch = '';

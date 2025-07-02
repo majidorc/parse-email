@@ -38,14 +38,16 @@ module.exports = async (req, res) => {
 
     // Use Bangkok time for today
     const todayBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date";
+    const tomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '1 day'";
+    const dayAfterTomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '2 day'";
     let todayWhere = '';
     let todayParams = [];
     let hasSearch = !!search;
     if (hasSearch) {
-      todayWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date = ${todayBangkokSql}`;
+      todayWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${todayBangkokSql} AND tour_date < ${tomorrowBangkokSql}`;
       todayParams = [`%${search}%`];
     } else {
-      todayWhere = `WHERE tour_date = ${todayBangkokSql}`;
+      todayWhere = `WHERE tour_date >= ${todayBangkokSql} AND tour_date < ${tomorrowBangkokSql}`;
       todayParams = [];
     }
     // Count today's bookings
@@ -68,14 +70,13 @@ module.exports = async (req, res) => {
     const todayCustomerNotSent = parseInt(customerNotSentRows[0].count, 10);
 
     // --- Tomorrow's stats (Bangkok time) ---
-    const tomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '1 day'";
     let tomorrowWhere = '';
     let tomorrowParams = [];
     if (hasSearch) {
-      tomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date = ${tomorrowBangkokSql}`;
+      tomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${tomorrowBangkokSql} AND tour_date < ${dayAfterTomorrowBangkokSql}`;
       tomorrowParams = [`%${search}%`];
     } else {
-      tomorrowWhere = `WHERE tour_date = ${tomorrowBangkokSql}`;
+      tomorrowWhere = `WHERE tour_date >= ${tomorrowBangkokSql} AND tour_date < ${dayAfterTomorrowBangkokSql}`;
       tomorrowParams = [];
     }
     // Count tomorrow's bookings

@@ -613,12 +613,16 @@
       setTimeout(() => {
         const lastMonthCard = document.getElementById('last-month-card');
         const thisMonthCard = document.getElementById('this-month-card');
+        function getBangkokDate(year, month, day) {
+          // month is 0-based
+          const utc = Date.UTC(year, month, day);
+          return new Date(utc + 7 * 60 * 60 * 1000);
+        }
         if (lastMonthCard) {
           lastMonthCard.onclick = function() {
             const now = new Date();
-            // Use local time to get first day of this month and last month
-            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const thisMonthStart = getBangkokDate(now.getFullYear(), now.getMonth(), 1);
+            const lastMonthStart = getBangkokDate(now.getFullYear(), now.getMonth() - 1, 1);
             const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
             accountingSearch = `date:${lastMonthStartStr},${thisMonthStartStr}`;
@@ -629,8 +633,8 @@
         if (thisMonthCard) {
           thisMonthCard.onclick = function() {
             const now = new Date();
-            const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const thisMonthStart = getBangkokDate(now.getFullYear(), now.getMonth(), 1);
+            const nextMonthStart = getBangkokDate(now.getFullYear(), now.getMonth() + 1, 1);
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
             const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
             accountingSearch = `date:${thisMonthStartStr},${nextMonthStartStr}`;

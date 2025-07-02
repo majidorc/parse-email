@@ -154,6 +154,7 @@ class BokunParser extends BaseEmailParser {
     try {
         const cleanedHtml = htmlContent.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
         this.$ = cheerio.load(cleanedHtml);
+        this.textContent = cleanupHtml(htmlContent); // For text search
     } catch (error) {
         throw new Error('BokunParser failed to load HTML.');
     }
@@ -218,6 +219,15 @@ class BokunParser extends BaseEmailParser {
     const match = product.match(/^([A-Z0-9]+)\s*-/);
     return match ? match[1] : '';
   }
+  extractPaid() {
+    // Look for 'Viator amount: THB 1234.56' in the text content
+    const match = this.textContent.match(/Viator amount:\s*THB\s*([\d,.]+)/i);
+    if (match && match[1]) {
+      // Remove commas, parse as float, fix to 2 decimals
+      return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
+    }
+    return null;
+  }
   extractAll() {
     const passengers = this.extractPassengers();
     const tourDate = this.extractTourDate();
@@ -229,7 +239,8 @@ class BokunParser extends BaseEmailParser {
       name: this.extractName(),
       adult: passengers.adult, child: passengers.child, infant: passengers.infant,
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
-      isoDate: this._getISODate(tourDate)
+      isoDate: this._getISODate(tourDate),
+      paid: this.extractPaid()
     };
   }
   formatBookingDetails() {
@@ -366,6 +377,18 @@ class ThailandToursParser extends BaseEmailParser {
         return '';
     }
 
+    extractPaid() {
+      // Look for 'Total: 1234' in the lines
+      const totalLine = this.lines.find(line => /^Total:/i.test(line));
+      if (totalLine) {
+        const match = totalLine.match(/Total:\s*([\d,.]+)/i);
+        if (match && match[1]) {
+          return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
+        }
+      }
+      return null;
+    }
+
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
@@ -380,7 +403,8 @@ class ThailandToursParser extends BaseEmailParser {
             infant: passengers.infant,
             hotel: this.extractHotel(),
             phoneNumber: this.extractPhone(),
-            isoDate: this._getISODate(tourDate)
+            isoDate: this._getISODate(tourDate),
+            paid: this.extractPaid()
         };
     }
 
@@ -525,6 +549,7 @@ async function handler(req, res) {
             const adult = parseInt(extractedInfo.adult, 10) || 0;
             const child = parseInt(extractedInfo.child, 10) || 0;
             const infant = parseInt(extractedInfo.infant, 10) || 0;
+            const paid = extractedInfo.paid !== undefined && extractedInfo.paid !== null && extractedInfo.paid !== '' ? Number(parseFloat(extractedInfo.paid).toFixed(2)) : null;
 
             if (existingBookings.length > 0) {
                 // Compare all relevant fields
@@ -540,10 +565,10 @@ async function handler(req, res) {
                   ['infant', infant],
                   ['hotel', extractedInfo.hotel],
                   ['phone_number', extractedInfo.phoneNumber],
-                  ['raw_tour_date', extractedInfo.tourDate]
+                  ['raw_tour_date', extractedInfo.tourDate],
+                  ['paid', paid]
                 ];
                 for (const [key, value] of fields) {
-                  // Compare as string for all
                   if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
                     changed = true;
                     break;
@@ -551,7 +576,7 @@ async function handler(req, res) {
                 }
                 if (changed) {
                   await sql`
-                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}
+                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');
@@ -561,8 +586,8 @@ async function handler(req, res) {
             }
 
             const { rows: [newBooking] } = await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate})
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid})
                 RETURNING *;
             `;
             if (adult === 0) {

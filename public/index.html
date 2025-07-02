@@ -383,8 +383,8 @@
       if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Tomorrow', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
-          ${statCard('Day After Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
+          ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
+          ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
         </div>
         <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
           Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results
@@ -392,25 +392,25 @@
         </p>
       `;
       renderPagination();
-      // Attach click event to Tomorrow card (now shows tomorrow)
-      const tomorrowCard = document.getElementById('today-card');
+      // Attach click event to Today card (Bangkok time)
+      const todayCard = document.getElementById('today-card');
+      if (todayCard) {
+        todayCard.onclick = function() {
+          const todayStr = getTodayDateStr();
+          document.getElementById('search-bar').value = todayStr;
+          document.getElementById('clear-search-btn').style.display = '';
+          searchTerm = todayStr;
+          fetchBookings(1, currentSort, currentDir, searchTerm, true);
+        };
+      }
+      // Attach click event to Tomorrow card (Bangkok time)
+      const tomorrowCard = document.getElementById('tomorrow-card');
       if (tomorrowCard) {
         tomorrowCard.onclick = function() {
           const tomorrowStr = getTomorrowDateStr();
           document.getElementById('search-bar').value = tomorrowStr;
           document.getElementById('clear-search-btn').style.display = '';
           searchTerm = tomorrowStr;
-          fetchBookings(1, currentSort, currentDir, searchTerm, true);
-        };
-      }
-      // Attach click event to Day After Tomorrow card
-      const dayAfterTomorrowCard = document.getElementById('tomorrow-card');
-      if (dayAfterTomorrowCard) {
-        dayAfterTomorrowCard.onclick = function() {
-          const dayAfterTomorrowStr = getDayAfterTomorrowDateStr();
-          document.getElementById('search-bar').value = dayAfterTomorrowStr;
-          document.getElementById('clear-search-btn').style.display = '';
-          searchTerm = dayAfterTomorrowStr;
           fetchBookings(1, currentSort, currentDir, searchTerm, true);
         };
       }
@@ -611,7 +611,8 @@
     let accountingSummaryData = null;
 
     function renderAccountingSummary(data) {
-      accountingSummaryData = data; // Store the unfiltered summary data
+      // Always use the original summary data for all bookings, not filtered
+      accountingSummaryData = data;
       function statCard(label, total, opNotSentPaid, color, bg, border, totalClass, id = "") {
         return `
         <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
@@ -633,7 +634,7 @@
           <span class="text-sm text-gray-500 ml-2">(Page ${accountingCurrentPage})</span>
         </p>
       `;
-      // Add click handlers for filtering
+      // Add click handlers for filtering (only filter table, not summary)
       setTimeout(() => {
         const lastMonthCard = document.getElementById('last-month-card');
         const thisMonthCard = document.getElementById('this-month-card');
@@ -685,10 +686,11 @@
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No results found.</td></tr>';
           accountingData = [];
           accountingTotalRows = 0;
-          if (!keepSummary && accountingSummaryData) {
+          // Always show the original summary, not filtered
+          if (accountingSummaryData) {
             document.getElementById('accounting-summary').style.display = '';
             renderAccountingSummary(accountingSummaryData);
-          } else if (!keepSummary) {
+          } else {
             document.getElementById('accounting-summary').style.display = '';
             renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
           }
@@ -697,9 +699,9 @@
         accountingData = data.bookings;
         accountingTotalRows = data.total || accountingData.length;
         accountingCurrentPage = data.page || 1;
-        // Show and render summary
+        // Always show the original summary, not filtered
         document.getElementById('accounting-summary').style.display = '';
-        if (page === 1 || !accountingSummaryData) {
+        if (!accountingSummaryData) {
           renderAccountingSummary({
             lastMonthCount: data.lastMonthCount || 0,
             lastMonthOpNotSentPaid: data.lastMonthOpNotSentPaid || 0,
@@ -713,10 +715,10 @@
         renderAccountingPagination();
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load data.</td></tr>';
-        if (!keepSummary && accountingSummaryData) {
+        if (accountingSummaryData) {
           document.getElementById('accounting-summary').style.display = '';
           renderAccountingSummary(accountingSummaryData);
-        } else if (!keepSummary) {
+        } else {
           document.getElementById('accounting-summary').style.display = '';
           renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
         }

@@ -683,9 +683,46 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-            <td class="px-4 py-3 text-sm">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : ''}</td>
+            <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class=\'text-gray-400\'>Click to add</span>'}</td>
           </tr>
         `).join('');
+        // Add inline edit handlers
+        setTimeout(() => {
+          document.querySelectorAll('.accounting-paid-cell').forEach(cell => {
+            cell.onclick = function(e) {
+              if (cell.querySelector('input')) return;
+              const bookingNumber = cell.getAttribute('data-booking');
+              const currentValue = cell.textContent.trim() === 'Click to add' ? '' : cell.textContent.trim();
+              cell.innerHTML = `<input type='number' step='0.01' min='0' class='border px-2 py-1 w-24' value='${currentValue}' autofocus />`;
+              const input = cell.querySelector('input');
+              input.focus();
+              input.select();
+              input.onblur = input.onkeydown = function(ev) {
+                if (ev.type === 'keydown' && ev.key !== 'Enter') return;
+                const newValue = input.value.trim();
+                if (newValue === '' || isNaN(newValue)) {
+                  cell.innerHTML = `<span class='text-gray-400'>Click to add</span>`;
+                  return;
+                }
+                cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+                fetch(`/api/accounting/${bookingNumber}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
+                }).then(r => r.json()).then(data => {
+                  if (data.success) {
+                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                  } else {
+                    cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                  }
+                }).catch(() => {
+                  cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                });
+              };
+            };
+            cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
+          });
+        }, 0);
       }
     }
     function renderAccountingPagination() {

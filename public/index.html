@@ -532,11 +532,13 @@
     });
     // Initial fetch
     fetchBookings();
-    // Helper to get tomorrow's date in YYYY-MM-DD
+    // Helper to get tomorrow's date in YYYY-MM-DD (Bangkok time)
     function getTomorrowDateStr() {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().slice(0, 10);
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60000);
+      bangkok.setDate(bangkok.getDate() + 1);
+      return bangkok.toISOString().slice(0, 10);
     }
     // Helper to get today's date in YYYY-MM-DD (Bangkok time)
     function getTodayDateStr() {
@@ -546,11 +548,13 @@
       const bangkok = new Date(utc + 7 * 60 * 60000);
       return bangkok.toISOString().slice(0, 10);
     }
-    // Add helper for day after tomorrow
+    // Add helper for day after tomorrow (Bangkok time)
     function getDayAfterTomorrowDateStr() {
-      const dayAfterTomorrow = new Date();
-      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-      return dayAfterTomorrow.toISOString().slice(0, 10);
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60000);
+      bangkok.setDate(bangkok.getDate() + 2);
+      return bangkok.toISOString().slice(0, 10);
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');

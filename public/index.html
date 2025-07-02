@@ -581,9 +581,10 @@
     let accountingDir = 'desc';
     let accountingSearch = '';
     const accountingRowsPerPage = 20;
+    let accountingSummaryData = null;
 
     function renderAccountingSummary(data) {
-      // data: { lastMonthCount, lastMonthOpNotSentPaid, thisMonthCount, thisMonthOpNotSentPaid }
+      accountingSummaryData = data; // Store the unfiltered summary data
       function statCard(label, total, opNotSentPaid, color, bg, border, totalClass, id = "") {
         return `
         <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
@@ -618,7 +619,8 @@
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
             accountingSearch = '';
             document.getElementById('search-bar').value = '';
-            fetchAccounting(1, accountingSort, accountingDir, `date:${lastMonthStartStr},${thisMonthStartStr}`);
+            // Only filter the table, keep showing the original summary
+            fetchAccounting(1, accountingSort, accountingDir, `date:${lastMonthStartStr},${thisMonthStartStr}`, true);
           };
         }
         if (thisMonthCard) {
@@ -630,13 +632,14 @@
             const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
             accountingSearch = '';
             document.getElementById('search-bar').value = '';
-            fetchAccounting(1, accountingSort, accountingDir, `date:${thisMonthStartStr},${nextMonthStartStr}`);
+            // Only filter the table, keep showing the original summary
+            fetchAccounting(1, accountingSort, accountingDir, `date:${thisMonthStartStr},${nextMonthStartStr}`, true);
           };
         }
       }, 0);
     }
 
-    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch) {
+    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false) {
       const tbody = document.getElementById('accounting-body');
       try {
         const params = new URLSearchParams({
@@ -652,8 +655,13 @@
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No results found.</td></tr>';
           accountingData = [];
           accountingTotalRows = 0;
-          document.getElementById('accounting-summary').style.display = '';
-          renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
+          if (!keepSummary) {
+            document.getElementById('accounting-summary').style.display = '';
+            renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
+          } else if (accountingSummaryData) {
+            document.getElementById('accounting-summary').style.display = '';
+            renderAccountingSummary(accountingSummaryData);
+          }
           return;
         }
         accountingData = data.bookings;
@@ -661,18 +669,27 @@
         accountingCurrentPage = data.page || 1;
         // Show and render summary
         document.getElementById('accounting-summary').style.display = '';
-        renderAccountingSummary({
-          lastMonthCount: data.lastMonthCount || 0,
-          lastMonthOpNotSentPaid: data.lastMonthOpNotSentPaid || 0,
-          thisMonthCount: data.thisMonthCount || 0,
-          thisMonthOpNotSentPaid: data.thisMonthOpNotSentPaid || 0
-        });
+        if (!keepSummary) {
+          renderAccountingSummary({
+            lastMonthCount: data.lastMonthCount || 0,
+            lastMonthOpNotSentPaid: data.lastMonthOpNotSentPaid || 0,
+            thisMonthCount: data.thisMonthCount || 0,
+            thisMonthOpNotSentPaid: data.thisMonthOpNotSentPaid || 0
+          });
+        } else if (accountingSummaryData) {
+          renderAccountingSummary(accountingSummaryData);
+        }
         renderAccountingTable();
         renderAccountingPagination();
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load data.</td></tr>';
-        document.getElementById('accounting-summary').style.display = '';
-        renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
+        if (!keepSummary) {
+          document.getElementById('accounting-summary').style.display = '';
+          renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
+        } else if (accountingSummaryData) {
+          document.getElementById('accounting-summary').style.display = '';
+          renderAccountingSummary(accountingSummaryData);
+        }
       }
     }
     function renderAccountingTable() {

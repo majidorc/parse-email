@@ -111,6 +111,11 @@
 </head>
 <body class="antialiased">
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
+    <!-- Table Toggle Section -->
+    <div class="mb-4 flex justify-center gap-4">
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
+      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
+    </div>
     <!-- Search Bar Section -->
     <div class="mb-6">
       <label for="search-bar" class="sr-only">Search bookings</label>
@@ -150,15 +155,36 @@
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Copy</th>
-          </tr>
-        </thead>
+        </tr>
+      </thead>
         <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
-          <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
-        </tbody>
-      </table>
+        <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
     </div>
     <hr class="border-gray-200 mt-6 mb-6">
     <div id="pagination-controls" class="flex justify-center items-center space-x-2 text-base"></div>
+    <div id="accounting-table-container" style="display:none;">
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table id="accounting-table" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
+              <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
+              <th data-col="customer_name" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
+              <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+              <th data-col="program" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+              <th data-col="hotel" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</th>
+              <th data-col="paid" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+            </tr>
+          </thead>
+          <tbody id="accounting-body" class="bg-white divide-y divide-gray-200">
+            <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
+    </div>
   </div>
   <script>
     function iconButton(column, bookingId, value) {
@@ -261,7 +287,7 @@
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
         cardsContainer.innerHTML = '';
       } else {
-        tbody.innerHTML = bookingsData.map(b => `
+      tbody.innerHTML = bookingsData.map(b => `
           <tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
@@ -276,8 +302,8 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></td>
-          </tr>
-        `).join('');
+        </tr>
+      `).join('');
         // Render cards for mobile
         cardsContainer.innerHTML = bookingsData.map(b => {
           const showChild = b.child && Number(b.child) > 0;
@@ -430,8 +456,8 @@
         // Update local data and UI
         booking[column] = newValue;
         btn.textContent = newValue ? '✅' : '❌';
-        btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
-        btn.title = newValue ? 'Yes' : 'No';
+      btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      btn.title = newValue ? 'Yes' : 'No';
       } catch (err) {
         alert('Failed to update: ' + (err.message || 'Unknown error'));
       } finally {
@@ -537,6 +563,130 @@
         `Cash on tour : None\n\n` +
         `Please mentioned if there is any additional charge for transfer collect from customer`;
     }
+
+    // --- ACCOUNTING TABLE LOGIC ---
+    let accountingData = [];
+    let accountingTotalRows = 0;
+    let accountingCurrentPage = 1;
+    let accountingSort = 'tour_date';
+    let accountingDir = 'desc';
+    let accountingSearch = '';
+    const accountingRowsPerPage = 20;
+
+    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch) {
+      const tbody = document.getElementById('accounting-body');
+      try {
+        const params = new URLSearchParams({
+          page,
+          limit: accountingRowsPerPage,
+          sort,
+          dir
+        });
+        if (search) params.append('search', search);
+        const res = await fetch(`/api/accounting?${params.toString()}`);
+        const data = await res.json();
+        if (!data.bookings || !data.bookings.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No results found.</td></tr>';
+          accountingData = [];
+          accountingTotalRows = 0;
+          return;
+        }
+        accountingData = data.bookings;
+        accountingTotalRows = data.total || accountingData.length;
+        accountingCurrentPage = data.page || 1;
+        renderAccountingTable();
+        renderAccountingPagination();
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Failed to load data.</td></tr>';
+      }
+    }
+    function renderAccountingTable() {
+      const tbody = document.getElementById('accounting-body');
+      if (!accountingData.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No results found.</td></tr>';
+      } else {
+        tbody.innerHTML = accountingData.map(b => `
+          <tr>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.program || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : ''}</td>
+          </tr>
+        `).join('');
+      }
+    }
+    function renderAccountingPagination() {
+      const controls = document.getElementById('accounting-pagination-controls');
+      const totalPages = Math.ceil(accountingTotalRows / accountingRowsPerPage);
+      if (totalPages <= 1) {
+        controls.innerHTML = '';
+        return;
+      }
+      let html = '';
+      html += `<button ${accountingCurrentPage === 1 ? 'disabled' : ''} onclick="gotoAccountingPage(${accountingCurrentPage - 1})">Prev</button> `;
+      let start = Math.max(1, accountingCurrentPage - 2);
+      let end = Math.min(totalPages, accountingCurrentPage + 2);
+      if (accountingCurrentPage <= 3) end = Math.min(5, totalPages);
+      if (accountingCurrentPage >= totalPages - 2) start = Math.max(1, totalPages - 4);
+      for (let i = start; i <= end; i++) {
+        html += `<button ${i === accountingCurrentPage ? 'disabled style="font-weight:bold;background:#bbdefb;color:#0d47a1;"' : ''} onclick="gotoAccountingPage(${i})">${i}</button> `;
+      }
+      html += `<button ${accountingCurrentPage === totalPages ? 'disabled' : ''} onclick="gotoAccountingPage(${accountingCurrentPage + 1})">Next</button>`;
+      controls.innerHTML = html;
+    }
+    window.gotoAccountingPage = function(page) {
+      const totalPages = Math.ceil(accountingTotalRows / accountingRowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      fetchAccounting(page, accountingSort, accountingDir, accountingSearch);
+    }
+    // Toggle logic
+    const bookingsBtn = document.getElementById('toggle-bookings');
+    const accountingBtn = document.getElementById('toggle-accounting');
+    const bookingsTableSection = document.querySelector('.overflow-x-auto');
+    const summarySection = document.getElementById('table-summary');
+    const accountingTableContainer = document.getElementById('accounting-table-container');
+    function setTableMode(mode) {
+      if (mode === 'bookings') {
+        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+        bookingsTableSection.style.display = '';
+        summarySection.style.display = '';
+        accountingTableContainer.style.display = 'none';
+      } else {
+        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+        bookingsTableSection.style.display = 'none';
+        summarySection.style.display = 'none';
+        accountingTableContainer.style.display = '';
+        fetchAccounting();
+      }
+    }
+    bookingsBtn.onclick = () => setTableMode('bookings');
+    accountingBtn.onclick = () => setTableMode('accounting');
+    // Search bar integration
+    document.getElementById('search-bar').addEventListener('input', function(e) {
+      if (accountingTableContainer.style.display !== 'none') {
+        accountingSearch = e.target.value;
+        fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+      }
+    });
+    // Sort integration for accounting table
+    document.querySelectorAll('#accounting-table th[data-col]').forEach(th => {
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', function() {
+        const col = th.getAttribute('data-col');
+        if (col === accountingSort) {
+          accountingDir = accountingDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          accountingSort = col;
+          accountingDir = 'asc';
+        }
+        fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+      });
+    });
   </script>
 </body>
 </html>

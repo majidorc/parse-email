@@ -189,6 +189,8 @@
       <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
     </div>
   </div>
+  <!-- Footer with Bangkok date and time -->
+  <footer id="bangkok-footer" class="w-full text-center text-xs text-gray-500 mt-8"></footer>
   <script>
     function iconButton(column, bookingId, value) {
       const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✅' : '❌';
@@ -908,6 +910,16 @@
         fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
       });
     });
+    function updateBangkokFooter() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60000);
+      const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+      const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('bangkok-footer').textContent = `Bangkok Time: ${dateStr} ${timeStr}`;
+    }
+    setInterval(updateBangkokFooter, 1000);
+    updateBangkokFooter();
   </script>
 </body>
 </html>

@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
     const todayBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date";
     const tomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '1 day'";
     const dayAfterTomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '2 day'";
+    const twoDaysAfterTomorrowBangkokSql = "(now() AT TIME ZONE 'Asia/Bangkok')::date + INTERVAL '3 day'";
     let todayWhere = '';
     let todayParams = [];
     let hasSearch = !!search;
@@ -99,6 +100,36 @@ module.exports = async (req, res) => {
     const tomorrowCustomerNotSent = parseInt(customerNotSentTomorrowRows[0].count, 10);
     // --- End tomorrow's stats ---
 
+    // --- Day After Tomorrow's stats (Bangkok time) ---
+    let dayAfterTomorrowWhere = '';
+    let dayAfterTomorrowParams = [];
+    if (hasSearch) {
+      dayAfterTomorrowWhere = `WHERE (booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1) AND tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
+      dayAfterTomorrowParams = [`%${search}%`];
+    } else {
+      dayAfterTomorrowWhere = `WHERE tour_date >= ${dayAfterTomorrowBangkokSql} AND tour_date < ${twoDaysAfterTomorrowBangkokSql}`;
+      dayAfterTomorrowParams = [];
+    }
+    // Count day after tomorrow's bookings
+    const dayAfterTomorrowCountQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere}`;
+    const { rows: dayAfterTomorrowRows } = hasSearch
+      ? await sql.query(dayAfterTomorrowCountQuery, dayAfterTomorrowParams)
+      : await sql.query(dayAfterTomorrowCountQuery);
+    const dayAfterTomorrowCount = parseInt(dayAfterTomorrowRows[0].count, 10);
+    // Count not sent to OP day after tomorrow
+    const dayAfterTomorrowOpNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere} AND (op IS NULL OR op = FALSE)`;
+    const { rows: opNotSentDayAfterTomorrowRows } = hasSearch
+      ? await sql.query(dayAfterTomorrowOpNotSentQuery, dayAfterTomorrowParams)
+      : await sql.query(dayAfterTomorrowOpNotSentQuery);
+    const dayAfterTomorrowOpNotSent = parseInt(opNotSentDayAfterTomorrowRows[0].count, 10);
+    // Count not sent to Customer day after tomorrow
+    const dayAfterTomorrowCustomerNotSentQuery = `SELECT COUNT(*) AS count FROM bookings ${dayAfterTomorrowWhere} AND (customer IS NULL OR customer = FALSE)`;
+    const { rows: customerNotSentDayAfterTomorrowRows } = hasSearch
+      ? await sql.query(dayAfterTomorrowCustomerNotSentQuery, dayAfterTomorrowParams)
+      : await sql.query(dayAfterTomorrowCustomerNotSentQuery);
+    const dayAfterTomorrowCustomerNotSent = parseInt(customerNotSentDayAfterTomorrowRows[0].count, 10);
+    // --- End day after tomorrow's stats ---
+
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
       SELECT booking_number, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number
@@ -120,7 +151,10 @@ module.exports = async (req, res) => {
       todayCustomerNotSent,
       tomorrowCount,
       tomorrowOpNotSent,
-      tomorrowCustomerNotSent
+      tomorrowCustomerNotSent,
+      dayAfterTomorrowCount,
+      dayAfterTomorrowOpNotSent,
+      dayAfterTomorrowCustomerNotSent
     });
     // Edge cache for 60s
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');

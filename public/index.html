@@ -383,8 +383,8 @@
       if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
-          ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
+          ${statCard('Tomorrow', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
+          ${statCard('Day After Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'tomorrow-card')}
         </div>
         <p class="text-gray-600 text-lg md:text-xl font-medium mt-6">
           Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results
@@ -392,8 +392,8 @@
         </p>
       `;
       renderPagination();
-      // Attach click event to Tomorrow card
-      const tomorrowCard = document.getElementById('tomorrow-card');
+      // Attach click event to Tomorrow card (now shows tomorrow)
+      const tomorrowCard = document.getElementById('today-card');
       if (tomorrowCard) {
         tomorrowCard.onclick = function() {
           const tomorrowStr = getTomorrowDateStr();
@@ -403,14 +403,14 @@
           fetchBookings(1, currentSort, currentDir, searchTerm, true);
         };
       }
-      // Attach click event to Today card
-      const todayCard = document.getElementById('today-card');
-      if (todayCard) {
-        todayCard.onclick = function() {
-          const todayStr = getTodayDateStr();
-          document.getElementById('search-bar').value = todayStr;
+      // Attach click event to Day After Tomorrow card
+      const dayAfterTomorrowCard = document.getElementById('tomorrow-card');
+      if (dayAfterTomorrowCard) {
+        dayAfterTomorrowCard.onclick = function() {
+          const dayAfterTomorrowStr = getDayAfterTomorrowDateStr();
+          document.getElementById('search-bar').value = dayAfterTomorrowStr;
           document.getElementById('clear-search-btn').style.display = '';
-          searchTerm = todayStr;
+          searchTerm = dayAfterTomorrowStr;
           fetchBookings(1, currentSort, currentDir, searchTerm, true);
         };
       }
@@ -545,6 +545,12 @@
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       const bangkok = new Date(utc + 7 * 60 * 60000);
       return bangkok.toISOString().slice(0, 10);
+    }
+    // Add helper for day after tomorrow
+    function getDayAfterTomorrowDateStr() {
+      const dayAfterTomorrow = new Date();
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+      return dayAfterTomorrow.toISOString().slice(0, 10);
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');

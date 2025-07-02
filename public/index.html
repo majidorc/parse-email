@@ -99,6 +99,7 @@
       table { min-width: unset; display: none; }
       .overflow-x-auto { display: none; }
       .booking-cards { display: block; }
+      .accounting-table { display: table !important; min-width: 700px; }
     }
     .booking-cards { display: none; }
     table tr.row-past td { color: #d32f2f !important; }
@@ -166,7 +167,7 @@
     <div id="pagination-controls" class="flex justify-center items-center space-x-2 text-base"></div>
     <div id="accounting-table-container" style="display:none;">
       <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-        <table id="accounting-table" class="min-w-full divide-y divide-gray-200">
+        <table id="accounting-table" class="accounting-table min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
               <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>

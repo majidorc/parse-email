@@ -661,12 +661,12 @@
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No results found.</td></tr>';
           accountingData = [];
           accountingTotalRows = 0;
-          if (!keepSummary) {
-            document.getElementById('accounting-summary').style.display = '';
-            renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
-          } else if (accountingSummaryData) {
+          if (!keepSummary && accountingSummaryData) {
             document.getElementById('accounting-summary').style.display = '';
             renderAccountingSummary(accountingSummaryData);
+          } else if (!keepSummary) {
+            document.getElementById('accounting-summary').style.display = '';
+            renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
           }
           return;
         }
@@ -675,26 +675,26 @@
         accountingCurrentPage = data.page || 1;
         // Show and render summary
         document.getElementById('accounting-summary').style.display = '';
-        if (!keepSummary) {
+        if (page === 1 || !accountingSummaryData) {
           renderAccountingSummary({
             lastMonthCount: data.lastMonthCount || 0,
             lastMonthOpNotSentPaid: data.lastMonthOpNotSentPaid || 0,
             thisMonthCount: data.thisMonthCount || 0,
             thisMonthOpNotSentPaid: data.thisMonthOpNotSentPaid || 0
           });
-        } else if (accountingSummaryData) {
+        } else {
           renderAccountingSummary(accountingSummaryData);
         }
         renderAccountingTable();
         renderAccountingPagination();
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Failed to load data.</td></tr>';
-        if (!keepSummary) {
-          document.getElementById('accounting-summary').style.display = '';
-          renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
-        } else if (accountingSummaryData) {
+        if (!keepSummary && accountingSummaryData) {
           document.getElementById('accounting-summary').style.display = '';
           renderAccountingSummary(accountingSummaryData);
+        } else if (!keepSummary) {
+          document.getElementById('accounting-summary').style.display = '';
+          renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
         }
       }
     }

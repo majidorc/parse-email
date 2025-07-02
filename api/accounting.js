@@ -57,11 +57,11 @@ module.exports = async (req, res) => {
     // Last Month
     const lastMonthParams = [...params, lastMonthStartStr, thisMonthStartStr];
     const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2} AND (op IS NULL OR op = false)`;
+    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     // This Month
     const thisMonthParams = [...params, thisMonthStartStr, nextMonthStartStr];
     const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2} AND (op IS NULL OR op = false)`;
+    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
       sql.query(lastMonthCountQuery, lastMonthParams),
       sql.query(lastMonthPaidQuery, lastMonthParams),

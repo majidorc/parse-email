@@ -524,10 +524,13 @@
       tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toISOString().slice(0, 10);
     }
-    // Helper to get today's date in YYYY-MM-DD
+    // Helper to get today's date in YYYY-MM-DD (Bangkok time)
     function getTodayDateStr() {
-      const today = new Date();
-      return today.toISOString().slice(0, 10);
+      // Get Bangkok time (UTC+7)
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60000);
+      return bangkok.toISOString().slice(0, 10);
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');
@@ -613,13 +616,13 @@
         if (lastMonthCard) {
           lastMonthCard.onclick = function() {
             const now = new Date();
-            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            // Use local time to get first day of this month and last month
             const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
             const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
             accountingSearch = '';
             document.getElementById('search-bar').value = '';
-            // Only filter the table, keep showing the original summary
             fetchAccounting(1, accountingSort, accountingDir, `date:${lastMonthStartStr},${thisMonthStartStr}`, true);
           };
         }
@@ -632,7 +635,6 @@
             const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
             accountingSearch = '';
             document.getElementById('search-bar').value = '';
-            // Only filter the table, keep showing the original summary
             fetchAccounting(1, accountingSort, accountingDir, `date:${thisMonthStartStr},${nextMonthStartStr}`, true);
           };
         }

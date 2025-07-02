@@ -49,21 +49,18 @@ module.exports = async (req, res) => {
     let summaryWhere = whereClause;
     let summaryParams = [...params];
     // Last Month
-    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${summaryWhere ? summaryWhere + ' AND' : 'WHERE'} tour_date >= $${summaryParams.length + 1} AND tour_date < $${summaryParams.length + 2}`;
-    const lastMonthOpNotSentPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${summaryWhere ? summaryWhere + ' AND' : 'WHERE'} tour_date >= $${summaryParams.length + 1} AND tour_date < $${summaryParams.length + 2} AND (op IS NULL OR op = false)`;
+    const lastMonthParams = [...params, lastMonthStartStr, thisMonthStartStr];
+    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2} AND (op IS NULL OR op = false)`;
     // This Month
-    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${summaryWhere ? summaryWhere + ' AND' : 'WHERE'} tour_date >= $${summaryParams.length + 3} AND tour_date < $${summaryParams.length + 4}`;
-    const thisMonthOpNotSentPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${summaryWhere ? summaryWhere + ' AND' : 'WHERE'} tour_date >= $${summaryParams.length + 3} AND tour_date < $${summaryParams.length + 4} AND (op IS NULL OR op = false)`;
-    const summaryValues = [
-      ...summaryParams,
-      lastMonthStartStr, thisMonthStartStr,
-      thisMonthStartStr, nextMonthStartStr
-    ];
-    const [lastMonthCountRes, lastMonthOpNotSentPaidRes, thisMonthCountRes, thisMonthOpNotSentPaidRes] = await Promise.all([
-      sql.query(lastMonthCountQuery, summaryValues),
-      sql.query(lastMonthOpNotSentPaidQuery, summaryValues),
-      sql.query(thisMonthCountQuery, summaryValues),
-      sql.query(thisMonthOpNotSentPaidQuery, summaryValues)
+    const thisMonthParams = [...params, thisMonthStartStr, nextMonthStartStr];
+    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2} AND (op IS NULL OR op = false)`;
+    const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
+      sql.query(lastMonthCountQuery, lastMonthParams),
+      sql.query(lastMonthPaidQuery, lastMonthParams),
+      sql.query(thisMonthCountQuery, thisMonthParams),
+      sql.query(thisMonthPaidQuery, thisMonthParams)
     ]);
 
     // Use string interpolation for ORDER BY direction
@@ -83,9 +80,9 @@ module.exports = async (req, res) => {
       page,
       limit,
       lastMonthCount: parseInt(lastMonthCountRes.rows[0].count, 10),
-      lastMonthOpNotSentPaid: parseFloat(lastMonthOpNotSentPaidRes.rows[0].sum),
+      lastMonthOpNotSentPaid: parseFloat(lastMonthPaidRes.rows[0].sum),
       thisMonthCount: parseInt(thisMonthCountRes.rows[0].count, 10),
-      thisMonthOpNotSentPaid: parseFloat(thisMonthOpNotSentPaidRes.rows[0].sum)
+      thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum)
     });
   } catch (err) {
     console.error('Accounting API error:', err);

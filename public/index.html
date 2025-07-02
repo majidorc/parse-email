@@ -235,7 +235,10 @@
             todayCustomerNotSent: summaryData.todayCustomerNotSent || 0,
             tomorrowCount: summaryData.tomorrowCount || 0,
             tomorrowOpNotSent: summaryData.tomorrowOpNotSent || 0,
-            tomorrowCustomerNotSent: summaryData.tomorrowCustomerNotSent || 0
+            tomorrowCustomerNotSent: summaryData.tomorrowCustomerNotSent || 0,
+            dayAfterTomorrowCount: summaryData.dayAfterTomorrowCount || 0,
+            dayAfterTomorrowOpNotSent: summaryData.dayAfterTomorrowOpNotSent || 0,
+            dayAfterTomorrowCustomerNotSent: summaryData.dayAfterTomorrowCustomerNotSent || 0
           };
           bookingsSummaryLoading = false;
           renderTable(); // Re-render summary with real data

@@ -621,9 +621,9 @@
             const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
             const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
-            accountingSearch = '';
+            accountingSearch = `date:${lastMonthStartStr},${thisMonthStartStr}`;
             document.getElementById('search-bar').value = '';
-            fetchAccounting(1, accountingSort, accountingDir, `date:${lastMonthStartStr},${thisMonthStartStr}`, true);
+            fetchAccounting(1, accountingSort, accountingDir, accountingSearch, true);
           };
         }
         if (thisMonthCard) {
@@ -633,9 +633,9 @@
             const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
             const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
             const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
-            accountingSearch = '';
+            accountingSearch = `date:${thisMonthStartStr},${nextMonthStartStr}`;
             document.getElementById('search-bar').value = '';
-            fetchAccounting(1, accountingSort, accountingDir, `date:${thisMonthStartStr},${nextMonthStartStr}`, true);
+            fetchAccounting(1, accountingSort, accountingDir, accountingSearch, true);
           };
         }
       }, 0);

@@ -651,18 +651,29 @@
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
     function setTableMode(mode) {
+      const cardsContainer = document.getElementById('booking-cards-container');
+      const paginationControls = document.getElementById('pagination-controls');
       if (mode === 'bookings') {
         bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
         accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
         bookingsTableSection.style.display = '';
         summarySection.style.display = '';
         accountingTableContainer.style.display = 'none';
+        paginationControls.style.display = '';
+        // Show cards on mobile only
+        if (window.innerWidth <= 700) {
+          cardsContainer.style.display = 'block';
+        } else {
+          cardsContainer.style.display = 'none';
+        }
       } else {
         bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
         accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
         bookingsTableSection.style.display = 'none';
         summarySection.style.display = 'none';
         accountingTableContainer.style.display = '';
+        paginationControls.style.display = 'none';
+        cardsContainer.style.display = 'none';
         fetchAccounting();
       }
     }

@@ -111,12 +111,14 @@
   </style>
 </head>
 <body class="antialiased">
+  <!-- Footer with Bangkok date and time (moved above toggle buttons) -->
+  <footer id="bangkok-footer" class="w-full text-center text-xs text-gray-500 mb-4"></footer>
+  <!-- Table Toggle Section -->
+  <div class="mb-4 flex justify-center gap-4">
+    <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
+    <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
+  </div>
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
-    <!-- Table Toggle Section -->
-    <div class="mb-4 flex justify-center gap-4">
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
-      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
-    </div>
     <!-- Search Bar Section -->
     <div class="mb-6">
       <label for="search-bar" class="sr-only">Search bookings</label>
@@ -189,8 +191,6 @@
       <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
     </div>
   </div>
-  <!-- Footer with Bangkok date and time -->
-  <footer id="bangkok-footer" class="w-full text-center text-xs text-gray-500 mt-8"></footer>
   <script>
     function iconButton(column, bookingId, value) {
       const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✅' : '❌';

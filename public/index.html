@@ -578,14 +578,16 @@
       if (!currentBangkokDate) updateBangkokDateTime();
       const tomorrow = new Date(currentBangkokDate);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      return tomorrow.toISOString().slice(0, 10);
+      // Use Bangkok time for formatting
+      return tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     }
     // Helper to get day after tomorrow's date in YYYY-MM-DD (Bangkok time, always based on currentBangkokDate)
     function getDayAfterTomorrowDateStr() {
       if (!currentBangkokDate) updateBangkokDateTime();
       const dayAfterTomorrow = new Date(currentBangkokDate);
       dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-      return dayAfterTomorrow.toISOString().slice(0, 10);
+      // Use Bangkok time for formatting
+      return dayAfterTomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');

@@ -1235,6 +1235,8 @@
               row.rate = selectedRate.name;
               row.net_adult = selectedRate.net_adult;
               row.net_child = selectedRate.net_child;
+              // Save to backend without reloading table
+              saveProgramRow(tr, row, false, false); // false = not adding new rate, false = don't reload table
             }
           }
         };
@@ -1268,6 +1270,8 @@
                 netAdultInput.parentElement.style.display = '';
                 netChildInput.parentElement.style.display = '';
                 addingNewRate = false;
+                // Save to backend and reload table after adding new rate
+                saveProgramRow(tr, row, true, true); // true = adding new rate, true = reload table
               } else {
                 alert('Failed to add rate.');
               }
@@ -1277,7 +1281,7 @@
         };
         // Save/cancel handlers
         if (isEdit) {
-          tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate);
+          tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate, true);
           tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
         } else {
           tr.querySelector('.edit-btn').onclick = () => {
@@ -1285,26 +1289,6 @@
             tr.replaceWith(renderProgramRow(editRow, true));
           };
           tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
-          // Inline rate change in view mode
-          rateSelect.onchange = () => {
-            if (rateSelect.value === '') {
-              // Switch to edit mode for adding new rate
-              tr.replaceWith(renderProgramRow(row, true));
-            } else {
-              // Auto-fill net prices in-place, update row and save
-              const selectedRate = allRates.find(r => r.name === rateSelect.value);
-              if (selectedRate) {
-                row.rate = selectedRate.name;
-                row.net_adult = selectedRate.net_adult;
-                row.net_child = selectedRate.net_child;
-                // Update the fields in-place
-                tr.querySelector('.net-adult-input').value = selectedRate.net_adult;
-                tr.querySelector('.net-child-input').value = selectedRate.net_child;
-                // Save immediately
-                saveProgramRow(tr, row, false);
-              }
-            }
-          };
         }
       } else {
         tr.innerHTML = `
@@ -1340,7 +1324,7 @@
       tbody.prepend(renderProgramRow(newRow, true));
     };
 
-    function saveProgramRow(tr, oldRow, addingNewRate) {
+    function saveProgramRow(tr, oldRow, addingNewRate, reloadTable) {
       const inputs = tr.querySelectorAll('input');
       const selects = tr.querySelectorAll('select');
       const [sku, id, program] = [inputs[0].value, inputs[1].value, inputs[2].value];
@@ -1385,7 +1369,12 @@
         body: JSON.stringify(body)
       })
         .then(res => res.json())
-        .then(() => fetchRatesAndPrograms())
+        .then(() => {
+          if (reloadTable) {
+            fetchRatesAndPrograms();
+          }
+          // If not reloading table, do nothing (row stays updated in-place)
+        })
         .catch(() => alert('Failed to save.'));
     }
 

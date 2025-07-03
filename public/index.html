@@ -1227,11 +1227,14 @@
             rateSelect.style.display = '';
             netAdultInput.parentElement.style.display = '';
             netChildInput.parentElement.style.display = '';
-            // Auto-fill net prices from selected rate
+            // Auto-fill net prices from selected rate (and update row data)
             const selectedRate = allRates.find(r => r.name === rateSelect.value);
             if (selectedRate) {
               netAdultInput.value = selectedRate.net_adult;
               netChildInput.value = selectedRate.net_child;
+              row.rate = selectedRate.name;
+              row.net_adult = selectedRate.net_adult;
+              row.net_child = selectedRate.net_child;
             }
           }
         };
@@ -1258,6 +1261,8 @@
                 netAdultInput.value = data.rate.net_adult;
                 netChildInput.value = data.rate.net_child;
                 row.rate = data.rate.name;
+                row.net_adult = data.rate.net_adult;
+                row.net_child = data.rate.net_child;
                 rateSelect.style.display = '';
                 rateNewFields.style.display = 'none';
                 netAdultInput.parentElement.style.display = '';
@@ -1286,12 +1291,16 @@
               // Switch to edit mode for adding new rate
               tr.replaceWith(renderProgramRow(row, true));
             } else {
-              // Auto-fill net prices and save immediately
+              // Auto-fill net prices in-place, update row and save
               const selectedRate = allRates.find(r => r.name === rateSelect.value);
               if (selectedRate) {
                 row.rate = selectedRate.name;
                 row.net_adult = selectedRate.net_adult;
                 row.net_child = selectedRate.net_child;
+                // Update the fields in-place
+                tr.querySelector('.net-adult-input').value = selectedRate.net_adult;
+                tr.querySelector('.net-child-input').value = selectedRate.net_child;
+                // Save immediately
                 saveProgramRow(tr, row, false);
               }
             }

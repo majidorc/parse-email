@@ -975,6 +975,7 @@
       searchBarSection.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
       programsSection.style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
       fetchDashboardAnalytics();
     };
     bookingsBtn.onclick = () => {
@@ -989,6 +990,8 @@
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = '';
       programsSection.style.display = 'none';
+      // Show mobile cards only if on mobile
+      document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
       fetchBookings();
     };
     accountingBtn.onclick = () => {
@@ -1003,6 +1006,7 @@
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = 'none';
       programsSection.style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
       fetchAccounting();
     };
     programsBtn.onclick = () => {
@@ -1017,6 +1021,7 @@
       programsSection.style.display = '';
       searchBarSection.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
       fetchRatesAndPrograms();
     };
     // Search bar integration
@@ -1183,9 +1188,9 @@
           </td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" ${isEdit ? '' : 'readonly'} /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td><input type='checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+          <td><input type='checkbox' class='np-checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-adult-input' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-child-input' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
           <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
           <td>
             ${isEdit ? `<button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
@@ -1194,14 +1199,16 @@
           </td>
         `;
         // Enable/disable NP fields based on checkbox
-        const npCheckbox = tr.querySelector('td:nth-child(7) input[type=checkbox]');
-        const npAdultInput = tr.querySelector('td:nth-child(8) input');
-        const npChildInput = tr.querySelector('td:nth-child(9) input');
-        if (npCheckbox) {
-          npCheckbox.onchange = () => {
-            npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
-          };
+        const npCheckbox = tr.querySelector('.np-checkbox');
+        const npAdultInput = tr.querySelector('.np-adult-input');
+        const npChildInput = tr.querySelector('.np-child-input');
+        function updateNpFields() {
+          const checked = npCheckbox.checked;
+          npAdultInput.disabled = !checked;
+          npChildInput.disabled = !checked;
         }
+        updateNpFields();
+        npCheckbox.addEventListener('change', updateNpFields);
         // Rate select/input logic
         const rateSelect = tr.querySelector('.rate-select');
         const rateNewFields = tr.querySelector('.rate-new-fields');

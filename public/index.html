@@ -118,7 +118,8 @@
     </div>
     <!-- Table Toggle Section -->
     <div class="mb-4 flex justify-center gap-4">
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
+      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Dashboard</button>
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Bookings</button>
       <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
     </div>
     <!-- Search Bar Section -->
@@ -191,6 +192,54 @@
         </table>
       </div>
       <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
+    </div>
+    <!-- Dashboard Section (hidden by default) -->
+    <div id="dashboard-section" style="display:none;">
+      <div class="flex flex-wrap gap-4 justify-center mb-6">
+        <div class="bg-indigo-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-indigo-700 font-semibold mb-1">Total Bookings</div>
+          <div id="dashboard-total-bookings" class="text-2xl font-bold text-indigo-900">-</div>
+          <div id="dashboard-total-bookings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-pink-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-pink-700 font-semibold mb-1">New Bookings</div>
+          <div id="dashboard-new-bookings" class="text-2xl font-bold text-pink-900">-</div>
+          <div id="dashboard-new-bookings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-green-700 font-semibold mb-1">Total Earnings</div>
+          <div id="dashboard-total-earnings" class="text-2xl font-bold text-green-900">-</div>
+          <div id="dashboard-total-earnings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-blue-700 font-semibold mb-1">Done vs Booked</div>
+          <div class="flex items-center justify-center gap-2 mt-2">
+            <div id="dashboard-done" class="font-bold text-blue-900">-</div>
+            <span class="text-xs text-gray-500">/</span>
+            <div id="dashboard-booked" class="font-bold text-blue-700">-</div>
+          </div>
+          <div class="w-full bg-gray-200 rounded h-2 mt-2">
+            <div id="dashboard-progress" class="bg-blue-500 h-2 rounded" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-8 justify-center mb-6">
+        <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
+          <div class="flex justify-between items-center mb-2">
+            <div class="text-base font-semibold text-indigo-800">Revenue by Day</div>
+            <select id="dashboard-period" class="border rounded px-2 py-1 text-sm">
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+          <div id="dashboard-revenue-list" class="text-sm"></div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow min-w-[220px]">
+          <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
+          <div id="dashboard-top-destinations" class="text-sm"></div>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -858,40 +907,65 @@
       fetchAccounting(page, accountingSort, accountingDir, accountingSearch);
     }
     // Toggle logic
+    const dashboardBtn = document.getElementById('toggle-dashboard');
     const bookingsBtn = document.getElementById('toggle-bookings');
     const accountingBtn = document.getElementById('toggle-accounting');
+    const dashboardSection = document.getElementById('dashboard-section');
     const bookingsTableSection = document.querySelector('.bookings-table-container');
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
-    function setTableMode(mode) {
-      const cardsContainer = document.getElementById('booking-cards-container');
-      const paginationControls = document.getElementById('pagination-controls');
-      if (mode === 'bookings') {
-        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-        bookingsTableSection.style.display = '';
-        summarySection.style.display = '';
-        accountingTableContainer.style.display = 'none';
-        paginationControls.style.display = '';
-        // Show cards on mobile only
-        if (window.innerWidth <= 700) {
-          cardsContainer.style.display = 'block';
-        } else {
-          cardsContainer.style.display = 'none';
-        }
-      } else {
-        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-        bookingsTableSection.style.display = 'none';
-        summarySection.style.display = 'none';
-        accountingTableContainer.style.display = '';
-        paginationControls.style.display = 'none';
-        cardsContainer.style.display = 'none';
-        fetchAccounting();
-      }
-    }
-    bookingsBtn.onclick = () => setTableMode('bookings');
-    accountingBtn.onclick = () => setTableMode('accounting');
+    const searchBarSection = document.querySelector('.mb-6');
+
+    // On page load, show Dashboard by default
+    window.addEventListener('DOMContentLoaded', () => {
+      dashboardSection.style.display = '';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      fetchDashboardAnalytics();
+    });
+
+    dashboardBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardSection.style.display = '';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      fetchDashboardAnalytics();
+    };
+    bookingsBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = '';
+      summarySection.style.display = '';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = '';
+      document.getElementById('pagination-controls').style.display = '';
+      fetchBookings();
+    };
+    accountingBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = '';
+      searchBarSection.style.display = '';
+      document.getElementById('pagination-controls').style.display = 'none';
+      fetchAccounting();
+    };
     // Search bar integration
     document.getElementById('search-bar').addEventListener('input', function(e) {
       if (accountingTableContainer.style.display !== 'none') {
@@ -924,6 +998,82 @@
     }
     setInterval(updateBangkokDateTime, 1000);
     updateBangkokDateTime();
+
+    function fetchDashboardAnalytics() {
+      const period = document.getElementById('dashboard-period').value;
+      // Show loading states
+      document.getElementById('dashboard-total-bookings').textContent = '...';
+      document.getElementById('dashboard-new-bookings').textContent = '...';
+      document.getElementById('dashboard-total-earnings').textContent = '...';
+      document.getElementById('dashboard-done').textContent = '...';
+      document.getElementById('dashboard-booked').textContent = '...';
+      document.getElementById('dashboard-progress').style.width = '0%';
+      document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">Loading...</span>';
+      document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">Loading...</span>';
+      fetch(`/api/dashboard?period=${period}`)
+        .then(res => res.json())
+        .then(data => {
+          // Total Bookings
+          document.getElementById('dashboard-total-bookings').textContent = data.totalBookings.toLocaleString();
+          // New Bookings
+          document.getElementById('dashboard-new-bookings').textContent = data.newBookings.toLocaleString();
+          // Total Earnings
+          document.getElementById('dashboard-total-earnings').textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+          // Done/Booked
+          document.getElementById('dashboard-done').textContent = data.done.toLocaleString();
+          document.getElementById('dashboard-booked').textContent = data.booked.toLocaleString();
+          const total = data.done + data.booked;
+          const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
+          document.getElementById('dashboard-progress').style.width = percent + '%';
+          // Revenue by Day
+          if (data.revenueByDay && data.revenueByDay.length) {
+            document.getElementById('dashboard-revenue-list').innerHTML = data.revenueByDay.map(row =>
+              `<div class='flex justify-between'><span>${row.day}</span><span class='font-semibold text-green-700'>${Number(row.revenue).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`
+            ).join('');
+          } else {
+            document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">No data</span>';
+          }
+          // Top Destinations
+          if (data.topDestinations && data.topDestinations.length) {
+            document.getElementById('dashboard-top-destinations').innerHTML = data.topDestinations.map((row, i) =>
+              `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${row.count}</span></div>`
+            ).join('');
+          } else {
+            document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">No data</span>';
+          }
+          // Percent changes
+          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+          const newChange = document.getElementById('dashboard-new-bookings-change');
+          const earningsChange = document.getElementById('dashboard-total-earnings-change');
+          if (data.percentNew !== null && data.percentNew !== undefined) {
+            const up = data.percentNew >= 0;
+            newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentNew.toFixed(2)}%</span> vs last month`;
+          } else {
+            newChange.textContent = '';
+          }
+          if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
+            const up = data.percentEarnings >= 0;
+            earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentEarnings.toFixed(2)}%</span> vs last month`;
+          } else {
+            earningsChange.textContent = '';
+          }
+          bookingsChange.textContent = '';
+        })
+        .catch(err => {
+          document.getElementById('dashboard-total-bookings').textContent = '-';
+          document.getElementById('dashboard-new-bookings').textContent = '-';
+          document.getElementById('dashboard-total-earnings').textContent = '-';
+          document.getElementById('dashboard-done').textContent = '-';
+          document.getElementById('dashboard-booked').textContent = '-';
+          document.getElementById('dashboard-progress').style.width = '0%';
+          document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-red-500">Error loading data</span>';
+          document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-red-500">Error loading data</span>';
+          document.getElementById('dashboard-total-bookings-change').textContent = '';
+          document.getElementById('dashboard-new-bookings-change').textContent = '';
+          document.getElementById('dashboard-total-earnings-change').textContent = '';
+        });
+    }
+    document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
   </script>
 </body>
 </html>

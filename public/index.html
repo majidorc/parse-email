@@ -1191,7 +1191,7 @@
           <td><input type='checkbox' class='np-checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-adult-input' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-child-input' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
-          <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input class='border px-2 py-1 w-32 remark-input' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
           <td>
             ${isEdit ? `<button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
             <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>` : `<button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>`}
@@ -1396,6 +1396,23 @@
         tr.replaceWith(renderProgramRow(row, false));
       }
     };
+    const saveBtn = tr.querySelector('.save-btn');
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        const sku = tr.querySelector('input.border')?.value || '';
+        const id = tr.querySelectorAll('input.border')[1]?.value || '';
+        const program = tr.querySelectorAll('input.border')[2]?.value || '';
+        const rate = tr.querySelector('.rate-select')?.value || '';
+        const net_adult = tr.querySelector('.net-adult-input')?.value || '';
+        const net_child = tr.querySelector('.net-child-input')?.value || '';
+        const np = tr.querySelector('.np-checkbox')?.checked || false;
+        const np_adult = tr.querySelector('.np-adult-input')?.value || '';
+        const np_child = tr.querySelector('.np-child-input')?.value || '';
+        const remark = tr.querySelector('.remark-input')?.value || '';
+        const payload = { sku, id, program, rate, net_adult, net_child, np, np_adult, np_child, remark };
+        // ... existing save logic ...
+      };
+    }
   </script>
 </body>
 </html>

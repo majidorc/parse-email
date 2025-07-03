@@ -80,6 +80,21 @@ All notable changes to this project will be documented in this file.
 - Multiple timezone and summary card bugs: summary cards and table are always in sync, no more off-by-one errors after midnight or on timezone boundaries.
 - Summary cards never show wrong stats after clicking or searching.
 
+## [1.6.0] - 2025-07-04
+### Added
+- Programs (Tours) management tab with inline-editable table (CRUD).
+- Rate dropdown in Programs with "-- Add New Item --" and custom entry support.
+- Rates table: auto-fill net prices for adult/child, add new rates inline.
+- NP (Net Price) logic: NP Adult/Child fields only enabled when NP is checked.
+
+### Changed
+- Programs save logic now uses class selectors for np_adult, np_child, and remark fields (no more field mix-ups).
+- Bookings cards on mobile now only show on Bookings tab (never on Dashboard, Programs, or Accounting).
+
+### Fixed
+- NP Adult/Child fields always enable/disable in sync with NP checkbox, both on render and toggle.
+- Saving a Program never overwrites remark with np_adult/np_child values.
+
 ## [Unreleased]
 - Add accounting table view with toggle (shows only relevant columns and paid value)
 - Add summary cards for Last Month and This Month (total bookings and total paid)

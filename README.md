@@ -80,6 +80,13 @@ A full-stack automated email processing and bookings management system, designed
   - Copy button copies all booking details, including phone number
   - Live Bangkok date and time is shown at the top of the main card for reference
   - Bookings/Accounting toggle buttons are inside the main card for a cleaner UI
+  - **Programs (Tours) Management:**
+    - Programs tab with inline-editable table for CRUD (create, read, update, delete) of tour programs
+    - Rate dropdown with "-- Add New Item --" and custom entry support
+    - Rates table: auto-fill net prices for adult/child, add new rates inline
+    - NP (Net Price) logic: NP Adult/Child fields only enabled when NP is checked, robust save logic
+    - Bugfix: Saving a Program never overwrites remark with np_adult/np_child values
+  - **Mobile UI:** Bookings cards only show on Bookings tab (never on Dashboard, Programs, or Accounting)
 
 ---
 

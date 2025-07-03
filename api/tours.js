@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     // Add a new tour
     const { id, sku, program, rate, net_adult, net_child, np, np_adult, np_child, remark } = req.body;
-    if (!id || !sku || !program || !rate || net_adult === undefined || net_child === undefined || np === undefined) {
+    if (!sku || !program || !rate || net_adult === undefined || net_child === undefined || np === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     try {

@@ -1158,16 +1158,19 @@
 
     function renderProgramRow(row, isEdit = false) {
       const tr = document.createElement('tr');
-      if (isEdit) {
+      // Always show dropdown if more than one rate
+      const showDropdown = allRates.length > 1;
+      let addingNewRate = false;
+      if (isEdit || showDropdown) {
         // Build rate dropdown options
         let rateOptions = `<option value="">-- Add New Item --</option>`;
         allRates.forEach(rate => {
           rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
         });
         tr.innerHTML = `
-          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
-          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
-          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
+          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" ${isEdit ? '' : 'readonly'} /></td>
           <td>
             <select class='border px-2 py-1 w-32 rate-select'>${rateOptions}</select>
             <div class='rate-new-fields' style='display:none;'>
@@ -1177,24 +1180,27 @@
               <button class='add-rate-btn px-2 py-1 bg-green-600 text-white rounded'>Save</button>
             </div>
           </td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" /></td>
-          <td><input type='checkbox' ${row.np ? 'checked' : ''} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} /></td>
-          <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input type='checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+          <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
           <td>
-            <button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
-            <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>
+            ${isEdit ? `<button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
+            <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>` : `<button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>`}
+            ${isEdit ? '' : `<button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>`}
           </td>
         `;
         // Enable/disable NP fields based on checkbox
         const npCheckbox = tr.querySelector('td:nth-child(7) input[type=checkbox]');
         const npAdultInput = tr.querySelector('td:nth-child(8) input');
         const npChildInput = tr.querySelector('td:nth-child(9) input');
-        npCheckbox.onchange = () => {
-          npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
-        };
+        if (npCheckbox) {
+          npCheckbox.onchange = () => {
+            npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
+          };
+        }
         // Rate select/input logic
         const rateSelect = tr.querySelector('.rate-select');
         const rateNewFields = tr.querySelector('.rate-new-fields');
@@ -1204,18 +1210,23 @@
         const addRateBtn = tr.querySelector('.add-rate-btn');
         const netAdultInput = tr.querySelector('.net-adult-input');
         const netChildInput = tr.querySelector('.net-child-input');
-        let addingNewRate = false;
         rateSelect.onchange = () => {
           if (rateSelect.value === '') {
             addingNewRate = true;
             rateSelect.style.display = 'none';
             rateNewFields.style.display = '';
+            netAdultInput.parentElement.style.display = 'none';
+            netChildInput.parentElement.style.display = 'none';
             rateNameInput.value = '';
             rateAdultInput.value = '';
             rateChildInput.value = '';
             rateNameInput.focus();
           } else {
             addingNewRate = false;
+            rateNewFields.style.display = 'none';
+            rateSelect.style.display = '';
+            netAdultInput.parentElement.style.display = '';
+            netChildInput.parentElement.style.display = '';
             // Auto-fill net prices from selected rate
             const selectedRate = allRates.find(r => r.name === rateSelect.value);
             if (selectedRate) {
@@ -1249,6 +1260,8 @@
                 row.rate = data.rate.name;
                 rateSelect.style.display = '';
                 rateNewFields.style.display = 'none';
+                netAdultInput.parentElement.style.display = '';
+                netChildInput.parentElement.style.display = '';
                 addingNewRate = false;
               } else {
                 alert('Failed to add rate.');
@@ -1258,8 +1271,32 @@
             .finally(() => { addRateBtn.disabled = false; });
         };
         // Save/cancel handlers
-        tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate);
-        tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
+        if (isEdit) {
+          tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate);
+          tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
+        } else {
+          tr.querySelector('.edit-btn').onclick = () => {
+            const editRow = { ...row };
+            tr.replaceWith(renderProgramRow(editRow, true));
+          };
+          tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
+          // Inline rate change in view mode
+          rateSelect.onchange = () => {
+            if (rateSelect.value === '') {
+              // Switch to edit mode for adding new rate
+              tr.replaceWith(renderProgramRow(row, true));
+            } else {
+              // Auto-fill net prices and save immediately
+              const selectedRate = allRates.find(r => r.name === rateSelect.value);
+              if (selectedRate) {
+                row.rate = selectedRate.name;
+                row.net_adult = selectedRate.net_adult;
+                row.net_child = selectedRate.net_child;
+                saveProgramRow(tr, row, false);
+              }
+            }
+          };
+        }
       } else {
         tr.innerHTML = `
           <td>${row.sku || ''}</td>

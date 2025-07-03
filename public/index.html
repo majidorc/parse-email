@@ -914,7 +914,7 @@
     function updateBangkokDateTime() {
       const now = new Date();
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const bangkok = new Date(utc + 7 * 60 * 60000);
+      const bangkok = new Date(utc + 7 * 60 * 60 * 1000);
       currentBangkokDate = new Date(bangkok.getFullYear(), bangkok.getMonth(), bangkok.getDate()); // midnight Bangkok
       const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
       const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });

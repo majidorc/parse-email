@@ -1128,12 +1128,14 @@
     }
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
 
+    let allRates = [];
     function fetchPrograms() {
       const tbody = document.getElementById('programs-table-body');
       tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Loading...</td></tr>';
       fetch('/api/tours')
         .then(res => res.json())
         .then(data => {
+          allRates = [...new Set(data.tours.map(row => row.rate).filter(Boolean))];
           if (!data.tours || !data.tours.length) {
             tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No programs found.</td></tr>';
             return;
@@ -1149,11 +1151,19 @@
     function renderProgramRow(row, isEdit = false) {
       const tr = document.createElement('tr');
       if (isEdit) {
+        // Build rate dropdown options
+        let rateOptions = `<option value="">-- Add New Item --</option>`;
+        allRates.forEach(rate => {
+          rateOptions += `<option value="${rate.replace(/"/g, '&quot;') }"${row.rate === rate ? ' selected' : ''}>${rate}</option>`;
+        });
         tr.innerHTML = `
           <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
           <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
           <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
-          <td><input class='border px-2 py-1 w-32' value="${row.rate || ''}" /></td>
+          <td>
+            <select class='border px-2 py-1 w-32 rate-select'>${rateOptions}</select>
+            <input type='text' class='border px-2 py-1 w-32 rate-input' style='display:none;' placeholder='New rate' />
+          </td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_adult || ''}" /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_child || ''}" /></td>
           <td><input type='checkbox' ${row.np ? 'checked' : ''} /></td>
@@ -1171,6 +1181,28 @@
         const npChildInput = tr.querySelector('td:nth-child(9) input');
         npCheckbox.onchange = () => {
           npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
+        };
+        // Rate select/input logic
+        const rateSelect = tr.querySelector('.rate-select');
+        const rateInput = tr.querySelector('.rate-input');
+        rateSelect.onchange = () => {
+          if (rateSelect.value === '') {
+            rateSelect.style.display = 'none';
+            rateInput.style.display = '';
+            rateInput.value = '';
+            rateInput.focus();
+          }
+        };
+        rateInput.onblur = () => {
+          if (rateInput.value.trim()) {
+            row.rate = rateInput.value.trim();
+            if (!allRates.includes(row.rate)) allRates.push(row.rate);
+            fetchPrograms(); // re-render to update dropdowns
+          } else {
+            rateInput.style.display = 'none';
+            rateSelect.style.display = '';
+            rateSelect.value = '';
+          }
         };
         // Save/cancel handlers
         tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row);

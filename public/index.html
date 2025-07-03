@@ -973,6 +973,7 @@
       accountingTableContainer.style.display = 'none';
       searchBarSection.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
+      programsSection.style.display = 'none';
       fetchDashboardAnalytics();
     };
     bookingsBtn.onclick = () => {
@@ -985,6 +986,7 @@
       accountingTableContainer.style.display = 'none';
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = '';
+      programsSection.style.display = 'none';
       fetchBookings();
     };
     accountingBtn.onclick = () => {
@@ -997,6 +999,7 @@
       accountingTableContainer.style.display = '';
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = 'none';
+      programsSection.style.display = 'none';
       fetchAccounting();
     };
     programsBtn.onclick = () => {
@@ -1210,6 +1213,11 @@
         inputs[4].value, inputs[5].value, inputs[6].checked,
         inputs[7].value, inputs[8].value, inputs[9].value
       ];
+      // Frontend validation for required fields (id is optional)
+      if (!sku || !program || !rate || net_adult === '' || net_child === '') {
+        alert('Please fill in all required fields: SKU, Program, Rate, Net Adult, Net Child.');
+        return;
+      }
       const body = {
         sku, id, program, rate,
         net_adult: net_adult ? parseFloat(net_adult) : 0,

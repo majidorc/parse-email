@@ -1017,7 +1017,7 @@
       programsSection.style.display = '';
       searchBarSection.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
-      fetchPrograms();
+      fetchRatesAndPrograms();
     };
     // Search bar integration
     document.getElementById('search-bar').addEventListener('input', function(e) {
@@ -1129,13 +1129,21 @@
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
 
     let allRates = [];
+    function fetchRatesAndPrograms() {
+      // Fetch rates first
+      fetch('/api/rates')
+        .then(res => res.json())
+        .then(data => {
+          allRates = data.rates || [];
+          fetchPrograms();
+        });
+    }
     function fetchPrograms() {
       const tbody = document.getElementById('programs-table-body');
       tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Loading...</td></tr>';
       fetch('/api/tours')
         .then(res => res.json())
         .then(data => {
-          allRates = [...new Set(data.tours.map(row => row.rate).filter(Boolean))];
           if (!data.tours || !data.tours.length) {
             tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No programs found.</td></tr>';
             return;
@@ -1154,7 +1162,7 @@
         // Build rate dropdown options
         let rateOptions = `<option value="">-- Add New Item --</option>`;
         allRates.forEach(rate => {
-          rateOptions += `<option value="${rate.replace(/"/g, '&quot;') }"${row.rate === rate ? ' selected' : ''}>${rate}</option>`;
+          rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
         });
         tr.innerHTML = `
           <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
@@ -1162,10 +1170,15 @@
           <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
           <td>
             <select class='border px-2 py-1 w-32 rate-select'>${rateOptions}</select>
-            <input type='text' class='border px-2 py-1 w-32 rate-input' style='display:none;' placeholder='New rate' />
+            <div class='rate-new-fields' style='display:none;'>
+              <input type='text' class='border px-2 py-1 w-32 rate-name-input' placeholder='New rate name' />
+              <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-adult-input' placeholder='Net Adult' />
+              <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-child-input' placeholder='Net Child' />
+              <button class='add-rate-btn px-2 py-1 bg-green-600 text-white rounded'>Save</button>
+            </div>
           </td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_adult || ''}" /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_child || ''}" /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" /></td>
           <td><input type='checkbox' ${row.np ? 'checked' : ''} /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} /></td>
@@ -1184,29 +1197,65 @@
         };
         // Rate select/input logic
         const rateSelect = tr.querySelector('.rate-select');
-        const rateInput = tr.querySelector('.rate-input');
+        const rateNewFields = tr.querySelector('.rate-new-fields');
+        const rateNameInput = tr.querySelector('.rate-name-input');
+        const rateAdultInput = tr.querySelector('.rate-adult-input');
+        const rateChildInput = tr.querySelector('.rate-child-input');
+        const addRateBtn = tr.querySelector('.add-rate-btn');
+        const netAdultInput = tr.querySelector('.net-adult-input');
+        const netChildInput = tr.querySelector('.net-child-input');
         rateSelect.onchange = () => {
           if (rateSelect.value === '') {
             rateSelect.style.display = 'none';
-            rateInput.style.display = '';
-            rateInput.value = '';
-            rateInput.focus();
+            rateNewFields.style.display = '';
+            rateNameInput.value = '';
+            rateAdultInput.value = '';
+            rateChildInput.value = '';
+            rateNameInput.focus();
+          } else {
+            // Auto-fill net prices from selected rate
+            const selectedRate = allRates.find(r => r.name === rateSelect.value);
+            if (selectedRate) {
+              netAdultInput.value = selectedRate.net_adult;
+              netChildInput.value = selectedRate.net_child;
+            }
           }
         };
-        rateInput.onblur = () => {
-          if (rateInput.value.trim()) {
-            row.rate = rateInput.value.trim();
-            if (!allRates.includes(row.rate)) allRates.push(row.rate);
-            fetchPrograms(); // re-render to update dropdowns
-          } else {
-            rateInput.style.display = 'none';
-            rateSelect.style.display = '';
-            rateSelect.value = '';
+        addRateBtn.onclick = () => {
+          const name = rateNameInput.value.trim();
+          const net_adult = rateAdultInput.value.trim();
+          const net_child = rateChildInput.value.trim();
+          if (!name || net_adult === '' || net_child === '') {
+            alert('Please fill in all rate fields.');
+            return;
           }
+          addRateBtn.disabled = true;
+          fetch('/api/rates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, net_adult, net_child })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.rate) {
+                allRates.push(data.rate);
+                rateSelect.innerHTML += `<option value="${data.rate.name}">${data.rate.name}</option>`;
+                rateSelect.value = data.rate.name;
+                netAdultInput.value = data.rate.net_adult;
+                netChildInput.value = data.rate.net_child;
+                row.rate = data.rate.name;
+                rateSelect.style.display = '';
+                rateNewFields.style.display = 'none';
+              } else {
+                alert('Failed to add rate.');
+              }
+            })
+            .catch(() => alert('Failed to add rate.'))
+            .finally(() => { addRateBtn.disabled = false; });
         };
         // Save/cancel handlers
         tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row);
-        tr.querySelector('.cancel-btn').onclick = () => fetchPrograms();
+        tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
       } else {
         tr.innerHTML = `
           <td>${row.sku || ''}</td>

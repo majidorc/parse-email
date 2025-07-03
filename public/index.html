@@ -1178,6 +1178,7 @@
               <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-adult-input' placeholder='Net Adult' />
               <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-child-input' placeholder='Net Child' />
               <button class='add-rate-btn px-2 py-1 bg-green-600 text-white rounded'>Save</button>
+              <button class='cancel-rate-btn px-2 py-1 bg-gray-400 text-white rounded ml-2'>Cancel</button>
             </div>
           </td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" ${isEdit ? '' : 'readonly'} /></td>
@@ -1376,6 +1377,18 @@
         .then(() => fetchPrograms())
         .catch(() => alert('Failed to delete.'));
     }
+
+    const cancelRateBtn = tr.querySelector('.cancel-rate-btn');
+    cancelRateBtn.onclick = () => {
+      // Revert row to view mode
+      tr.replaceWith(renderProgramRow(row, false));
+    };
+    // Optionally, handle Escape key to cancel
+    rateNameInput.onkeydown = rateAdultInput.onkeydown = rateChildInput.onkeydown = (e) => {
+      if (e.key === 'Escape') {
+        tr.replaceWith(renderProgramRow(row, false));
+      }
+    };
   </script>
 </body>
 </html>

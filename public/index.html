@@ -1257,21 +1257,8 @@
             .then(res => res.json())
             .then(data => {
               if (data.rate) {
-                allRates.push(data.rate);
-                rateSelect.innerHTML += `<option value="${data.rate.name}">${data.rate.name}</option>`;
-                rateSelect.value = data.rate.name;
-                netAdultInput.value = data.rate.net_adult;
-                netChildInput.value = data.rate.net_child;
-                row.rate = data.rate.name;
-                row.net_adult = data.rate.net_adult;
-                row.net_child = data.rate.net_child;
-                rateSelect.style.display = '';
-                rateNewFields.style.display = 'none';
-                netAdultInput.parentElement.style.display = '';
-                netChildInput.parentElement.style.display = '';
-                addingNewRate = false;
-                // After adding and saving, reload the table to restore view mode
-                saveProgramRow(tr, row, true, true); // true = adding new rate, true = reload table
+                // After adding and saving, always reload the table to restore view mode
+                saveProgramRow(tr, { ...row, rate: data.rate.name, net_adult: data.rate.net_adult, net_child: data.rate.net_child }, true, true);
               } else {
                 alert('Failed to add rate.');
               }

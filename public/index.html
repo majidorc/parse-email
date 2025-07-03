@@ -121,8 +121,39 @@
     </div>
     <!-- Table Toggle Section -->
     <div class="mb-4 flex justify-center gap-4">
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white" type="button">Bookings</button>
+      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Dashboard</button>
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Bookings</button>
+      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Programs</button>
       <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
+    </div>
+    <!-- Programs Table Section (hidden by default) -->
+    <div id="programs-section" style="display:none;">
+      <div class="mb-4 flex justify-between items-center">
+        <h2 class="text-xl font-bold text-indigo-800">Programs</h2>
+        <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+        <table id="programs-table" class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2">SKU</th>
+              <th class="px-3 py-2">ID</th>
+              <th class="px-3 py-2">Program</th>
+              <th class="px-3 py-2">Rate</th>
+              <th class="px-3 py-2">Net Adult</th>
+              <th class="px-3 py-2">Net Child</th>
+              <th class="px-3 py-2">NP</th>
+              <th class="px-3 py-2">NP Adult</th>
+              <th class="px-3 py-2">NP Child</th>
+              <th class="px-3 py-2">Remark</th>
+              <th class="px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="programs-table-body">
+            <tr><td colspan="11" style="text-align:center;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <!-- Search Bar Section -->
     <div class="mb-6">
@@ -194,6 +225,54 @@
         </table>
       </div>
       <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
+    </div>
+    <!-- Dashboard Section (hidden by default) -->
+    <div id="dashboard-section" style="display:none;">
+      <div class="flex flex-wrap gap-4 justify-center mb-6">
+        <div class="bg-indigo-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-indigo-700 font-semibold mb-1">Total Bookings</div>
+          <div id="dashboard-total-bookings" class="text-2xl font-bold text-indigo-900">-</div>
+          <div id="dashboard-total-bookings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-pink-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-pink-700 font-semibold mb-1">New Bookings</div>
+          <div id="dashboard-new-bookings" class="text-2xl font-bold text-pink-900">-</div>
+          <div id="dashboard-new-bookings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-green-700 font-semibold mb-1">Total Earnings</div>
+          <div id="dashboard-total-earnings" class="text-2xl font-bold text-green-900">-</div>
+          <div id="dashboard-total-earnings-change" class="text-xs mt-1"></div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+          <div class="text-sm text-blue-700 font-semibold mb-1">Done vs Booked</div>
+          <div class="flex items-center justify-center gap-2 mt-2">
+            <div id="dashboard-done" class="font-bold text-blue-900">-</div>
+            <span class="text-xs text-gray-500">/</span>
+            <div id="dashboard-booked" class="font-bold text-blue-700">-</div>
+          </div>
+          <div class="w-full bg-gray-200 rounded h-2 mt-2">
+            <div id="dashboard-progress" class="bg-blue-500 h-2 rounded" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-8 justify-center mb-6">
+        <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
+          <div class="flex justify-between items-center mb-2">
+            <div class="text-base font-semibold text-indigo-800">Revenue by Day</div>
+            <select id="dashboard-period" class="border rounded px-2 py-1 text-sm">
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+          <div id="dashboard-revenue-list" class="text-sm"></div>
+        </div>
+        <div class="bg-white rounded-lg p-4 shadow min-w-[220px]">
+          <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
+          <div id="dashboard-top-destinations" class="text-sm"></div>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -861,40 +940,82 @@
       fetchAccounting(page, accountingSort, accountingDir, accountingSearch);
     }
     // Toggle logic
+    const dashboardBtn = document.getElementById('toggle-dashboard');
     const bookingsBtn = document.getElementById('toggle-bookings');
     const accountingBtn = document.getElementById('toggle-accounting');
+    const dashboardSection = document.getElementById('dashboard-section');
     const bookingsTableSection = document.querySelector('.bookings-table-container');
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
-    function setTableMode(mode) {
-      const cardsContainer = document.getElementById('booking-cards-container');
-      const paginationControls = document.getElementById('pagination-controls');
-      if (mode === 'bookings') {
-        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-        bookingsTableSection.style.display = '';
-        summarySection.style.display = '';
-        accountingTableContainer.style.display = 'none';
-        paginationControls.style.display = '';
-        // Show cards on mobile only
-        if (window.innerWidth <= 700) {
-          cardsContainer.style.display = 'block';
-        } else {
-          cardsContainer.style.display = 'none';
-        }
-      } else {
-        bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-        accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-        bookingsTableSection.style.display = 'none';
-        summarySection.style.display = 'none';
-        accountingTableContainer.style.display = '';
-        paginationControls.style.display = 'none';
-        cardsContainer.style.display = 'none';
-        fetchAccounting();
-      }
-    }
-    bookingsBtn.onclick = () => setTableMode('bookings');
-    accountingBtn.onclick = () => setTableMode('accounting');
+    const searchBarSection = document.querySelector('.mb-6');
+    const programsBtn = document.getElementById('toggle-programs');
+    const programsSection = document.getElementById('programs-section');
+    const addProgramBtn = document.getElementById('add-program-btn');
+
+    // On page load, show Dashboard by default
+    window.addEventListener('DOMContentLoaded', () => {
+      dashboardSection.style.display = '';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      fetchDashboardAnalytics();
+    });
+
+    dashboardBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardSection.style.display = '';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      fetchDashboardAnalytics();
+    };
+    bookingsBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = '';
+      summarySection.style.display = '';
+      accountingTableContainer.style.display = 'none';
+      searchBarSection.style.display = '';
+      document.getElementById('pagination-controls').style.display = '';
+      fetchBookings();
+    };
+    accountingBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = '';
+      searchBarSection.style.display = '';
+      document.getElementById('pagination-controls').style.display = 'none';
+      fetchAccounting();
+    };
+    programsBtn.onclick = () => {
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      programsSection.style.display = '';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      fetchPrograms();
+    };
     // Search bar integration
     document.getElementById('search-bar').addEventListener('input', function(e) {
       if (accountingTableContainer.style.display !== 'none') {
@@ -927,6 +1048,202 @@
     }
     setInterval(updateBangkokDateTime, 1000);
     updateBangkokDateTime();
+
+    function fetchDashboardAnalytics() {
+      const period = document.getElementById('dashboard-period').value;
+      // Show loading states
+      document.getElementById('dashboard-total-bookings').textContent = '...';
+      document.getElementById('dashboard-new-bookings').textContent = '...';
+      document.getElementById('dashboard-total-earnings').textContent = '...';
+      document.getElementById('dashboard-done').textContent = '...';
+      document.getElementById('dashboard-booked').textContent = '...';
+      document.getElementById('dashboard-progress').style.width = '0%';
+      document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">Loading...</span>';
+      document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">Loading...</span>';
+      fetch(`/api/dashboard?period=${period}`)
+        .then(res => res.json())
+        .then(data => {
+          // Total Bookings
+          document.getElementById('dashboard-total-bookings').textContent = data.totalBookings.toLocaleString();
+          // New Bookings
+          document.getElementById('dashboard-new-bookings').textContent = data.newBookings.toLocaleString();
+          // Total Earnings
+          document.getElementById('dashboard-total-earnings').textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+          // Done/Booked
+          document.getElementById('dashboard-done').textContent = data.done.toLocaleString();
+          document.getElementById('dashboard-booked').textContent = data.booked.toLocaleString();
+          const total = data.done + data.booked;
+          const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
+          document.getElementById('dashboard-progress').style.width = percent + '%';
+          // Revenue by Day
+          if (data.revenueByDay && data.revenueByDay.length) {
+            document.getElementById('dashboard-revenue-list').innerHTML = data.revenueByDay.map(row =>
+              `<div class='flex justify-between'><span>${row.day}</span><span class='font-semibold text-green-700'>${Number(row.revenue).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`
+            ).join('');
+          } else {
+            document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">No data</span>';
+          }
+          // Top Destinations
+          if (data.topDestinations && data.topDestinations.length) {
+            document.getElementById('dashboard-top-destinations').innerHTML = data.topDestinations.map((row, i) =>
+              `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${row.count}</span></div>`
+            ).join('');
+          } else {
+            document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">No data</span>';
+          }
+          // Percent changes
+          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+          const newChange = document.getElementById('dashboard-new-bookings-change');
+          const earningsChange = document.getElementById('dashboard-total-earnings-change');
+          if (data.percentNew !== null && data.percentNew !== undefined) {
+            const up = data.percentNew >= 0;
+            newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentNew.toFixed(2)}%</span> vs last month`;
+          } else {
+            newChange.textContent = '';
+          }
+          if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
+            const up = data.percentEarnings >= 0;
+            earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentEarnings.toFixed(2)}%</span> vs last month`;
+          } else {
+            earningsChange.textContent = '';
+          }
+          bookingsChange.textContent = '';
+        })
+        .catch(err => {
+          document.getElementById('dashboard-total-bookings').textContent = '-';
+          document.getElementById('dashboard-new-bookings').textContent = '-';
+          document.getElementById('dashboard-total-earnings').textContent = '-';
+          document.getElementById('dashboard-done').textContent = '-';
+          document.getElementById('dashboard-booked').textContent = '-';
+          document.getElementById('dashboard-progress').style.width = '0%';
+          document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-red-500">Error loading data</span>';
+          document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-red-500">Error loading data</span>';
+          document.getElementById('dashboard-total-bookings-change').textContent = '';
+          document.getElementById('dashboard-new-bookings-change').textContent = '';
+          document.getElementById('dashboard-total-earnings-change').textContent = '';
+        });
+    }
+    document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
+
+    function fetchPrograms() {
+      const tbody = document.getElementById('programs-table-body');
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Loading...</td></tr>';
+      fetch('/api/tours')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.tours || !data.tours.length) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No programs found.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = '';
+          data.tours.forEach(row => tbody.appendChild(renderProgramRow(row)));
+        })
+        .catch(() => {
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:red;">Failed to load programs.</td></tr>';
+        });
+    }
+
+    function renderProgramRow(row, isEdit = false) {
+      const tr = document.createElement('tr');
+      if (isEdit) {
+        tr.innerHTML = `
+          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
+          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
+          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
+          <td><input class='border px-2 py-1 w-32' value="${row.rate || ''}" /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_adult || ''}" /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_child || ''}" /></td>
+          <td><input type='checkbox' ${row.np ? 'checked' : ''} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} /></td>
+          <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" /></td>
+          <td>
+            <button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
+            <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>
+          </td>
+        `;
+        // Enable/disable NP fields based on checkbox
+        const npCheckbox = tr.querySelector('td:nth-child(7) input[type=checkbox]');
+        const npAdultInput = tr.querySelector('td:nth-child(8) input');
+        const npChildInput = tr.querySelector('td:nth-child(9) input');
+        npCheckbox.onchange = () => {
+          npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
+        };
+        // Save/cancel handlers
+        tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row);
+        tr.querySelector('.cancel-btn').onclick = () => fetchPrograms();
+      } else {
+        tr.innerHTML = `
+          <td>${row.sku || ''}</td>
+          <td>${row.id || ''}</td>
+          <td>${row.program || ''}</td>
+          <td>${row.rate || ''}</td>
+          <td>${row.net_adult || ''}</td>
+          <td>${row.net_child || ''}</td>
+          <td>${row.np ? '✅' : '❌'}</td>
+          <td>${row.np ? (row.np_adult || '') : ''}</td>
+          <td>${row.np ? (row.np_child || '') : ''}</td>
+          <td>${row.remark || ''}</td>
+          <td>
+            <button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>
+            <button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>
+          </td>
+        `;
+        tr.querySelector('.edit-btn').onclick = () => {
+          const editRow = { ...row };
+          tr.replaceWith(renderProgramRow(editRow, true));
+        };
+        tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
+      }
+      return tr;
+    }
+
+    addProgramBtn.onclick = () => {
+      const tbody = document.getElementById('programs-table-body');
+      const newRow = {
+        sku: '', id: '', program: '', rate: '', net_adult: '', net_child: '', np: false, np_adult: '', np_child: '', remark: ''
+      };
+      tbody.prepend(renderProgramRow(newRow, true));
+    };
+
+    function saveProgramRow(tr, oldRow) {
+      const inputs = tr.querySelectorAll('input');
+      const [sku, id, program, rate, net_adult, net_child, np, np_adult, np_child, remark] = [
+        inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value,
+        inputs[4].value, inputs[5].value, inputs[6].checked,
+        inputs[7].value, inputs[8].value, inputs[9].value
+      ];
+      const body = {
+        sku, id, program, rate,
+        net_adult: net_adult ? parseFloat(net_adult) : 0,
+        net_child: net_child ? parseFloat(net_child) : 0,
+        np,
+        np_adult: np ? (np_adult ? parseFloat(np_adult) : 0) : null,
+        np_child: np ? (np_child ? parseFloat(np_child) : 0) : null,
+        remark
+      };
+      const method = oldRow && oldRow.sku ? 'PUT' : 'POST';
+      fetch('/api/tours', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+        .then(res => res.json())
+        .then(() => fetchPrograms())
+        .catch(() => alert('Failed to save.'));
+    }
+
+    function deleteProgramRow(row) {
+      if (!confirm('Delete this program?')) return;
+      fetch('/api/tours', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: row.id, sku: row.sku, rate: row.rate })
+      })
+        .then(res => res.json())
+        .then(() => fetchPrograms())
+        .catch(() => alert('Failed to delete.'));
+    }
   </script>
 </body>
 </html>

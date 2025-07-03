@@ -1270,7 +1270,7 @@
                 netAdultInput.parentElement.style.display = '';
                 netChildInput.parentElement.style.display = '';
                 addingNewRate = false;
-                // Save to backend and reload table after adding new rate
+                // After adding and saving, reload the table to restore view mode
                 saveProgramRow(tr, row, true, true); // true = adding new rate, true = reload table
               } else {
                 alert('Failed to add rate.');

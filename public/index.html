@@ -1204,8 +1204,10 @@
         const addRateBtn = tr.querySelector('.add-rate-btn');
         const netAdultInput = tr.querySelector('.net-adult-input');
         const netChildInput = tr.querySelector('.net-child-input');
+        let addingNewRate = false;
         rateSelect.onchange = () => {
           if (rateSelect.value === '') {
+            addingNewRate = true;
             rateSelect.style.display = 'none';
             rateNewFields.style.display = '';
             rateNameInput.value = '';
@@ -1213,6 +1215,7 @@
             rateChildInput.value = '';
             rateNameInput.focus();
           } else {
+            addingNewRate = false;
             // Auto-fill net prices from selected rate
             const selectedRate = allRates.find(r => r.name === rateSelect.value);
             if (selectedRate) {
@@ -1246,6 +1249,7 @@
                 row.rate = data.rate.name;
                 rateSelect.style.display = '';
                 rateNewFields.style.display = 'none';
+                addingNewRate = false;
               } else {
                 alert('Failed to add rate.');
               }
@@ -1254,7 +1258,7 @@
             .finally(() => { addRateBtn.disabled = false; });
         };
         // Save/cancel handlers
-        tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row);
+        tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate);
         tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
       } else {
         tr.innerHTML = `
@@ -1290,20 +1294,37 @@
       tbody.prepend(renderProgramRow(newRow, true));
     };
 
-    function saveProgramRow(tr, oldRow) {
+    function saveProgramRow(tr, oldRow, addingNewRate) {
       const inputs = tr.querySelectorAll('input');
-      const [sku, id, program, rate, net_adult, net_child, np, np_adult, np_child, remark] = [
-        inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value,
-        inputs[4].value, inputs[5].value, inputs[6].checked,
-        inputs[7].value, inputs[8].value, inputs[9].value
-      ];
-      // Frontend validation for required fields (id is optional)
-      if (!sku || !program || !rate || net_adult === '' || net_child === '') {
-        alert('Please fill in all required fields: SKU, Program, Rate, Net Adult, Net Child.');
-        return;
+      const selects = tr.querySelectorAll('select');
+      const [sku, id, program] = [inputs[0].value, inputs[1].value, inputs[2].value];
+      let rate, net_adult, net_child;
+      if (addingNewRate) {
+        // If adding new rate, get from new rate fields
+        rate = tr.querySelector('.rate-name-input').value;
+        net_adult = tr.querySelector('.rate-adult-input').value;
+        net_child = tr.querySelector('.rate-child-input').value;
+        if (!sku || !program || !rate || net_adult === '' || net_child === '') {
+          alert('Please fill in all required fields: SKU, Program, Rate, Net Adult, Net Child.');
+          return;
+        }
+      } else {
+        // If using existing rate, get from dropdown and auto-filled fields
+        rate = selects[0].value;
+        net_adult = tr.querySelector('.net-adult-input').value;
+        net_child = tr.querySelector('.net-child-input').value;
+        if (!sku || !program || !rate) {
+          alert('Please fill in all required fields: SKU, Program, Rate.');
+          return;
+        }
       }
+      const np = inputs[6].checked;
+      const np_adult = inputs[7].value;
+      const np_child = inputs[8].value;
+      const remark = inputs[9].value;
+      const idVal = id;
       const body = {
-        sku, id, program, rate,
+        sku, id: idVal, program, rate,
         net_adult: net_adult ? parseFloat(net_adult) : 0,
         net_child: net_child ? parseFloat(net_child) : 0,
         np,
@@ -1318,7 +1339,7 @@
         body: JSON.stringify(body)
       })
         .then(res => res.json())
-        .then(() => fetchPrograms())
+        .then(() => fetchRatesAndPrograms())
         .catch(() => alert('Failed to save.'));
     }
 

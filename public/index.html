@@ -575,18 +575,16 @@
     fetchBookings();
     // Helper to get tomorrow's date in YYYY-MM-DD (Bangkok time, always based on currentBangkokDate)
     function getTomorrowDateStr() {
-      // Always use the date at the top of the page (currentBangkokDate) as the base
       if (!currentBangkokDate) updateBangkokDateTime();
       const tomorrow = new Date(currentBangkokDate);
-      tomorrow.setDate(currentBangkokDate.getDate() + 1);
+      tomorrow.setDate(tomorrow.getDate() + 1);
       return tomorrow.toISOString().slice(0, 10);
     }
     // Helper to get day after tomorrow's date in YYYY-MM-DD (Bangkok time, always based on currentBangkokDate)
     function getDayAfterTomorrowDateStr() {
-      // Always use the date at the top of the page (currentBangkokDate) as the base
       if (!currentBangkokDate) updateBangkokDateTime();
       const dayAfterTomorrow = new Date(currentBangkokDate);
-      dayAfterTomorrow.setDate(currentBangkokDate.getDate() + 2);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
       return dayAfterTomorrow.toISOString().slice(0, 10);
     }
     window.addEventListener('resize', () => {

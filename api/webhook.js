@@ -5,7 +5,7 @@ const axios = require('axios');
 const { sql } = require('@vercel/postgres');
 const { convert } = require('html-to-text');
 const configData = require('../config.json');
-const NotificationManager = require('./notificationManager');
+const NotificationManager = require('../notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;

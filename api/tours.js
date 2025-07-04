@@ -70,6 +70,8 @@ module.exports = async (req, res) => {
     }
     try {
       await sql`DELETE FROM tours WHERE id=${id} AND sku=${sku} AND rate=${rate}`;
+      // Also delete all rates with the same sku
+      await sql`DELETE FROM rates WHERE sku=${sku}`;
       res.status(200).json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'Failed to delete tour', details: err.message });

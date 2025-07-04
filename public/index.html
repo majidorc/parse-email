@@ -593,7 +593,7 @@
       // Send PATCH request to backend
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/bookings/${bookingId}`, {
+        const res = await fetch(`/api/bookings?booking_number=${bookingId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ column, value: newValue })
@@ -890,7 +890,7 @@
                   return;
                 }
                 cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
-                fetch(`/api/accounting/${bookingNumber}`, {
+                fetch(`/api/accounting?booking_number=${bookingNumber}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
@@ -913,7 +913,7 @@
               const bookingNumber = btn.getAttribute('data-booking');
               if (!confirm('Are you sure you want to cancel and remove this booking?')) return;
               btn.disabled = true;
-              fetch(`/api/accounting/${bookingNumber}`, {
+              fetch(`/api/accounting?booking_number=${bookingNumber}`, {
                 method: 'DELETE'
               }).then(r => r.json()).then(data => {
                 if (data.success) {

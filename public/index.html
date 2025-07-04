@@ -911,7 +911,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-            <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class=\'text-gray-400\'>Click to add</span>'}</td>
+            <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class='text-gray-400'>Click to add</span>'}</td>
             <td class="px-4 py-3 text-center"><button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button></td>
           </tr>
         `).join('');
@@ -1547,6 +1547,10 @@
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
+                <label for="rateName_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Rate Name <span class="text-red-500">*</span></label>
+                <input type="text" id="rateName_${rateItemCounter}" name="rateName" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., Standard" value="Standard">
+              </div>
+              <div>
                 <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
                 <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
               </div>
@@ -1640,6 +1644,7 @@
           const rateId = item.id.split('-').pop();
           const feeType = document.getElementById(`feeType_${rateId}`).value;
           const rateData = {
+            name: item.querySelector(`[name="rateName"]`).value,
             netAdult: item.querySelector(`[name="netAdult"]`).value,
             netChild: item.querySelector(`[name="netChild"]`).value,
             feeType: feeType,

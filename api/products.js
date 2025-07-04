@@ -17,6 +17,7 @@ module.exports = async (req, res) => {
   const { sku, program, remark } = req.body;
   // Map frontend rates fields to backend fields
   const mappedRates = (req.body.rates || []).map(rate => ({
+    name: rate.name,
     net_adult: rate.netAdult,
     net_child: rate.netChild,
     fee_type: rate.feeType,
@@ -39,16 +40,16 @@ module.exports = async (req, res) => {
     const productId = prodResult.rows[0].id;
     // Insert rates
     for (const rate of mappedRates) {
-      const { net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
+      const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
       if (
-        net_adult == null || net_child == null || !fee_type ||
+        !name || net_adult == null || net_child == null || !fee_type ||
         ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))
       ) {
         throw new Error('Invalid rate item');
       }
       await client.query(
-        `INSERT INTO rates (product_id, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6)`,
-        [productId, net_adult, net_child, fee_type, fee_adult, fee_child]
+        `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
       );
     }
     await client.query('COMMIT');

@@ -11,14 +11,14 @@ module.exports = async (req, res) => {
     return;
   }
   if (req.method === 'POST') {
-    const { name, net_adult, net_child } = req.body;
-    if (!name || net_adult === undefined || net_child === undefined) {
+    const { name, net_adult, net_child, fee_type, fee_adult, fee_child, product_id } = req.body;
+    if (!name || net_adult === undefined || net_child === undefined || !fee_type) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     try {
       const { rows } = await sql`
-        INSERT INTO rates (name, net_adult, net_child)
-        VALUES (${name}, ${net_adult}, ${net_child})
+        INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child)
+        VALUES (${product_id}, ${name}, ${net_adult}, ${net_child}, ${fee_type}, ${fee_adult}, ${fee_child})
         RETURNING *
       `;
       res.status(201).json({ rate: rows[0] });

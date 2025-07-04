@@ -99,7 +99,7 @@
       </div>
     </div>
     <!-- Search Bar Section -->
-    <div class="mb-6">
+    <div class="mb-6" id="search-bar-section">
       <label for="search-bar" class="sr-only">Search bookings</label>
       <div class="relative">
         <button id="clear-search-btn" type="button" style="display:none;" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-red-500 focus:outline-none z-10" title="Clear search">
@@ -905,7 +905,7 @@
     const bookingsTableSection = document.querySelector('.bookings-table-container');
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
-    const searchBarSection = document.querySelector('.mb-6');
+    const searchBarSection = document.getElementById('search-bar-section');
     const programsBtn = document.getElementById('toggle-programs');
     const programsSection = document.getElementById('programs-section');
     let addProgramBtn = document.getElementById('add-program-btn');

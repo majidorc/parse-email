@@ -2,29 +2,26 @@ const { sql } = require('@vercel/postgres');
 
 module.exports = async (req, res) => {
   if (req.method === 'GET') {
-    // List all tours with cheapest rate price
+    // List all products with their rates
     try {
-      // Get all tours
-      const { rows: tours } = await sql`SELECT * FROM tours ORDER BY program, sku, rate`;
+      // Get all products
+      const { rows: products } = await sql`SELECT * FROM products ORDER BY program, sku`;
       // Get all rates
       const { rows: rates } = await sql`SELECT * FROM rates`;
-      // For each tour, find the cheapest rate (lowest net_adult)
-      const toursWithCheapest = tours.map(tour => {
-        // Find all rates for this program (by name match)
-        // If you want to match by rate name, you can adjust this logic
-        const cheapest = rates.reduce((min, rate) => {
-          if (!min || Number(rate.net_adult) < Number(min.net_adult)) return rate;
-          return min;
-        }, null);
-        return {
-          ...tour,
-          cheapest_net_adult: cheapest ? cheapest.net_adult : null,
-          cheapest_net_child: cheapest ? cheapest.net_child : null
-        };
-      });
-      res.status(200).json({ tours: toursWithCheapest });
+      // Group rates by product_id
+      const ratesByProduct = {};
+      for (const rate of rates) {
+        if (!ratesByProduct[rate.product_id]) ratesByProduct[rate.product_id] = [];
+        ratesByProduct[rate.product_id].push(rate);
+      }
+      // Attach rates to products
+      const productsWithRates = products.map(product => ({
+        ...product,
+        rates: ratesByProduct[product.id] || []
+      }));
+      res.status(200).json({ tours: productsWithRates });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to fetch tours', details: err.message });
+      res.status(500).json({ error: 'Failed to fetch programs', details: err.message });
     }
     return;
   }

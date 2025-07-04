@@ -113,6 +113,7 @@
     .card-row-today { color: #1b5e20 !important; background: #e8f5e9 !important; }
     .card-row-tomorrow { color: #b59b00 !important; background: #fffde7 !important; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="antialiased">
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
@@ -266,7 +267,7 @@
               <option value="all">All Time</option>
             </select>
           </div>
-          <div id="dashboard-revenue-list" class="text-sm"></div>
+          <canvas id="revenueChart" height="220"></canvas>
         </div>
         <div class="bg-white rounded-lg p-4 shadow min-w-[220px]">
           <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
@@ -1101,13 +1102,55 @@
           const total = data.done + data.booked;
           const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
           document.getElementById('dashboard-progress').style.width = percent + '%';
-          // Revenue by Day
+          // Revenue by Day - Chart.js
+          const ctx = document.getElementById('revenueChart').getContext('2d');
+          if (window.revenueChartInstance) {
+            window.revenueChartInstance.destroy();
+          }
           if (data.revenueByDay && data.revenueByDay.length) {
-            document.getElementById('dashboard-revenue-list').innerHTML = data.revenueByDay.map(row =>
-              `<div class='flex justify-between'><span>${row.day}</span><span class='font-semibold text-green-700'>${Number(row.revenue).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`
-            ).join('');
+            const labels = data.revenueByDay.map(row => row.day.split('T')[0]);
+            const revenues = data.revenueByDay.map(row => Number(row.revenue));
+            let cumulative = 0;
+            const cumulativeRevenues = revenues.map(val => (cumulative += val));
+            window.revenueChartInstance = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [
+                  {
+                    type: 'bar',
+                    label: 'Daily Revenue',
+                    data: revenues,
+                    backgroundColor: 'rgba(37, 99, 235, 0.5)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1
+                  },
+                  {
+                    type: 'line',
+                    label: 'Cumulative Revenue',
+                    data: cumulativeRevenues,
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'y',
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { display: true },
+                  tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                  x: { title: { display: true, text: 'Date' } },
+                  y: { title: { display: true, text: 'Revenue (THB)' }, beginAtZero: true }
+                }
+              }
+            });
           } else {
-            document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">No data</span>';
+            ctx.clearRect(0, 0, 400, 220);
           }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {

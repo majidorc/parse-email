@@ -1284,8 +1284,9 @@
           rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
         });
         if (row.rate === '' || row.rate === undefined) {
-          // If Add New Item is selected, render add-new-rate row
+          // If Add New Item is selected, render add-new-rate row and return immediately
           renderAddNewRateRow();
+          return tr;
         } else {
           tr.innerHTML = `
             <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" ${isEdit ? '' : 'readonly'} /></td>

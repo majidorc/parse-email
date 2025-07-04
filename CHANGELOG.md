@@ -104,3 +104,16 @@ All notable changes to this project will be documented in this file.
 - Initial bookings ingestion and notification logic.
 - Basic table UI and backend endpoints.
 - Email parsing and database integration 
+
+## [1.7.0] - 2025-07-05
+### Changed
+- Programs tab redesigned to match pixel-perfect table/nested rates example, with dynamic Add Program form and multi-rate support.
+- Add Program form logic improved and robust against dashboard errors.
+- Dashboard bugfix: percent change elements (bookingsChange, newChange, earningsChange) must exist in the DOM; added troubleshooting steps.
+- Improved error handling and null checks for dashboard metrics.
+- Documentation and troubleshooting sections updated in README.
+
+### Fixed
+- Fixed ReferenceError for missing percent change elements in dashboard.
+- Fixed Add Program form not showing due to earlier JS errors.
+- Ensured all dashboard and program features work after redeploy and hard refresh. 

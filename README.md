@@ -19,7 +19,32 @@ A full-stack automated email processing and bookings management system, designed
   - **Inline edit**: Click the Paid cell to add or update the value, saved instantly
   - Click summary cards to filter table by month
   - Search, sort, and pagination supported
+- **Programs (Tours) Management:**
+  - Modern, pixel-perfect Programs tab with table and nested rates (matches design example)
+  - Add Program form with dynamic rate items, supports multiple rates per program
+  - CRUD for programs and rates, with validation and clean UI
+- **Dashboard:**
+  - Robust error handling for missing percent change elements (see Troubleshooting)
+  - All dashboard metrics and percent changes require their respective DOM elements
 - **Server Time Debug Endpoint:** `/api/server-time` returns current server time, UTC, and formatted Bangkok time for debugging timezone issues on Vercel.
+
+---
+
+## Troubleshooting
+- **Dashboard JavaScript Error (bookingsChange is not defined):**
+  - Ensure the following elements exist in your dashboard section:
+    - `<div id="dashboard-total-bookings-change"></div>`
+    - `<div id="dashboard-new-bookings-change"></div>`
+    - `<div id="dashboard-total-earnings-change"></div>`
+  - If missing, add them directly under the main value for each metric card.
+  - Hard refresh your browser after redeploying.
+- **Add Program form not showing:**
+  - This is usually caused by a JavaScript error earlier in the script (see above).
+  - Fix dashboard errors first, then the Add Program button will work.
+- **Redeploying:**
+  - For Vercel: Go to your project dashboard, click "Deployments" > "Redeploy".
+  - For Netlify: Go to your site dashboard, click "Deploys" > "Trigger deploy" > "Deploy site".
+  - For custom servers: `git pull` and restart your server.
 
 ---
 

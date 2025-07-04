@@ -105,7 +105,8 @@ module.exports = async (req, res) => {
     const dataParams = [...params, limit, offset];
     const { rows: bookings } = await sql.query(dataQuery, dataParams);
 
-    res.status(200).json({
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    return res.status(200).json({
       bookings,
       total,
       page,
@@ -115,10 +116,10 @@ module.exports = async (req, res) => {
       thisMonthCount: parseInt(thisMonthCountRes.rows[0].count, 10),
       thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum)
     });
-    // Edge cache for 60s
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
   } catch (err) {
     console.error('Accounting API error:', err);
-    res.status(500).json({ error: 'Failed to fetch accounting data', details: err.message, stack: err.stack });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Failed to fetch accounting data', details: err.message, stack: err.stack });
+    }
   }
 }; 

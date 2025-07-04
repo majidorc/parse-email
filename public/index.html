@@ -1079,29 +1079,37 @@
     function fetchDashboardAnalytics() {
       const period = document.getElementById('dashboard-period').value;
       // Show loading states
-      document.getElementById('dashboard-total-bookings').textContent = '...';
-      document.getElementById('dashboard-new-bookings').textContent = '...';
-      document.getElementById('dashboard-total-earnings').textContent = '...';
-      document.getElementById('dashboard-done').textContent = '...';
-      document.getElementById('dashboard-booked').textContent = '...';
-      document.getElementById('dashboard-progress').style.width = '0%';
-      document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">Loading...</span>';
-      document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">Loading...</span>';
+      const dashboardTotalBookings = document.getElementById('dashboard-total-bookings');
+      if (dashboardTotalBookings) dashboardTotalBookings.textContent = '...';
+      const dashboardNewBookings = document.getElementById('dashboard-new-bookings');
+      if (dashboardNewBookings) dashboardNewBookings.textContent = '...';
+      const dashboardTotalEarnings = document.getElementById('dashboard-total-earnings');
+      if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = '...';
+      const dashboardDone = document.getElementById('dashboard-done');
+      if (dashboardDone) dashboardDone.textContent = '...';
+      const dashboardBooked = document.getElementById('dashboard-booked');
+      if (dashboardBooked) dashboardBooked.textContent = '...';
+      const dashboardProgress = document.getElementById('dashboard-progress');
+      if (dashboardProgress) dashboardProgress.style.width = '0%';
+      const dashboardRevenueList = document.getElementById('dashboard-revenue-list');
+      if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-gray-400">Loading...</span>';
+      const dashboardTopDestinations = document.getElementById('dashboard-top-destinations');
+      if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">Loading...</span>';
       fetch(`/api/dashboard?period=${period}`)
         .then(res => res.json())
         .then(data => {
           // Total Bookings
-          document.getElementById('dashboard-total-bookings').textContent = data.totalBookings.toLocaleString();
+          if (dashboardTotalBookings) dashboardTotalBookings.textContent = data.totalBookings.toLocaleString();
           // New Bookings
-          document.getElementById('dashboard-new-bookings').textContent = data.newBookings.toLocaleString();
+          if (dashboardNewBookings) dashboardNewBookings.textContent = data.newBookings.toLocaleString();
           // Total Earnings
-          document.getElementById('dashboard-total-earnings').textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+          if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
           // Done/Booked
-          document.getElementById('dashboard-done').textContent = data.done.toLocaleString();
-          document.getElementById('dashboard-booked').textContent = data.booked.toLocaleString();
+          if (dashboardDone) dashboardDone.textContent = data.done.toLocaleString();
+          if (dashboardBooked) dashboardBooked.textContent = data.booked.toLocaleString();
           const total = data.done + data.booked;
           const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
-          document.getElementById('dashboard-progress').style.width = percent + '%';
+          if (dashboardProgress) dashboardProgress.style.width = percent + '%';
           // Revenue by Day - Chart.js
           const ctx = document.getElementById('revenueChart').getContext('2d');
           if (window.revenueChartInstance) {
@@ -1154,11 +1162,11 @@
           }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {
-            document.getElementById('dashboard-top-destinations').innerHTML = data.topDestinations.map((row, i) =>
+            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = data.topDestinations.map((row, i) =>
               `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${row.count}</span></div>`
             ).join('');
           } else {
-            document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">No data</span>';
+            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes
           const bookingsChange = document.getElementById('dashboard-total-bookings-change');
@@ -1179,17 +1187,17 @@
           bookingsChange.textContent = '';
         })
         .catch(err => {
-          document.getElementById('dashboard-total-bookings').textContent = '-';
-          document.getElementById('dashboard-new-bookings').textContent = '-';
-          document.getElementById('dashboard-total-earnings').textContent = '-';
-          document.getElementById('dashboard-done').textContent = '-';
-          document.getElementById('dashboard-booked').textContent = '-';
-          document.getElementById('dashboard-progress').style.width = '0%';
-          document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-red-500">Error loading data</span>';
-          document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-red-500">Error loading data</span>';
-          document.getElementById('dashboard-total-bookings-change').textContent = '';
-          document.getElementById('dashboard-new-bookings-change').textContent = '';
-          document.getElementById('dashboard-total-earnings-change').textContent = '';
+          if (dashboardTotalBookings) dashboardTotalBookings.textContent = '-';
+          if (dashboardNewBookings) dashboardNewBookings.textContent = '-';
+          if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = '-';
+          if (dashboardDone) dashboardDone.textContent = '-';
+          if (dashboardBooked) dashboardBooked.textContent = '-';
+          if (dashboardProgress) dashboardProgress.style.width = '0%';
+          if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-red-500">Error loading data</span>';
+          if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-red-500">Error loading data</span>';
+          if (bookingsChange) bookingsChange.textContent = '';
+          if (newChange) newChange.textContent = '';
+          if (earningsChange) earningsChange.textContent = '';
         });
     }
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);

@@ -1127,7 +1127,7 @@
           } else {
             earningsChange.textContent = '';
           }
-          bookingsChange.textContent = '';
+          if (bookingsChange) bookingsChange.textContent = '';
         })
         .catch(err => {
           if (dashboardTotalBookings) dashboardTotalBookings.textContent = '-';

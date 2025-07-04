@@ -128,13 +128,27 @@
       <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Programs</button>
       <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
     </div>
-    <!-- Programs Section (modern card style) -->
+    <!-- Programs Section (table style) -->
     <div id="programs-section" style="display:none;">
       <div class="mb-4 flex justify-between items-center">
         <h2 class="text-xl font-bold text-indigo-800">Programs</h2>
         <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
       </div>
-      <div id="programs-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200 bg-gray-50">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">SKU</th>
+              <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Program</th>
+              <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rates</th>
+              <th class="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Remark</th>
+            </tr>
+          </thead>
+          <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
+            <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <!-- Add Program Form Section (hidden by default) -->
     <div id="add-program-section" style="display:none;">
@@ -1238,45 +1252,62 @@
         });
     }
     function fetchPrograms() {
-      const list = document.getElementById('programs-list');
-      list.innerHTML = '<div class="col-span-full text-center text-gray-400">Loading...</div>';
+      const tbody = document.getElementById('programs-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>';
       fetch('/api/tours')
         .then(res => res.json())
         .then(data => {
           if (!data.tours || !data.tours.length) {
-            list.innerHTML = '<div class="col-span-full text-center text-gray-400">No programs found.</div>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
             return;
           }
-          list.innerHTML = '';
+          tbody.innerHTML = '';
           data.tours.forEach(product => {
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-xl shadow p-6 flex flex-col';
-            card.innerHTML = `
-              <div class="mb-2 flex-1">
-                <div class="text-lg font-bold text-indigo-900 mb-1">${product.program}</div>
-                <div class="text-sm text-gray-500 mb-2">SKU: <span class="font-mono">${product.sku}</span></div>
-                <div class="text-sm text-gray-500 mb-2">${product.remark ? product.remark : ''}</div>
-                <div class="mt-2">
-                  <div class="font-semibold text-indigo-700 mb-1">Rates</div>
-                  <div class="space-y-2">
-                    ${product.rates.map(rate => `
-                      <div class="flex items-center justify-between bg-indigo-50 rounded p-2">
-                        <div>
-                          <span class="font-semibold">${rate.name}</span>
-                          <span class="ml-2 text-xs text-gray-500">Adult: <span class="font-mono">${rate.net_adult}</span> | Child: <span class="font-mono">${rate.net_child}</span></span>
-                          ${rate.fee_type !== 'none' ? `<span class="ml-2 text-xs text-pink-700">${rate.fee_type === 'np' ? 'NP Fee' : 'Entrance Fee'}: Adult <span class="font-mono">${rate.fee_adult}</span>, Child <span class="font-mono">${rate.fee_child}</span></span>` : ''}
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
+            const tr = document.createElement('tr');
+            tr.className = 'align-top';
+            tr.innerHTML = `
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
+                ${product.sku}<br><span class="text-xs text-gray-400">ID: ${product.id || ''}</span>
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="font-semibold">${product.program}</div>
+              </td>
+              <td class="px-4 py-4">
+                <div class="inline-block min-w-[320px]">
+                  <table class="w-full text-xs bg-gray-50 rounded">
+                    <thead>
+                      <tr class="text-gray-500 bg-gray-100">
+                        <th class="px-2 py-1 text-left font-semibold">Name</th>
+                        <th class="px-2 py-1 text-left font-semibold">Net Adult</th>
+                        <th class="px-2 py-1 text-left font-semibold">Net Child</th>
+                        <th class="px-2 py-1 text-left font-semibold">Fee Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${product.rates.map(rate => `
+                        <tr>
+                          <td class="px-2 py-1 font-medium text-gray-900">${rate.name}</td>
+                          <td class="px-2 py-1">${Number(rate.net_adult).toFixed(2)}</td>
+                          <td class="px-2 py-1">${Number(rate.net_child).toFixed(2)}</td>
+                          <td class="px-2 py-1">
+                            ${rate.fee_type === 'none' ? '<span class="italic text-gray-400">No additional fee</span>' : ''}
+                            ${rate.fee_type === 'np' ? `<div class="text-pink-700">NP Fee Adult: ${Number(rate.fee_adult).toFixed(2)}<br>NP Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                            ${rate.fee_type === 'entrance' ? `<div class="text-blue-700">Entrance Fee Adult: ${Number(rate.fee_adult).toFixed(2)}<br>Entrance Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+              </td>
+              <td class="px-4 py-4 whitespace-pre-line text-sm text-gray-700">${product.remark || ''}</td>
             `;
-            list.appendChild(card);
+            tbody.appendChild(tr);
           });
         })
         .catch(() => {
-          list.innerHTML = '<div class="col-span-full text-center text-red-500">Failed to load programs.</div>';
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs.</td></tr>';
         });
     }
 

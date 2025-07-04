@@ -1195,9 +1195,9 @@
       // Helper to render add-new-rate row
       function renderAddNewRateRow() {
         tr.innerHTML = `
-          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
-          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
-          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
+          <td><input class='border px-2 py-1 w-24 sku-input' value="${row.sku || ''}" /></td>
+          <td><input class='border px-2 py-1 w-24 id-input' value="${row.id || ''}" /></td>
+          <td><input class='border px-2 py-1 w-40 program-input' value="${row.program || ''}" /></td>
           <td><input type='text' class='border px-2 py-1 w-32 rate-name-input' placeholder='New rate name' /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 rate-adult-input' placeholder='Net Adult' /></td>
           <td><input type='number' step='0.01' class='border px-2 py-1 w-20 rate-child-input' placeholder='Net Child' /></td>
@@ -1211,35 +1211,65 @@
           </td>
         `;
         // Add event handlers for Save/Cancel
+        const skuInput = tr.querySelector('.sku-input');
+        const idInput = tr.querySelector('.id-input');
+        const programInput = tr.querySelector('.program-input');
         const rateNameInput = tr.querySelector('.rate-name-input');
         const rateAdultInput = tr.querySelector('.rate-adult-input');
         const rateChildInput = tr.querySelector('.rate-child-input');
         const addRateBtn = tr.querySelector('.add-rate-btn');
         const cancelRateBtn = tr.querySelector('.cancel-rate-btn');
         addRateBtn.onclick = () => {
+          const sku = skuInput.value.trim();
+          const id = idInput.value.trim();
+          const program = programInput.value.trim();
           const name = rateNameInput.value.trim();
           const net_adult = rateAdultInput.value.trim();
           const net_child = rateChildInput.value.trim();
-          if (!name || net_adult === '' || net_child === '') {
-            alert('Please fill in all rate fields.');
+          if (!sku || !program || !name || net_adult === '' || net_child === '') {
+            alert('Please fill in all fields.');
             return;
           }
           addRateBtn.disabled = true;
+          // 1. Add the new rate
           fetch('/api/rates', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, net_adult, net_child, sku: row.sku })
+            body: JSON.stringify({ name, net_adult, net_child, sku })
           })
             .then(res => res.json())
             .then(data => {
               if (data.rate) {
-                // After adding and saving, always reload the table to restore view mode
-                fetchRatesAndPrograms();
+                // 2. Add the new program using the new rate
+                fetch('/api/tours', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id,
+                    sku,
+                    program,
+                    rate: name,
+                    net_adult,
+                    net_child,
+                    np: false,
+                    np_adult: '',
+                    np_child: '',
+                    remark: ''
+                  })
+                })
+                  .then(res2 => res2.json())
+                  .then(data2 => {
+                    if (data2.success) {
+                      fetchRatesAndPrograms();
+                    } else {
+                      alert('Failed to add program.');
+                    }
+                  });
               } else {
                 alert('Failed to add rate.');
               }
             })
-            .catch(() => alert('Failed to add rate.'))
+            .catch(() => alert('Failed to add rate/program.'))
             .finally(() => { addRateBtn.disabled = false; });
         };
         cancelRateBtn.onclick = () => fetchRatesAndPrograms();

@@ -148,6 +148,8 @@ module.exports = async (req, res) => {
     const dataParams = [...params, limit, offset];
     const { rows: bookings } = await sql.query(dataQuery, dataParams);
 
+    // Edge cache for 60s
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
     res.status(200).json({
       bookings,
       total,
@@ -163,8 +165,6 @@ module.exports = async (req, res) => {
       dayAfterTomorrowOpNotSent,
       dayAfterTomorrowCustomerNotSent
     });
-    // Edge cache for 60s
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
   } catch (err) {
     console.error('Bookings API error:', err);
     res.status(500).json({ error: 'Failed to fetch bookings', details: err.message, stack: err.stack });

@@ -100,6 +100,10 @@
       .bookings-table-container .overflow-x-auto { display: none; }
       .booking-cards { display: block; }
       .accounting-table { display: table !important; min-width: 700px; }
+      /* --- Tab buttons mobile improvements --- */
+      .tab-btn-container { flex-direction: column !important; gap: 0.5rem !important; align-items: stretch !important; }
+      .tab-btn-container button { width: 100%; padding: 1rem 0.5rem !important; font-size: 1.1rem !important; margin-bottom: 0.5rem; }
+      .tab-btn-container button:last-child { margin-bottom: 0; }
     }
     .booking-cards { display: none; }
     table tr.row-past td { color: #d32f2f !important; }
@@ -117,7 +121,7 @@
       <span id="bangkok-datetime" class="text-base md:text-lg font-semibold text-indigo-700 bg-indigo-50 rounded px-4 py-1 shadow-sm"></span>
     </div>
     <!-- Table Toggle Section -->
-    <div class="mb-4 flex justify-center gap-4">
+    <div class="mb-4 flex justify-center gap-4 tab-btn-container">
       <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Dashboard</button>
       <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Bookings</button>
       <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Programs</button>

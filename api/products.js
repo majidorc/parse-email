@@ -12,28 +12,34 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { sku, product_id_optional, program, remark, rates } = req.body;
-
+  // Accept both camelCase and snake_case for productId
+  const product_id_optional = req.body.productId || req.body.product_id_optional || null;
+  const { sku, program, remark } = req.body;
+  // Map frontend rates fields to backend fields
+  const mappedRates = (req.body.rates || []).map(rate => ({
+    net_adult: rate.netAdult,
+    net_child: rate.netChild,
+    fee_type: rate.feeType,
+    fee_adult: rate.feeAdult,
+    fee_child: rate.feeChild
+  }));
   // Basic validation
-  if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
+  if (!sku || !program || !Array.isArray(mappedRates) || mappedRates.length === 0) {
     res.status(400).json({ error: 'Missing required fields' });
     return;
   }
-
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     // Insert product
     const prodResult = await client.query(
       `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [sku, product_id_optional || null, program, remark || null]
+      [sku, product_id_optional, program, remark || null]
     );
     const productId = prodResult.rows[0].id;
-
     // Insert rates
-    for (const rate of rates) {
+    for (const rate of mappedRates) {
       const { net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
-      // Validate required fields for each rate
       if (
         net_adult == null || net_child == null || !fee_type ||
         ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))

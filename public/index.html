@@ -1172,7 +1172,13 @@
             return;
           }
           tbody.innerHTML = '';
-          data.tours.forEach(row => tbody.appendChild(renderProgramRow(row)));
+          data.tours.forEach(row => {
+            // Ensure at least one default rate for each SKU
+            if (!allRates.some(r => r.sku === row.sku)) {
+              allRates.push({ name: 'Rate', net_adult: 0, net_child: 0, sku: row.sku });
+            }
+            tbody.appendChild(renderProgramRow(row));
+          });
         })
         .catch(() => {
           tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:red;">Failed to load programs.</td></tr>';
@@ -1184,10 +1190,15 @@
       // Always show dropdown if more than one rate
       const showDropdown = allRates.length > 1;
       let addingNewRate = false;
+      // Filter rates for this SKU
+      const ratesForSku = allRates.filter(r => r.sku === row.sku);
       if (isEdit || showDropdown) {
         // Build rate dropdown options
         let rateOptions = `<option value="">-- Add New Item --</option>`;
-        allRates.forEach(rate => {
+        if (!ratesForSku.some(r => r.name === 'Rate')) {
+          rateOptions += `<option value="Rate">Rate</option>`;
+        }
+        ratesForSku.forEach(rate => {
           rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
         });
         tr.innerHTML = `
@@ -1332,8 +1343,12 @@
     addProgramBtn.onclick = () => {
       const tbody = document.getElementById('programs-table-body');
       const newRow = {
-        sku: '', id: '', program: '', rate: '', net_adult: '', net_child: '', np: false, np_adult: '', np_child: '', remark: ''
+        sku: '', id: '', program: '', rate: 'Rate', net_adult: '', net_child: '', np: false, np_adult: '', np_child: '', remark: ''
       };
+      // Ensure default rate exists for new SKU
+      if (!allRates.some(r => r.sku === newRow.sku && r.name === 'Rate')) {
+        allRates.push({ name: 'Rate', net_adult: 0, net_child: 0, sku: newRow.sku });
+      }
       tbody.prepend(renderProgramRow(newRow, true));
     };
 
@@ -1356,8 +1371,8 @@
         rate = selects[0].value;
         net_adult = tr.querySelector('.net-adult-input').value;
         net_child = tr.querySelector('.net-child-input').value;
-        if (!sku || !program || !rate) {
-          alert('Please fill in all required fields: SKU, Program, Rate.');
+        if (!sku || !program || !rate || rate === '' || rate === '-- Add New Item --') {
+          alert('Please select a valid rate.');
           return;
         }
       }

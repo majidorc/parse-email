@@ -1054,11 +1054,11 @@
           const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
           if (dashboardProgress) dashboardProgress.style.width = percent + '%';
           // Revenue by Day - Chart.js
-          const ctx = document.getElementById('revenueChart').getContext('2d');
+          const ctx = document.getElementById('revenueChart')?.getContext('2d');
           if (window.revenueChartInstance) {
             window.revenueChartInstance.destroy();
           }
-          if (data.revenueByDay && data.revenueByDay.length) {
+          if (ctx && data.revenueByDay && data.revenueByDay.length) {
             const labels = data.revenueByDay.map(row => row.day.split('T')[0]);
             const revenues = data.revenueByDay.map(row => Number(row.revenue));
             let cumulative = 0;
@@ -1100,7 +1100,7 @@
                 }
               }
             });
-          } else {
+          } else if (ctx) {
             ctx.clearRect(0, 0, 400, 220);
           }
           // Top Destinations
@@ -1117,15 +1117,15 @@
           const earningsChange = document.getElementById('dashboard-total-earnings-change');
           if (data.percentNew !== null && data.percentNew !== undefined) {
             const up = data.percentNew >= 0;
-            newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentNew.toFixed(2)}%</span> vs last month`;
+            if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentNew.toFixed(2)}%</span> vs last month`;
           } else {
-            newChange.textContent = '';
+            if (newChange) newChange.textContent = '';
           }
           if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
             const up = data.percentEarnings >= 0;
-            earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentEarnings.toFixed(2)}%</span> vs last month`;
+            if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentEarnings.toFixed(2)}%</span> vs last month`;
           } else {
-            earningsChange.textContent = '';
+            if (earningsChange) earningsChange.textContent = '';
           }
           if (bookingsChange) bookingsChange.textContent = '';
         })
@@ -1138,6 +1138,9 @@
           if (dashboardProgress) dashboardProgress.style.width = '0%';
           if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-red-500">Error loading data</span>';
           if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-red-500">Error loading data</span>';
+          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+          const newChange = document.getElementById('dashboard-new-bookings-change');
+          const earningsChange = document.getElementById('dashboard-total-earnings-change');
           if (bookingsChange) bookingsChange.textContent = '';
           if (newChange) newChange.textContent = '';
           if (earningsChange) earningsChange.textContent = '';

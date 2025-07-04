@@ -266,6 +266,7 @@
               <option value="lastMonth">Last Month</option>
               <option value="all">All Time</option>
             </select>
+            <button id="dashboard-refresh" class="ml-2 px-2 py-1 rounded bg-gray-300 text-gray-800 text-sm">Refresh</button>
           </div>
           <canvas id="revenueChart" height="220"></canvas>
         </div>
@@ -1098,6 +1099,7 @@
       fetch(`/api/dashboard?period=${period}`)
         .then(res => res.json())
         .then(data => {
+          console.log('Dashboard API response:', data); // Debug log
           // Total Bookings
           if (dashboardTotalBookings) dashboardTotalBookings.textContent = data.totalBookings.toLocaleString();
           // New Bookings
@@ -1201,6 +1203,7 @@
         });
     }
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
+    document.getElementById('dashboard-refresh').addEventListener('click', fetchDashboardAnalytics);
 
     let allRates = [];
     function fetchRatesAndPrograms() {

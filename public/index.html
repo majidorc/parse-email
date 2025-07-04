@@ -1402,35 +1402,6 @@
         .then(() => fetchPrograms())
         .catch(() => alert('Failed to delete.'));
     }
-
-    const cancelRateBtn = tr.querySelector('.cancel-rate-btn');
-    cancelRateBtn.onclick = () => {
-      // Revert row to view mode
-      tr.replaceWith(renderProgramRow(row, false));
-    };
-    // Optionally, handle Escape key to cancel
-    rateNameInput.onkeydown = rateAdultInput.onkeydown = rateChildInput.onkeydown = (e) => {
-      if (e.key === 'Escape') {
-        tr.replaceWith(renderProgramRow(row, false));
-      }
-    };
-    const saveBtn = tr.querySelector('.save-btn');
-    if (saveBtn) {
-      saveBtn.onclick = async () => {
-        const sku = tr.querySelector('input.border')?.value || '';
-        const id = tr.querySelectorAll('input.border')[1]?.value || '';
-        const program = tr.querySelectorAll('input.border')[2]?.value || '';
-        const rate = tr.querySelector('.rate-select')?.value || '';
-        const net_adult = tr.querySelector('.net-adult-input')?.value || '';
-        const net_child = tr.querySelector('.net-child-input')?.value || '';
-        const np = tr.querySelector('.np-checkbox')?.checked || false;
-        const np_adult = tr.querySelector('.np-adult-input')?.value || '';
-        const np_child = tr.querySelector('.np-child-input')?.value || '';
-        const remark = tr.querySelector('.remark-input')?.value || '';
-        const payload = { sku, id, program, rate, net_adult, net_child, np, np_adult, np_child, remark };
-        // ... existing save logic ...
-      };
-    }
   </script>
 </body>
 </html>

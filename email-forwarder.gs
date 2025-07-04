@@ -4,7 +4,7 @@ function forwardEmails() {
   var threads = GmailApp.search(searchQuery);
   
   // Your Vercel webhook URL
-  var webhookUrl = 'https://parse-email.vercel.app/api/webhook';
+  var webhookUrl = 'https://xxxxxx.vercel.app/api/webhook';
   
   for (var i = 0; i < threads.length; i++) {
     var messages = threads[i].getMessages();

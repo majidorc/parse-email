@@ -1657,14 +1657,25 @@
           alert('Please fill out all required fields.');
           return;
         }
-        // TODO: Send data to backend API
-        console.log('Form Submitted Data:', JSON.stringify(data, null, 2));
-        alert('Form data has been logged to the console. See the developer tools (F12).');
-        // After submit, hide form and show table
-        addProgramSection.style.display = 'none';
-        programsSection.style.display = '';
-        // Optionally, refresh the programs table
-        if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+        // Send data to backend API
+        fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to save program');
+          return res.json();
+        })
+        .then(result => {
+          alert('Program saved successfully!');
+          addProgramSection.style.display = 'none';
+          programsSection.style.display = '';
+          if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+        })
+        .catch(err => {
+          alert('Error saving program: ' + err.message);
+        });
       });
       // Add one rate item by default on form show
       addProgramBtn.addEventListener('click', function () {

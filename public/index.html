@@ -679,8 +679,17 @@
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');
-      if (cardsContainer) {
-        cardsContainer.style.display = window.innerWidth <= 700 ? 'block' : 'none';
+      const bookingsBtn = document.getElementById('toggle-bookings');
+      const bookingsTableSection = document.querySelector('.bookings-table-container');
+      if (
+        cardsContainer &&
+        window.innerWidth <= 700 &&
+        bookingsBtn.classList.contains('bg-blue-600') &&
+        bookingsTableSection && bookingsTableSection.style.display !== 'none'
+      ) {
+        cardsContainer.style.display = 'block';
+      } else if (cardsContainer) {
+        cardsContainer.style.display = 'none';
       }
     });
     // Copy notification text logic

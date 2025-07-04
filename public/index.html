@@ -1042,14 +1042,50 @@
         .then(data => {
           console.log('Dashboard API response:', data); // Debug log
           // Total Bookings
-          if (dashboardTotalBookings) dashboardTotalBookings.textContent = data.totalBookings.toLocaleString();
+          console.log('Dashboard API response:', data);
+          if (dashboardTotalBookings) {
+            if (typeof data.totalBookings === 'number') {
+              dashboardTotalBookings.textContent = data.totalBookings.toLocaleString();
+            } else {
+              console.warn('totalBookings missing or not a number:', data.totalBookings);
+              dashboardTotalBookings.textContent = '-';
+            }
+          }
           // New Bookings
-          if (dashboardNewBookings) dashboardNewBookings.textContent = data.newBookings.toLocaleString();
+          if (dashboardNewBookings) {
+            if (typeof data.newBookings === 'number') {
+              dashboardNewBookings.textContent = data.newBookings.toLocaleString();
+            } else {
+              console.warn('newBookings missing or not a number:', data.newBookings);
+              dashboardNewBookings.textContent = '-';
+            }
+          }
           // Total Earnings
-          if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+          if (dashboardTotalEarnings) {
+            if (typeof data.totalEarnings === 'number') {
+              dashboardTotalEarnings.textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            } else {
+              console.warn('totalEarnings missing or not a number:', data.totalEarnings);
+              dashboardTotalEarnings.textContent = '-';
+            }
+          }
           // Done/Booked
-          if (dashboardDone) dashboardDone.textContent = data.done.toLocaleString();
-          if (dashboardBooked) dashboardBooked.textContent = data.booked.toLocaleString();
+          if (dashboardDone) {
+            if (typeof data.done === 'number') {
+              dashboardDone.textContent = data.done.toLocaleString();
+            } else {
+              console.warn('done missing or not a number:', data.done);
+              dashboardDone.textContent = '-';
+            }
+          }
+          if (dashboardBooked) {
+            if (typeof data.booked === 'number') {
+              dashboardBooked.textContent = data.booked.toLocaleString();
+            } else {
+              console.warn('booked missing or not a number:', data.booked);
+              dashboardBooked.textContent = '-';
+            }
+          }
           const total = data.done + data.booked;
           const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
           if (dashboardProgress) dashboardProgress.style.width = percent + '%';
@@ -1101,6 +1137,7 @@
               }
             });
           } else if (ctx) {
+            console.warn('revenueByDay missing or empty:', data.revenueByDay);
             ctx.clearRect(0, 0, 400, 220);
           }
           // Top Destinations
@@ -1109,6 +1146,7 @@
               `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${row.count}</span></div>`
             ).join('');
           } else {
+            console.warn('topDestinations missing or empty:', data.topDestinations);
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes

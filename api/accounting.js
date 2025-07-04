@@ -28,7 +28,6 @@ module.exports = async (req, res) => {
     } else {
       return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
-    return;
   }
 
   const page = parseInt(req.query.page, 10) || 1;

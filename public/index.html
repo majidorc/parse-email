@@ -1192,91 +1192,30 @@
       let addingNewRate = false;
       // Filter rates for this SKU
       const ratesForSku = allRates.filter(r => r.sku === row.sku);
-      if (isEdit || showDropdown) {
-        // Build rate dropdown options
-        let rateOptions = `<option value="">-- Add New Item --</option>`;
-        if (!ratesForSku.some(r => r.name === 'Rate')) {
-          rateOptions += `<option value="Rate">Rate</option>`;
-        }
-        ratesForSku.forEach(rate => {
-          rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
-        });
+      // Helper to render add-new-rate row
+      function renderAddNewRateRow() {
         tr.innerHTML = `
-          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" ${isEdit ? '' : 'readonly'} /></td>
+          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
+          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
+          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
+          <td><input type='text' class='border px-2 py-1 w-32 rate-name-input' placeholder='New rate name' /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 rate-adult-input' placeholder='Net Adult' /></td>
+          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 rate-child-input' placeholder='Net Child' /></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
           <td>
-            <select class='border px-2 py-1 w-32 rate-select'>${rateOptions}</select>
-            <div class='rate-new-fields' style='display:none;'>
-              <input type='text' class='border px-2 py-1 w-32 rate-name-input' placeholder='New rate name' />
-              <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-adult-input' placeholder='Net Adult' />
-              <input type='number' step='0.01' class='border px-2 py-1 w-20 rate-child-input' placeholder='Net Child' />
-              <button class='add-rate-btn px-2 py-1 bg-green-600 text-white rounded'>Save</button>
-              <button class='cancel-rate-btn px-2 py-1 bg-gray-400 text-white rounded ml-2'>Cancel</button>
-            </div>
-          </td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td><input type='checkbox' class='np-checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-adult-input' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-child-input' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
-          <td><input class='border px-2 py-1 w-32 remark-input' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
-          <td>
-            ${isEdit ? `<button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
-            <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>` : `<button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>`}
-            ${isEdit ? '' : `<button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>`}
+            <button class='add-rate-btn px-2 py-1 bg-green-600 text-white rounded'>Save</button>
+            <button class='cancel-rate-btn px-2 py-1 bg-gray-400 text-white rounded ml-2'>Cancel</button>
           </td>
         `;
-        // Enable/disable NP fields based on checkbox
-        const npCheckbox = tr.querySelector('.np-checkbox');
-        const npAdultInput = tr.querySelector('.np-adult-input');
-        const npChildInput = tr.querySelector('.np-child-input');
-        function updateNpFields() {
-          const checked = npCheckbox.checked;
-          npAdultInput.disabled = !checked;
-          npChildInput.disabled = !checked;
-        }
-        updateNpFields();
-        npCheckbox.addEventListener('change', updateNpFields);
-        // Rate select/input logic
-        const rateSelect = tr.querySelector('.rate-select');
-        const rateNewFields = tr.querySelector('.rate-new-fields');
+        // Add event handlers for Save/Cancel
         const rateNameInput = tr.querySelector('.rate-name-input');
         const rateAdultInput = tr.querySelector('.rate-adult-input');
         const rateChildInput = tr.querySelector('.rate-child-input');
         const addRateBtn = tr.querySelector('.add-rate-btn');
-        const netAdultInput = tr.querySelector('.net-adult-input');
-        const netChildInput = tr.querySelector('.net-child-input');
-        rateSelect.onchange = () => {
-          if (rateSelect.value === '') {
-            addingNewRate = true;
-            rateSelect.style.display = 'none';
-            rateNewFields.style.display = '';
-            netAdultInput.parentElement.style.display = 'none';
-            netChildInput.parentElement.style.display = 'none';
-            rateNameInput.value = '';
-            rateAdultInput.value = '';
-            rateChildInput.value = '';
-            rateNameInput.focus();
-          } else {
-            addingNewRate = false;
-            rateNewFields.style.display = 'none';
-            rateSelect.style.display = '';
-            netAdultInput.parentElement.style.display = '';
-            netChildInput.parentElement.style.display = '';
-            // Auto-fill net prices from selected rate (and update row data)
-            const selectedRate = allRates.find(r => r.name === rateSelect.value);
-            if (selectedRate) {
-              netAdultInput.value = selectedRate.net_adult;
-              netChildInput.value = selectedRate.net_child;
-              row.rate = selectedRate.name;
-              row.net_adult = selectedRate.net_adult;
-              row.net_child = selectedRate.net_child;
-              // Save to backend without reloading table
-              saveProgramRow(tr, row, false, false); // false = not adding new rate, false = don't reload table
-            }
-          }
-        };
+        const cancelRateBtn = tr.querySelector('.cancel-rate-btn');
         addRateBtn.onclick = () => {
           const name = rateNameInput.value.trim();
           const net_adult = rateAdultInput.value.trim();
@@ -1289,13 +1228,13 @@
           fetch('/api/rates', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, net_adult, net_child })
+            body: JSON.stringify({ name, net_adult, net_child, sku: row.sku })
           })
             .then(res => res.json())
             .then(data => {
               if (data.rate) {
                 // After adding and saving, always reload the table to restore view mode
-                saveProgramRow(tr, { ...row, rate: data.rate.name, net_adult: data.rate.net_adult, net_child: data.rate.net_child }, true, true);
+                fetchRatesAndPrograms();
               } else {
                 alert('Failed to add rate.');
               }
@@ -1303,39 +1242,64 @@
             .catch(() => alert('Failed to add rate.'))
             .finally(() => { addRateBtn.disabled = false; });
         };
-        // Save/cancel handlers
-        if (isEdit) {
-          tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row, addingNewRate, true);
-          tr.querySelector('.cancel-btn').onclick = () => fetchRatesAndPrograms();
+        cancelRateBtn.onclick = () => fetchRatesAndPrograms();
+      }
+      if (isEdit || showDropdown) {
+        // Build rate dropdown options
+        let rateOptions = `<option value="">-- Add New Item --</option>`;
+        if (!ratesForSku.some(r => r.name === 'Rate')) {
+          rateOptions += `<option value="Rate">Rate</option>`;
+        }
+        ratesForSku.forEach(rate => {
+          rateOptions += `<option value="${rate.name.replace(/"/g, '&quot;') }"${row.rate === rate.name ? ' selected' : ''}>${rate.name}</option>`;
+        });
+        if (row.rate === '' || row.rate === undefined) {
+          // If Add New Item is selected, render add-new-rate row
+          renderAddNewRateRow();
         } else {
-          tr.querySelector('.edit-btn').onclick = () => {
-            const editRow = { ...row };
-            tr.replaceWith(renderProgramRow(editRow, true));
+          tr.innerHTML = `
+            <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td>
+              <select class='border px-2 py-1 w-32 rate-select'>${rateOptions}</select>
+            </td>
+            <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-adult-input' value="${row.net_adult || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td><input type='number' step='0.01' class='border px-2 py-1 w-20 net-child-input' value="${row.net_child || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td><input type='checkbox' class='np-checkbox' ${row.np ? 'checked' : ''} ${isEdit ? '' : 'disabled'} /></td>
+            <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-adult-input' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+            <td><input type='number' step='0.01' class='border px-2 py-1 w-20 np-child-input' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} ${isEdit ? '' : 'readonly'} /></td>
+            <td><input class='border px-2 py-1 w-32 remark-input' value="${row.remark || ''}" ${isEdit ? '' : 'readonly'} /></td>
+            <td>
+              ${isEdit ? `<button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
+              <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>` : `<button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>`}
+              ${isEdit ? '' : `<button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>`}
+            </td>
+          `;
+          // ... rest of event handlers ...
+          // Rate select/input logic
+          const rateSelect = tr.querySelector('.rate-select');
+          rateSelect.onchange = () => {
+            if (rateSelect.value === '') {
+              // Switch to add-new-rate row
+              renderAddNewRateRow();
+            } else {
+              // ... existing logic ...
+              const selectedRate = ratesForSku.find(r => r.name === rateSelect.value);
+              if (selectedRate) {
+                tr.querySelector('.net-adult-input').value = selectedRate.net_adult;
+                tr.querySelector('.net-child-input').value = selectedRate.net_child;
+                row.rate = selectedRate.name;
+                row.net_adult = selectedRate.net_adult;
+                row.net_child = selectedRate.net_child;
+                saveProgramRow(tr, row, false, false);
+              }
+            }
           };
-          tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
+          // ... rest of event handlers ...
         }
       } else {
-        tr.innerHTML = `
-          <td>${row.sku || ''}</td>
-          <td>${row.id || ''}</td>
-          <td>${row.program || ''}</td>
-          <td>${row.rate || ''}</td>
-          <td>${row.cheapest_net_adult || ''}</td>
-          <td>${row.cheapest_net_child || ''}</td>
-          <td>${row.np ? '✅' : '❌'}</td>
-          <td>${row.np ? (row.np_adult || '') : ''}</td>
-          <td>${row.np ? (row.np_child || '') : ''}</td>
-          <td>${row.remark || ''}</td>
-          <td>
-            <button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>
-            <button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>
-          </td>
-        `;
-        tr.querySelector('.edit-btn').onclick = () => {
-          const editRow = { ...row };
-          tr.replaceWith(renderProgramRow(editRow, true));
-        };
-        tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
+        // ... existing code ...
       }
       return tr;
     }

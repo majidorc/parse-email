@@ -6,6 +6,8 @@
   <title>Programs</title>
   <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js for dashboard charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1046,31 +1048,36 @@
           if (dashboardTotalBookings) {
             const val = Number(data.totalBookings);
             dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
-          }
-          // New Bookings
+            console.log('Set dashboard-total-bookings:', dashboardTotalBookings.textContent);
+          } else { console.error('dashboard-total-bookings element missing'); }
           if (dashboardNewBookings) {
             const val = Number(data.newBookings);
             dashboardNewBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
-          }
-          // Total Earnings
+            console.log('Set dashboard-new-bookings:', dashboardNewBookings.textContent);
+          } else { console.error('dashboard-new-bookings element missing'); }
           if (dashboardTotalEarnings) {
             const val = Number(data.totalEarnings);
             dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-          }
-          // Done/Booked
+            console.log('Set dashboard-total-earnings:', dashboardTotalEarnings.textContent);
+          } else { console.error('dashboard-total-earnings element missing'); }
           if (dashboardDone) {
             const val = Number(data.done);
             dashboardDone.textContent = isNaN(val) ? '-' : val.toLocaleString();
-          }
+            console.log('Set dashboard-done:', dashboardDone.textContent);
+          } else { console.error('dashboard-done element missing'); }
           if (dashboardBooked) {
             const val = Number(data.booked);
             dashboardBooked.textContent = isNaN(val) ? '-' : val.toLocaleString();
-          }
+            console.log('Set dashboard-booked:', dashboardBooked.textContent);
+          } else { console.error('dashboard-booked element missing'); }
           const doneVal = Number(data.done);
           const bookedVal = Number(data.booked);
           const total = (isNaN(doneVal) ? 0 : doneVal) + (isNaN(bookedVal) ? 0 : bookedVal);
           const percent = total === 0 ? 0 : Math.round(((isNaN(doneVal) ? 0 : doneVal) / total) * 100);
-          if (dashboardProgress) dashboardProgress.style.width = percent + '%';
+          if (dashboardProgress) {
+            dashboardProgress.style.width = percent + '%';
+            console.log('Set dashboard-progress width:', dashboardProgress.style.width);
+          } else { console.error('dashboard-progress element missing'); }
           // Revenue by Day - Chart.js
           const ctx = document.getElementById('revenueChart')?.getContext('2d');
           if (window.revenueChartInstance) {
@@ -1118,10 +1125,11 @@
                 }
               }
             });
+            console.log('Chart rendered');
           } else if (ctx) {
             console.warn('revenueByDay missing or empty:', data.revenueByDay);
             ctx.clearRect(0, 0, 400, 220);
-          }
+          } else { console.error('revenueChart canvas or context missing'); }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = data.topDestinations.map((row, i) =>

@@ -29,9 +29,9 @@ module.exports = async (req, res) => {
   const period = req.query.period || 'thisMonth'; // 'thisMonth', 'lastMonth', 'all'
   const [start, end] = getBangkokDateRange(period);
   try {
-    // Total bookings (by tour_date)
+    // Total bookings (all time, no date filter)
     const { rows: totalRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings`
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
 

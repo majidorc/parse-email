@@ -36,11 +36,10 @@ module.exports = async (req, res) => {
     return;
   }
   if (req.method === 'POST') {
-    // Add a new program with multiple rates
+    // Upsert logic: if id is present, update; else insert new
     const product_id_optional = req.body.productId || req.body.product_id_optional || null;
-    const { sku, program, remark } = req.body;
+    const { sku, program, remark, id } = req.body;
     const rates = req.body.rates || [];
-    // Basic validation
     if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
@@ -48,13 +47,24 @@ module.exports = async (req, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      // Insert product
-      const prodResult = await client.query(
-        `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
-        [sku, product_id_optional, program, remark || null]
-      );
-      const productId = prodResult.rows[0].id;
-      // Insert rates
+      let productId = id;
+      if (id) {
+        // Update product
+        await client.query(
+          `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4 WHERE id=$5`,
+          [sku, product_id_optional, program, remark || null, id]
+        );
+        // Delete all existing rates for this product
+        await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
+      } else {
+        // Insert product
+        const prodResult = await client.query(
+          `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
+          [sku, product_id_optional, program, remark || null]
+        );
+        productId = prodResult.rows[0].id;
+      }
+      // Insert all rates
       for (const rate of rates) {
         const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
         if (

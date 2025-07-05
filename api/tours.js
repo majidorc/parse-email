@@ -26,53 +26,56 @@ module.exports = async (req, res) => {
     return;
   }
   if (req.method === 'POST') {
-    // Add a new tour
-    const { id, sku, program, rate, net_adult, net_child, np, np_adult, np_child, remark } = req.body;
-    if (!sku || !program || !rate || net_adult === undefined || net_child === undefined || np === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Add a new program with multiple rates
+    const product_id_optional = req.body.productId || req.body.product_id_optional || null;
+    const { sku, program, remark } = req.body;
+    const rates = req.body.rates || [];
+    // Basic validation
+    if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
     }
+    const client = await sql.connect();
     try {
-      await sql`
-        INSERT INTO tours (id, sku, program, rate, net_adult, net_child, np, np_adult, np_child, remark)
-        VALUES (${id}, ${sku}, ${program}, ${rate}, ${net_adult}, ${net_child}, ${np}, ${np_adult}, ${np_child}, ${remark})
-      `;
-      res.status(201).json({ success: true });
+      await client.query('BEGIN');
+      // Insert product
+      const prodResult = await client.query(
+        `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
+        [sku, product_id_optional, program, remark || null]
+      );
+      const productId = prodResult.rows[0].id;
+      // Insert rates
+      for (const rate of rates) {
+        const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
+        if (
+          !name || net_adult == null || net_child == null || !fee_type ||
+          ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))
+        ) {
+          throw new Error('Invalid rate item');
+        }
+        await client.query(
+          `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
+        );
+      }
+      await client.query('COMMIT');
+      res.status(201).json({ success: true, productId });
     } catch (err) {
-      res.status(500).json({ error: 'Failed to add tour', details: err.message });
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
     return;
   }
   if (req.method === 'PUT') {
-    // Edit a tour (by id+sku+rate)
-    const { id, sku, rate, program, net_adult, net_child, np, np_adult, np_child, remark } = req.body;
-    if (!id || !sku || !rate) {
-      return res.status(400).json({ error: 'Missing id, sku, or rate' });
-    }
-    try {
-      await sql`
-        UPDATE tours SET program=${program}, net_adult=${net_adult}, net_child=${net_child}, np=${np}, np_adult=${np_adult}, np_child=${np_child}, remark=${remark}, updated_at=NOW()
-        WHERE id=${id} AND sku=${sku} AND rate=${rate}
-      `;
-      res.status(200).json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to update tour', details: err.message });
-    }
+    // TODO: Implement update logic for products and rates
+    res.status(501).json({ error: 'Not implemented' });
     return;
   }
   if (req.method === 'DELETE') {
-    // Delete a tour (by id+sku+rate)
-    const { id, sku, rate } = req.body;
-    if (!id || !sku || !rate) {
-      return res.status(400).json({ error: 'Missing id, sku, or rate' });
-    }
-    try {
-      await sql`DELETE FROM tours WHERE id=${id} AND sku=${sku} AND rate=${rate}`;
-      // Also delete all rates with the same sku
-      await sql`DELETE FROM rates WHERE sku=${sku}`;
-      res.status(200).json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to delete tour', details: err.message });
-    }
+    // TODO: Implement delete logic for products and rates
+    res.status(501).json({ error: 'Not implemented' });
     return;
   }
   res.status(405).json({ error: 'Method not allowed' });

@@ -95,6 +95,7 @@
           </div>
           <div class="border-t border-gray-200 pt-6 flex justify-between">
             <button type="button" id="cancel-add-program" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
+            <button type="button" id="delete-program-btn" style="display:none;" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Delete</button>
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Save Configuration</button>
           </div>
         </form>
@@ -1328,6 +1329,8 @@
                 }
               });
             }
+            // Show Delete button if editing
+            document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
           });
       });
       // Add Rate Item logic
@@ -1484,6 +1487,31 @@
         .catch(err => {
           alert('Error saving program: ' + err.message);
         });
+      });
+    });
+
+    // Add Delete button handler after DOMContentLoaded
+    document.getElementById('delete-program-btn').addEventListener('click', function() {
+      const id = document.getElementById('productId').value;
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this program and all its rates? This cannot be undone.')) return;
+      fetch('/api/tours', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to delete program');
+        return res.json();
+      })
+      .then(result => {
+        alert('Program deleted successfully!');
+        document.getElementById('add-program-section').style.display = 'none';
+        document.getElementById('programs-section').style.display = '';
+        if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+      })
+      .catch(err => {
+        alert('Error deleting program: ' + err.message);
       });
     });
   </script>

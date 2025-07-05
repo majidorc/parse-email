@@ -94,8 +94,25 @@ module.exports = async (req, res) => {
     return;
   }
   if (req.method === 'DELETE') {
-    // TODO: Implement delete logic for products and rates
-    res.status(501).json({ error: 'Not implemented' });
+    // Delete a product and all its rates
+    const { id } = req.body;
+    if (!id) {
+      res.status(400).json({ error: 'Missing id' });
+      return;
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM rates WHERE product_id = $1', [id]);
+      await client.query('DELETE FROM products WHERE id = $1', [id]);
+      await client.query('COMMIT');
+      res.status(200).json({ success: true });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      res.status(500).json({ error: err.message, stack: err.stack });
+    } finally {
+      client.release();
+    }
     return;
   }
   res.status(405).json({ error: 'Method not allowed' });

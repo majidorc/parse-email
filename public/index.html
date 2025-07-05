@@ -1423,7 +1423,7 @@
         const formData = new FormData(this);
         const data = {
           sku: formData.get('sku'),
-          productId: formData.get('productId'),
+          id: formData.get('productId'),
           program: formData.get('program'),
           remark: formData.get('remark'),
           rates: []
@@ -1438,16 +1438,16 @@
           const rateId = item.id.split('-').pop();
           const feeType = document.getElementById(`feeType_${rateId}`).value;
           const rateData = {
-            name: item.querySelector('[name="rateName"]').value,
-            netAdult: item.querySelector('[name="netAdult"]').value,
-            netChild: item.querySelector('[name="netChild"]').value,
-            feeType: feeType,
-            feeAdult: null,
-            feeChild: null
+            name: item.querySelector(`[name="rateName"]`).value,
+            net_adult: item.querySelector(`[name="netAdult"]`).value,
+            net_child: item.querySelector(`[name="netChild"]`).value,
+            fee_type: feeType,
+            fee_adult: null,
+            fee_child: null
           };
           if (feeType !== 'none') {
-            rateData.feeAdult = item.querySelector('[name="feeAdult"]').value;
-            rateData.feeChild = item.querySelector('[name="feeChild"]').value;
+            rateData.fee_adult = item.querySelector(`[name="feeAdult"]`).value;
+            rateData.fee_child = item.querySelector(`[name="feeChild"]`).value;
           }
           data.rates.push(rateData);
         });

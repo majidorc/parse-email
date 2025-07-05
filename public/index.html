@@ -28,11 +28,11 @@
       <span id="bangkok-datetime" class="text-base md:text-lg font-semibold text-indigo-700 bg-indigo-50 rounded px-4 py-1 shadow-sm"></span>
     </div>
     <!-- Table Toggle Section -->
-    <div class="mb-4 flex justify-center gap-4 tab-btn-container">
-      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Dashboard</button>
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Bookings</button>
-      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Programs</button>
-      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
+    <div class="mb-4 tab-btn-container grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-4">
+      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 w-full" type="button">Dashboard</button>
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 w-full" type="button">Bookings</button>
+      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 w-full" type="button">Programs</button>
+      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 w-full" type="button">Accounting</button>
     </div>
     <!-- Programs Section (pixel-perfect match) -->
     <div id="programs-section" style="display:none;">
@@ -433,8 +433,7 @@
       const bookingsTableSection = document.querySelector('.bookings-table-container');
       if (
         window.innerWidth <= 700 &&
-        bookingsBtn.classList.contains('bg-blue-600') &&
-        bookingsTableSection && bookingsTableSection.style.display !== 'none'
+        bookingsBtn.classList.contains('bg-blue-600')
       ) {
         cardsContainer.style.display = 'block';
       } else {
@@ -638,8 +637,7 @@
       if (
         cardsContainer &&
         window.innerWidth <= 700 &&
-        bookingsBtn.classList.contains('bg-blue-600') &&
-        bookingsTableSection && bookingsTableSection.style.display !== 'none'
+        bookingsBtn.classList.contains('bg-blue-600')
       ) {
         cardsContainer.style.display = 'block';
       } else if (cardsContainer) {

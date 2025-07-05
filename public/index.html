@@ -1457,6 +1457,7 @@
           return;
         }
         // Send data to backend API
+        console.log("Saving program, payload:", data);
         fetch('/api/tours', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

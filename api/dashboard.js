@@ -28,24 +28,28 @@ function getBangkokDateRange(period) {
 module.exports = async (req, res) => {
   const period = req.query.period || 'thisMonth'; // 'thisMonth', 'lastMonth', 'all'
   const [start, end] = getBangkokDateRange(period);
+  console.log('[DEBUG] Dashboard API called:', { period, start, end });
   try {
     // Total bookings (by tour_date, filtered by period)
     const { rows: totalRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
+    console.log('[DEBUG] Total bookings:', totalBookings);
 
     // New bookings (by created_at)
     const { rows: newRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE created_at >= $1 AND created_at < $2`, [start, end]
     );
     const newBookings = parseInt(newRows[0].count, 10);
+    console.log('[DEBUG] New bookings:', newBookings);
 
     // Total earnings (sum of paid)
     const { rows: paidRows } = await sql.query(
       `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
+    console.log('[DEBUG] Total earnings:', totalEarnings);
 
     // Done vs Booked
     const { rows: doneRows } = await sql.query(
@@ -53,6 +57,7 @@ module.exports = async (req, res) => {
     );
     const done = parseInt(doneRows[0].count, 10);
     const booked = totalBookings - done;
+    console.log('[DEBUG] Done:', done, 'Booked:', booked);
 
     // Revenue by day (for chart)
     const { rows: revenueRows } = await sql.query(
@@ -60,10 +65,12 @@ module.exports = async (req, res) => {
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2
        GROUP BY day ORDER BY day`, [start, end]
     );
+    console.log('[DEBUG] Revenue by day:', revenueRows.length);
     // Top destinations (by program)
     const { rows: destRows } = await sql.query(
       `SELECT program, COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC LIMIT 5`, [start, end]
     );
+    console.log('[DEBUG] Top destinations:', destRows.length);
 
     // Percent changes (this month vs last month)
     let percentNew = null, percentEarnings = null;

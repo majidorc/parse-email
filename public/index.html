@@ -1053,18 +1053,24 @@
           if (dashboardTotalBookings) {
             const val = Number(data.totalBookings);
             dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
-            console.log('Set dashboard-total-bookings:', dashboardTotalBookings.textContent);
-          } else { console.error('dashboard-total-bookings element missing'); }
+          }
           if (dashboardNewBookings) {
             const val = Number(data.newBookings);
             dashboardNewBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
-            console.log('Set dashboard-new-bookings:', dashboardNewBookings.textContent);
-          } else { console.error('dashboard-new-bookings element missing'); }
+          }
           if (dashboardTotalEarnings) {
             const val = Number(data.totalEarnings);
             dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-            console.log('Set dashboard-total-earnings:', dashboardTotalEarnings.textContent);
-          } else { console.error('dashboard-total-earnings element missing'); }
+          }
+          // Set percent change for Total Bookings
+          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+          if (data.percentTotal !== null && data.percentTotal !== undefined) {
+            const percentVal = Number(data.percentTotal);
+            const up = percentVal >= 0;
+            if (bookingsChange) bookingsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
+          } else {
+            if (bookingsChange) bookingsChange.textContent = '';
+          }
           if (dashboardDone) {
             const val = Number(data.done);
             dashboardDone.textContent = isNaN(val) ? '-' : val.toLocaleString();
@@ -1148,13 +1154,6 @@
           const bookingsChange = document.getElementById('dashboard-total-bookings-change');
           const newChange = document.getElementById('dashboard-new-bookings-change');
           const earningsChange = document.getElementById('dashboard-total-earnings-change');
-          if (data.percentTotal !== null && data.percentTotal !== undefined) {
-            const percentVal = Number(data.percentTotal);
-            const up = percentVal >= 0;
-            if (bookingsChange) bookingsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
-          } else {
-            if (bookingsChange) bookingsChange.textContent = '';
-          }
           if (data.percentNew !== null && data.percentNew !== undefined) {
             const percentVal = Number(data.percentNew);
             const up = percentVal >= 0;

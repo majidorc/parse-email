@@ -1067,7 +1067,6 @@
             dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
           }
           // Set percent change for Total Bookings
-          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
           if (data.percentTotal !== null && data.percentTotal !== undefined) {
             const percentVal = Number(data.percentTotal);
             const up = percentVal >= 0;
@@ -1155,9 +1154,6 @@
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes
-          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
-          const newChange = document.getElementById('dashboard-new-bookings-change');
-          const earningsChange = document.getElementById('dashboard-total-earnings-change');
           if (data.percentNew !== null && data.percentNew !== undefined) {
             const percentVal = Number(data.percentNew);
             const up = percentVal >= 0;

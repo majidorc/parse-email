@@ -1148,6 +1148,13 @@
           const bookingsChange = document.getElementById('dashboard-total-bookings-change');
           const newChange = document.getElementById('dashboard-new-bookings-change');
           const earningsChange = document.getElementById('dashboard-total-earnings-change');
+          if (data.percentTotal !== null && data.percentTotal !== undefined) {
+            const percentVal = Number(data.percentTotal);
+            const up = percentVal >= 0;
+            if (bookingsChange) bookingsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
+          } else {
+            if (bookingsChange) bookingsChange.textContent = '';
+          }
           if (data.percentNew !== null && data.percentNew !== undefined) {
             const percentVal = Number(data.percentNew);
             const up = percentVal >= 0;

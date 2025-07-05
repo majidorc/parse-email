@@ -592,16 +592,29 @@ async function handler(req, res) {
                 }
             }
 
-            const { rows: [newBooking] } = await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid})
-                RETURNING *;
-            `;
             if (adult === 0) {
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
-            return res.status(200).send('Webhook processed: Booking saved.');
+
+            await sql`
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid})
+                ON CONFLICT (booking_number) DO UPDATE SET
+                  tour_date = EXCLUDED.tour_date,
+                  sku = EXCLUDED.sku,
+                  program = EXCLUDED.program,
+                  customer_name = EXCLUDED.customer_name,
+                  adult = EXCLUDED.adult,
+                  child = EXCLUDED.child,
+                  infant = EXCLUDED.infant,
+                  hotel = EXCLUDED.hotel,
+                  phone_number = EXCLUDED.phone_number,
+                  notification_sent = EXCLUDED.notification_sent,
+                  raw_tour_date = EXCLUDED.raw_tour_date,
+                  paid = EXCLUDED.paid;
+            `;
+            return res.status(200).send('Webhook processed: Booking upserted.');
 
         } catch (error) {
             console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);

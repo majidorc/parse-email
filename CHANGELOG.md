@@ -116,4 +116,22 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fixed ReferenceError for missing percent change elements in dashboard.
 - Fixed Add Program form not showing due to earlier JS errors.
-- Ensured all dashboard and program features work after redeploy and hard refresh. 
+- Ensured all dashboard and program features work after redeploy and hard refresh.
+
+## [1.8.0] - 2025-07-06
+### Added
+- `book_date` column to bookings table, parsed from Bokun and tours.co.th emails.
+- Display of Book Date in bookings and accounting tables (frontend and API).
+- Percent change display for Total Bookings metric on dashboard.
+- Product ID (Optional) field mapped to `product_id_optional` in programs management.
+
+### Changed
+- Robust upsert logic for bookings: all fields updated if booking_number exists; supports both "New booking:" and "Updated booking:" emails.
+- Programs endpoint refactored to support multiple rates per program and robust upsert/delete logic.
+- Programs table shows Product ID (Optional) under SKU, and Action header beside Remark.
+- Removed all debug `console.log` and `console.debug` statements from frontend for clean production output.
+
+### Fixed
+- Dashboard metrics and progress bar calculations for New Bookings, Done vs Booked, and percent change.
+- Book Date now correctly shown in all relevant tables and API responses.
+- UI/UX improvements and bugfixes for Add/Edit/Delete Program, dashboard, and accounting features. 

@@ -47,8 +47,8 @@
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Program</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
-                </tr>
-              </thead>
+        </tr>
+      </thead>
               <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
                 <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
               </tbody>
@@ -1241,6 +1241,9 @@
               </td>
               <td class="px-6 py-4 whitespace-normal text-sm text-gray-600 max-w-xs">
                 ${product.remark || ''}
+              </td>
+              <td class="px-6 py-4 text-right">
+                <button class="edit-program-btn px-2 py-1 bg-blue-600 text-white rounded" data-sku="${product.sku}">Edit</button>
               </td>
             `;
             tbody.appendChild(tr);

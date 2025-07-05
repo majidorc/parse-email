@@ -1208,8 +1208,9 @@
             const channelLabels = data.channels.map(row => row.channel);
             const channelCounts = data.channels.map(row => row.count);
             const channelColors = [
-              '#2563eb', // OTA
-              '#0f172a'  // Website
+              '#0f172a', // Website
+              '#2563eb', // GYG
+              '#f59e42'  // Viator
             ];
             window.channelsPieChartInstance = new Chart(channelsPieCtx, {
               type: 'pie',
@@ -1239,12 +1240,14 @@
                 }
               }
             });
-            // Show booking counts for OTA and Website
-            const ota = data.channels.find(c => c.channel === 'OTA');
+            // Show booking counts for Website, GYG, Viator
             const website = data.channels.find(c => c.channel === 'Website');
+            const gyg = data.channels.find(c => c.channel === 'GYG');
+            const viator = data.channels.find(c => c.channel === 'Viator');
             document.getElementById('channels-booking-counts').innerHTML =
-              `<div>OTA: <span class='font-bold'>${ota ? ota.count : 0}</span></div>` +
-              `<div>Website: <span class='font-bold'>${website ? website.count : 0}</span></div>`;
+              `<div>Website: <span class='font-bold'>${website ? website.count : 0}</span></div>` +
+              `<div>GYG: <span class='font-bold'>${gyg ? gyg.count : 0}</span></div>` +
+              `<div>Viator: <span class='font-bold'>${viator ? viator.count : 0}</span></div>`;
           } else if (channelsPieCtx) {
             channelsPieCtx.clearRect(0, 0, 180, 180);
             document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';

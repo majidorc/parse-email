@@ -97,11 +97,21 @@ module.exports = async (req, res) => {
     const totalAdults = parseInt(paxRows[0].adults, 10);
     const totalChildren = parseInt(paxRows[0].children, 10);
 
-    // Booking counts by channel
-    const { rows: channelRows } = await sql.query(
-      `SELECT channel, COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY channel`, [start, end]
+    // Booking counts by channel (Website, GYG, Viator)
+    const { rows: allRows } = await sql.query(
+      `SELECT booking_number FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
-    const channels = channelRows.map(row => ({ channel: row.channel, count: parseInt(row.count, 10) }));
+    let websiteCount = 0, gygCount = 0, viatorCount = 0;
+    allRows.forEach(row => {
+      if (row.booking_number.startsWith('6')) websiteCount++;
+      else if (row.booking_number.startsWith('GYG')) gygCount++;
+      else viatorCount++;
+    });
+    const channels = [
+      { channel: 'Website', count: websiteCount },
+      { channel: 'GYG', count: gygCount },
+      { channel: 'Viator', count: viatorCount }
+    ];
 
     res.status(200).json({
       totalBookings,

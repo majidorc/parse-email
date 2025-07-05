@@ -1073,8 +1073,8 @@
           } else { console.error('dashboard-booked element missing'); }
           const doneVal = Number(data.done);
           const bookedVal = Number(data.booked);
-          const total = (isNaN(doneVal) ? 0 : doneVal) + (isNaN(bookedVal) ? 0 : bookedVal);
-          const percent = total === 0 ? 0 : Math.round(((isNaN(doneVal) ? 0 : doneVal) / total) * 100);
+          // Progress bar: full if done=booked, 0 if booked=0, else (done/booked)*100
+          const percent = (isNaN(bookedVal) || bookedVal === 0) ? 0 : Math.round((doneVal / bookedVal) * 100);
           if (dashboardProgress) {
             dashboardProgress.style.width = percent + '%';
             console.log('Set dashboard-progress width:', dashboardProgress.style.width);

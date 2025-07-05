@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     console.log('[DEBUG] Top destinations:', destRows.length);
 
     // Percent changes (this month vs last month)
-    let percentNew = null, percentEarnings = null;
+    let percentNew = null, percentEarnings = null, percentTotal = null;
     if (period === 'thisMonth') {
       const [lastStart, lastEnd] = getBangkokDateRange('lastMonth');
       const { rows: lastNewRows } = await sql.query(
@@ -82,6 +82,12 @@ module.exports = async (req, res) => {
       );
       const lastEarnings = parseFloat(lastPaidRows[0].sum);
       percentEarnings = lastEarnings === 0 ? null : ((totalEarnings - lastEarnings) / lastEarnings) * 100;
+      // Add percentTotal: compare totalBookings (this month) to last month's totalBookings
+      const { rows: lastTotalRows } = await sql.query(
+        `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [lastStart, lastEnd]
+      );
+      const lastTotal = parseInt(lastTotalRows[0].count, 10);
+      percentTotal = lastTotal === 0 ? null : ((totalBookings - lastTotal) / lastTotal) * 100;
     }
 
     res.status(200).json({
@@ -94,6 +100,7 @@ module.exports = async (req, res) => {
       topDestinations: destRows,
       percentNew,
       percentEarnings,
+      percentTotal,
       period,
       start,
       end

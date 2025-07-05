@@ -756,6 +756,7 @@
         if (search) params.append('search', search);
         const res = await fetch(`/api/accounting?${params.toString()}`);
         const data = await res.json();
+        console.log('[DEBUG] fetchAccounting data:', data);
         if (!data.bookings || !data.bookings.length) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No results found.</td></tr>';
           accountingData = [];

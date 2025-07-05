@@ -51,6 +51,7 @@ module.exports = async (req, res) => {
     if (dateRangeMatch) {
       whereClause = `WHERE tour_date >= $1 AND tour_date < $2`;
       params = [dateRangeMatch[1], dateRangeMatch[2]];
+      console.log('[DEBUG] Last Month filter:', params);
     } else {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
@@ -64,6 +65,7 @@ module.exports = async (req, res) => {
 
     // Get total count
     const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause}`;
+    console.log('[DEBUG] Count Query:', countQuery, params);
     const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
 
@@ -104,6 +106,7 @@ module.exports = async (req, res) => {
     `;
     const dataParams = [...params, limit, offset];
     const { rows: bookings } = await sql.query(dataQuery, dataParams);
+    console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
 
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
     return res.status(200).json({

@@ -228,6 +228,17 @@ class BokunParser extends BaseEmailParser {
     }
     return null;
   }
+  extractBookDate() {
+    // Look for a line like 'Created\tFri, July 04 2025 @ 23:17'
+    const match = this.textContent.match(/Created\s*[\t:]*\s*([A-Za-z]+,?\s+[A-Za-z]+\s+\d{1,2}\s+\d{4})/);
+    if (match && match[1]) {
+      // Remove day of week if present (e.g., 'Fri, July 04 2025' -> 'July 04 2025')
+      const dateStr = match[1].replace(/^[A-Za-z]+,?\s+/, '');
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    }
+    return null;
+  }
   extractAll() {
     const passengers = this.extractPassengers();
     const tourDate = this.extractTourDate();
@@ -240,7 +251,8 @@ class BokunParser extends BaseEmailParser {
       adult: passengers.adult, child: passengers.child, infant: passengers.infant,
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
       isoDate: this._getISODate(tourDate),
-      paid: this.extractPaid()
+      paid: this.extractPaid(),
+      book_date: this.extractBookDate()
     };
   }
   formatBookingDetails() {
@@ -396,6 +408,19 @@ class ThailandToursParser extends BaseEmailParser {
       return null;
     }
 
+    extractBookDate() {
+      // Look for a line like 'Order date: July 5, 2025'
+      const line = this.lines.find(l => l.toLowerCase().startsWith('order date:'));
+      if (line) {
+        const match = line.match(/Order date:\s*([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
+        if (match && match[1]) {
+          const d = new Date(match[1]);
+          if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+        }
+      }
+      return null;
+    }
+
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
@@ -411,7 +436,8 @@ class ThailandToursParser extends BaseEmailParser {
             hotel: this.extractHotel(),
             phoneNumber: this.extractPhone(),
             isoDate: this._getISODate(tourDate),
-            paid: this.extractPaid()
+            paid: this.extractPaid(),
+            book_date: this.extractBookDate()
         };
     }
 
@@ -573,7 +599,8 @@ async function handler(req, res) {
                   ['hotel', extractedInfo.hotel],
                   ['phone_number', extractedInfo.phoneNumber],
                   ['raw_tour_date', extractedInfo.tourDate],
-                  ['paid', paid]
+                  ['paid', paid],
+                  ['book_date', extractedInfo.book_date]
                 ];
                 for (const [key, value] of fields) {
                   if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
@@ -583,7 +610,7 @@ async function handler(req, res) {
                 }
                 if (changed) {
                   await sql`
-                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}
+                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');
@@ -598,8 +625,8 @@ async function handler(req, res) {
             }
 
             await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid})
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date})
                 ON CONFLICT (booking_number) DO UPDATE SET
                   tour_date = EXCLUDED.tour_date,
                   sku = EXCLUDED.sku,
@@ -612,7 +639,8 @@ async function handler(req, res) {
                   phone_number = EXCLUDED.phone_number,
                   notification_sent = EXCLUDED.notification_sent,
                   raw_tour_date = EXCLUDED.raw_tour_date,
-                  paid = EXCLUDED.paid;
+                  paid = EXCLUDED.paid,
+                  book_date = EXCLUDED.book_date;
             `;
             return res.status(200).send('Webhook processed: Booking upserted.');
 

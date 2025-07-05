@@ -41,6 +41,16 @@
           <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Programs</h2>
           <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
         </div>
+        <!-- Search bar for Programs -->
+        <div class="mb-4 flex justify-end">
+          <input
+            id="programs-search-bar"
+            type="text"
+            placeholder="Search programs..."
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style="max-width: 300px;"
+          />
+        </div>
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -51,8 +61,8 @@
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
-        </tr>
-      </thead>
+                </tr>
+              </thead>
               <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
                 <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
               </tbody>
@@ -1195,6 +1205,61 @@
           fetchPrograms();
         });
     }
+    let allPrograms = [];
+    function renderProgramsTable(programs) {
+      const tbody = document.getElementById('programs-table-body');
+      if (!programs.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      programs.forEach(product => {
+        const tr = document.createElement('tr');
+        tr.className = '';
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">${product.sku}</div>
+            <div class="text-sm text-gray-500">Product ID: ${product.product_id_optional || ''}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-normal max-w-xs">
+            <div class="text-sm font-medium text-gray-900">${product.program}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <table class="min-w-full divide-y divide-gray-100 rounded-lg bg-gray-50">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Name</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Adult</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Child</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Fee Details</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                ${product.rates.map(rate => `
+                  <tr>
+                    <td class="px-3 py-2 text-sm text-gray-800">${rate.name}</td>
+                    <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_adult).toFixed(2)}</td>
+                    <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_child).toFixed(2)}</td>
+                    <td class="px-3 py-2 text-sm ${rate.fee_type === 'none' ? 'text-gray-500 italic' : 'text-gray-800'}">
+                      ${rate.fee_type === 'none' ? 'No additional fee' : ''}
+                      ${rate.fee_type === 'np' ? `<div>NP Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>NP Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                      ${rate.fee_type === 'entrance' ? `<div>Entrance Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>Entrance Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </td>
+          <td class="px-6 py-4 whitespace-normal text-sm text-gray-600 max-w-xs">
+            ${product.remark || ''}
+          </td>
+          <td class="px-6 py-4 text-right">
+            <button class="edit-program-btn px-2 py-1 bg-blue-600 text-white rounded" data-sku="${product.sku}">Edit</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
     function fetchPrograms() {
       const tbody = document.getElementById('programs-table-body');
       if (!tbody) return;
@@ -1202,62 +1267,22 @@
       fetch('/api/tours')
         .then(res => res.json())
         .then(data => {
-          if (!data.tours || !data.tours.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
-            return;
-          }
-          tbody.innerHTML = '';
-          data.tours.forEach(product => {
-            const tr = document.createElement('tr');
-            tr.className = '';
-            tr.innerHTML = `
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">${product.sku}</div>
-                <div class="text-sm text-gray-500">Product ID: ${product.product_id_optional || ''}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-normal max-w-xs">
-                <div class="text-sm font-medium text-gray-900">${product.program}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <table class="min-w-full divide-y divide-gray-100 rounded-lg bg-gray-50">
-                  <thead class="bg-gray-100">
-                    <tr>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Name</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Adult</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Child</th>
-                      <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Fee Details</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-100">
-                    ${product.rates.map(rate => `
-                      <tr>
-                        <td class="px-3 py-2 text-sm text-gray-800">${rate.name}</td>
-                        <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_adult).toFixed(2)}</td>
-                        <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_child).toFixed(2)}</td>
-                        <td class="px-3 py-2 text-sm ${rate.fee_type === 'none' ? 'text-gray-500 italic' : 'text-gray-800'}">
-                          ${rate.fee_type === 'none' ? 'No additional fee' : ''}
-                          ${rate.fee_type === 'np' ? `<div>NP Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>NP Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
-                          ${rate.fee_type === 'entrance' ? `<div>Entrance Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>Entrance Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </td>
-              <td class="px-6 py-4 whitespace-normal text-sm text-gray-600 max-w-xs">
-                ${product.remark || ''}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <button class="edit-program-btn px-2 py-1 bg-blue-600 text-white rounded" data-sku="${product.sku}">Edit</button>
-              </td>
-            `;
-            tbody.appendChild(tr);
-          });
+          allPrograms = data.tours || [];
+          renderProgramsTable(allPrograms);
         })
         .catch(() => {
           tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs.</td></tr>';
         });
     }
+    document.getElementById('programs-search-bar').addEventListener('input', function(e) {
+      const search = e.target.value.toLowerCase();
+      const filtered = allPrograms.filter(p =>
+        (p.sku && p.sku.toLowerCase().includes(search)) ||
+        (p.program && p.program.toLowerCase().includes(search)) ||
+        (p.remark && p.remark.toLowerCase().includes(search))
+      );
+      renderProgramsTable(filtered);
+    });
     // ... (rest of Programs tab logic: add/edit/delete, form, event listeners, etc. as in previous code) ...
 
     // Restore Programs tab logic (add, edit, delete, form, and event listeners)

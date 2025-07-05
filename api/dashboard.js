@@ -37,9 +37,9 @@ module.exports = async (req, res) => {
     const totalBookings = parseInt(totalRows[0].count, 10);
     console.log('[DEBUG] Total bookings:', totalBookings);
 
-    // New bookings (by created_at)
+    // New bookings (by tour_date in period)
     const { rows: newRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE created_at >= $1 AND created_at < $2`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
     const newBookings = parseInt(newRows[0].count, 10);
     console.log('[DEBUG] New bookings:', newBookings);
@@ -51,12 +51,16 @@ module.exports = async (req, res) => {
     const totalEarnings = parseFloat(paidRows[0].sum);
     console.log('[DEBUG] Total earnings:', totalEarnings);
 
-    // Done vs Booked
+    // Done: bookings with tour_date in period and customer=TRUE
     const { rows: doneRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date < CURRENT_DATE AND customer = TRUE AND tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE`, [start, end]
     );
     const done = parseInt(doneRows[0].count, 10);
-    const booked = totalBookings - done;
+    // Booked: bookings with tour_date in period and customer!=TRUE
+    const { rows: bookedRows } = await sql.query(
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND (customer IS NULL OR customer = FALSE)`, [start, end]
+    );
+    const booked = parseInt(bookedRows[0].count, 10);
     console.log('[DEBUG] Done:', done, 'Booked:', booked);
 
     // Revenue by day (for chart)

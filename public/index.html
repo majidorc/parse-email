@@ -246,6 +246,12 @@
           <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
           <div id="dashboard-top-destinations" class="text-sm"></div>
         </div>
+        <!-- Booking Channels Pie Chart -->
+        <div class="bg-white rounded-lg p-4 shadow min-w-[220px] flex flex-col items-center">
+          <div class="text-base font-semibold text-indigo-800 mb-2">Booking Channels</div>
+          <canvas id="channelsPieChart" width="180" height="180"></canvas>
+          <div id="channels-booking-counts" class="mt-2 text-sm text-gray-700"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1192,6 +1198,63 @@
           if (dashboardTotalPassengers) {
             const val = Number(data.totalAdults) + Number(data.totalChildren);
             dashboardTotalPassengers.textContent = isNaN(val) ? '-' : val.toLocaleString();
+          }
+          // Booking Channels Pie Chart
+          const channelsPieCtx = document.getElementById('channelsPieChart')?.getContext('2d');
+          if (window.channelsPieChartInstance) {
+            window.channelsPieChartInstance.destroy();
+          }
+          if (channelsPieCtx && data.channels && data.channels.length) {
+            const channelLabels = data.channels.map(row => {
+              if (row.channel === 'bokun') return 'Bokun';
+              if (row.channel === 'tours.co.th') return 'tours.co.th';
+              if (row.channel === 'getyourguide') return 'GetYourGuide';
+              return 'Other';
+            });
+            const channelCounts = data.channels.map(row => row.count);
+            const channelColors = [
+              '#2563eb', // Bokun
+              '#0f172a', // tours.co.th
+              '#f59e42', // GetYourGuide
+              '#a3a3a3'  // Other
+            ];
+            window.channelsPieChartInstance = new Chart(channelsPieCtx, {
+              type: 'pie',
+              data: {
+                labels: channelLabels,
+                datasets: [{
+                  data: channelCounts,
+                  backgroundColor: channelLabels.map((l, i) => channelColors[i] || '#a3a3a3'),
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                responsive: false,
+                plugins: {
+                  legend: { display: true, position: 'bottom' },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.chart._metasets[0].total || 1;
+                        const percent = ((value / total) * 100).toFixed(2);
+                        return `${label}: ${value} (${percent}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            // Show booking counts for Bokun and tours.co.th
+            const bokun = data.channels.find(c => c.channel === 'bokun');
+            const tours = data.channels.find(c => c.channel === 'tours.co.th');
+            document.getElementById('channels-booking-counts').innerHTML =
+              `<div>Bokun: <span class='font-bold'>${bokun ? bokun.count : 0}</span></div>` +
+              `<div>tours.co.th: <span class='font-bold'>${tours ? tours.count : 0}</span></div>`;
+          } else if (channelsPieCtx) {
+            channelsPieCtx.clearRect(0, 0, 180, 180);
+            document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';
           }
         })
         .catch(err => {

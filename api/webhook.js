@@ -456,6 +456,16 @@ class EmailParserFactory {
   static create(parsedEmail) {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
+    let channel = null;
+    if (fromAddress && fromAddress.includes('bokun.io')) {
+      channel = 'bokun';
+    } else if (fromAddress && fromAddress.includes('tours.co.th')) {
+      channel = 'tours.co.th';
+    } else if (fromAddress && fromAddress.includes('getyourguide')) {
+      channel = 'getyourguide';
+    } else {
+      channel = 'other';
+    }
 
     if (!subject || (!subject.toLowerCase().startsWith('new booking') && !subject.toLowerCase().startsWith('updated booking'))) {
       return null;
@@ -618,15 +628,15 @@ async function handler(req, res) {
                   return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
                 }
             }
-
+            
             if (adult === 0) {
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
-
+            
             await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date})
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel})
                 ON CONFLICT (booking_number) DO UPDATE SET
                   tour_date = EXCLUDED.tour_date,
                   sku = EXCLUDED.sku,
@@ -640,7 +650,8 @@ async function handler(req, res) {
                   notification_sent = EXCLUDED.notification_sent,
                   raw_tour_date = EXCLUDED.raw_tour_date,
                   paid = EXCLUDED.paid,
-                  book_date = EXCLUDED.book_date;
+                  book_date = EXCLUDED.book_date,
+                  channel = EXCLUDED.channel;
             `;
             return res.status(200).send('Webhook processed: Booking upserted.');
 

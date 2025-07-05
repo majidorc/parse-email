@@ -97,6 +97,12 @@ module.exports = async (req, res) => {
     const totalAdults = parseInt(paxRows[0].adults, 10);
     const totalChildren = parseInt(paxRows[0].children, 10);
 
+    // Booking counts by channel
+    const { rows: channelRows } = await sql.query(
+      `SELECT channel, COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY channel`, [start, end]
+    );
+    const channels = channelRows.map(row => ({ channel: row.channel, count: parseInt(row.count, 10) }));
+
     res.status(200).json({
       totalBookings,
       newBookings,
@@ -112,7 +118,8 @@ module.exports = async (req, res) => {
       start,
       end,
       totalAdults,
-      totalChildren
+      totalChildren,
+      channels
     });
   } catch (err) {
     console.error('Dashboard API error:', err);

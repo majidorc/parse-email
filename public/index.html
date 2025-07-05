@@ -762,7 +762,6 @@
         if (search) params.append('search', search);
         const res = await fetch(`/api/accounting?${params.toString()}`);
         const data = await res.json();
-        console.log('[DEBUG] fetchAccounting data:', data);
         if (!data.bookings || !data.bookings.length) {
           tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No results found.</td></tr>';
           accountingData = [];
@@ -1054,9 +1053,7 @@
       fetch(`/api/dashboard?period=${period}`)
         .then(res => res.json())
         .then(data => {
-          console.log('Dashboard API response:', data); // Debug log
           // Total Bookings
-          console.log('Dashboard API response:', data);
           if (dashboardTotalBookings) {
             const val = Number(data.totalBookings);
             dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
@@ -1080,12 +1077,10 @@
           if (dashboardDone) {
             const val = Number(data.done);
             dashboardDone.textContent = isNaN(val) ? '-' : val.toLocaleString();
-            console.log('Set dashboard-done:', dashboardDone.textContent);
           } else { console.error('dashboard-done element missing'); }
           if (dashboardBooked) {
             const val = Number(data.booked);
             dashboardBooked.textContent = isNaN(val) ? '-' : val.toLocaleString();
-            console.log('Set dashboard-booked:', dashboardBooked.textContent);
           } else { console.error('dashboard-booked element missing'); }
           const doneVal = Number(data.done);
           const bookedVal = Number(data.booked);
@@ -1093,7 +1088,6 @@
           const percent = (isNaN(bookedVal) || bookedVal === 0) ? 0 : Math.round((doneVal / bookedVal) * 100);
           if (dashboardProgress) {
             dashboardProgress.style.width = percent + '%';
-            console.log('Set dashboard-progress width:', dashboardProgress.style.width);
           } else { console.error('dashboard-progress element missing'); }
           // Revenue by Day - Chart.js
           const ctx = document.getElementById('revenueChart')?.getContext('2d');
@@ -1142,7 +1136,6 @@
                 }
               }
             });
-            console.log('Chart rendered');
           } else if (ctx) {
             console.warn('revenueByDay missing or empty:', data.revenueByDay);
             ctx.clearRect(0, 0, 400, 220);
@@ -1472,7 +1465,6 @@
           return;
         }
         // Send data to backend API
-        console.log("Saving program, payload:", data);
         fetch('/api/tours', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

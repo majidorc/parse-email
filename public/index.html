@@ -1205,8 +1205,10 @@
             window.channelsPieChartInstance.destroy();
           }
           if (channelsPieCtx && data.channels && data.channels.length) {
-            const channelLabels = data.channels.map(row => row.channel);
-            const channelCounts = data.channels.map(row => row.count);
+            // Only show channels with count > 0
+            const filteredChannels = data.channels.filter(row => row.count > 0);
+            const channelLabels = filteredChannels.map(row => row.channel);
+            const channelCounts = filteredChannels.map(row => row.count);
             const channelColors = [
               '#0f172a', // Website
               '#2563eb', // GYG
@@ -1240,14 +1242,12 @@
                 }
               }
             });
-            // Show booking counts for Website, GYG, Viator
-            const website = data.channels.find(c => c.channel === 'Website');
-            const gyg = data.channels.find(c => c.channel === 'GYG');
-            const viator = data.channels.find(c => c.channel === 'Viator');
-            document.getElementById('channels-booking-counts').innerHTML =
-              `<div>Website: <span class='font-bold'>${website ? website.count : 0}</span></div>` +
-              `<div>GYG: <span class='font-bold'>${gyg ? gyg.count : 0}</span></div>` +
-              `<div>Viator: <span class='font-bold'>${viator ? viator.count : 0}</span></div>`;
+            // Show booking counts for Website, GYG, Viator (only if count > 0)
+            let html = '';
+            filteredChannels.forEach(c => {
+              html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span></div>`;
+            });
+            document.getElementById('channels-booking-counts').innerHTML = html;
           } else if (channelsPieCtx) {
             channelsPieCtx.clearRect(0, 0, 180, 180);
             document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';

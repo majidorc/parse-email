@@ -1044,6 +1044,10 @@
       if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-gray-400">Loading...</span>';
       const dashboardTopDestinations = document.getElementById('dashboard-top-destinations');
       if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">Loading...</span>';
+      // Declare these only once at the top
+      const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+      const newChange = document.getElementById('dashboard-new-bookings-change');
+      const earningsChange = document.getElementById('dashboard-total-earnings-change');
       fetch(`/api/dashboard?period=${period}`)
         .then(res => res.json())
         .then(data => {
@@ -1179,9 +1183,7 @@
           if (dashboardProgress) dashboardProgress.style.width = '0%';
           if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-red-500">Error loading data</span>';
           if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-red-500">Error loading data</span>';
-          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
-          const newChange = document.getElementById('dashboard-new-bookings-change');
-          const earningsChange = document.getElementById('dashboard-total-earnings-change');
+          // Just use the variables, do not redeclare
           if (bookingsChange) bookingsChange.textContent = '';
           if (newChange) newChange.textContent = '';
           if (earningsChange) earningsChange.textContent = '';

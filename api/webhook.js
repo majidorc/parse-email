@@ -431,7 +431,7 @@ class EmailParserFactory {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
 
-    if (!subject || !subject.toLowerCase().includes('new booking')) {
+    if (!subject || (!subject.toLowerCase().startsWith('new booking') && !subject.toLowerCase().startsWith('updated booking'))) {
       return null;
     }
 

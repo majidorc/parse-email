@@ -954,7 +954,7 @@
       accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
       programsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
       dashboardSection.style.display = 'none';
-      bookingsTableSection.style.display = '';
+      bookingsTableSection.style.display = window.innerWidth <= 700 ? 'none' : '';
       summarySection.style.display = '';
       accountingTableContainer.style.display = 'none';
       searchBarSection.style.display = '';

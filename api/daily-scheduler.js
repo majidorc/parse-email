@@ -1,5 +1,5 @@
 const { sql } = require('@vercel/postgres');
-const NotificationManager = require('../notificationManager');
+const NotificationManager = require('../../notificationManager');
 
 // This is the main function for the daily cron job
 module.exports = async (req, res) => {

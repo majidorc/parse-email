@@ -1,28 +1,65 @@
 const { sql } = require('@vercel/postgres');
 
 function getBangkokDateRange(period) {
-  // Returns [startDate, endDate] in YYYY-MM-DD for the given period in Bangkok time
   const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const bangkok = new Date(utc + 7 * 60 * 60 * 1000);
-  let start, end;
-  if (period === 'all') {
-    start = '1970-01-01';
-    end = '2100-01-01';
-  } else if (period === 'lastMonth') {
-    // Last month in Bangkok time
-    const firstOfThisMonth = new Date(bangkok.getFullYear(), bangkok.getMonth(), 1);
-    const firstOfLastMonth = new Date(bangkok.getFullYear(), bangkok.getMonth() - 1, 1);
-    start = firstOfLastMonth.toISOString().slice(0, 10);
-    end = firstOfThisMonth.toISOString().slice(0, 10);
-  } else {
-    // This month (default)
-    const firstOfThisMonth = new Date(bangkok.getFullYear(), bangkok.getMonth(), 1);
-    const firstOfNextMonth = new Date(bangkok.getFullYear(), bangkok.getMonth() + 1, 1);
-    start = firstOfThisMonth.toISOString().slice(0, 10);
-    end = firstOfNextMonth.toISOString().slice(0, 10);
+  // Helper to get start of week (Monday) in Bangkok time
+  function getStartOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getUTCDay();
+    const diff = (day === 0 ? -6 : 1) - day; // Monday as start
+    d.setUTCDate(d.getUTCDate() + diff);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
   }
-  return [start, end];
+  // Helper to get start of year in Bangkok time
+  function getStartOfYear(date) {
+    return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  }
+  // Helper to get start of next year in Bangkok time
+  function getStartOfNextYear(date) {
+    return new Date(Date.UTC(date.getUTCFullYear() + 1, 0, 1));
+  }
+  let start, end;
+  switch (period) {
+    case 'thisWeek': {
+      start = getStartOfWeek(now);
+      end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 7);
+      break;
+    }
+    case 'lastWeek': {
+      end = getStartOfWeek(now);
+      start = new Date(end);
+      start.setUTCDate(end.getUTCDate() - 7);
+      break;
+    }
+    case 'thisMonth': {
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      break;
+    }
+    case 'lastMonth': {
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+      break;
+    }
+    case 'thisYear': {
+      start = getStartOfYear(now);
+      end = getStartOfNextYear(now);
+      break;
+    }
+    case 'lastYear': {
+      end = getStartOfYear(now);
+      start = getStartOfYear(new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)));
+      break;
+    }
+    case 'all':
+    default:
+      start = new Date(Date.UTC(2000, 0, 1));
+      end = new Date(Date.UTC(2100, 0, 1));
+      break;
+  }
+  return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
 }
 
 module.exports = async (req, res) => {

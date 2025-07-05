@@ -90,6 +90,13 @@ module.exports = async (req, res) => {
       percentTotal = lastTotal === 0 ? null : ((totalBookings - lastTotal) / lastTotal) * 100;
     }
 
+    // Total adults and children (for Passengers card)
+    const { rows: paxRows } = await sql.query(
+      `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+    );
+    const totalAdults = parseInt(paxRows[0].adults, 10);
+    const totalChildren = parseInt(paxRows[0].children, 10);
+
     res.status(200).json({
       totalBookings,
       newBookings,
@@ -103,7 +110,9 @@ module.exports = async (req, res) => {
       percentTotal,
       period,
       start,
-      end
+      end,
+      totalAdults,
+      totalChildren
     });
   } catch (err) {
     console.error('Dashboard API error:', err);

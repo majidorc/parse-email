@@ -868,17 +868,33 @@
               const input = cell.querySelector('input');
               input.focus();
               input.select();
-              input.onblur = function(ev) {
-                if (input._saving) return;
-                input._saving = true;
-                savePaidInput();
-              };
-              input.onkeydown = function(ev) {
-                if (ev.key === 'Enter') {
-                  if (input._saving) return;
-                  input._saving = true;
-                  savePaidInput();
+              let hasSaved = false;
+              function savePaidInput() {
+                if (hasSaved) return;
+                hasSaved = true;
+                const newValue = input.value.trim();
+                if (newValue === '' || isNaN(newValue)) {
+                  cell.innerHTML = `<span class='text-gray-400'>Click to add</span>`;
+                  return;
                 }
+                cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+                fetch(`/api/accounting?booking_number=${bookingNumber}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
+                }).then(r => r.json()).then(data => {
+                  if (data.success) {
+                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                  } else {
+                    cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                  }
+                }).catch(() => {
+                  cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                });
+              }
+              input.onblur = savePaidInput;
+              input.onkeydown = function(ev) {
+                if (ev.key === 'Enter') savePaidInput();
               };
             };
             cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
@@ -1631,28 +1647,6 @@
       } finally {
         btn.disabled = false;
       }
-    }
-
-    function savePaidInput() {
-      const newValue = input.value.trim();
-      if (newValue === '' || isNaN(newValue)) {
-        cell.innerHTML = `<span class='text-gray-400'>Click to add</span>`;
-        return;
-      }
-      cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
-      fetch(`/api/accounting?booking_number=${bookingNumber}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
-      }).then(r => r.json()).then(data => {
-        if (data.success) {
-          fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
-        } else {
-          cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-        }
-      }).catch(() => {
-        cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-      });
     }
   </script>
 </body>

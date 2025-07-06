@@ -785,7 +785,7 @@
       }, 0);
     }
 
-    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false) {
+    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false, cacheBuster = null) {
       const tbody = document.getElementById('accounting-body');
       try {
         const params = new URLSearchParams({
@@ -795,6 +795,7 @@
           dir
         });
         if (search) params.append('search', search);
+        if (cacheBuster) params.append('_ts', cacheBuster);
         const res = await fetch(`/api/accounting?${params.toString()}`);
         const data = await res.json();
         if (!data.bookings || !data.bookings.length) {
@@ -884,7 +885,8 @@
                   body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
                 }).then(r => r.json()).then(data => {
                   if (data.success) {
-                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                    // Add cache-busting param to ensure fresh data
+                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
                   } else {
                     cell.innerHTML = `<span class='text-red-500'>Error</span>`;
                   }
@@ -909,7 +911,7 @@
                 method: 'DELETE'
               }).then(r => r.json()).then(data => {
                 if (data.success) {
-                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
                 } else {
                   alert('Failed to cancel: ' + (data.error || 'Unknown error'));
                   btn.disabled = false;
@@ -945,7 +947,7 @@
     window.gotoAccountingPage = function(page) {
       const totalPages = Math.ceil(accountingTotalRows / accountingRowsPerPage);
       if (page < 1 || page > totalPages) return;
-      fetchAccounting(page, accountingSort, accountingDir, accountingSearch);
+      fetchAccounting(page, accountingSort, accountingDir, accountingSearch, false, Date.now());
     }
     // Toggle logic
     const dashboardBtn = document.getElementById('toggle-dashboard');

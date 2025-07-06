@@ -14,6 +14,7 @@ module.exports = async (req, res) => {
       }
       try {
         await sql.query('UPDATE bookings SET paid = $1 WHERE booking_number = $2', [paid, bookingNumber]);
+        res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json({ success: true });
       } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
@@ -21,6 +22,7 @@ module.exports = async (req, res) => {
     } else if (req.method === 'DELETE') {
       try {
         await sql.query('DELETE FROM bookings WHERE booking_number = $1', [bookingNumber]);
+        res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json({ success: true });
       } catch (err) {
         return res.status(500).json({ success: false, error: err.message });

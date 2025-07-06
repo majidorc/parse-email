@@ -81,9 +81,18 @@ module.exports = async (req, res) => {
         res.status(500).json({ error: 'Failed to update booking', details: err.message, stack: err.stack });
       }
     }
-    // If not GET or PATCH, fall through to main logic (405)
-    if (req.method !== 'PATCH' && req.method !== 'GET') {
-      res.setHeader('Allow', ['PATCH', 'GET']);
+    if (req.method === 'DELETE') {
+      try {
+        await sql`DELETE FROM bookings WHERE booking_number = ${booking_number}`;
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        console.error('Failed to delete booking:', err);
+        return res.status(500).json({ error: 'Failed to delete booking', details: err.message });
+      }
+    }
+    // If not GET, PATCH, or DELETE, fall through to main logic (405)
+    if (req.method !== 'PATCH' && req.method !== 'GET' && req.method !== 'DELETE') {
+      res.setHeader('Allow', ['PATCH', 'GET', 'DELETE']);
       return res.status(405).json({ error: 'Method not allowed' });
     }
     return;

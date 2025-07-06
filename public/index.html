@@ -158,7 +158,7 @@
             <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
-            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Copy</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
         </tr>
       </thead>
         <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
@@ -194,7 +194,7 @@
     </div>
     <!-- Dashboard Section (hidden by default) -->
     <div id="dashboard-section" style="display:none;">
-      <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4">
+      <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
         <div class="bg-indigo-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
           <div class="text-sm text-indigo-700 font-semibold mb-1">Total Bookings</div>
           <div id="dashboard-total-bookings" class="text-2xl font-bold text-indigo-900">-</div>
@@ -229,7 +229,7 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-wrap gap-8 justify-center mb-6">
+      <div class="flex flex-wrap gap-8 justify-center mb-6 mx-auto max-w-5xl">
         <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
           <div class="flex justify-between items-center mb-2">
             <div class="text-base font-semibold text-indigo-800">Revenue by Day</div>
@@ -420,7 +420,10 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">
+              <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button>
+              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
+            </td>
         </tr>
       `).join('');
         // Render cards for mobile
@@ -1622,6 +1625,22 @@
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('service-worker.js');
       });
+    }
+
+    // Add button styles
+    window.handleDelete = async function(bookingNumber, btn) {
+      if (!confirm('Are you sure you want to delete this booking?')) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
+        fetchBookings(currentPage, currentSort, currentDir, searchTerm);
+      } catch (err) {
+        alert('Failed to delete: ' + (err.message || 'Unknown error'));
+      } finally {
+        btn.disabled = false;
+      }
     }
   </script>
 </body>

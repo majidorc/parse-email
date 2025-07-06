@@ -634,6 +634,22 @@ async function handler(req, res) {
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
             
+            // Determine channel based on sender or booking number
+            let channel = 'Website';
+            if (parsedEmail.from && parsedEmail.from.value && parsedEmail.from.value[0]) {
+              const sender = parsedEmail.from.value[0].address || '';
+              if (sender.includes('bokun.io')) channel = 'Bokun';
+              else if (sender.includes('tours.co.th')) channel = 'tours.co.th';
+              else if (sender.includes('getyourguide.com')) channel = 'GYG';
+            }
+            if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('GYG')) {
+              channel = 'GYG';
+            } else if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('6')) {
+              channel = 'Website';
+            } else if (!['Bokun', 'tours.co.th', 'GYG', 'Website'].includes(channel)) {
+              channel = 'OTA';
+            }
+
             await sql`
                 INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel)
                 VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel})

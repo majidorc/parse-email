@@ -1185,9 +1185,11 @@
           } else { console.error('revenueChart canvas or context missing'); }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {
-            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = data.topDestinations.map((row, i) =>
-              `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${Number(row.count)} / ${Number(row.total_pax)} pax</span></div>`
-            ).join('');
+            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML =
+              `<div class='flex justify-between font-semibold text-gray-500 mb-1'><span></span><span>B/P</span></div>` +
+              data.topDestinations.map((row, i) =>
+                `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${Number(row.count)} / ${Number(row.total_pax)}</span></div>`
+              ).join('');
           } else {
             console.warn('topDestinations missing or empty:', data.topDestinations);
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';

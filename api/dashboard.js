@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
     console.log('[DEBUG] Revenue by day:', revenueRows.length);
     // Top destinations (by program)
     const { rows: destRows } = await sql.query(
-      `SELECT program, COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC LIMIT 5`, [start, end]
+      `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC LIMIT 5`, [start, end]
     );
     console.log('[DEBUG] Top destinations:', destRows.length);
 

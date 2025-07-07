@@ -19,6 +19,7 @@
     @media (max-width: 700px) {
       .bookings-table-container { display: none !important; }
     }
+    .summary-card { flex: 1 1 0; min-width: 220px; max-width: 340px; }
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
@@ -480,7 +481,7 @@
       }
       function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
         return `
-        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
+        <div class="summary-card p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
           <p class="${color} font-semibold mb-2 text-lg">${day}</p>
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
             <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
@@ -499,7 +500,7 @@
       }
       if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
+        <div class="flex flex-row gap-4 justify-center items-stretch w-full mb-4">
           ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'today-card')}
           ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'tomorrow-card')}
           ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}

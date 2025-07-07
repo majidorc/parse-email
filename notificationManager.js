@@ -90,9 +90,11 @@ class NotificationManager {
 
     async sendTelegramWithButtons(booking, message) {
         const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        // Wrap message in triple backticks for monospace font
+        const monoMessage = '```' + message + '```';
         await axios.post(url, {
             chat_id: process.env.TELEGRAM_CHAT_ID,
-            text: message,
+            text: monoMessage,
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [

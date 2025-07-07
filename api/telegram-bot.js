@@ -16,6 +16,12 @@ async function sendTelegram(chat_id, text, reply_to_message_id = null) {
 
 // Helper to search bookings
 async function searchBookings(query) {
+  // Special: search for due bookings (tour_date today or earlier)
+  if (query.toLowerCase() === 'due') {
+    const sqlQuery = `SELECT * FROM bookings WHERE tour_date::date <= (now() AT TIME ZONE 'Asia/Bangkok')::date ORDER BY tour_date ASC LIMIT 5`;
+    const { rows } = await sql.query(sqlQuery);
+    return rows;
+  }
   // Try booking number (exact)
   let sqlQuery = 'SELECT * FROM bookings WHERE booking_number = $1';
   let params = [query];

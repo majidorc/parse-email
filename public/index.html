@@ -500,6 +500,7 @@
       if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
+          ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'today-card')}
           ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'tomorrow-card')}
           ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}
         </div>
@@ -508,6 +509,19 @@
         </div>
       `;
       renderPagination();
+      // Attach click event to Today card (Bangkok time)
+      const todayCard = document.getElementById('today-card');
+      if (todayCard) {
+        todayCard.onclick = function() {
+          if (!currentBangkokDate) updateBangkokDateTime();
+          const today = new Date(currentBangkokDate);
+          const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          document.getElementById('search-bar').value = todayStr;
+          document.getElementById('clear-search-btn').style.display = '';
+          searchTerm = todayStr;
+          fetchBookings(1, currentSort, currentDir, searchTerm, true);
+        };
+      }
       // Attach click event to Tomorrow card (Bangkok time)
       const tomorrowCard = document.getElementById('tomorrow-card');
       if (tomorrowCard) {

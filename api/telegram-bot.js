@@ -1,6 +1,7 @@
 const { sql } = require('@vercel/postgres');
 const NotificationManager = require('../notificationManager');
 const axios = require('axios');
+const moment = require('moment');
 
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
@@ -16,28 +17,29 @@ async function sendTelegram(chat_id, text, reply_to_message_id = null) {
 
 // Helper to search bookings
 async function searchBookings(query) {
-  // Special: search for due bookings (tour_date today or earlier)
-  if (query.toLowerCase() === 'due') {
-    const sqlQuery = `SELECT * FROM bookings WHERE tour_date::date <= (now() AT TIME ZONE 'Asia/Bangkok')::date ORDER BY tour_date ASC LIMIT 5`;
-    const { rows } = await sql.query(sqlQuery);
-    return rows;
-  }
   // Try booking number (exact)
   let sqlQuery = 'SELECT * FROM bookings WHERE booking_number = $1';
   let params = [query];
   let { rows } = await sql.query(sqlQuery, params);
   if (rows.length > 0) return rows;
-
   // Try customer name (partial, case-insensitive)
   sqlQuery = 'SELECT * FROM bookings WHERE customer_name ILIKE $1 ORDER BY tour_date DESC LIMIT 3';
   params = [`%${query}%`];
   rows = (await sql.query(sqlQuery, params)).rows;
   if (rows.length > 0) return rows;
-
   // Try date (YYYY-MM-DD)
   if (/^\d{4}-\d{2}-\d{2}$/.test(query)) {
     sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
     params = [query];
+    rows = (await sql.query(sqlQuery, params)).rows;
+    if (rows.length > 0) return rows;
+  }
+  // Try date in 'D MMM YY' or 'DD MMM YY' format (e.g., '17 May 25')
+  const parsed = moment(query, ['D MMM YY', 'DD MMM YY', 'D MMMM YY', 'DD MMMM YY'], true);
+  if (parsed.isValid()) {
+    const dateStr = parsed.format('YYYY-MM-DD');
+    sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
+    params = [dateStr];
     rows = (await sql.query(sqlQuery, params)).rows;
     if (rows.length > 0) return rows;
   }

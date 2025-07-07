@@ -56,7 +56,7 @@ class NotificationManager {
         }
         if (config.notifications.telegram.enabled) {
             try {
-                await this.sendTelegram(message);
+                await this.sendTelegramWithButtons(booking, message);
                 results.push('telegram');
             } catch (e) { console.error('Telegram notification failed:', e); }
         }
@@ -85,6 +85,24 @@ class NotificationManager {
             chat_id: process.env.TELEGRAM_CHAT_ID,
             text: message,
             parse_mode: 'Markdown'
+        });
+    }
+
+    async sendTelegramWithButtons(booking, message) {
+        const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        await axios.post(url, {
+            chat_id: process.env.TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'OP', callback_data: `op:${booking.booking_number}` },
+                        { text: 'RI', callback_data: `ri:${booking.booking_number}` },
+                        { text: 'Customer', callback_data: `customer:${booking.booking_number}` }
+                    ]
+                ]
+            }
         });
     }
 

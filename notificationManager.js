@@ -144,4 +144,17 @@ class NotificationManager {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: opText, callback_data: `
+                        { text: opText, callback_data: `toggle:op:${booking.booking_number}` },
+                        { text: riText, callback_data: `toggle:ri:${booking.booking_number}` },
+                        { text: customerText, callback_data: `toggle:customer:${booking.booking_number}` }
+                    ],
+                    [
+                        { text: parkFeeText, callback_data: `toggle:parkfee:${booking.booking_number}` }
+                    ]
+                ]
+            }
+        });
+    }
+}
+
+module.exports = NotificationManager;

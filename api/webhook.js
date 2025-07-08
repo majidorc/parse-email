@@ -646,7 +646,7 @@ async function handler(req, res) {
             return handleTelegramCallback(jsonData.callback_query, res);
         }
 
-        // Handle Telegram /search command
+        // Handle Telegram /search command and general search
         if (jsonData && jsonData.message && jsonData.message.chat && jsonData.message.text) {
             const chat_id = jsonData.message.chat.id;
             const reply_to_message_id = jsonData.message.message_id;
@@ -679,7 +679,34 @@ async function handler(req, res) {
                     await nm.sendTelegramWithButtons(booking, chat_id);
                 }
                 return res.json({ ok: true });
+            } else if (!text.startsWith('/')) {
+                // If not a command, treat as search
+                if (!query) {
+                    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                        chat_id,
+                        text: 'Please send a booking number, customer name, or date to search.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const results = await searchBookings(query);
+                if (results.length === 0) {
+                    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                        chat_id,
+                        text: 'No bookings found for your query.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const nm = new NotificationManager();
+                for (const booking of results) {
+                    await nm.sendTelegramWithButtons(booking, chat_id);
+                }
+                return res.json({ ok: true });
             }
+            // Ignore other commands (like /start, /help, etc.)
         }
         
         const parsedEmail = await simpleParser(rawBody);

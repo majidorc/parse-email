@@ -480,10 +480,8 @@
       }
       // Show cards on mobile only if Bookings tab is active and section is visible
       const bookingsBtn = document.getElementById('toggle-bookings');
-      if (window.innerWidth <= 700 && bookingsBtn.classList.contains('bg-indigo-600')) {
+      if (window.innerWidth <= 700 && bookingsBtn.getAttribute('data-active') === 'true') {
         cardsContainer.style.display = 'block';
-      } else if (window.innerWidth > 700 && bookingsBtn.classList.contains('bg-indigo-600')) {
-        cardsContainer.style.display = 'none';
       } else {
         cardsContainer.style.display = 'none';
       }
@@ -506,7 +504,7 @@
         </div>`;
       }
       // Use summary data from unfiltered fetch
-      let summary = bookingsSummaryData;
+      let summary = bookingsSummaryDataUnfiltered;
       if (bookingsSummaryLoading) {
         summaryDiv.innerHTML = `<div class='flex justify-center items-center py-8'><span class='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700'></span> <span class='ml-3 text-gray-500 text-lg'>Loading summary...</span></div>`;
         return;
@@ -1006,6 +1004,10 @@
     });
 
     dashboardBtn.onclick = () => {
+      dashboardBtn.setAttribute('data-active', 'true');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.removeAttribute('data-active');
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
       bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
       accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
@@ -1021,6 +1023,10 @@
       fetchDashboardAnalytics();
     };
     bookingsBtn.onclick = () => {
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.setAttribute('data-active', 'true');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.removeAttribute('data-active');
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
       bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200';
       accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
@@ -1037,6 +1043,10 @@
       fetchBookings();
     };
     accountingBtn.onclick = () => {
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.setAttribute('data-active', 'true');
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
       bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
       accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200';
@@ -1052,6 +1062,10 @@
       fetchAccounting();
     };
     programsBtn.onclick = () => {
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.setAttribute('data-active', 'true');
+      accountingBtn.removeAttribute('data-active');
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
       bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
       accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';

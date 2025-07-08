@@ -480,12 +480,10 @@
       }
       // Show cards on mobile only if Bookings tab is active and section is visible
       const bookingsBtn = document.getElementById('toggle-bookings');
-      const bookingsTableSection = document.querySelector('.bookings-table-container');
-      if (
-        window.innerWidth <= 700 &&
-        bookingsBtn.classList.contains('bg-blue-600')
-      ) {
+      if (window.innerWidth <= 700 && bookingsBtn.classList.contains('bg-indigo-600')) {
         cardsContainer.style.display = 'block';
+      } else if (window.innerWidth > 700 && bookingsBtn.classList.contains('bg-indigo-600')) {
+        cardsContainer.style.display = 'none';
       } else {
         cardsContainer.style.display = 'none';
       }

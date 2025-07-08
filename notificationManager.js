@@ -122,13 +122,13 @@ class NotificationManager {
     }
 
     // New: Unified sendTelegramWithButtons for all Telegram notifications
-    async sendTelegramWithButtons(booking) {
+    async sendTelegramWithButtons(booking, chat_id = null) {
         const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
         const message = this.constructNotificationMessage(booking);
         // Pre-message (tour date)
         const preMessage = this.formatTourDatePreMessage(booking);
         await axios.post(url, {
-            chat_id: process.env.TELEGRAM_CHAT_ID,
+            chat_id: chat_id || process.env.TELEGRAM_CHAT_ID,
             text: preMessage
         });
         // Inline keyboard: first row OP | RI | Customer, second row National Park Fee
@@ -138,69 +138,10 @@ class NotificationManager {
         const parkFeeText = `National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
-            chat_id: process.env.TELEGRAM_CHAT_ID,
+            chat_id: chat_id || process.env.TELEGRAM_CHAT_ID,
             text: monoMessage,
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: opText, callback_data: `toggle:op:${booking.booking_number}` },
-                        { text: riText, callback_data: `toggle:ri:${booking.booking_number}` },
-                        { text: customerText, callback_data: `toggle:customer:${booking.booking_number}` }
-                    ],
-                    [
-                        { text: parkFeeText, callback_data: `toggle:parkfee:${booking.booking_number}` }
-                    ]
-                ]
-            }
-        });
-    }
-
-    async sendLine(message) {
-        const url = 'https://api.line.me/v2/bot/message/push';
-        await axios.post(url, {
-            to: process.env.LINE_USER_ID,
-            messages: [{ type: 'text', text: message }]
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
-            }
-        });
-    }
-
-    async sendLineButton(message, op, customer) {
-        // Example: send a button template to LINE (customize as needed)
-        const url = 'https://api.line.me/v2/bot/message/push';
-        await axios.post(url, {
-            to: process.env.LINE_USER_ID,
-            messages: [{
-                type: 'template',
-                altText: message,
-                template: {
-                    type: 'buttons',
-                    text: message,
-                    actions: [
-                        {
-                            type: 'postback',
-                            label: op ? 'OP ✓' : 'OP X',
-                            data: 'toggle:op:'
-                        },
-                        {
-                            type: 'postback',
-                            label: customer ? 'Customer ✓' : 'Customer X',
-                            data: 'toggle:customer:'
-                        }
-                    ]
-                }
-            }]
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`
-            }
-        });
-    }
-}
-
-module.exports = NotificationManager; 
+                        { text: opText, callback_data: `

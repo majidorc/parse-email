@@ -33,6 +33,8 @@ class NotificationManager {
         const customerName = booking.customer_name;
         const hotel = booking.hotel;
         const phoneNumber = booking.phone_number || '';
+        // National Park Fee logic
+        const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
         return `Please confirm the *pickup time* for this booking:\n\n` +
             `Booking no : ${bookingNumber}\n` +
             `Tour date : ${tourDate}\n` +
@@ -41,7 +43,7 @@ class NotificationManager {
             `Pax : ${paxString} (Total: ${totalPax})\n` +
             `Hotel : ${hotel}\n` +
             `Phone Number : ${phoneNumber}\n` +
-            `Cash on tour : None\n\n` +
+            `Cash on tour : ${cashOnTour}\n\n` +
             `Please mentioned if there is any additional charge for transfer collect from customer`;
     }
 
@@ -77,7 +79,7 @@ class NotificationManager {
         }
         if (config.notifications.telegram.enabled) {
             try {
-                await this.sendTelegram(message, booking); // Pass booking for pre-message
+                await this.sendTelegramWithButtons(booking);
                 results.push('telegram');
             } catch (e) { console.error('Telegram notification failed:', e); }
         }
@@ -119,15 +121,21 @@ class NotificationManager {
         });
     }
 
-    async sendTelegramWithButtons(booking, message) {
+    // New: Unified sendTelegramWithButtons for all Telegram notifications
+    async sendTelegramWithButtons(booking) {
         const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-        // Send the pre-message first
+        const message = this.constructNotificationMessage(booking);
+        // Pre-message (tour date)
         const preMessage = this.formatTourDatePreMessage(booking);
         await axios.post(url, {
             chat_id: process.env.TELEGRAM_CHAT_ID,
             text: preMessage
         });
-        // Wrap message in triple backticks for monospace font
+        // Inline keyboard: first row OP | RI | Customer, second row National Park Fee
+        const opText = `OP${booking.op ? ' ✓' : ' X'}`;
+        const riText = `RI${booking.ri ? ' ✓' : ' X'}`;
+        const customerText = `Customer${booking.customer ? ' ✓' : ' X'}`;
+        const parkFeeText = `National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
             chat_id: process.env.TELEGRAM_CHAT_ID,
@@ -136,9 +144,12 @@ class NotificationManager {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: 'OP', callback_data: `op:${booking.booking_number}` },
-                        { text: 'RI', callback_data: `ri:${booking.booking_number}` },
-                        { text: 'Customer', callback_data: `customer:${booking.booking_number}` }
+                        { text: opText, callback_data: `toggle:op:${booking.booking_number}` },
+                        { text: riText, callback_data: `toggle:ri:${booking.booking_number}` },
+                        { text: customerText, callback_data: `toggle:customer:${booking.booking_number}` }
+                    ],
+                    [
+                        { text: parkFeeText, callback_data: `toggle:parkfee:${booking.booking_number}` }
                     ]
                 ]
             }

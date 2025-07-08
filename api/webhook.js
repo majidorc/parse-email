@@ -20,55 +20,82 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
 
-    if (action !== 'toggle' || !['op', 'ri', 'customer'].includes(buttonType)) {
+    // Accept op, ri, customer, parkfee
+    if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee'].includes(buttonType)) {
         console.error('Invalid callback data:', data);
         return res.status(400).send('Invalid callback data');
     }
 
     try {
-        const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
-        let buttonIndex = buttonType === 'op' ? 0 : buttonType === 'ri' ? 1 : 2;
-        const button = newKeyboard[0][buttonIndex];
-        if (button) {
-            const isChecked = button.text.endsWith('✓');
-            button.text = buttonType.toUpperCase() + (isChecked ? ' X' : ' ✓');
-            // Update the database
-            let column;
-            if (buttonType === 'op') column = 'op';
-            else if (buttonType === 'ri') column = 'ri';
-            else if (buttonType === 'customer') column = 'customer';
-            else return res.status(400).send('Invalid column');
-            if (buttonType === 'customer' && !isChecked) {
-                // Only allow setting customer to true if op is true
-                const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
-                if (!rows.length || !rows[0].op) {
-                    // Send error to Telegram with a short message and log the response
-                    const popupText = 'OP must be ✓ first.';
-                    try {
-                        const popupResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-                            callback_query_id: callbackQuery.id,
-                            text: popupText,
-                            show_alert: true
-                        });
-                        console.log('Sent Telegram popup alert:', popupResp.data);
-                    } catch (popupErr) {
-                        console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
-                    }
-                    return res.status(200).send('OP not send yet');
-                }
-            }
-            const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
-            const result = await sql.query(query, [!isChecked, bookingId]);
-            if (result.rowCount !== undefined) {
-              console.log('Rows affected:', result.rowCount);
-            }
-        } else {
-            console.error(`Button at index ${buttonIndex} not found in keyboard.`);
+        // Fetch the latest booking state
+        const { rows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
+        if (!rows.length) {
+            return res.status(404).send('Booking not found');
         }
-        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
+        const booking = rows[0];
+        let update = {};
+        if (buttonType === 'op') {
+            update.op = !booking.op;
+            // If OP is turned off, also turn off Customer
+            if (!update.op) update.customer = false;
+        } else if (buttonType === 'ri') {
+            update.ri = !booking.ri;
+        } else if (buttonType === 'customer') {
+            // Only allow setting customer to true if op is true
+            if (!booking.op) {
+                // Send error to Telegram with a short message and log the response
+                const popupText = 'OP must be ✓ first.';
+                try {
+                    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                        callback_query_id: callbackQuery.id,
+                        text: popupText,
+                        show_alert: true
+                    });
+                } catch (popupErr) {
+                    console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
+                }
+                return res.status(200).send('OP not send yet');
+            }
+            update.customer = !booking.customer;
+        } else if (buttonType === 'parkfee') {
+            update.national_park_fee = !booking.national_park_fee;
+        }
+        // Build the update query
+        const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
+        const values = [bookingId, ...Object.values(update)];
+        if (setClauses.length > 0) {
+            await sql.query(`UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`, values);
+        }
+        // Fetch the updated booking
+        const { rows: updatedRows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
+        const updatedBooking = updatedRows[0];
+        // Rebuild the message and keyboard
+        const nm = new NotificationManager();
+        const newMessage = nm.constructNotificationMessage(updatedBooking);
+        const opText = `OP${updatedBooking.op ? ' ✓' : ' X'}`;
+        const riText = `RI${updatedBooking.ri ? ' ✓' : ' X'}`;
+        const customerText = `Customer${updatedBooking.customer ? ' ✓' : ' X'}`;
+        const parkFeeText = `National Park Fee ${updatedBooking.national_park_fee ? '✅' : '❌'}`;
+        const monoMessage = '```' + newMessage + '```';
+        const newKeyboard = {
+            inline_keyboard: [
+                [
+                    { text: opText, callback_data: `toggle:op:${bookingId}` },
+                    { text: riText, callback_data: `toggle:ri:${bookingId}` },
+                    { text: customerText, callback_data: `toggle:customer:${bookingId}` }
+                ],
+                [
+                    { text: parkFeeText, callback_data: `toggle:parkfee:${bookingId}` }
+                ]
+            ]
+        };
+        // Edit the message (monospace)
+        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageText`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
-            reply_markup: { inline_keyboard: newKeyboard }
+            text: monoMessage,
+            parse_mode: 'Markdown',
+            reply_markup: newKeyboard
         });
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id

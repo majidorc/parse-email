@@ -50,9 +50,9 @@
     <!-- Table Toggle Section -->
     <div class="mb-4 tab-btn-container grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-4">
       <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Dashboard</button>
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200" type="button">Bookings</button>
-      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200" type="button">Programs</button>
-      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200" type="button">Accounting</button>
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Bookings</button>
+      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Programs</button>
+      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Accounting</button>
     </div>
     <!-- Programs Section (pixel-perfect match) -->
     <div id="programs-section" style="display:none;">
@@ -999,17 +999,17 @@
       searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
       document.getElementById('pagination-controls').style.display = 'none';
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       fetchDashboardAnalytics();
     });
 
     dashboardBtn.onclick = () => {
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = '';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
@@ -1022,9 +1022,9 @@
     };
     bookingsBtn.onclick = () => {
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = 'none';
       bookingsTableSection.style.display = window.innerWidth <= 700 ? 'none' : '';
       summarySection.style.display = '';
@@ -1038,9 +1038,9 @@
     };
     accountingBtn.onclick = () => {
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = 'none';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
@@ -1053,9 +1053,9 @@
     };
     programsBtn.onclick = () => {
       dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200';
       dashboardSection.style.display = 'none';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';

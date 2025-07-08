@@ -45,7 +45,7 @@
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
     <!-- Today's Date and Time (Bangkok) -->
     <div class="flex justify-center mb-2">
-      <span id="bangkok-datetime" class="text-base md:text-lg font-semibold text-indigo-700 bg-indigo-50 rounded px-4 py-1 shadow-sm"></span>
+      <span id="bangkok-datetime" class="text-xs md:text-sm font-medium text-gray-500 px-2"></span>
     </div>
     <!-- Table Toggle Section -->
     <div class="mb-4 tab-btn-container grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-4">
@@ -1273,8 +1273,7 @@
             const channelCounts = filteredChannels.map(row => row.count);
             const channelColors = [
               '#0f172a', // Website
-              '#2563eb', // GYG
-              '#f59e42'  // Viator
+              '#f59e42'  // OTA
             ];
             window.channelsPieChartInstance = new Chart(channelsPieCtx, {
               type: 'pie',
@@ -1304,7 +1303,7 @@
                 }
               }
             });
-            // Show booking counts for Website, GYG, Viator (only if count > 0)
+            // Show booking counts for Website and OTA (only if count > 0)
             let html = '';
             filteredChannels.forEach(c => {
               html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span></div>`;

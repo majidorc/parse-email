@@ -1106,9 +1106,12 @@
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       const bangkok = new Date(utc + 7 * 60 * 60 * 1000);
       currentBangkokDate = new Date(bangkok.getFullYear(), bangkok.getMonth(), bangkok.getDate()); // midnight Bangkok
-      const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-      const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      document.getElementById('bangkok-datetime').textContent = `${dateStr} — ${timeStr} (Bangkok Time)`;
+      // Format: 'Wed, Jul 9, 02:52:21'
+      const weekday = bangkok.toLocaleDateString('en-US', { weekday: 'short' });
+      const month = bangkok.toLocaleDateString('en-US', { month: 'short' });
+      const day = bangkok.getDate();
+      const time = bangkok.toLocaleTimeString('en-US', { hour12: false });
+      document.getElementById('bangkok-datetime').textContent = `${weekday}, ${month} ${day}, ${time}`;
     }
     setInterval(updateBangkokDateTime, 1000);
     updateBangkokDateTime();

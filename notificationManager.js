@@ -45,6 +45,27 @@ class NotificationManager {
             `Please mentioned if there is any additional charge for transfer collect from customer`;
     }
 
+    // Helper to get the label for the tour date (Today/Tomorrow/Day After Tomorrow/Other)
+    getTourDateLabel(tourDateStr) {
+        if (!tourDateStr) return '';
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const date = new Date(tourDateStr);
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const diffDays = Math.round((dateOnly - today) / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Tomorrow';
+        if (diffDays === 2) return 'Day After Tomorrow';
+        return '';
+    }
+
+    // Helper to format the pre-message
+    formatTourDatePreMessage(booking) {
+        const tourDate = booking.tour_date ? new Date(booking.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A';
+        const label = this.getTourDateLabel(booking.tour_date);
+        return `Tour Date: ${tourDate}${label ? ` (${label})` : ''}`;
+    }
+
     async sendAll(booking) {
         const message = this.constructNotificationMessage(booking);
         const results = [];
@@ -56,7 +77,7 @@ class NotificationManager {
         }
         if (config.notifications.telegram.enabled) {
             try {
-                await this.sendTelegram(message);
+                await this.sendTelegram(message, booking); // Pass booking for pre-message
                 results.push('telegram');
             } catch (e) { console.error('Telegram notification failed:', e); }
         }
@@ -79,8 +100,16 @@ class NotificationManager {
         await this.transporter.sendMail(mailOptions);
     }
 
-    async sendTelegram(message) {
+    async sendTelegram(message, booking = null) {
         const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        // If booking is provided, send the pre-message first
+        if (booking) {
+            const preMessage = this.formatTourDatePreMessage(booking);
+            await axios.post(url, {
+                chat_id: process.env.TELEGRAM_CHAT_ID,
+                text: preMessage
+            });
+        }
         // Wrap message in triple backticks for monospace font
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
@@ -92,6 +121,12 @@ class NotificationManager {
 
     async sendTelegramWithButtons(booking, message) {
         const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        // Send the pre-message first
+        const preMessage = this.formatTourDatePreMessage(booking);
+        await axios.post(url, {
+            chat_id: process.env.TELEGRAM_CHAT_ID,
+            text: preMessage
+        });
         // Wrap message in triple backticks for monospace font
         const monoMessage = '```' + message + '```';
         await axios.post(url, {

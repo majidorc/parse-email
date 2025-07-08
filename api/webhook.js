@@ -30,16 +30,20 @@ async function handleTelegramCallback(callbackQuery, res) {
         // Fetch the latest booking state
         const { rows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
         if (!rows.length) {
+            console.error('Booking not found for callback:', bookingId);
             return res.status(404).send('Booking not found');
         }
         const booking = rows[0];
+        console.log('Booking before update:', booking);
         let update = {};
         if (buttonType === 'op') {
             update.op = !booking.op;
             // If OP is turned off, also turn off Customer
             if (!update.op) update.customer = false;
+            console.log(`Toggling OP to ${update.op}, Customer to ${update.customer}`);
         } else if (buttonType === 'ri') {
             update.ri = !booking.ri;
+            console.log(`Toggling RI to ${update.ri}`);
         } else if (buttonType === 'customer') {
             // Only allow setting customer to true if op is true
             if (!booking.op) {
@@ -54,21 +58,26 @@ async function handleTelegramCallback(callbackQuery, res) {
                 } catch (popupErr) {
                     console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
                 }
+                console.warn('Tried to toggle Customer but OP is not enabled.');
                 return res.status(200).send('OP not send yet');
             }
             update.customer = !booking.customer;
+            console.log(`Toggling Customer to ${update.customer}`);
         } else if (buttonType === 'parkfee') {
             update.national_park_fee = !booking.national_park_fee;
+            console.log(`Toggling National Park Fee to ${update.national_park_fee}`);
         }
         // Build the update query
         const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
         const values = [bookingId, ...Object.values(update)];
         if (setClauses.length > 0) {
+            console.log('Updating booking with:', update);
             await sql.query(`UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`, values);
         }
         // Fetch the updated booking
         const { rows: updatedRows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
         const updatedBooking = updatedRows[0];
+        console.log('Booking after update:', updatedBooking);
         // Rebuild the message and keyboard
         const nm = new NotificationManager();
         const newMessage = nm.constructNotificationMessage(updatedBooking);
@@ -90,13 +99,18 @@ async function handleTelegramCallback(callbackQuery, res) {
             ]
         };
         // Edit the message (monospace)
-        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageText`, {
-            chat_id: message.chat.id,
-            message_id: message.message_id,
-            text: monoMessage,
-            parse_mode: 'Markdown',
-            reply_markup: newKeyboard
-        });
+        try {
+            const editResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageText`, {
+                chat_id: message.chat.id,
+                message_id: message.message_id,
+                text: monoMessage,
+                parse_mode: 'Markdown',
+                reply_markup: newKeyboard
+            });
+            console.log('editMessageText response:', editResp.data);
+        } catch (editErr) {
+            console.error('Error editing Telegram message:', editErr.response ? editErr.response.data : editErr.message);
+        }
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id
         });

@@ -135,7 +135,7 @@ class NotificationManager {
         const opText = `OP${booking.op ? ' ✓' : ' X'}`;
         const riText = `RI${booking.ri ? ' ✓' : ' X'}`;
         const customerText = `Customer${booking.customer ? ' ✓' : ' X'}`;
-        const parkFeeText = `National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
+        const parkFeeText = `Cash on tour : National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
             chat_id: chat_id || process.env.TELEGRAM_CHAT_ID,

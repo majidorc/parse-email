@@ -579,6 +579,53 @@ class FallbackParser extends BaseEmailParser {
     }
 }
 
+async function searchBookings(query) {
+  // Try booking number (exact)
+  let sqlQuery = 'SELECT * FROM bookings WHERE booking_number = $1';
+  let params = [query];
+  let { rows } = await sql.query(sqlQuery, params);
+  if (rows.length > 0) return rows;
+  // Try customer name (partial, case-insensitive)
+  sqlQuery = 'SELECT * FROM bookings WHERE customer_name ILIKE $1 ORDER BY tour_date DESC LIMIT 3';
+  params = [`%${query}%`];
+  rows = (await sql.query(sqlQuery, params)).rows;
+  if (rows.length > 0) return rows;
+  // Try date (YYYY-MM-DD)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(query)) {
+    sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
+    params = [query];
+    rows = (await sql.query(sqlQuery, params)).rows;
+    if (rows.length > 0) return rows;
+  }
+  // Try date in 'D MMM YY' or 'DD MMM YY' format (e.g., '17 May 25')
+  const moment = require('moment');
+  const parsed = moment(query, ['D MMM YY', 'DD MMM YY', 'D MMMM YY', 'DD MMMM YY'], true);
+  if (parsed.isValid()) {
+    const dateStr = parsed.format('YYYY-MM-DD');
+    sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
+    params = [dateStr];
+    rows = (await sql.query(sqlQuery, params)).rows;
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+function extractQuery(text, botUsername) {
+  if (!text) return '';
+  text = text.trim();
+  // Handle /search command
+  if (text.startsWith('/search')) {
+    return text.replace(/^\/search(@\w+)?\s*/i, '');
+  }
+  // Handle mention (e.g., @botname query)
+  if (text.startsWith('@')) {
+    // Remove @botname and any whitespace
+    return text.replace(/^@\w+\s*/i, '');
+  }
+  // Otherwise, return as is
+  return text;
+}
+
 async function handler(req, res) {
     console.log('WEBHOOK REQUEST RECEIVED:', req.method, new Date().toISOString());
     if (req.method !== 'POST') {
@@ -594,8 +641,45 @@ async function handler(req, res) {
             jsonData = null;
         }
 
+        // Handle Telegram callback queries (inline keyboard)
         if (jsonData && jsonData.callback_query) {
             return handleTelegramCallback(jsonData.callback_query, res);
+        }
+
+        // Handle Telegram /search command
+        if (jsonData && jsonData.message && jsonData.message.chat && jsonData.message.text) {
+            const chat_id = jsonData.message.chat.id;
+            const reply_to_message_id = jsonData.message.message_id;
+            const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
+            const text = jsonData.message.text.trim();
+            const query = extractQuery(text, botUsername);
+            if (text.startsWith('/search')) {
+                if (!query) {
+                    // Send help message
+                    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                        chat_id,
+                        text: 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const results = await searchBookings(query);
+                if (results.length === 0) {
+                    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                        chat_id,
+                        text: 'No bookings found for your query.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const nm = new NotificationManager();
+                for (const booking of results) {
+                    await nm.sendTelegramWithButtons(booking, chat_id);
+                }
+                return res.json({ ok: true });
+            }
         }
         
         const parsedEmail = await simpleParser(rawBody);

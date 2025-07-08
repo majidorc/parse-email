@@ -86,8 +86,8 @@ module.exports = async (req, res) => {
     }
     const nm = new NotificationManager();
     for (const booking of results) {
-      const text = nm.constructNotificationMessage(booking);
-      await sendTelegram(chat_id, text, reply_to_message_id);
+      // Use the unified inline keyboard with buttons
+      await nm.sendTelegramWithButtons(booking);
     }
     return res.json({ ok: true });
   } catch (err) {

@@ -25,6 +25,8 @@ module.exports = async (req, res) => {
       }
     });
     const bookings = response.data;
+    // Log all booking numbers for debugging
+    console.log('[BOKUN SYNC] Booking numbers:', bookings.map(b => b.bookingNumber || b.booking_number || b.id));
     // For now, just log the bookings
     console.log('[BOKUN SYNC] Fetched bookings:', bookings.length);
     // Upsert each booking into DB

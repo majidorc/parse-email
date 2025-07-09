@@ -18,30 +18,43 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const method = 'GET';
-    const path = '/v1/bookings';
-    const host = 'api.bokun.io';
-    const date = new Date().toISOString();
-    const stringToSign = `${method}\n${path}\n${date}`;
-    const signature = crypto.createHmac('sha256', bokunSecretKey)
-      .update(stringToSign)
-      .digest('hex');
-    const headers = {
-      'Bokun-AccessKey': bokunAccessKey,
-      'Bokun-Date': date,
-      'Bokun-Signature': signature,
-      'Content-Type': 'application/json'
-    };
-    const url = `https://${host}${path}`;
-    const response = await axios.get(url, { headers });
-    const bookings = response.data;
-    // Log all booking numbers for debugging
-    console.log('[BOKUN SYNC] Booking numbers:', bookings.map(b => b.bookingNumber || b.booking_number || b.id));
-    // For now, just log the bookings
-    console.log('[BOKUN SYNC] Fetched bookings:', bookings.length);
+    const fromDate = '2023-01-01';
+    const toDate = new Date().toISOString().slice(0, 10);
+    let allBookings = [];
+    let page = 0;
+    let pageSize = 100;
+    let more = true;
+    while (more) {
+      const query = `?fromDate=${fromDate}&toDate=${toDate}&page=${page}&size=${pageSize}`;
+      const path = `/v1/bookings${query}`;
+      const method = 'GET';
+      const host = 'api.bokun.io';
+      const date = new Date().toISOString();
+      const stringToSign = `${method}\n${path}\n${date}`;
+      const signature = crypto.createHmac('sha256', bokunSecretKey)
+        .update(stringToSign)
+        .digest('hex');
+      const headers = {
+        'Bokun-AccessKey': bokunAccessKey,
+        'Bokun-Date': date,
+        'Bokun-Signature': signature,
+        'Content-Type': 'application/json'
+      };
+      const url = `https://${host}${path}`;
+      const response = await axios.get(url, { headers });
+      const bookings = response.data;
+      allBookings = allBookings.concat(bookings);
+      console.log(`[BOKUN SYNC] Page ${page} fetched ${bookings.length} bookings.`);
+      if (bookings.length < pageSize) {
+        more = false;
+      } else {
+        page++;
+      }
+    }
+    console.log('[BOKUN SYNC] All booking numbers:', allBookings.map(b => b.bookingNumber || b.booking_number || b.id));
     // Upsert each booking into DB
     let upserted = 0;
-    for (const b of bookings) {
+    for (const b of allBookings) {
       // Map Bokun API fields to DB fields (adjust as needed)
       const bookingNumber = b.bookingNumber || b.booking_number || b.id;
       if (!bookingNumber) continue;
@@ -80,7 +93,7 @@ module.exports = async (req, res) => {
       upserted++;
       console.log(`[BOKUN SYNC] Upserted booking: ${bookingNumber}`);
     }
-    return res.status(200).json({ ok: true, count: bookings.length, upserted });
+    return res.status(200).json({ ok: true, count: allBookings.length, upserted });
   } catch (err) {
     console.error('[BOKUN SYNC] Error fetching bookings:', err.message);
     return res.status(500).json({ error: 'Failed to fetch Bokun bookings', details: err.message });

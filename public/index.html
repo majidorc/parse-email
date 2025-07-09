@@ -51,18 +51,6 @@
       <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
       <form id="settings-form" class="space-y-4">
         <div>
-          <label for="bokun-api-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun API Key</label>
-          <input type="text" id="bokun-api-key" name="bokun_api_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun API Key">
-        </div>
-        <div>
-          <label for="woocommerce-api-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce API Key</label>
-          <input type="text" id="woocommerce-api-key" name="woocommerce_api_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce API Key">
-        </div>
-        <div>
-          <label for="woocommerce-api-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce API Secret</label>
-          <input type="text" id="woocommerce-api-secret" name="woocommerce_api_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce API Secret">
-        </div>
-        <div>
           <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
           <input type="text" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
         </div>
@@ -1751,14 +1739,11 @@
     const settingsModal = document.getElementById('settings-modal');
     const settingsModalClose = document.getElementById('settings-modal-close');
     const settingsForm = document.getElementById('settings-form');
-    const bokunApiKeyInput = document.getElementById('bokun-api-key');
-    const wooApiKeyInput = document.getElementById('woocommerce-api-key');
-    const wooApiSecretInput = document.getElementById('woocommerce-api-secret');
-    const useBokunApiInput = document.getElementById('use-bokun-api');
     const bokunAccessKeyInput = document.getElementById('bokun-access-key');
     const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
     const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
     const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
+    const useBokunApiInput = document.getElementById('use-bokun-api');
     let settingsLoading = false;
     let settingsError = '';
     let settingsSuccess = '';
@@ -1811,9 +1796,6 @@
         const res = await fetch('/api/dashboard-settings?type=settings');
         if (!res.ok) throw new Error('Failed to load settings');
         const data = await res.json();
-        bokunApiKeyInput.value = data.bokun_api_key || '';
-        wooApiKeyInput.value = data.woocommerce_api_key || '';
-        wooApiSecretInput.value = data.woocommerce_api_secret || '';
         bokunAccessKeyInput.value = data.bokun_access_key || '';
         bokunSecretKeyInput.value = data.bokun_secret_key || '';
         wooConsumerKeyInput.value = data.woocommerce_consumer_key || '';
@@ -1838,11 +1820,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            bokun_api_key: bokunApiKeyInput.value,
             bokun_access_key: bokunAccessKeyInput.value,
             bokun_secret_key: bokunSecretKeyInput.value,
-            woocommerce_api_key: wooApiKeyInput.value,
-            woocommerce_api_secret: wooApiSecretInput.value,
             woocommerce_consumer_key: wooConsumerKeyInput.value,
             woocommerce_consumer_secret: wooConsumerSecretInput.value,
             use_bokun_api: useBokunApiInput.checked

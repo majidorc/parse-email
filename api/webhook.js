@@ -345,7 +345,6 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        // Match lines like 'Adult (11+) 1399: 1', 'Adults: 1', 'Child: 0', etc.
         for (const line of this.lines) {
             // Adult
             const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
@@ -361,6 +360,11 @@ class ThailandToursParser extends BaseEmailParser {
             const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
             if (infantMatch && infantMatch[1]) {
                 pax.infant = infantMatch[1];
+            }
+            // Person (+4 Years): N (treat as adult)
+            const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
+            if (personPlusMatch && personPlusMatch[1]) {
+                pax.adult = personPlusMatch[1];
             }
         }
         // If no explicit adult/child/infant found, fallback to 'Person: N'

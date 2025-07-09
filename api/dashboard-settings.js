@@ -83,8 +83,14 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       const { bokun_api_key, woocommerce_api_key, woocommerce_api_secret, use_bokun_api } = req.body || {};
       await sql`
-        INSERT INTO settings (bokun_api_key, woocommerce_api_key, woocommerce_api_secret, use_bokun_api, updated_at)
-        VALUES (${bokun_api_key || ''}, ${woocommerce_api_key || ''}, ${woocommerce_api_secret || ''}, ${!!use_bokun_api}, NOW())
+        INSERT INTO settings (id, bokun_api_key, woocommerce_api_key, woocommerce_api_secret, use_bokun_api, updated_at)
+        VALUES (1, ${bokun_api_key || ''}, ${woocommerce_api_key || ''}, ${woocommerce_api_secret || ''}, ${!!use_bokun_api}, NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          bokun_api_key = EXCLUDED.bokun_api_key,
+          woocommerce_api_key = EXCLUDED.woocommerce_api_key,
+          woocommerce_api_secret = EXCLUDED.woocommerce_api_secret,
+          use_bokun_api = EXCLUDED.use_bokun_api,
+          updated_at = NOW();
       `;
       return res.status(200).json({ success: true });
     }

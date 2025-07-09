@@ -1,5 +1,6 @@
 const { sql } = require('@vercel/postgres');
 const axios = require('axios');
+const crypto = require('crypto');
 
 module.exports = async (req, res) => {
   // Only allow POST (for cron/scheduler)
@@ -10,20 +11,29 @@ module.exports = async (req, res) => {
   if (!rows.length || !rows[0].use_bokun_api) {
     return res.status(200).json({ ok: true, message: 'Bokun API not enabled in settings.' });
   }
-  const bokunApiKey = rows[0].bokun_api_key;
-  if (!bokunApiKey) {
-    return res.status(400).json({ error: 'No Bokun API key set in settings.' });
+  const bokunAccessKey = rows[0].bokun_access_key;
+  const bokunSecretKey = rows[0].bokun_secret_key;
+  if (!bokunAccessKey || !bokunSecretKey) {
+    return res.status(400).json({ error: 'Bokun Access Key or Secret Key not set in settings.' });
   }
 
-  // Fetch bookings from Bokun API (example endpoint, update as needed)
   try {
-    // Replace with actual Bokun API endpoint and auth method
-    const response = await axios.get('https://api.bokun.io/v1/bookings', {
-      headers: {
-        'Authorization': `Bearer ${bokunApiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    const method = 'GET';
+    const path = '/v1/bookings';
+    const host = 'api.bokun.io';
+    const date = new Date().toISOString();
+    const stringToSign = `${method}\n${path}\n${date}`;
+    const signature = crypto.createHmac('sha256', bokunSecretKey)
+      .update(stringToSign)
+      .digest('hex');
+    const headers = {
+      'Bokun-AccessKey': bokunAccessKey,
+      'Bokun-Date': date,
+      'Bokun-Signature': signature,
+      'Content-Type': 'application/json'
+    };
+    const url = `https://${host}${path}`;
+    const response = await axios.get(url, { headers });
     const bookings = response.data;
     // Log all booking numbers for debugging
     console.log('[BOKUN SYNC] Booking numbers:', bookings.map(b => b.bookingNumber || b.booking_number || b.id));

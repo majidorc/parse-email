@@ -63,6 +63,22 @@
           <input type="text" id="woocommerce-api-secret" name="woocommerce_api_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce API Secret">
         </div>
         <div>
+          <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
+          <input type="text" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
+        </div>
+        <div>
+          <label for="bokun-secret-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Secret Key</label>
+          <input type="text" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Secret Key">
+        </div>
+        <div>
+          <label for="woocommerce-consumer-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Key</label>
+          <input type="text" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Key">
+        </div>
+        <div>
+          <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
+          <input type="text" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
+        </div>
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
           <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
         </div>
@@ -1739,6 +1755,10 @@
     const wooApiKeyInput = document.getElementById('woocommerce-api-key');
     const wooApiSecretInput = document.getElementById('woocommerce-api-secret');
     const useBokunApiInput = document.getElementById('use-bokun-api');
+    const bokunAccessKeyInput = document.getElementById('bokun-access-key');
+    const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
+    const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
+    const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
     let settingsLoading = false;
     let settingsError = '';
     let settingsSuccess = '';
@@ -1794,6 +1814,10 @@
         bokunApiKeyInput.value = data.bokun_api_key || '';
         wooApiKeyInput.value = data.woocommerce_api_key || '';
         wooApiSecretInput.value = data.woocommerce_api_secret || '';
+        bokunAccessKeyInput.value = data.bokun_access_key || '';
+        bokunSecretKeyInput.value = data.bokun_secret_key || '';
+        wooConsumerKeyInput.value = data.woocommerce_consumer_key || '';
+        wooConsumerSecretInput.value = data.woocommerce_consumer_secret || '';
         useBokunApiInput.checked = !!data.use_bokun_api;
         settingsLoading = false;
         renderSettingsModalState();
@@ -1815,8 +1839,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             bokun_api_key: bokunApiKeyInput.value,
+            bokun_access_key: bokunAccessKeyInput.value,
+            bokun_secret_key: bokunSecretKeyInput.value,
             woocommerce_api_key: wooApiKeyInput.value,
             woocommerce_api_secret: wooApiSecretInput.value,
+            woocommerce_consumer_key: wooConsumerKeyInput.value,
+            woocommerce_consumer_secret: wooConsumerSecretInput.value,
             use_bokun_api: useBokunApiInput.checked
           })
         });

@@ -1734,30 +1734,103 @@
     const settingsGearBtn = document.getElementById('settings-gear-btn');
     const settingsModal = document.getElementById('settings-modal');
     const settingsModalClose = document.getElementById('settings-modal-close');
-    settingsGearBtn.onclick = () => { settingsModal.style.display = 'flex'; };
+    const settingsForm = document.getElementById('settings-form');
+    const bokunApiKeyInput = document.getElementById('bokun-api-key');
+    const wooApiKeyInput = document.getElementById('woocommerce-api-key');
+    const wooApiSecretInput = document.getElementById('woocommerce-api-secret');
+    const useBokunApiInput = document.getElementById('use-bokun-api');
+    let settingsLoading = false;
+    let settingsError = '';
+    let settingsSuccess = '';
+    // Helper to show/hide loading
+    function renderSettingsModalState() {
+      const loadingDiv = document.getElementById('settings-loading');
+      const errorDiv = document.getElementById('settings-error');
+      const successDiv = document.getElementById('settings-success');
+      if (loadingDiv) loadingDiv.style.display = settingsLoading ? '' : 'none';
+      if (errorDiv) {
+        errorDiv.style.display = settingsError ? '' : 'none';
+        errorDiv.textContent = settingsError;
+      }
+      if (successDiv) {
+        successDiv.style.display = settingsSuccess ? '' : 'none';
+        successDiv.textContent = settingsSuccess;
+      }
+    }
+    // Add loading/error/success divs to modal
+    (() => {
+      const form = document.getElementById('settings-form');
+      if (!document.getElementById('settings-loading')) {
+        const loading = document.createElement('div');
+        loading.id = 'settings-loading';
+        loading.innerHTML = '<span class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-700 inline-block"></span> <span class="ml-2 text-gray-500">Loading...</span>';
+        loading.style.display = 'none';
+        form.prepend(loading);
+      }
+      if (!document.getElementById('settings-error')) {
+        const error = document.createElement('div');
+        error.id = 'settings-error';
+        error.className = 'text-red-600 font-semibold mb-2';
+        error.style.display = 'none';
+        form.prepend(error);
+      }
+      if (!document.getElementById('settings-success')) {
+        const success = document.createElement('div');
+        success.id = 'settings-success';
+        success.className = 'text-green-600 font-semibold mb-2';
+        success.style.display = 'none';
+        form.prepend(success);
+      }
+    })();
+    settingsGearBtn.onclick = async () => {
+      settingsModal.style.display = 'flex';
+      settingsLoading = true; settingsError = ''; settingsSuccess = '';
+      renderSettingsModalState();
+      // Load settings from backend
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) throw new Error('Failed to load settings');
+        const data = await res.json();
+        bokunApiKeyInput.value = data.bokun_api_key || '';
+        wooApiKeyInput.value = data.woocommerce_api_key || '';
+        wooApiSecretInput.value = data.woocommerce_api_secret || '';
+        useBokunApiInput.checked = !!data.use_bokun_api;
+        settingsLoading = false;
+        renderSettingsModalState();
+      } catch (err) {
+        settingsLoading = false;
+        settingsError = 'Failed to load settings: ' + (err.message || 'Unknown error');
+        renderSettingsModalState();
+      }
+    };
     settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
     settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
-    // Optionally: Save settings to localStorage (for demo)
-    document.getElementById('settings-form').onsubmit = function(e) {
+    settingsForm.onsubmit = async function(e) {
       e.preventDefault();
-      const bokunApiKey = document.getElementById('bokun-api-key').value;
-      const wooApiKey = document.getElementById('woocommerce-api-key').value;
-      const wooApiSecret = document.getElementById('woocommerce-api-secret').value;
-      const useBokunApi = document.getElementById('use-bokun-api').checked;
-      localStorage.setItem('bokun_api_key', bokunApiKey);
-      localStorage.setItem('woocommerce_api_key', wooApiKey);
-      localStorage.setItem('woocommerce_api_secret', wooApiSecret);
-      localStorage.setItem('use_bokun_api', useBokunApi ? '1' : '0');
-      alert('Settings saved locally! (For demo only)');
-      settingsModal.style.display = 'none';
+      settingsLoading = true; settingsError = ''; settingsSuccess = '';
+      renderSettingsModalState();
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bokun_api_key: bokunApiKeyInput.value,
+            woocommerce_api_key: wooApiKeyInput.value,
+            woocommerce_api_secret: wooApiSecretInput.value,
+            use_bokun_api: useBokunApiInput.checked
+          })
+        });
+        if (!res.ok) throw new Error('Failed to save settings');
+        settingsLoading = false;
+        settingsSuccess = 'Settings saved!';
+        renderSettingsModalState();
+        setTimeout(() => { settingsSuccess = ''; renderSettingsModalState(); settingsModal.style.display = 'none'; }, 1200);
+      } catch (err) {
+        settingsLoading = false;
+        settingsError = 'Failed to save settings: ' + (err.message || 'Unknown error');
+        renderSettingsModalState();
+      }
     };
-    // Load settings from localStorage on open
-    settingsGearBtn.addEventListener('click', () => {
-      document.getElementById('bokun-api-key').value = localStorage.getItem('bokun_api_key') || '';
-      document.getElementById('woocommerce-api-key').value = localStorage.getItem('woocommerce_api_key') || '';
-      document.getElementById('woocommerce-api-secret').value = localStorage.getItem('woocommerce_api_secret') || '';
-      document.getElementById('use-bokun-api').checked = localStorage.getItem('use_bokun_api') === '1';
-    });
   </script>
 </body>
 </html>

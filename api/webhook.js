@@ -45,22 +45,22 @@ async function handleTelegramCallback(callbackQuery, res) {
             update.ri = !booking.ri;
             console.log(`Toggling RI to ${update.ri}`);
         } else if (buttonType === 'customer') {
-            // Only allow setting customer to true if op is true
+                // Only allow setting customer to true if op is true
             if (!booking.op) {
-                // Send error to Telegram with a short message and log the response
-                const popupText = 'OP must be ✓ first.';
-                try {
+                    // Send error to Telegram with a short message and log the response
+                    const popupText = 'OP must be ✓ first.';
+                    try {
                     await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-                        callback_query_id: callbackQuery.id,
-                        text: popupText,
-                        show_alert: true
-                    });
-                } catch (popupErr) {
-                    console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
-                }
+                            callback_query_id: callbackQuery.id,
+                            text: popupText,
+                            show_alert: true
+                        });
+                    } catch (popupErr) {
+                        console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
+                    }
                 console.warn('Tried to toggle Customer but OP is not enabled.');
-                return res.status(200).send('OP not send yet');
-            }
+                    return res.status(200).send('OP not send yet');
+                }
             update.customer = !booking.customer;
             console.log(`Toggling Customer to ${update.customer}`);
         } else if (buttonType === 'parkfee') {
@@ -101,12 +101,12 @@ async function handleTelegramCallback(callbackQuery, res) {
         // Edit the message (monospace)
         try {
             const editResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageText`, {
-                chat_id: message.chat.id,
-                message_id: message.message_id,
+            chat_id: message.chat.id,
+            message_id: message.message_id,
                 text: monoMessage,
                 parse_mode: 'Markdown',
                 reply_markup: newKeyboard
-            });
+        });
             console.log('editMessageText response:', editResp.data);
         } catch (editErr) {
             console.error('Error editing Telegram message:', editErr.response ? editErr.response.data : editErr.message);
@@ -717,9 +717,11 @@ async function handler(req, res) {
             const match = parsedEmail.subject.match(/Ext\. booking ref: ([A-Z0-9]+)/);
             if (match && match[1]) {
                 const bookingNumber = match[1];
+                console.log(`[CANCEL] Removing booking: ${bookingNumber}`);
                 await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
                 return res.status(200).send(`Webhook processed: Booking ${bookingNumber} removed (cancelled).`);
             } else {
+                console.warn('[CANCEL] Cancelled booking email, but booking number not found in subject:', parsedEmail.subject);
                 return res.status(400).send('Webhook processed: Cancelled booking email, but booking number not found in subject.');
             }
         }
@@ -727,13 +729,27 @@ async function handler(req, res) {
         const parser = EmailParserFactory.create(parsedEmail);
 
         if (!parser) {
+            console.warn('[SKIP] No suitable parser found or subject incorrect:', {
+                subject: parsedEmail.subject,
+                from: parsedEmail.from?.value?.[0]?.address,
+            });
             return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
         }
 
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+        console.log('[PARSE] Extracted info:', extractedInfo);
 
         if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+            console.warn('[SKIP] Skipped due to invalid date:', {
+                bookingNumber: extractedInfo?.bookingNumber,
+                tourDate: extractedInfo?.tourDate,
+                isoDate: extractedInfo?.isoDate,
+            });
             return res.status(200).send('Webhook processed: Skipped due to invalid date.');
+        }
+        if (!extractedInfo.bookingNumber) {
+            console.warn('[SKIP] Skipped due to missing booking number:', extractedInfo);
+            return res.status(200).send('Webhook processed: Skipped due to missing booking number.');
         }
 
         try {
@@ -771,17 +787,20 @@ async function handler(req, res) {
                   }
                 }
                 if (changed) {
+                  console.log(`[UPDATE] Updating booking: ${extractedInfo.bookingNumber}`);
                   await sql`
                     UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');
                 } else {
+                  console.log(`[UNCHANGED] Booking unchanged (no update needed): ${extractedInfo.bookingNumber}`);
                   return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
                 }
             }
             
             if (adult === 0) {
+                console.log(`[REMOVE] Removing booking (adult=0): ${extractedInfo.bookingNumber}`);
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
@@ -802,6 +821,7 @@ async function handler(req, res) {
               channel = 'OTA';
             }
 
+            console.log(`[INSERT] Inserting new booking: ${extractedInfo.bookingNumber}`);
             await sql`
                 INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel)
                 VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel})
@@ -824,7 +844,7 @@ async function handler(req, res) {
             return res.status(200).send('Webhook processed: Booking upserted.');
 
         } catch (error) {
-            console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
+            console.error(`[ERROR][DB] Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
             return res.status(500).send({ error: 'Database processing failed.', details: error.message });
         }
 

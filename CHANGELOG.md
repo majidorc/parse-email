@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2025-07-07
+### Added
+- Each tab button (Dashboard, Bookings, Programs, Accounting) now has a unique color theme for better UX and clarity.
+- National Park Fee inline keyboard button in Telegram always shows 'Cash on tour : National Park Fee' with check/cross, and toggling updates the main message line accordingly.
+
+### Changed
+- Summary cards (Today, Tomorrow, Day After Tomorrow) always show unfiltered (all bookings) counts, regardless of search or filter. Only the table/cards below are filtered.
+- Summary cards in bookings tab now match dashboard style and stack vertically on mobile (1 column, no horizontal scroll).
+- Tab button color logic and tab switching now use a data-active attribute for reliable state detection.
+- Mobile booking cards are always visible when Bookings tab is active, regardless of color class logic.
+- Tab buttons use indigo, blue, green, and pink themes for Dashboard, Bookings, Programs, and Accounting, respectively.
+
+### Fixed
+- Bug where summary cards would swap or show wrong numbers after clicking or searching.
+- Bug where booking results/cards would disappear on mobile after tab switch or color class change.
+- Telegram bot: /search and natural queries now always reply in the correct chat (private or group), and always show the unified inline keyboard (OP, RI, Customer, National Park Fee).
+- Inline keyboard and callback logic for toggling OP, RI, Customer, and National Park Fee is now robust and always in sync with the database and message.
+
 ## [Unreleased]
 - Add accounting table view with toggle (shows only relevant columns and paid value)
 - Add summary cards for Last Month and This Month (total bookings and total paid)

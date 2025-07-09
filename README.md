@@ -29,6 +29,14 @@ A full-stack automated email processing and bookings management system, designed
   - All dashboard metrics and percent changes require their respective DOM elements
   - Percent change for Total Bookings metric
 - **Server Time Debug Endpoint:** `/api/server-time` returns current server time, UTC, and formatted Bangkok time for debugging timezone issues on Vercel.
+- **[2025-07-07] Latest Updates:**
+  - Each tab button (Dashboard, Bookings, Programs, Accounting) now has a unique color theme for better UX and clarity (indigo, blue, green, pink).
+  - Summary cards (Today, Tomorrow, Day After Tomorrow) always show unfiltered (all bookings) counts, regardless of search or filter. Only the table/cards below are filtered.
+  - Summary cards in bookings tab now match dashboard style and stack vertically on mobile (1 column, no horizontal scroll).
+  - Mobile booking cards are always visible when Bookings tab is active, regardless of color class logic.
+  - Telegram bot: /search and natural queries always reply in the correct chat (private or group), and always show the unified inline keyboard (OP, RI, Customer, National Park Fee).
+  - National Park Fee inline keyboard button in Telegram always shows 'Cash on tour : National Park Fee' with check/cross, and toggling updates the main message line accordingly.
+  - Inline keyboard and callback logic for toggling OP, RI, Customer, and National Park Fee is now robust and always in sync with the database and message.
 
 ---
 
@@ -118,6 +126,12 @@ A full-stack automated email processing and bookings management system, designed
   - **Mobile UI:** Bookings cards only show on Bookings tab (never on Dashboard, Programs, or Accounting)
   - All debug `console.log` and `console.debug` statements removed for clean production output
   - Robust upsert logic for bookings and programs, improved UI/UX, and bugfixes
+  - Tab buttons use unique color themes: indigo (Dashboard), blue (Bookings), green (Programs), pink (Accounting)
+  - Summary cards always show unfiltered counts, regardless of search or filter
+  - Summary cards stack vertically on mobile for better visibility
+  - Mobile booking cards are always visible when Bookings tab is active
+  - Telegram bot always replies in the correct chat and shows a unified inline keyboard (OP, RI, Customer, National Park Fee)
+  - National Park Fee toggle in Telegram updates both the message and the database, always in sync
 
 ---
 

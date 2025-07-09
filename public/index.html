@@ -42,6 +42,36 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 </head>
 <body class="antialiased">
+  <!-- Settings Gear Icon -->
+  <button id="settings-gear-btn" title="Settings" style="position: absolute; top: 18px; right: 24px; z-index: 50; background: none; border: none; font-size: 2rem; cursor: pointer; color: #6366f1; transition: color 0.2s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6366f1'">⚙️</button>
+  <!-- Settings Modal -->
+  <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 1rem; max-width: 95vw; width: 400px; margin: auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); position: relative;">
+      <button id="settings-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
+      <form id="settings-form" class="space-y-4">
+        <div>
+          <label for="bokun-api-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun API Key</label>
+          <input type="text" id="bokun-api-key" name="bokun_api_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun API Key">
+        </div>
+        <div>
+          <label for="woocommerce-api-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce API Key</label>
+          <input type="text" id="woocommerce-api-key" name="woocommerce_api_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce API Key">
+        </div>
+        <div>
+          <label for="woocommerce-api-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce API Secret</label>
+          <input type="text" id="woocommerce-api-secret" name="woocommerce_api_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce API Secret">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
+          <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
+        </div>
+        <div class="flex justify-end mt-6">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
     <!-- Today's Date and Time (Bangkok) -->
     <div class="flex justify-center mb-2">
@@ -1699,6 +1729,35 @@
         btn.disabled = false;
       }
     }
+
+    // Settings Gear Icon and Modal Logic
+    const settingsGearBtn = document.getElementById('settings-gear-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsModalClose = document.getElementById('settings-modal-close');
+    settingsGearBtn.onclick = () => { settingsModal.style.display = 'flex'; };
+    settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
+    settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
+    // Optionally: Save settings to localStorage (for demo)
+    document.getElementById('settings-form').onsubmit = function(e) {
+      e.preventDefault();
+      const bokunApiKey = document.getElementById('bokun-api-key').value;
+      const wooApiKey = document.getElementById('woocommerce-api-key').value;
+      const wooApiSecret = document.getElementById('woocommerce-api-secret').value;
+      const useBokunApi = document.getElementById('use-bokun-api').checked;
+      localStorage.setItem('bokun_api_key', bokunApiKey);
+      localStorage.setItem('woocommerce_api_key', wooApiKey);
+      localStorage.setItem('woocommerce_api_secret', wooApiSecret);
+      localStorage.setItem('use_bokun_api', useBokunApi ? '1' : '0');
+      alert('Settings saved locally! (For demo only)');
+      settingsModal.style.display = 'none';
+    };
+    // Load settings from localStorage on open
+    settingsGearBtn.addEventListener('click', () => {
+      document.getElementById('bokun-api-key').value = localStorage.getItem('bokun_api_key') || '';
+      document.getElementById('woocommerce-api-key').value = localStorage.getItem('woocommerce_api_key') || '';
+      document.getElementById('woocommerce-api-secret').value = localStorage.getItem('woocommerce_api_secret') || '';
+      document.getElementById('use-bokun-api').checked = localStorage.getItem('use_bokun_api') === '1';
+    });
   </script>
 </body>
 </html>

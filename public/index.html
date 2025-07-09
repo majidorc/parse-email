@@ -1372,7 +1372,7 @@
     // --- Programs Tab Logic (merged) ---
     let allRates = [];
     function fetchRatesAndPrograms() {
-      fetch('/api/products-rates?type=rate')
+      fetch('/api/products-rates?type=tour')
         .then(res => res.json())
         .then(data => {
           allRates = data.rates || [];
@@ -1438,7 +1438,7 @@
       const tbody = document.getElementById('programs-table-body');
       if (!tbody) return;
       tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>';
-      fetch('/api/products-rates?type=product')
+      fetch('/api/products-rates?type=tour')
         .then(res => res.json())
         .then(data => {
           allPrograms = data.tours || [];
@@ -1487,7 +1487,7 @@
         if (!btn) return;
         const sku = btn.getAttribute('data-sku');
         // Find the program data from the loaded tours (reuse last fetched data)
-        fetch('/api/products-rates?type=product')
+        fetch('/api/products-rates?type=tour')
           .then(res => res.json())
           .then(data => {
             const program = data.tours.find(p => p.sku === sku);
@@ -1665,7 +1665,7 @@
           return;
         }
         // Send data to backend API
-        fetch('/api/products-rates?type=product', {
+        fetch('/api/products-rates?type=tour', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -1691,7 +1691,7 @@
       const id = document.getElementById('dbRowId').value;
       if (!id) return;
       if (!confirm('Are you sure you want to delete this program and all its rates? This cannot be undone.')) return;
-      fetch('/api/products-rates?type=product', {
+      fetch('/api/products-rates?type=tour', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })

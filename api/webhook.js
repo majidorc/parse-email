@@ -639,6 +639,12 @@ async function getTelegramBotToken() {
   return rows[0]?.telegram_bot_token || '';
 }
 
+// Helper to get Telegram Chat ID from settings
+async function getTelegramChatId() {
+  const { rows } = await sql`SELECT telegram_chat_id FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+  return rows[0]?.telegram_chat_id || '';
+}
+
 async function handler(req, res) {
     console.log('WEBHOOK REQUEST RECEIVED:', req.method, new Date().toISOString());
     if (req.method !== 'POST') {
@@ -670,8 +676,9 @@ async function handler(req, res) {
                 if (!query) {
                     // Send help message
                     const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
                     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id,
+                        chat_id: chatId,
                         text: 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.',
                         reply_to_message_id,
                         parse_mode: 'Markdown'
@@ -681,8 +688,9 @@ async function handler(req, res) {
                 const results = await searchBookings(query);
                 if (results.length === 0) {
                     const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
                     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id,
+                        chat_id: chatId,
                         text: 'No bookings found for your query.',
                         reply_to_message_id,
                         parse_mode: 'Markdown'
@@ -698,8 +706,9 @@ async function handler(req, res) {
                 // If not a command, treat as search
                 if (!query) {
                     const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
                     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id,
+                        chat_id: chatId,
                         text: 'Please send a booking number, customer name, or date to search.',
                         reply_to_message_id,
                         parse_mode: 'Markdown'
@@ -709,8 +718,9 @@ async function handler(req, res) {
                 const results = await searchBookings(query);
                 if (results.length === 0) {
                     const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
                     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id,
+                        chat_id: chatId,
                         text: 'No bookings found for your query.',
                         reply_to_message_id,
                         parse_mode: 'Markdown'

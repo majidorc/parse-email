@@ -80,14 +80,15 @@ module.exports = async (req, res) => {
         woocommerce_consumer_key: s.woocommerce_consumer_key || '',
         woocommerce_consumer_secret: s.woocommerce_consumer_secret || '',
         use_bokun_api: !!s.use_bokun_api,
-        telegram_bot_token: s.telegram_bot_token || ''
+        telegram_bot_token: s.telegram_bot_token || '',
+        telegram_chat_id: s.telegram_chat_id || ''
       });
     }
     if (req.method === 'POST') {
-      const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token } = req.body || {};
+      const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id } = req.body || {};
       await sql`
-        INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, updated_at)
-        VALUES (1, ${bokun_access_key || ''}, ${bokun_secret_key || ''}, ${woocommerce_consumer_key || ''}, ${woocommerce_consumer_secret || ''}, ${!!use_bokun_api}, ${telegram_bot_token || ''}, NOW())
+        INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id, updated_at)
+        VALUES (1, ${bokun_access_key || ''}, ${bokun_secret_key || ''}, ${woocommerce_consumer_key || ''}, ${woocommerce_consumer_secret || ''}, ${!!use_bokun_api}, ${telegram_bot_token || ''}, ${telegram_chat_id || ''}, NOW())
         ON CONFLICT (id) DO UPDATE SET
           bokun_access_key = EXCLUDED.bokun_access_key,
           bokun_secret_key = EXCLUDED.bokun_secret_key,
@@ -95,6 +96,7 @@ module.exports = async (req, res) => {
           woocommerce_consumer_secret = EXCLUDED.woocommerce_consumer_secret,
           use_bokun_api = EXCLUDED.use_bokun_api,
           telegram_bot_token = EXCLUDED.telegram_bot_token,
+          telegram_chat_id = EXCLUDED.telegram_chat_id,
           updated_at = NOW();
       `;
       return res.status(200).json({ success: true });

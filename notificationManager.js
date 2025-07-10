@@ -15,6 +15,7 @@ class NotificationManager {
             }
         });
         this.telegramBotToken = null;
+        this.telegramChatId = null;
     }
 
     async getTelegramBotToken() {
@@ -23,6 +24,14 @@ class NotificationManager {
         const { rows } = await sql`SELECT telegram_bot_token FROM settings ORDER BY updated_at DESC LIMIT 1;`;
         this.telegramBotToken = rows[0]?.telegram_bot_token || '';
         return this.telegramBotToken;
+    }
+
+    async getTelegramChatId() {
+        if (this.telegramChatId) return this.telegramChatId;
+        const { sql } = require('@vercel/postgres');
+        const { rows } = await sql`SELECT telegram_chat_id FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+        this.telegramChatId = rows[0]?.telegram_chat_id || '';
+        return this.telegramChatId;
     }
 
     constructNotificationMessage(booking) {
@@ -114,18 +123,19 @@ class NotificationManager {
     async sendTelegram(message, booking = null) {
         const token = await this.getTelegramBotToken();
         const url = `https://api.telegram.org/bot${token}/sendMessage`;
+        const chatId = await this.getTelegramChatId();
         // If booking is provided, send the pre-message first
         if (booking) {
             const preMessage = this.formatTourDatePreMessage(booking);
             await axios.post(url, {
-                chat_id: process.env.TELEGRAM_CHAT_ID,
+                chat_id: chatId,
                 text: preMessage
             });
         }
         // Wrap message in triple backticks for monospace font
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
-            chat_id: process.env.TELEGRAM_CHAT_ID,
+            chat_id: chatId,
             text: monoMessage,
             parse_mode: 'Markdown'
         });
@@ -138,8 +148,9 @@ class NotificationManager {
         const message = this.constructNotificationMessage(booking);
         // Pre-message (tour date)
         const preMessage = this.formatTourDatePreMessage(booking);
+        const chatId = chat_id || await this.getTelegramChatId();
         await axios.post(url, {
-            chat_id: chat_id || process.env.TELEGRAM_CHAT_ID,
+            chat_id: chatId,
             text: preMessage
         });
         // Inline keyboard: first row OP | RI | Customer, second row National Park Fee
@@ -149,7 +160,7 @@ class NotificationManager {
         const parkFeeText = `Cash on tour : National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
         const monoMessage = '```' + message + '```';
         await axios.post(url, {
-            chat_id: chat_id || process.env.TELEGRAM_CHAT_ID,
+            chat_id: chatId,
             text: monoMessage,
             parse_mode: 'Markdown',
             reply_markup: {

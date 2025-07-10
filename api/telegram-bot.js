@@ -9,12 +9,19 @@ async function getTelegramBotToken() {
   return rows[0]?.telegram_bot_token || '';
 }
 
+// Helper to get Telegram Chat ID from settings
+async function getTelegramChatId() {
+  const { rows } = await sql`SELECT telegram_chat_id FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+  return rows[0]?.telegram_chat_id || '';
+}
+
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
   const token = await getTelegramBotToken();
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const chatId = chat_id || await getTelegramChatId();
   const payload = {
-    chat_id,
+    chat_id: chatId,
     text,
     parse_mode: 'Markdown'
   };

@@ -82,6 +82,10 @@
           <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
         </div>
         <div>
+          <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
+          <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Chat ID">
+        </div>
+        <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
           <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
         </div>
@@ -1774,6 +1778,7 @@
     const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
     const useBokunApiInput = document.getElementById('use-bokun-api');
     const telegramBotTokenInput = document.getElementById('telegram-bot-token');
+    const telegramChatIdInput = document.getElementById('telegram-chat-id');
     let settingsLoading = false;
     let settingsError = '';
     let settingsSuccess = '';
@@ -1832,6 +1837,7 @@
         wooConsumerSecretInput.value = data.woocommerce_consumer_secret || '';
         useBokunApiInput.checked = !!data.use_bokun_api;
         telegramBotTokenInput.value = data.telegram_bot_token || '';
+        telegramChatIdInput.value = data.telegram_chat_id || '';
         settingsLoading = false;
         renderSettingsModalState();
       } catch (err) {
@@ -1856,7 +1862,8 @@
             woocommerce_consumer_key: wooConsumerKeyInput.value,
             woocommerce_consumer_secret: wooConsumerSecretInput.value,
             use_bokun_api: useBokunApiInput.checked,
-            telegram_bot_token: telegramBotTokenInput.value
+            telegram_bot_token: telegramBotTokenInput.value,
+            telegram_chat_id: telegramChatIdInput.value
           })
         });
         if (!res.ok) throw new Error('Failed to save settings');

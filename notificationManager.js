@@ -35,7 +35,7 @@ class NotificationManager {
         const phoneNumber = booking.phone_number || '';
         // National Park Fee logic
         const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
-        return `Please confirm the *pickup time* for this booking:\n\n` +
+        return `✅ Please confirm the *pickup time* for this booking:\n\n` +
             `Booking no : ${bookingNumber}\n` +
             `Tour date : ${tourDate}\n` +
             `Program : ${program}\n` +

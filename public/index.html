@@ -42,7 +42,7 @@
       .summary-card {
         min-width: 0;
         max-width: 100%;
-        width: 100%;
+      width: 100%;
         margin: 0 auto;
       }
     }
@@ -76,6 +76,10 @@
         <div>
           <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
           <input type="text" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
+        </div>
+        <div>
+          <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
+          <input type="text" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
@@ -126,8 +130,8 @@
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
                   <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
-                </tr>
-              </thead>
+        </tr>
+      </thead>
               <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
                 <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
               </tbody>
@@ -466,7 +470,7 @@
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
         cardsContainer.innerHTML = '';
       } else {
-        tbody.innerHTML = bookingsData.map(b => `
+      tbody.innerHTML = bookingsData.map(b => `
           <tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
@@ -485,8 +489,8 @@
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
             </td>
-          </tr>
-        `).join('');
+        </tr>
+      `).join('');
         // Render cards for mobile
         cardsContainer.innerHTML = bookingsData.map(b => {
           const showChild = b.child && Number(b.child) > 0;
@@ -1769,6 +1773,7 @@
     const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
     const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
     const useBokunApiInput = document.getElementById('use-bokun-api');
+    const telegramBotTokenInput = document.getElementById('telegram-bot-token');
     let settingsLoading = false;
     let settingsError = '';
     let settingsSuccess = '';
@@ -1826,6 +1831,7 @@
         wooConsumerKeyInput.value = data.woocommerce_consumer_key || '';
         wooConsumerSecretInput.value = data.woocommerce_consumer_secret || '';
         useBokunApiInput.checked = !!data.use_bokun_api;
+        telegramBotTokenInput.value = data.telegram_bot_token || '';
         settingsLoading = false;
         renderSettingsModalState();
       } catch (err) {
@@ -1849,7 +1855,8 @@
             bokun_secret_key: bokunSecretKeyInput.value,
             woocommerce_consumer_key: wooConsumerKeyInput.value,
             woocommerce_consumer_secret: wooConsumerSecretInput.value,
-            use_bokun_api: useBokunApiInput.checked
+            use_bokun_api: useBokunApiInput.checked,
+            telegram_bot_token: telegramBotTokenInput.value
           })
         });
         if (!res.ok) throw new Error('Failed to save settings');

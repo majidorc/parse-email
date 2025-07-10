@@ -3,9 +3,16 @@ const NotificationManager = require('../notificationManager');
 const axios = require('axios');
 const moment = require('moment');
 
+// Helper to get Telegram Bot Token from settings
+async function getTelegramBotToken() {
+  const { rows } = await sql`SELECT telegram_bot_token FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+  return rows[0]?.telegram_bot_token || '';
+}
+
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
-  const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const token = await getTelegramBotToken();
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const payload = {
     chat_id,
     text,

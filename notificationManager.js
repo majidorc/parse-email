@@ -14,6 +14,15 @@ class NotificationManager {
                 pass: process.env.SMTP_PASS
             }
         });
+        this.telegramBotToken = null;
+    }
+
+    async getTelegramBotToken() {
+        if (this.telegramBotToken) return this.telegramBotToken;
+        const { sql } = require('@vercel/postgres');
+        const { rows } = await sql`SELECT telegram_bot_token FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+        this.telegramBotToken = rows[0]?.telegram_bot_token || '';
+        return this.telegramBotToken;
     }
 
     constructNotificationMessage(booking) {
@@ -103,7 +112,8 @@ class NotificationManager {
     }
 
     async sendTelegram(message, booking = null) {
-        const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const token = await this.getTelegramBotToken();
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
         // If booking is provided, send the pre-message first
         if (booking) {
             const preMessage = this.formatTourDatePreMessage(booking);
@@ -123,7 +133,8 @@ class NotificationManager {
 
     // New: Unified sendTelegramWithButtons for all Telegram notifications
     async sendTelegramWithButtons(booking, chat_id = null) {
-        const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+        const token = await this.getTelegramBotToken();
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
         const message = this.constructNotificationMessage(booking);
         // Pre-message (tour date)
         const preMessage = this.formatTourDatePreMessage(booking);

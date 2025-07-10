@@ -79,20 +79,22 @@ module.exports = async (req, res) => {
         bokun_secret_key: s.bokun_secret_key || '',
         woocommerce_consumer_key: s.woocommerce_consumer_key || '',
         woocommerce_consumer_secret: s.woocommerce_consumer_secret || '',
-        use_bokun_api: !!s.use_bokun_api
+        use_bokun_api: !!s.use_bokun_api,
+        telegram_bot_token: s.telegram_bot_token || ''
       });
     }
     if (req.method === 'POST') {
-      const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api } = req.body || {};
+      const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token } = req.body || {};
       await sql`
-        INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, updated_at)
-        VALUES (1, ${bokun_access_key || ''}, ${bokun_secret_key || ''}, ${woocommerce_consumer_key || ''}, ${woocommerce_consumer_secret || ''}, ${!!use_bokun_api}, NOW())
+        INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, updated_at)
+        VALUES (1, ${bokun_access_key || ''}, ${bokun_secret_key || ''}, ${woocommerce_consumer_key || ''}, ${woocommerce_consumer_secret || ''}, ${!!use_bokun_api}, ${telegram_bot_token || ''}, NOW())
         ON CONFLICT (id) DO UPDATE SET
           bokun_access_key = EXCLUDED.bokun_access_key,
           bokun_secret_key = EXCLUDED.bokun_secret_key,
           woocommerce_consumer_key = EXCLUDED.woocommerce_consumer_key,
           woocommerce_consumer_secret = EXCLUDED.woocommerce_consumer_secret,
           use_bokun_api = EXCLUDED.use_bokun_api,
+          telegram_bot_token = EXCLUDED.telegram_bot_token,
           updated_at = NOW();
       `;
       return res.status(200).json({ success: true });

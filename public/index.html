@@ -18,6 +18,17 @@
     }
     @media (max-width: 700px) {
       .bookings-table-container { display: none !important; }
+      #settings-gear-btn {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 100;
+        font-size: 1.7rem !important;
+        background: white !important;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 0.2em 0.3em;
+      }
     }
     .summary-card { flex: 1 1 0; min-width: 220px; max-width: 340px; }
     @media (max-width: 700px) {
@@ -445,17 +456,24 @@
       return '';
     }
 
+    // 1. Add a helper to determine if RI column should be shown for the current page
+    function shouldShowRI() {
+      // Show RI if any booking in the current page has customer === false
+      return bookingsData.some(b => !b.customer);
+    }
+
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       const cardsContainer = document.getElementById('booking-cards-container');
       // Hide cards by default
       cardsContainer.style.display = 'none';
+      const showRI = shouldShowRI();
       if (!bookingsData.length) {
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
         cardsContainer.innerHTML = '';
       } else {
-      tbody.innerHTML = bookingsData.map(b => `
+        tbody.innerHTML = bookingsData.map(b => `
           <tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
@@ -465,7 +483,7 @@
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
+            ${showRI ? `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('ri', b.booking_number, b.ri)}</td>` : ''}
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
@@ -498,7 +516,7 @@
             <hr class="my-2">
             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
               <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
-              <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
+              ${showRI ? `<span class=\"font-bold\">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}` : ''}
               <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
             </div>
             <hr class="my-2">

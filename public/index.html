@@ -456,25 +456,18 @@
       return '';
     }
 
-    // 1. Add a helper to determine if RI column should be shown for the current page
-    function shouldShowRI() {
-      // Show RI if any booking in the current page has customer === false
-      return bookingsData.some(b => !b.customer);
-    }
-
     function renderTable() {
       const tbody = document.getElementById('bookings-body');
       const summaryDiv = document.getElementById('table-summary');
       const cardsContainer = document.getElementById('booking-cards-container');
       // Hide cards by default
       cardsContainer.style.display = 'none';
-      const showRI = shouldShowRI();
       if (!bookingsData.length) {
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
         cardsContainer.innerHTML = '';
       } else {
-        tbody.innerHTML = bookingsData.map(b => {
-          let row = `<tr class="${getRowClass(b.tour_date)}">
+        tbody.innerHTML = bookingsData.map(b => `
+          <tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
@@ -482,21 +475,18 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>`;
-          if (showRI) {
-            row += `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('ri', b.booking_number, b.ri)}</td>`;
-          }
-          row += `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('customer', b.booking_number, b.customer)}</td>
-            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.adult || ''}</td>
-            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.child || ''}</td>
-            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.infant || ''}</td>
-            <td class=\"px-4 py-3 whitespace-nowrap text-center\">
-              <button class=\"copy-btn\" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title=\"Copy notification text\" onclick=\"handleCopy(this)\">📋 Copy</button>
-              <button class=\"delete-btn ml-2 text-red-500 hover:text-red-700\" title=\"Delete booking\" onclick=\"handleDelete('${b.booking_number}', this)\">❌</button>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">
+              <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button>
+              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
             </td>
-          </tr>`;
-          return row;
-        }).join('');
+          </tr>
+        `).join('');
         // Render cards for mobile
         cardsContainer.innerHTML = bookingsData.map(b => {
           const showChild = b.child && Number(b.child) > 0;
@@ -519,7 +509,7 @@
             <hr class="my-2">
             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
               <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
-              ${showRI ? `<span class=\"font-bold\">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}` : ''}
+              <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
               <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
             </div>
             <hr class="my-2">
@@ -762,10 +752,24 @@
     // Copy notification text logic
     window.handleCopy = function(btn) {
       const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
-      const text = generateNotificationText(booking);
+      let text = generateNotificationText(booking);
+      // Ensure copy always starts from 'Please confirm' (CONFIRM line)
+      const confirmIdx = text.toLowerCase().indexOf('please confirm');
+      if (confirmIdx !== -1) {
+        text = text.substring(confirmIdx);
+      }
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = '✅ Copied!';
         setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+        // If inside a modal or text area, close it or move focus out
+        const modal = btn.closest('.modal, .text-area-modal');
+        if (modal) {
+          modal.style.display = 'none';
+        } else {
+          // Optionally scroll to bookings table for better UX
+          const table = document.getElementById('bookings-table');
+          if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     }
     // Notification text generator (matches NotificationManager.constructNotificationMessage)

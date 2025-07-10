@@ -69,10 +69,57 @@ A full-stack automated email processing and bookings management system, designed
    npm install
    ```
 3. **Configure environment variables:**
-   - Copy `.env.example` to `.env` and fill in your credentials for Postgres, SMTP, Telegram, and LINE.
+   - Copy `.env.example` to `.env` and fill in your credentials for Postgres, SMTP, and LINE (Telegram and notification email settings are now managed in the web UI, see below).
    - Set up `config.json` for parser rules and notification channel toggles.
 4. **Deploy:**
    - Deploy to Vercel for serverless operation, or run locally with `npm start` (for development/testing).
+
+---
+
+## Settings Modal & Database-Driven Configuration
+
+All notification settings (Telegram Bot Token, Telegram Chat ID, notification email address, and enable/disable Telegram notifications) are now managed via the web UI settings modal and stored in the database. You no longer need to set these as environment variables.
+
+**How it works:**
+- Open the app and click the settings gear icon.
+- Enter your Telegram Bot Token, Telegram Chat ID, and notification email address in the modal.
+- Toggle "Enable Telegram Notifications" as needed.
+- All values are saved to the `settings` table in your Postgres database and used by the backend for notifications.
+
+**Migration Note:**
+If you are upgrading from an older version or setting up a new database, make sure your `settings` table includes these columns:
+
+```sql
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS telegram_bot_token TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS notification_email_to TEXT;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS enable_telegram_notifications BOOLEAN DEFAULT TRUE;
+```
+
+If your friend or a new user is starting from scratch, use this to create the table:
+
+```sql
+CREATE TABLE IF NOT EXISTS settings (
+  id SERIAL PRIMARY KEY,
+  bokun_access_key TEXT,
+  bokun_secret_key TEXT,
+  woocommerce_consumer_key TEXT,
+  woocommerce_consumer_secret TEXT,
+  use_bokun_api BOOLEAN DEFAULT FALSE,
+  telegram_bot_token TEXT,
+  telegram_chat_id TEXT,
+  notification_email_to TEXT,
+  enable_telegram_notifications BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**.env is still required for:**
+- Database connection (POSTGRES_URL)
+- SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM)
+- LINE bot credentials (LINE_CHANNEL_ACCESS_TOKEN, LINE_USER_ID)
+
+**Do NOT set Telegram or notification email targets in .env anymore.**
 
 ---
 
@@ -81,7 +128,7 @@ A full-stack automated email processing and bookings management system, designed
   - `parserRules`: Maps sender addresses to parser classes.
   - `notifications`: Enable/disable email, Telegram, and LINE notifications.
 - **Environment Variables:**
-  - `POSTGRES_URL`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_USER_ID`, etc.
+  - `POSTGRES_URL`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_USER_ID`, etc. (Telegram and notification email settings are now managed in the app UI)
 
 ---
 

@@ -20,14 +20,14 @@
       .bookings-table-container { display: none !important; }
       #settings-gear-btn {
         position: fixed !important;
-        top: 10px !important;
-        right: 10px !important;
+        top: 2px !important;
+        right: 8px !important;
         z-index: 100;
         font-size: 1.7rem !important;
-        background: white !important;
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        padding: 0.2em 0.3em;
+        background: none !important;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
       }
     }
     .summary-card { flex: 1 1 0; min-width: 220px; max-width: 340px; }
@@ -473,8 +473,8 @@
         tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
         cardsContainer.innerHTML = '';
       } else {
-        tbody.innerHTML = bookingsData.map(b => `
-          <tr class="${getRowClass(b.tour_date)}">
+        tbody.innerHTML = bookingsData.map(b => {
+          let row = `<tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
@@ -482,18 +482,21 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
-            ${showRI ? `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('ri', b.booking_number, b.ri)}</td>` : ''}
-            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center">
-              <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button>
-              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
+            <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>`;
+          if (showRI) {
+            row += `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('ri', b.booking_number, b.ri)}</td>`;
+          }
+          row += `<td class=\"px-4 py-3 whitespace-nowrap text-center\">${iconButton('customer', b.booking_number, b.customer)}</td>
+            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.adult || ''}</td>
+            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.child || ''}</td>
+            <td class=\"px-4 py-3 whitespace-nowrap text-sm text-center\">${b.infant || ''}</td>
+            <td class=\"px-4 py-3 whitespace-nowrap text-center\">
+              <button class=\"copy-btn\" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title=\"Copy notification text\" onclick=\"handleCopy(this)\">📋 Copy</button>
+              <button class=\"delete-btn ml-2 text-red-500 hover:text-red-700\" title=\"Delete booking\" onclick=\"handleDelete('${b.booking_number}', this)\">❌</button>
             </td>
-        </tr>
-      `).join('');
+          </tr>`;
+          return row;
+        }).join('');
         // Render cards for mobile
         cardsContainer.innerHTML = bookingsData.map(b => {
           const showChild = b.child && Number(b.child) > 0;

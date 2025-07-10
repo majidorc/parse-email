@@ -16,6 +16,7 @@ class NotificationManager {
         });
         this.telegramBotToken = null;
         this.telegramChatId = null;
+        this.notificationEmailTo = null;
     }
 
     async getTelegramBotToken() {
@@ -32,6 +33,14 @@ class NotificationManager {
         const { rows } = await sql`SELECT telegram_chat_id FROM settings ORDER BY updated_at DESC LIMIT 1;`;
         this.telegramChatId = rows[0]?.telegram_chat_id || '';
         return this.telegramChatId;
+    }
+
+    async getNotificationEmailTo() {
+        if (this.notificationEmailTo) return this.notificationEmailTo;
+        const { sql } = require('@vercel/postgres');
+        const { rows } = await sql`SELECT notification_email_to FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+        this.notificationEmailTo = rows[0]?.notification_email_to || '';
+        return this.notificationEmailTo;
     }
 
     constructNotificationMessage(booking) {
@@ -111,11 +120,26 @@ class NotificationManager {
     }
 
     async sendEmail(booking, message) {
+        const to = await this.getNotificationEmailTo();
+        if (!to) throw new Error('No notification email address set');
         const mailOptions = {
             from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to: process.env.NOTIFY_EMAIL_TO,
+            to: to,
             subject: `Booking Notification: ${booking.booking_number}`,
             text: message
+        };
+        await this.transporter.sendMail(mailOptions);
+    }
+
+    async sendEmailNotification(subject, text, html) {
+        const to = await this.getNotificationEmailTo();
+        if (!to) throw new Error('No notification email address set');
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: to,
+            subject: subject,
+            text: text,
+            html: html
         };
         await this.transporter.sendMail(mailOptions);
     }

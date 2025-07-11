@@ -548,16 +548,19 @@
         return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
       function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
+        let statusHtml = '';
+        if (opNotSent == 0 && customerNotSent == 0) {
+          statusHtml = `<span class="text-green-700 font-bold flex items-center gap-2 justify-center mt-2"><span>✅ OP: 0</span> | <span>✅ Customer: 0</span> <span class='ml-2'>🟢 Green light</span></span>`;
+        } else {
+          statusHtml = `<span class="text-red-700 font-bold flex items-center gap-2 justify-center mt-2"><span>OP: ${opNotSent}</span> | <span>Customer: ${customerNotSent}</span> <span class='ml-2'>🔴 Red light</span></span>`;
+        }
         return `
         <div class="summary-card p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
           <p class="${color} font-semibold mb-2 text-lg">${day}</p>
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
             <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
-            <span>|</span>
-            ${statSpan('Not sent to OP:', opNotSent, opNotSent == 0)}
-            <span>|</span>
-            ${statSpan('Not sent to Customer:', customerNotSent, customerNotSent == 0, customerNotSent == 0 ? 'font-medium' : 'font-bold')}
           </div>
+          ${statusHtml}
         </div>`;
       }
       // Use summary data from unfiltered fetch
@@ -572,13 +575,6 @@
           ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
           ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'tomorrow-card')}
           ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}
-        </div>
-        <div id="op-customer-status" class="flex justify-center items-center mb-2">
-          ${
-            (summary.todayOpNotSent == 0 && summary.todayCustomerNotSent == 0)
-              ? `<span class="text-green-700 font-bold flex items-center gap-2"><span>✅ OP: 0</span> | <span>✅ Customer: 0</span> <span class='ml-2'>🟢 Green light</span></span>`
-              : `<span class="text-red-700 font-bold flex items-center gap-2"><span>OP: ${summary.todayOpNotSent}</span> | <span>Customer: ${summary.todayCustomerNotSent}</span> <span class='ml-2'>Red light</span></span>`
-          }
         </div>
         <div class="flex justify-end mt-4">
           <span class="text-xs text-gray-500">Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results <span class="text-xs text-gray-400 ml-1">(Page ${currentPage})</span></span>

@@ -1,159 +1,201 @@
 <!DOCTYPE html>
+//// test 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bookings Table</title>
+  <title>Programs</title>
+  <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js for dashboard charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f0f2f5;
-      display: flex;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 2rem;
-      box-sizing: border-box;
-    }
-    .icon-check {
-      color: #10B981;
-      font-size: 1.25rem;
-    }
-    .icon-cross {
-      color: #EF4444;
-      font-size: 1.25rem;
-    }
-    .container {
-      max-width: 100vw;
-      margin: 40px auto;
-      padding: 24px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      overflow-x: auto;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-      color: #1a237e;
-    }
-    table {
-      width: 100%;
-      min-width: 1100px;
-      border-collapse: collapse;
-      margin: 2rem 0;
-      background: #fff;
-      font-size: 1rem;
-      table-layout: fixed;
-    }
-    th, td {
-      border: 1px solid #e0e0e0;
-      padding: 0.6rem 0.5rem;
-      text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-weight: bold;
-    }
-    th {
-      background: #e3f0fb;
-      color: #0d47a1;
-      font-weight: 600;
-    }
-    th.booking { min-width: 90px; width: 90px; }
-    th.tourdate { min-width: 110px; width: 110px; }
-    th.customername { min-width: 160px; width: 160px; }
-    th.sku { min-width: 80px; width: 80px; }
-    th.program { min-width: 120px; width: 120px; }
-    th.hotel { min-width: 120px; width: 120px; }
-    th.op, th.ri, th.customer, th.adult, th.child, th.infant {
-      min-width: 50px; width: 50px; text-align: center;
-    }
-    td.op, td.ri, td.customer, td.adult, td.child, td.infant {
-      text-align: center;
-    }
-    .icon-true {
-      color: #388e3c;
-      font-weight: bold;
-      font-size: 1.2em;
-    }
-    .icon-false {
-      color: #d32f2f;
-      font-weight: bold;
-      font-size: 1.2em;
-    }
-    tr:nth-child(even) td {
-      background: #f7fbff;
-    }
-    tr:hover td {
-      background: #bbdefb;
-      color: #0d47a1;
-    }
-    @media (max-width: 1200px) {
-      table { min-width: 900px; }
     }
     @media (max-width: 700px) {
-      .container { padding: 8px; }
-      table, th, td { font-size: 0.92rem; }
-      #bookings-table { min-width: unset; display: none; }
-      .bookings-table-container .overflow-x-auto { display: none; }
-      .booking-cards { display: block; }
-      .accounting-table { display: table !important; min-width: 700px; }
+      .bookings-table-container { display: none !important; }
+      #settings-gear-btn {
+        position: fixed !important;
+        top: 2px !important;
+        right: 8px !important;
+        z-index: 100;
+        font-size: 1.7rem !important;
+        background: none !important;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+      }
     }
-    .booking-cards { display: none; }
-    table tr.row-past td { color: #d32f2f !important; }
-    table tr.row-today td { color: #1b5e20 !important; background: #e8f5e9 !important; }
-    table tr.row-tomorrow td { color: #b59b00 !important; background: #fffde7 !important; }
-    .card-row-past { color: #d32f2f !important; background: #ffebee !important; }
-    .card-row-today { color: #1b5e20 !important; background: #e8f5e9 !important; }
-    .card-row-tomorrow { color: #b59b00 !important; background: #fffde7 !important; }
+    .summary-card { flex: 1 1 0; min-width: 220px; max-width: 340px; }
+    @media (max-width: 700px) {
+      .summary-cards-scroll {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        align-items: stretch !important;
+        overflow-x: unset !important;
+        flex-wrap: nowrap !important;
+      }
+      .summary-card {
+        min-width: 0;
+        max-width: 100%;
+      width: 100%;
+        margin: 0 auto;
+      }
+    }
   </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 </head>
 <body class="antialiased">
+  <!-- Settings Gear Icon -->
+  <button id="settings-gear-btn" title="Settings" style="position: absolute; top: 18px; right: 24px; z-index: 50; background: none; border: none; font-size: 2rem; cursor: pointer; color: #6366f1; transition: color 0.2s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6366f1'">⚙️</button>
+  <!-- Settings Modal -->
+  <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 1rem; max-width: 95vw; width: 400px; margin: auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); position: relative;">
+      <button id="settings-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
+      <form id="settings-form" class="space-y-4">
+        <div>
+          <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
+          <input type="password" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
+        </div>
+        <div>
+          <label for="bokun-secret-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Secret Key</label>
+          <input type="password" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Secret Key">
+        </div>
+        <div>
+          <label for="woocommerce-consumer-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Key</label>
+          <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Key">
+        </div>
+        <div>
+          <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
+          <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
+        </div>
+        <div>
+          <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
+          <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
+        </div>
+        <div>
+          <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
+          <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Chat ID">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
+          <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
+        </div>
+        <div>
+          <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
+          <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter notification email address(es)">
+        </div>
+        <div class="flex justify-end mt-6">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
     <!-- Today's Date and Time (Bangkok) -->
     <div class="flex justify-center mb-2">
-      <span id="bangkok-datetime" class="text-base md:text-lg font-semibold text-indigo-700 bg-indigo-50 rounded px-4 py-1 shadow-sm"></span>
+      <span id="bangkok-datetime" class="text-xs md:text-sm font-medium text-gray-500 px-2"></span>
     </div>
     <!-- Table Toggle Section -->
-    <div class="mb-4 flex justify-center gap-4">
-      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Dashboard</button>
-      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Bookings</button>
-      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Programs</button>
-      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800" type="button">Accounting</button>
+    <div class="mb-4 tab-btn-container grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-4">
+      <button id="toggle-dashboard" class="px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Dashboard</button>
+      <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Bookings</button>
+      <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Programs</button>
+      <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Accounting</button>
     </div>
-    <!-- Programs Table Section (hidden by default) -->
+    <!-- Programs Section (pixel-perfect match) -->
     <div id="programs-section" style="display:none;">
-      <div class="mb-4 flex justify-between items-center">
-        <h2 class="text-xl font-bold text-indigo-800">Programs</h2>
-        <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
+      <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="mb-6 flex justify-between items-center">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Programs</h2>
+          <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
+        </div>
+        <!-- Search bar for Programs -->
+        <div class="mb-4 flex justify-end">
+          <input
+            id="programs-search-bar"
+            type="text"
+            placeholder="Search programs..."
+            class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            style="max-width: 300px;"
+          />
+        </div>
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">SKU</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Program</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
+        </tr>
+      </thead>
+              <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
+                <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-        <table id="programs-table" class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-3 py-2">SKU</th>
-              <th class="px-3 py-2">ID</th>
-              <th class="px-3 py-2">Program</th>
-              <th class="px-3 py-2">Rate</th>
-              <th class="px-3 py-2">Net Adult</th>
-              <th class="px-3 py-2">Net Child</th>
-              <th class="px-3 py-2">NP</th>
-              <th class="px-3 py-2">NP Adult</th>
-              <th class="px-3 py-2">NP Child</th>
-              <th class="px-3 py-2">Remark</th>
-              <th class="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="programs-table-body">
-            <tr><td colspan="11" style="text-align:center;">Loading...</td></tr>
-          </tbody>
-        </table>
+    </div>
+    <!-- Add Program Form Section (hidden by default) -->
+    <div id="add-program-section" style="display:none;">
+      <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto mt-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Product Rate Configuration</h1>
+        <p class="text-gray-500 mb-8">Fill in the details below to configure the product rates.</p>
+        <form id="productForm" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU <span class="text-red-500">*</span></label>
+              <input type="text" id="sku" name="sku" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., TOUR-PHUKET-001">
+            </div>
+            <input type="hidden" id="dbRowId" name="id">
+            <div>
+              <label for="productIdOptional" class="block text-sm font-medium text-gray-700 mb-1">Product ID (Optional)</label>
+              <input type="text" id="productIdOptional" name="product_id_optional" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 12345ABC">
+            </div>
+          </div>
+          <div>
+            <label for="program" class="block text-sm font-medium text-gray-700 mb-1">Program <span class="text-red-500">*</span></label>
+            <input type="text" id="program" name="program" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Full Day James Bond Island Tour">
+          </div>
+          <div class="border-t border-gray-200 pt-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold text-gray-800">Rates</h2>
+              <button type="button" id="addRateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Add Rate Item
+              </button>
+            </div>
+            <div id="ratesContainer" class="space-y-4"></div>
+          </div>
+          <div>
+            <label for="remark" class="block text-sm font-medium text-gray-700 mb-1">Remark</label>
+            <textarea id="remark" name="remark" rows="4" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="Add any additional notes here..."></textarea>
+          </div>
+          <div class="border-t border-gray-200 pt-6 flex justify-between">
+            <button type="button" id="cancel-add-program" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
+            <button type="button" id="delete-program-btn" style="display:none;" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Delete</button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Save Configuration</button>
+          </div>
+        </form>
       </div>
     </div>
     <!-- Search Bar Section -->
-    <div class="mb-6">
+    <div class="mb-6" id="search-bar-section">
       <label for="search-bar" class="sr-only">Search bookings</label>
       <div class="relative">
         <button id="clear-search-btn" type="button" style="display:none;" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-red-500 focus:outline-none z-10" title="Clear search">
@@ -172,13 +214,13 @@
     <!-- Results Summary Section -->
     <div id="table-summary" class="text-center mb-6"></div>
     <div id="booking-cards-container" class="booking-cards"></div>
-    <hr class="border-gray-200 mb-6">
-    <!-- Bookings Table Section -->
     <div class="bookings-table-container overflow-x-auto rounded-lg shadow-md border border-gray-200">
+      <hr class="border-gray-200 mb-6">
       <table id="bookings-table" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
+            <th data-col="book_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Date</th>
             <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
             <th data-col="customer_name" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
             <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
@@ -190,7 +232,7 @@
             <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
-            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Copy</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
         </tr>
       </thead>
         <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
@@ -207,6 +249,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
+              <th data-col="book_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Date</th>
               <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
               <th data-col="customer_name" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
               <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
@@ -225,23 +268,23 @@
     </div>
     <!-- Dashboard Section (hidden by default) -->
     <div id="dashboard-section" style="display:none;">
-      <div class="flex flex-wrap gap-4 justify-center mb-6">
-        <div class="bg-indigo-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+      <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
+        <div class="bg-indigo-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
           <div class="text-sm text-indigo-700 font-semibold mb-1">Total Bookings</div>
           <div id="dashboard-total-bookings" class="text-2xl font-bold text-indigo-900">-</div>
           <div id="dashboard-total-bookings-change" class="text-xs mt-1"></div>
         </div>
-        <div class="bg-pink-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+        <div class="bg-pink-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
           <div class="text-sm text-pink-700 font-semibold mb-1">New Bookings</div>
           <div id="dashboard-new-bookings" class="text-2xl font-bold text-pink-900">-</div>
           <div id="dashboard-new-bookings-change" class="text-xs mt-1"></div>
         </div>
-        <div class="bg-green-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+        <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
           <div class="text-sm text-green-700 font-semibold mb-1">Total Earnings</div>
           <div id="dashboard-total-earnings" class="text-2xl font-bold text-green-900">-</div>
           <div id="dashboard-total-earnings-change" class="text-xs mt-1"></div>
         </div>
-        <div class="bg-blue-50 rounded-lg p-4 min-w-[220px] text-center shadow">
+        <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
           <div class="text-sm text-blue-700 font-semibold mb-1">Done vs Booked</div>
           <div class="flex items-center justify-center gap-2 mt-2">
             <div id="dashboard-done" class="font-bold text-blue-900">-</div>
@@ -252,22 +295,40 @@
             <div id="dashboard-progress" class="bg-blue-500 h-2 rounded" style="width:0%"></div>
           </div>
         </div>
+        <!-- Passengers Card -->
+        <div class="bg-yellow-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
+          <div class="text-sm text-yellow-700 font-semibold mb-1">Passengers</div>
+          <div class="text-2xl font-bold text-yellow-900">
+            <span id="dashboard-total-passengers">-</span>
+          </div>
+        </div>
       </div>
-      <div class="flex flex-wrap gap-8 justify-center mb-6">
+      <div class="flex flex-wrap gap-8 justify-center mb-6 mx-auto max-w-5xl">
         <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
           <div class="flex justify-between items-center mb-2">
             <div class="text-base font-semibold text-indigo-800">Revenue by Day</div>
             <select id="dashboard-period" class="border rounded px-2 py-1 text-sm">
+              <option value="thisWeek">This Week</option>
+              <option value="lastWeek">Last Week</option>
               <option value="thisMonth">This Month</option>
               <option value="lastMonth">Last Month</option>
+              <option value="thisYear">This Year</option>
+              <option value="lastYear">Last Year</option>
               <option value="all">All Time</option>
             </select>
+            <button id="dashboard-refresh" class="ml-2 px-2 py-1 rounded bg-gray-300 text-gray-800 text-sm">Refresh</button>
           </div>
-          <div id="dashboard-revenue-list" class="text-sm"></div>
+          <canvas id="revenueChart" height="220"></canvas>
         </div>
         <div class="bg-white rounded-lg p-4 shadow min-w-[220px]">
           <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
           <div id="dashboard-top-destinations" class="text-sm"></div>
+        </div>
+        <!-- Booking Channels Pie Chart -->
+        <div class="bg-white rounded-lg p-4 shadow min-w-[220px] flex flex-col items-center">
+          <div class="text-base font-semibold text-indigo-800 mb-2">Booking Channels</div>
+          <canvas id="channelsPieChart" width="180" height="180"></canvas>
+          <div id="channels-booking-counts" class="mt-2 text-sm text-gray-700"></div>
         </div>
       </div>
     </div>
@@ -373,7 +434,7 @@
         const data = await res.json();
         if (!data.bookings || !data.bookings.length) {
           tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
-          summaryDiv.textContent = 'No results.';
+          // Do not show 'No results.' above the table; keep summary cards visible
           document.getElementById('pagination-controls').innerHTML = '';
           bookingsData = [];
           totalRows = 0;
@@ -421,6 +482,7 @@
       tbody.innerHTML = bookingsData.map(b => `
           <tr class="${getRowClass(b.tour_date)}">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
@@ -432,7 +494,10 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-center"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">
+              <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
+              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
+            </td>
         </tr>
       `).join('');
         // Render cards for mobile
@@ -466,13 +531,14 @@
               ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
               ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
             </div>
-            <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋 Copy</button></div>
+            <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button></div>
           </div>
           `;
         }).join('');
       }
-      // Show cards on mobile only
-      if (window.innerWidth <= 700) {
+      // Show cards on mobile only if Bookings tab is active and section is visible
+      const bookingsBtn = document.getElementById('toggle-bookings');
+      if (window.innerWidth <= 700 && bookingsBtn.getAttribute('data-active') === 'true') {
         cardsContainer.style.display = 'block';
       } else {
         cardsContainer.style.display = 'none';
@@ -483,28 +549,32 @@
         return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
       }
       function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
+        let statusHtml = '';
+        if (opNotSent == 0 && customerNotSent == 0) {
+          statusHtml = `<span class="text-green-700 font-bold flex items-center gap-2 justify-center mt-2"><span>✅ OP: 0</span> | <span>✅ Customer: 0</span> <span class='ml-2'>🟢</span></span>`;
+        } else {
+          statusHtml = `<span class="text-red-700 font-bold flex items-center gap-2 justify-center mt-2"><span>OP: ${opNotSent}</span> | <span>Customer: ${customerNotSent}</span> <span class='ml-2'>🔴</span></span>`;
+        }
         return `
-        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
+        <div class="summary-card p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
           <p class="${color} font-semibold mb-2 text-lg">${day}</p>
           <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
             <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
-            <span>|</span>
-            ${statSpan('Not sent to OP:', opNotSent, opNotSent == 0)}
-            <span>|</span>
-            ${statSpan('Not sent to Customer:', customerNotSent, customerNotSent == 0, customerNotSent == 0 ? 'font-medium' : 'font-bold')}
           </div>
+          ${statusHtml}
         </div>`;
       }
       // Use summary data from unfiltered fetch
-      let summary = bookingsSummaryData;
+      let summary = bookingsSummaryDataUnfiltered;
       if (bookingsSummaryLoading) {
         summaryDiv.innerHTML = `<div class='flex justify-center items-center py-8'><span class='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-700'></span> <span class='ml-3 text-gray-500 text-lg'>Loading summary...</span></div>`;
         return;
       }
       if (!summary) summary = { todayCount: 0, todayOpNotSent: 0, todayCustomerNotSent: 0, tomorrowCount: 0, tomorrowOpNotSent: 0, tomorrowCustomerNotSent: 0 };
       summaryDiv.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm md:text-base">
-          ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'tomorrow-card')}
+        <div class="flex flex-row gap-4 justify-center items-stretch w-full mb-4 summary-cards-scroll">
+          ${statCard('Today', summary.todayCount, summary.todayOpNotSent, summary.todayCustomerNotSent, 'text-indigo-700', 'bg-indigo-50', 'border-indigo-100', 'text-indigo-800', 'today-card')}
+          ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'tomorrow-card')}
           ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}
         </div>
         <div class="flex justify-end mt-4">
@@ -512,6 +582,19 @@
         </div>
       `;
       renderPagination();
+      // Attach click event to Today card (Bangkok time)
+      const todayCard = document.getElementById('today-card');
+      if (todayCard) {
+        todayCard.onclick = function() {
+          if (!currentBangkokDate) updateBangkokDateTime();
+          const today = new Date(currentBangkokDate);
+          const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+          document.getElementById('search-bar').value = todayStr;
+          document.getElementById('clear-search-btn').style.display = '';
+          searchTerm = todayStr;
+          fetchBookings(1, currentSort, currentDir, searchTerm, true);
+        };
+      }
       // Attach click event to Tomorrow card (Bangkok time)
       const tomorrowCard = document.getElementById('tomorrow-card');
       if (tomorrowCard) {
@@ -583,7 +666,7 @@
       // Send PATCH request to backend
       btn.disabled = true;
       try {
-        const res = await fetch(`/api/bookings/${bookingId}`, {
+        const res = await fetch(`/api/bookings?booking_number=${bookingId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ column, value: newValue })
@@ -670,17 +753,39 @@
     }
     window.addEventListener('resize', () => {
       const cardsContainer = document.getElementById('booking-cards-container');
-      if (cardsContainer) {
-        cardsContainer.style.display = window.innerWidth <= 700 ? 'block' : 'none';
+      const bookingsBtn = document.getElementById('toggle-bookings');
+      const bookingsTableSection = document.querySelector('.bookings-table-container');
+      if (
+        cardsContainer &&
+        window.innerWidth <= 700 &&
+        bookingsBtn.classList.contains('bg-blue-600')
+      ) {
+        cardsContainer.style.display = 'block';
+      } else if (cardsContainer) {
+        cardsContainer.style.display = 'none';
       }
     });
     // Copy notification text logic
     window.handleCopy = function(btn) {
       const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
-      const text = generateNotificationText(booking);
+      let text = generateNotificationText(booking);
+      // Ensure copy always starts from 'Please confirm' (CONFIRM line)
+      const confirmIdx = text.toLowerCase().indexOf('please confirm');
+      if (confirmIdx !== -1) {
+        text = text.substring(confirmIdx);
+      }
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = '✅ Copied!';
         setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+        // If inside a modal or text area, close it or move focus out
+        const modal = btn.closest('.modal, .text-area-modal');
+        if (modal) {
+          modal.style.display = 'none';
+        } else {
+          // Optionally scroll to bookings table for better UX
+          const table = document.getElementById('bookings-table');
+          if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     }
     // Notification text generator (matches NotificationManager.constructNotificationMessage)
@@ -700,7 +805,7 @@
       const customerName = b.customer_name;
       const hotel = b.hotel;
       const phoneNumber = b.phone_number || '';
-      return `Please confirm the *pickup time* for this booking:\n\n` +
+      return `✅ Please confirm the *pickup time* for this booking:\n\n` +
         `Booking no : ${bookingNumber}\n` +
         `Tour date : ${tourDate}\n` +
         `Program : ${program}\n` +
@@ -781,7 +886,7 @@
       }, 0);
     }
 
-    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false) {
+    async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false, cacheBuster = null) {
       const tbody = document.getElementById('accounting-body');
       try {
         const params = new URLSearchParams({
@@ -791,6 +896,7 @@
           dir
         });
         if (search) params.append('search', search);
+        if (cacheBuster) params.append('_ts', cacheBuster);
         const res = await fetch(`/api/accounting?${params.toString()}`);
         const data = await res.json();
         if (!data.bookings || !data.bookings.length) {
@@ -843,12 +949,13 @@
         tbody.innerHTML = accountingData.map(b => `
           <tr>
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
-            <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class=\'text-gray-400\'>Click to add</span>'}</td>
+            <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
             <td class="px-4 py-3 text-center"><button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button></td>
           </tr>
         `).join('');
@@ -863,27 +970,34 @@
               const input = cell.querySelector('input');
               input.focus();
               input.select();
-              input.onblur = input.onkeydown = function(ev) {
-                if (ev.type === 'keydown' && ev.key !== 'Enter') return;
+              let hasSaved = false;
+              function savePaidInput() {
+                if (hasSaved) return;
+                hasSaved = true;
                 const newValue = input.value.trim();
                 if (newValue === '' || isNaN(newValue)) {
                   cell.innerHTML = `<span class='text-gray-400'>Click to add</span>`;
                   return;
                 }
                 cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
-                fetch(`/api/accounting/${bookingNumber}`, {
+                fetch(`/api/accounting?booking_number=${bookingNumber}`, {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ paid: parseFloat(newValue).toFixed(2) })
                 }).then(r => r.json()).then(data => {
                   if (data.success) {
-                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                    // Add cache-busting param to ensure fresh data
+                    fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
                   } else {
                     cell.innerHTML = `<span class='text-red-500'>Error</span>`;
                   }
                 }).catch(() => {
                   cell.innerHTML = `<span class='text-red-500'>Error</span>`;
                 });
+              }
+              input.onblur = savePaidInput;
+              input.onkeydown = function(ev) {
+                if (ev.key === 'Enter') savePaidInput();
               };
             };
             cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
@@ -894,11 +1008,11 @@
               const bookingNumber = btn.getAttribute('data-booking');
               if (!confirm('Are you sure you want to cancel and remove this booking?')) return;
               btn.disabled = true;
-              fetch(`/api/accounting/${bookingNumber}`, {
+              fetch(`/api/accounting?booking_number=${bookingNumber}`, {
                 method: 'DELETE'
               }).then(r => r.json()).then(data => {
                 if (data.success) {
-                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
                 } else {
                   alert('Failed to cancel: ' + (data.error || 'Unknown error'));
                   btn.disabled = false;
@@ -934,7 +1048,7 @@
     window.gotoAccountingPage = function(page) {
       const totalPages = Math.ceil(accountingTotalRows / accountingRowsPerPage);
       if (page < 1 || page > totalPages) return;
-      fetchAccounting(page, accountingSort, accountingDir, accountingSearch);
+      fetchAccounting(page, accountingSort, accountingDir, accountingSearch, false, Date.now());
     }
     // Toggle logic
     const dashboardBtn = document.getElementById('toggle-dashboard');
@@ -944,10 +1058,10 @@
     const bookingsTableSection = document.querySelector('.bookings-table-container');
     const summarySection = document.getElementById('table-summary');
     const accountingTableContainer = document.getElementById('accounting-table-container');
-    const searchBarSection = document.querySelector('.mb-6');
+    const searchBarSection = document.getElementById('search-bar-section');
     const programsBtn = document.getElementById('toggle-programs');
     const programsSection = document.getElementById('programs-section');
-    const addProgramBtn = document.getElementById('add-program-btn');
+    let addProgramBtn = document.getElementById('add-program-btn');
 
     // On page load, show Dashboard by default
     window.addEventListener('DOMContentLoaded', () => {
@@ -955,55 +1069,82 @@
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
       accountingTableContainer.style.display = 'none';
-      searchBarSection.style.display = 'none';
+      searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
       document.getElementById('pagination-controls').style.display = 'none';
-      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       fetchDashboardAnalytics();
     });
 
     dashboardBtn.onclick = () => {
-      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardBtn.setAttribute('data-active', 'true');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.removeAttribute('data-active');
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = '';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
       accountingTableContainer.style.display = 'none';
-      searchBarSection.style.display = 'none';
+      searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
       document.getElementById('pagination-controls').style.display = 'none';
+      programsSection.style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
       fetchDashboardAnalytics();
     };
     bookingsBtn.onclick = () => {
-      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.setAttribute('data-active', 'true');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.removeAttribute('data-active');
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = 'none';
-      bookingsTableSection.style.display = '';
+      bookingsTableSection.style.display = window.innerWidth <= 700 ? 'none' : '';
       summarySection.style.display = '';
       accountingTableContainer.style.display = 'none';
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = '';
+      programsSection.style.display = 'none';
+      // Show mobile cards only if on mobile
+      document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
       fetchBookings();
     };
     accountingBtn.onclick = () => {
-      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.removeAttribute('data-active');
+      accountingBtn.setAttribute('data-active', 'true');
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
       dashboardSection.style.display = 'none';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
       accountingTableContainer.style.display = '';
       searchBarSection.style.display = '';
       document.getElementById('pagination-controls').style.display = 'none';
+      programsSection.style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
       fetchAccounting();
     };
     programsBtn.onclick = () => {
-      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
-      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white';
-      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800';
+      dashboardBtn.removeAttribute('data-active');
+      bookingsBtn.removeAttribute('data-active');
+      programsBtn.setAttribute('data-active', 'true');
+      accountingBtn.removeAttribute('data-active');
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200';
       dashboardSection.style.display = 'none';
       bookingsTableSection.style.display = 'none';
       summarySection.style.display = 'none';
@@ -1011,7 +1152,8 @@
       programsSection.style.display = '';
       searchBarSection.style.display = 'none';
       document.getElementById('pagination-controls').style.display = 'none';
-      fetchPrograms();
+      document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
+      fetchRatesAndPrograms();
     };
     // Search bar integration
     document.getElementById('search-bar').addEventListener('input', function(e) {
@@ -1039,9 +1181,12 @@
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       const bangkok = new Date(utc + 7 * 60 * 60 * 1000);
       currentBangkokDate = new Date(bangkok.getFullYear(), bangkok.getMonth(), bangkok.getDate()); // midnight Bangkok
-      const dateStr = bangkok.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-      const timeStr = bangkok.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      document.getElementById('bangkok-datetime').textContent = `${dateStr} — ${timeStr} (Bangkok Time)`;
+      // Format: 'Wed, Jul 9, 02:52:21'
+      const weekday = bangkok.toLocaleDateString('en-US', { weekday: 'short' });
+      const month = bangkok.toLocaleDateString('en-US', { month: 'short' });
+      const day = bangkok.getDate();
+      const time = bangkok.toLocaleTimeString('en-US', { hour12: false });
+      document.getElementById('bangkok-datetime').textContent = `${weekday}, ${month} ${day}, ${time}`;
     }
     setInterval(updateBangkokDateTime, 1000);
     updateBangkokDateTime();
@@ -1049,198 +1194,700 @@
     function fetchDashboardAnalytics() {
       const period = document.getElementById('dashboard-period').value;
       // Show loading states
-      document.getElementById('dashboard-total-bookings').textContent = '...';
-      document.getElementById('dashboard-new-bookings').textContent = '...';
-      document.getElementById('dashboard-total-earnings').textContent = '...';
-      document.getElementById('dashboard-done').textContent = '...';
-      document.getElementById('dashboard-booked').textContent = '...';
-      document.getElementById('dashboard-progress').style.width = '0%';
-      document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">Loading...</span>';
-      document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">Loading...</span>';
-      fetch(`/api/dashboard?period=${period}`)
+      const dashboardTotalBookings = document.getElementById('dashboard-total-bookings');
+      if (dashboardTotalBookings) dashboardTotalBookings.textContent = '...';
+      const dashboardNewBookings = document.getElementById('dashboard-new-bookings');
+      if (dashboardNewBookings) dashboardNewBookings.textContent = '...';
+      const dashboardTotalEarnings = document.getElementById('dashboard-total-earnings');
+      if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = '...';
+      const dashboardDone = document.getElementById('dashboard-done');
+      if (dashboardDone) dashboardDone.textContent = '...';
+      const dashboardBooked = document.getElementById('dashboard-booked');
+      if (dashboardBooked) dashboardBooked.textContent = '...';
+      const dashboardProgress = document.getElementById('dashboard-progress');
+      if (dashboardProgress) dashboardProgress.style.width = '0%';
+      const dashboardRevenueList = document.getElementById('dashboard-revenue-list');
+      if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-gray-400">Loading...</span>';
+      const dashboardTopDestinations = document.getElementById('dashboard-top-destinations');
+      if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">Loading...</span>';
+      // Declare these only once at the top
+      const bookingsChange = document.getElementById('dashboard-total-bookings-change');
+      const newChange = document.getElementById('dashboard-new-bookings-change');
+      const earningsChange = document.getElementById('dashboard-total-earnings-change');
+      fetch(`/api/dashboard-settings?period=${period}`)
         .then(res => res.json())
         .then(data => {
           // Total Bookings
-          document.getElementById('dashboard-total-bookings').textContent = data.totalBookings.toLocaleString();
-          // New Bookings
-          document.getElementById('dashboard-new-bookings').textContent = data.newBookings.toLocaleString();
-          // Total Earnings
-          document.getElementById('dashboard-total-earnings').textContent = data.totalEarnings.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
-          // Done/Booked
-          document.getElementById('dashboard-done').textContent = data.done.toLocaleString();
-          document.getElementById('dashboard-booked').textContent = data.booked.toLocaleString();
-          const total = data.done + data.booked;
-          const percent = total === 0 ? 0 : Math.round((data.done / total) * 100);
-          document.getElementById('dashboard-progress').style.width = percent + '%';
-          // Revenue by Day
-          if (data.revenueByDay && data.revenueByDay.length) {
-            document.getElementById('dashboard-revenue-list').innerHTML = data.revenueByDay.map(row =>
-              `<div class='flex justify-between'><span>${row.day}</span><span class='font-semibold text-green-700'>${Number(row.revenue).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`
-            ).join('');
-          } else {
-            document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-gray-400">No data</span>';
+          if (dashboardTotalBookings) {
+            const val = Number(data.totalBookings);
+            dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
           }
+          if (dashboardNewBookings) {
+            const val = Number(data.newBookings);
+            dashboardNewBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
+          }
+          if (dashboardTotalEarnings) {
+            const val = Number(data.totalEarnings);
+            dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+          }
+          // Set percent change for Total Bookings
+          if (data.percentTotal !== null && data.percentTotal !== undefined) {
+            const percentVal = Number(data.percentTotal);
+            const up = percentVal >= 0;
+            if (bookingsChange) bookingsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
+          } else {
+            if (bookingsChange) bookingsChange.textContent = '';
+          }
+          if (dashboardDone) {
+            const val = Number(data.done);
+            dashboardDone.textContent = isNaN(val) ? '-' : val.toLocaleString();
+          } else { console.error('dashboard-done element missing'); }
+          if (dashboardBooked) {
+            const val = Number(data.booked);
+            dashboardBooked.textContent = isNaN(val) ? '-' : val.toLocaleString();
+          } else { console.error('dashboard-booked element missing'); }
+          const doneVal = Number(data.done);
+          const bookedVal = Number(data.booked);
+          // Progress bar: full if done=booked, 0 if booked=0, else (done/booked)*100
+          const percent = (isNaN(bookedVal) || bookedVal === 0) ? 0 : Math.round((doneVal / bookedVal) * 100);
+          if (dashboardProgress) {
+            dashboardProgress.style.width = percent + '%';
+          } else { console.error('dashboard-progress element missing'); }
+          // Revenue by Day - Chart.js
+          const ctx = document.getElementById('revenueChart')?.getContext('2d');
+          if (window.revenueChartInstance) {
+            window.revenueChartInstance.destroy();
+          }
+          if (ctx && data.revenueByDay && data.revenueByDay.length) {
+            const labels = data.revenueByDay.map(row => row.day.split('T')[0]);
+            const revenues = data.revenueByDay.map(row => Number(row.revenue));
+            let cumulative = 0;
+            const cumulativeRevenues = revenues.map(val => (cumulative += val));
+            window.revenueChartInstance = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [
+                  {
+                    type: 'bar',
+                    label: 'Daily Revenue',
+                    data: revenues,
+                    backgroundColor: 'rgba(37, 99, 235, 0.5)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1
+                  },
+                  {
+                    type: 'line',
+                    label: 'Cumulative Revenue',
+                    data: cumulativeRevenues,
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    fill: false,
+                    tension: 0.3,
+                    yAxisID: 'y',
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { display: true },
+                  tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                  x: { title: { display: true, text: 'Date' } },
+                  y: { title: { display: true, text: 'Revenue (THB)' }, beginAtZero: true }
+                }
+              }
+            });
+          } else if (ctx) {
+            console.warn('revenueByDay missing or empty:', data.revenueByDay);
+            ctx.clearRect(0, 0, 400, 220);
+          } else { console.error('revenueChart canvas or context missing'); }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {
-            document.getElementById('dashboard-top-destinations').innerHTML = data.topDestinations.map((row, i) =>
-              `<div class='flex justify-between'><span>${i+1}. ${row.program || '(No Program)'}</span><span class='font-semibold text-indigo-700'>${row.count}</span></div>`
-            ).join('');
+            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML =
+              `<div class='flex justify-between font-semibold text-gray-500 mb-1'><span></span><span>B/P</span></div>` +
+              data.topDestinations.map((row, i) => {
+                let name = row.program || '(No Program)';
+                if (name.length > 28) name = name.slice(0, 28) + '...';
+                return `<div class='flex justify-between'><span>${i+1}. ${name}</span><span class='font-semibold text-indigo-700'>${Number(row.count)} / ${Number(row.total_pax)}</span></div>`;
+              }).join('');
           } else {
-            document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-gray-400">No data</span>';
+            console.warn('topDestinations missing or empty:', data.topDestinations);
+            if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes
-          const bookingsChange = document.getElementById('dashboard-total-bookings-change');
-          const newChange = document.getElementById('dashboard-new-bookings-change');
-          const earningsChange = document.getElementById('dashboard-total-earnings-change');
           if (data.percentNew !== null && data.percentNew !== undefined) {
-            const up = data.percentNew >= 0;
-            newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentNew.toFixed(2)}%</span> vs last month`;
+            const percentVal = Number(data.percentNew);
+            const up = percentVal >= 0;
+            if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
           } else {
-            newChange.textContent = '';
+            if (newChange) newChange.textContent = '';
           }
           if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
-            const up = data.percentEarnings >= 0;
-            earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${data.percentEarnings.toFixed(2)}%</span> vs last month`;
+            const percentVal = Number(data.percentEarnings);
+            const up = percentVal >= 0;
+            if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
           } else {
-            earningsChange.textContent = '';
+            if (earningsChange) earningsChange.textContent = '';
           }
-          bookingsChange.textContent = '';
+          if (bookingsChange) bookingsChange.textContent = '';
+          // Passengers
+          const dashboardTotalPassengers = document.getElementById('dashboard-total-passengers');
+          if (dashboardTotalPassengers) {
+            const val = Number(data.totalAdults) + Number(data.totalChildren);
+            dashboardTotalPassengers.textContent = isNaN(val) ? '-' : val.toLocaleString();
+          }
+          // Booking Channels Pie Chart
+          const channelsPieCtx = document.getElementById('channelsPieChart')?.getContext('2d');
+          if (window.channelsPieChartInstance) {
+            window.channelsPieChartInstance.destroy();
+          }
+          if (channelsPieCtx && data.channels && data.channels.length) {
+            // Only show channels with count > 0
+            const filteredChannels = data.channels.filter(row => row.count > 0);
+            const channelLabels = filteredChannels.map(row => row.channel);
+            const channelCounts = filteredChannels.map(row => row.count);
+            const channelColors = [
+              '#0f172a', // Website
+              '#f59e42'  // OTA
+            ];
+            window.channelsPieChartInstance = new Chart(channelsPieCtx, {
+              type: 'pie',
+              data: {
+                labels: channelLabels,
+                datasets: [{
+                  data: channelCounts,
+                  backgroundColor: channelLabels.map((l, i) => channelColors[i] || '#a3a3a3'),
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                responsive: false,
+                plugins: {
+                  legend: { display: true, position: 'bottom' },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.chart._metasets[0].total || 1;
+                        const percent = ((value / total) * 100).toFixed(2);
+                        return `${label}: ${value} (${percent}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            // Show booking counts for Website and OTA (only if count > 0)
+            let html = '';
+            filteredChannels.forEach(c => {
+              html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span> bookings, <span class='font-bold'>${c.passengers}</span> passengers</div>`;
+            });
+            document.getElementById('channels-booking-counts').innerHTML = html;
+          } else if (channelsPieCtx) {
+            channelsPieCtx.clearRect(0, 0, 180, 180);
+            document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';
+          }
         })
         .catch(err => {
-          document.getElementById('dashboard-total-bookings').textContent = '-';
-          document.getElementById('dashboard-new-bookings').textContent = '-';
-          document.getElementById('dashboard-total-earnings').textContent = '-';
-          document.getElementById('dashboard-done').textContent = '-';
-          document.getElementById('dashboard-booked').textContent = '-';
-          document.getElementById('dashboard-progress').style.width = '0%';
-          document.getElementById('dashboard-revenue-list').innerHTML = '<span class="text-red-500">Error loading data</span>';
-          document.getElementById('dashboard-top-destinations').innerHTML = '<span class="text-red-500">Error loading data</span>';
-          document.getElementById('dashboard-total-bookings-change').textContent = '';
-          document.getElementById('dashboard-new-bookings-change').textContent = '';
-          document.getElementById('dashboard-total-earnings-change').textContent = '';
+          if (dashboardTotalBookings) dashboardTotalBookings.textContent = '-';
+          if (dashboardNewBookings) dashboardNewBookings.textContent = '-';
+          if (dashboardTotalEarnings) dashboardTotalEarnings.textContent = '-';
+          if (dashboardDone) dashboardDone.textContent = '-';
+          if (dashboardBooked) dashboardBooked.textContent = '-';
+          if (dashboardProgress) dashboardProgress.style.width = '0%';
+          if (dashboardRevenueList) dashboardRevenueList.innerHTML = '<span class="text-red-500">Error loading data</span>';
+          if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-red-500">Error loading data</span>';
+          // Just use the variables, do not redeclare
+          if (bookingsChange) bookingsChange.textContent = '';
+          if (newChange) newChange.textContent = '';
+          if (earningsChange) earningsChange.textContent = '';
         });
     }
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
+    document.getElementById('dashboard-refresh').addEventListener('click', fetchDashboardAnalytics);
 
-    function fetchPrograms() {
-      const tbody = document.getElementById('programs-table-body');
-      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Loading...</td></tr>';
-      fetch('/api/tours')
+    // --- Programs Tab Logic (merged) ---
+    let allRates = [];
+    function fetchRatesAndPrograms() {
+      fetch('/api/products-rates?type=tour')
         .then(res => res.json())
         .then(data => {
-          if (!data.tours || !data.tours.length) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No programs found.</td></tr>';
-            return;
-          }
-          tbody.innerHTML = '';
-          data.tours.forEach(row => tbody.appendChild(renderProgramRow(row)));
-        })
-        .catch(() => {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:red;">Failed to load programs.</td></tr>';
+          allRates = data.rates || [];
+          fetchPrograms();
         });
     }
-
-    function renderProgramRow(row, isEdit = false) {
-      const tr = document.createElement('tr');
-      if (isEdit) {
-        tr.innerHTML = `
-          <td><input class='border px-2 py-1 w-24' value="${row.sku || ''}" /></td>
-          <td><input class='border px-2 py-1 w-24' value="${row.id || ''}" /></td>
-          <td><input class='border px-2 py-1 w-40' value="${row.program || ''}" /></td>
-          <td><input class='border px-2 py-1 w-32' value="${row.rate || ''}" /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_adult || ''}" /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.net_child || ''}" /></td>
-          <td><input type='checkbox' ${row.np ? 'checked' : ''} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_adult || ''}" ${row.np ? '' : 'disabled'} /></td>
-          <td><input type='number' step='0.01' class='border px-2 py-1 w-20' value="${row.np_child || ''}" ${row.np ? '' : 'disabled'} /></td>
-          <td><input class='border px-2 py-1 w-32' value="${row.remark || ''}" /></td>
-          <td>
-            <button class='save-btn px-2 py-1 bg-green-600 text-white rounded mr-2'>Save</button>
-            <button class='cancel-btn px-2 py-1 bg-gray-400 text-white rounded'>Cancel</button>
-          </td>
-        `;
-        // Enable/disable NP fields based on checkbox
-        const npCheckbox = tr.querySelector('td:nth-child(7) input[type=checkbox]');
-        const npAdultInput = tr.querySelector('td:nth-child(8) input');
-        const npChildInput = tr.querySelector('td:nth-child(9) input');
-        npCheckbox.onchange = () => {
-          npAdultInput.disabled = npChildInput.disabled = !npCheckbox.checked;
-        };
-        // Save/cancel handlers
-        tr.querySelector('.save-btn').onclick = () => saveProgramRow(tr, row);
-        tr.querySelector('.cancel-btn').onclick = () => fetchPrograms();
-      } else {
-        tr.innerHTML = `
-          <td>${row.sku || ''}</td>
-          <td>${row.id || ''}</td>
-          <td>${row.program || ''}</td>
-          <td>${row.rate || ''}</td>
-          <td>${row.net_adult || ''}</td>
-          <td>${row.net_child || ''}</td>
-          <td>${row.np ? '✅' : '❌'}</td>
-          <td>${row.np ? (row.np_adult || '') : ''}</td>
-          <td>${row.np ? (row.np_child || '') : ''}</td>
-          <td>${row.remark || ''}</td>
-          <td>
-            <button class='edit-btn px-2 py-1 bg-blue-600 text-white rounded mr-2'>Edit</button>
-            <button class='delete-btn px-2 py-1 bg-red-600 text-white rounded'>Delete</button>
-          </td>
-        `;
-        tr.querySelector('.edit-btn').onclick = () => {
-          const editRow = { ...row };
-          tr.replaceWith(renderProgramRow(editRow, true));
-        };
-        tr.querySelector('.delete-btn').onclick = () => deleteProgramRow(row);
-      }
-      return tr;
-    }
-
-    addProgramBtn.onclick = () => {
+    let allPrograms = [];
+    function renderProgramsTable(programs) {
       const tbody = document.getElementById('programs-table-body');
-      const newRow = {
-        sku: '', id: '', program: '', rate: '', net_adult: '', net_child: '', np: false, np_adult: '', np_child: '', remark: ''
-      };
-      tbody.prepend(renderProgramRow(newRow, true));
-    };
-
-    function saveProgramRow(tr, oldRow) {
-      const inputs = tr.querySelectorAll('input');
-      const [sku, id, program, rate, net_adult, net_child, np, np_adult, np_child, remark] = [
-        inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value,
-        inputs[4].value, inputs[5].value, inputs[6].checked,
-        inputs[7].value, inputs[8].value, inputs[9].value
-      ];
-      const body = {
-        sku, id, program, rate,
-        net_adult: net_adult ? parseFloat(net_adult) : 0,
-        net_child: net_child ? parseFloat(net_child) : 0,
-        np,
-        np_adult: np ? (np_adult ? parseFloat(np_adult) : 0) : null,
-        np_child: np ? (np_child ? parseFloat(np_child) : 0) : null,
-        remark
-      };
-      const method = oldRow && oldRow.sku ? 'PUT' : 'POST';
-      fetch('/api/tours', {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
-        .then(res => res.json())
-        .then(() => fetchPrograms())
-        .catch(() => alert('Failed to save.'));
+      if (!programs.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      programs.forEach(product => {
+        const tr = document.createElement('tr');
+        tr.className = '';
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">${product.sku}</div>
+            <div class="text-sm text-gray-500">Product ID: ${product.product_id_optional || ''}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-normal max-w-xs">
+            <div class="text-sm font-medium text-gray-900">${product.program}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <table class="min-w-full divide-y divide-gray-100 rounded-lg bg-gray-50">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Name</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Adult</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Child</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Fee Details</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                ${product.rates.map(rate => `
+                  <tr>
+                    <td class="px-3 py-2 text-sm text-gray-800">${rate.name}</td>
+                    <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_adult).toFixed(2)}</td>
+                    <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_child).toFixed(2)}</td>
+                    <td class="px-3 py-2 text-sm ${rate.fee_type === 'none' ? 'text-gray-500 italic' : 'text-gray-800'}">
+                      ${rate.fee_type === 'none' ? 'No additional fee' : ''}
+                      ${rate.fee_type === 'np' ? `<div>NP Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>NP Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                      ${rate.fee_type === 'entrance' ? `<div>Entrance Fee Adult: ${Number(rate.fee_adult).toFixed(2)}</div><div>Entrance Fee Child: ${Number(rate.fee_child).toFixed(2)}</div>` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </td>
+          <td class="px-6 py-4 whitespace-normal text-sm text-gray-600 max-w-xs">
+            ${product.remark || ''}
+          </td>
+          <td class="px-6 py-4 text-right">
+            <button class="edit-program-btn px-2 py-1 bg-blue-600 text-white rounded" data-sku="${product.sku}">Edit</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
+    function fetchPrograms() {
+      const tbody = document.getElementById('programs-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>';
+      fetch('/api/products-rates?type=tour')
+        .then(res => res.json())
+        .then(data => {
+          allPrograms = data.tours || [];
+          renderProgramsTable(allPrograms);
+        })
+        .catch(() => {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs.</td></tr>';
+        });
+    }
+    document.getElementById('programs-search-bar').addEventListener('input', function(e) {
+      const search = e.target.value.toLowerCase();
+      const filtered = allPrograms.filter(p =>
+        (p.sku && p.sku.toLowerCase().includes(search)) ||
+        (p.program && p.program.toLowerCase().includes(search)) ||
+        (p.remark && p.remark.toLowerCase().includes(search))
+      );
+      renderProgramsTable(filtered);
+    });
+    // ... (rest of Programs tab logic: add/edit/delete, form, event listeners, etc. as in previous code) ...
 
-    function deleteProgramRow(row) {
-      if (!confirm('Delete this program?')) return;
-      fetch('/api/tours', {
+    // Restore Programs tab logic (add, edit, delete, form, and event listeners)
+    document.addEventListener('DOMContentLoaded', function () {
+      const addProgramBtn = document.getElementById('add-program-btn');
+      const programsSection = document.getElementById('programs-section');
+      const addProgramSection = document.getElementById('add-program-section');
+      const cancelAddProgramBtn = document.getElementById('cancel-add-program');
+      // Show form, hide table
+      addProgramBtn.addEventListener('click', function () {
+        programsSection.style.display = 'none';
+        addProgramSection.style.display = '';
+        // Reset form
+        document.getElementById('productForm').reset();
+        document.getElementById('ratesContainer').innerHTML = '';
+        let rateItemCounter = 0;
+        // Add one rate item by default
+        document.getElementById('addRateBtn').click();
+      });
+      // Cancel button: hide form, show table
+      cancelAddProgramBtn.addEventListener('click', function () {
+        addProgramSection.style.display = 'none';
+        programsSection.style.display = '';
+      });
+      // Add event listener for Edit buttons in Programs table
+      document.getElementById('programs-table-body').addEventListener('click', function(e) {
+        const btn = e.target.closest('.edit-program-btn');
+        if (!btn) return;
+        const sku = btn.getAttribute('data-sku');
+        // Find the program data from the loaded tours (reuse last fetched data)
+        fetch('/api/products-rates?type=tour')
+          .then(res => res.json())
+          .then(data => {
+            const program = data.tours.find(p => p.sku === sku);
+            if (!program) return;
+            // Show form, hide table
+            programsSection.style.display = 'none';
+            addProgramSection.style.display = '';
+            // Fill form fields
+            document.getElementById('sku').value = program.sku || '';
+            document.getElementById('dbRowId').value = program.id || '';
+            document.getElementById('productIdOptional').value = program.product_id_optional || '';
+            document.getElementById('program').value = program.program || '';
+            document.getElementById('remark').value = program.remark || '';
+            // Clear and fill rates
+            const ratesContainer = document.getElementById('ratesContainer');
+            ratesContainer.innerHTML = '';
+            if (program.rates && program.rates.length) {
+              program.rates.forEach(rate => {
+                // Add a rate item (reuse addRateBtn logic)
+                document.getElementById('addRateBtn').click();
+                // Fill the last added rate item
+                const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
+                const lastRateItem = rateItems[rateItems.length - 1];
+                if (lastRateItem) {
+                  lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
+                  lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
+                  lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
+                  lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
+                  // Trigger change to show/hide fee fields
+                  lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
+                  if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
+                    lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
+                    lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
+                  }
+                }
+              });
+            }
+            // Show Delete button if editing
+            document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
+          });
+      });
+      // Add Rate Item logic
+      const addRateBtn = document.getElementById('addRateBtn');
+      const ratesContainer = document.getElementById('ratesContainer');
+      let rateItemCounter = 0;
+      const addRateItem = () => {
+        rateItemCounter++;
+        const rateItemId = `rate-item-${rateItemCounter}`;
+        const rateItemHTML = `
+          <div id="${rateItemId}" class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm fade-in">
+            <div class="flex justify-between items-start mb-4">
+              <!-- Removed Rate Item #N heading -->
+              <button type="button" class="remove-rate-btn text-gray-400 hover:text-red-600 transition duration-150" data-remove-id="${rateItemId}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="rateName_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Rate Name <span class="text-red-500">*</span></label>
+                <input type="text" id="rateName_${rateItemCounter}" name="rateName" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., Standard" value="Standard">
+              </div>
+              <div>
+                <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
+                <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
+              </div>
+              <div>
+                <label for="netChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Child <span class="text-red-500">*</span></label>
+                <input type="number" step="0.01" id="netChild_${rateItemCounter}" name="netChild" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 50.25">
+              </div>
+            </div>
+            <div class="mt-4">
+              <div>
+                <label for="feeType_${rateItemCounter}" class="block text-sm font-medium text-gray-700">Additional Fee Type</label>
+                <select id="feeType_${rateItemCounter}" class="fee-type-select form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" data-controls-id="${rateItemCounter}">
+                  <option value="none" selected>No Additional Fee</option>
+                  <option value="np">National Park Fee</option>
+                  <option value="entrance">Entrance Fee</option>
+                </select>
+              </div>
+              <div id="feeFields_${rateItemCounter}" class="hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-dashed border-gray-300 pt-4">
+                <div>
+                  <label id="feeAdultLabel_${rateItemCounter}" for="feeAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Adult <span class="text-red-500">*</span></label>
+                  <input type="number" step="0.01" id="feeAdult_${rateItemCounter}" name="feeAdult" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 90.00">
+                </div>
+                <div>
+                  <label id="feeChildLabel_${rateItemCounter}" for="feeChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Child <span class="text-red-500">*</span></label>
+                  <input type="number" step="0.01" id="feeChild_${rateItemCounter}" name="feeChild" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 45.00">
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        ratesContainer.insertAdjacentHTML('beforeend', rateItemHTML);
+      };
+      addRateBtn.addEventListener('click', addRateItem);
+      ratesContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-rate-btn')) {
+          const button = e.target.closest('.remove-rate-btn');
+          const elementToRemove = document.getElementById(button.dataset.removeId);
+          if (elementToRemove) {
+            elementToRemove.remove();
+          }
+        }
+      });
+      ratesContainer.addEventListener('change', function(e) {
+        if (e.target.classList.contains('fee-type-select')) {
+          const select = e.target;
+          const controlsId = select.dataset.controlsId;
+          const feeFieldsContainer = document.getElementById(`feeFields_${controlsId}`);
+          const feeAdultInput = document.getElementById(`feeAdult_${controlsId}`);
+          const feeChildInput = document.getElementById(`feeChild_${controlsId}`);
+          const feeAdultLabel = document.getElementById(`feeAdultLabel_${controlsId}`);
+          const feeChildLabel = document.getElementById(`feeChildLabel_${controlsId}`);
+          const selectedValue = select.value;
+          if (selectedValue === 'none') {
+            feeFieldsContainer.classList.add('hidden');
+            feeAdultInput.required = false;
+            feeChildInput.required = false;
+            feeAdultInput.value = '';
+            feeChildInput.value = '';
+          } else {
+            let labelPrefix = '';
+            if (selectedValue === 'np') {
+              labelPrefix = 'NP Fee';
+            } else if (selectedValue === 'entrance') {
+              labelPrefix = 'Entrance Fee';
+            }
+            feeAdultLabel.innerHTML = `${labelPrefix} Adult <span class="text-red-500">*</span>`;
+            feeChildLabel.innerHTML = `${labelPrefix} Child <span class="text-red-500">*</span>`;
+            feeFieldsContainer.classList.remove('hidden');
+            feeAdultInput.required = true;
+            feeChildInput.required = true;
+          }
+        }
+      });
+      document.getElementById('productForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = {
+          sku: formData.get('sku'),
+          id: formData.get('id'),
+          product_id_optional: formData.get('product_id_optional'),
+          program: formData.get('program'),
+          remark: formData.get('remark'),
+          rates: []
+        };
+        const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
+        if (rateItems.length === 0) {
+          alert('Please add at least one rate item.');
+          return;
+        }
+        let formIsValid = true;
+        rateItems.forEach((item, index) => {
+          const rateId = item.id.split('-').pop();
+          const feeType = document.getElementById(`feeType_${rateId}`).value;
+          const rateData = {
+            name: item.querySelector(`[name="rateName"]`).value,
+            net_adult: Number(item.querySelector(`[name="netAdult"]`).value),
+            net_child: Number(item.querySelector(`[name="netChild"]`).value),
+            fee_type: feeType,
+            fee_adult: null,
+            fee_child: null
+          };
+          if (feeType !== 'none') {
+            rateData.fee_adult = Number(item.querySelector(`[name="feeAdult"]`).value);
+            rateData.fee_child = Number(item.querySelector(`[name="feeChild"]`).value);
+          }
+          data.rates.push(rateData);
+        });
+        if (!this.checkValidity()) {
+          this.reportValidity();
+          alert('Please fill out all required fields.');
+          return;
+        }
+        // Send data to backend API
+        fetch('/api/products-rates?type=tour', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to save program');
+          return res.json();
+        })
+        .then(result => {
+          alert('Program saved successfully!');
+          addProgramSection.style.display = 'none';
+          programsSection.style.display = '';
+          if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+        })
+        .catch(err => {
+          alert('Error saving program: ' + err.message);
+        });
+      });
+    });
+
+    // Add Delete button handler after DOMContentLoaded
+    document.getElementById('delete-program-btn').addEventListener('click', function() {
+      const id = document.getElementById('dbRowId').value;
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this program and all its rates? This cannot be undone.')) return;
+      fetch('/api/products-rates?type=tour', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: row.id, sku: row.sku, rate: row.rate })
+        body: JSON.stringify({ id })
       })
-        .then(res => res.json())
-        .then(() => fetchPrograms())
-        .catch(() => alert('Failed to delete.'));
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to delete program');
+        return res.json();
+      })
+      .then(result => {
+        alert('Program deleted successfully!');
+        document.getElementById('add-program-section').style.display = 'none';
+        document.getElementById('programs-section').style.display = '';
+        if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+      })
+      .catch(err => {
+        alert('Error deleting program: ' + err.message);
+      });
+    });
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js');
+      });
     }
+
+    // Add button styles
+    window.handleDelete = async function(bookingNumber, btn) {
+      if (!confirm('Are you sure you want to delete this booking?')) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
+        fetchBookings(currentPage, currentSort, currentDir, searchTerm);
+      } catch (err) {
+        alert('Failed to delete: ' + (err.message || 'Unknown error'));
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Settings Gear Icon and Modal Logic
+    const settingsGearBtn = document.getElementById('settings-gear-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsModalClose = document.getElementById('settings-modal-close');
+    const settingsForm = document.getElementById('settings-form');
+    const bokunAccessKeyInput = document.getElementById('bokun-access-key');
+    const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
+    const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
+    const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
+    const useBokunApiInput = document.getElementById('use-bokun-api');
+    const telegramBotTokenInput = document.getElementById('telegram-bot-token');
+    const telegramChatIdInput = document.getElementById('telegram-chat-id');
+    const notificationEmailToInput = document.getElementById('notification-email-to');
+    let settingsLoading = false;
+    let settingsError = '';
+    let settingsSuccess = '';
+    // Helper to show/hide loading
+    function renderSettingsModalState() {
+      const loadingDiv = document.getElementById('settings-loading');
+      const errorDiv = document.getElementById('settings-error');
+      const successDiv = document.getElementById('settings-success');
+      if (loadingDiv) loadingDiv.style.display = settingsLoading ? '' : 'none';
+      if (errorDiv) {
+        errorDiv.style.display = settingsError ? '' : 'none';
+        errorDiv.textContent = settingsError;
+      }
+      if (successDiv) {
+        successDiv.style.display = settingsSuccess ? '' : 'none';
+        successDiv.textContent = settingsSuccess;
+      }
+    }
+    // Add loading/error/success divs to modal
+    (() => {
+      const form = document.getElementById('settings-form');
+      if (!document.getElementById('settings-loading')) {
+        const loading = document.createElement('div');
+        loading.id = 'settings-loading';
+        loading.innerHTML = '<span class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-700 inline-block"></span> <span class="ml-2 text-gray-500">Loading...</span>';
+        loading.style.display = 'none';
+        form.prepend(loading);
+      }
+      if (!document.getElementById('settings-error')) {
+        const error = document.createElement('div');
+        error.id = 'settings-error';
+        error.className = 'text-red-600 font-semibold mb-2';
+        error.style.display = 'none';
+        form.prepend(error);
+      }
+      if (!document.getElementById('settings-success')) {
+        const success = document.createElement('div');
+        success.id = 'settings-success';
+        success.className = 'text-green-600 font-semibold mb-2';
+        success.style.display = 'none';
+        form.prepend(success);
+      }
+    })();
+    settingsGearBtn.onclick = async () => {
+      settingsModal.style.display = 'flex';
+      settingsLoading = true; settingsError = ''; settingsSuccess = '';
+      renderSettingsModalState();
+      // Load settings from backend
+      try {
+        const res = await fetch('/api/dashboard-settings?type=settings');
+        if (!res.ok) throw new Error('Failed to load settings');
+        const data = await res.json();
+        bokunAccessKeyInput.value = data.bokun_access_key || '';
+        bokunSecretKeyInput.value = data.bokun_secret_key || '';
+        wooConsumerKeyInput.value = data.woocommerce_consumer_key || '';
+        wooConsumerSecretInput.value = data.woocommerce_consumer_secret || '';
+        useBokunApiInput.checked = !!data.use_bokun_api;
+        telegramBotTokenInput.value = data.telegram_bot_token || '';
+        telegramChatIdInput.value = data.telegram_chat_id || '';
+        notificationEmailToInput.value = data.notification_email_to || '';
+        settingsLoading = false;
+        renderSettingsModalState();
+      } catch (err) {
+        settingsLoading = false;
+        settingsError = 'Failed to load settings: ' + (err.message || 'Unknown error');
+        renderSettingsModalState();
+      }
+    };
+    settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
+    settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
+    settingsForm.onsubmit = async function(e) {
+      e.preventDefault();
+      settingsLoading = true; settingsError = ''; settingsSuccess = '';
+      renderSettingsModalState();
+      try {
+        const res = await fetch('/api/dashboard-settings?type=settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bokun_access_key: bokunAccessKeyInput.value,
+            bokun_secret_key: bokunSecretKeyInput.value,
+            woocommerce_consumer_key: wooConsumerKeyInput.value,
+            woocommerce_consumer_secret: wooConsumerSecretInput.value,
+            use_bokun_api: useBokunApiInput.checked,
+            telegram_bot_token: telegramBotTokenInput.value,
+            telegram_chat_id: telegramChatIdInput.value,
+            notification_email_to: notificationEmailToInput.value
+          })
+        });
+        if (!res.ok) throw new Error('Failed to save settings');
+        settingsLoading = false;
+        settingsSuccess = 'Settings saved!';
+        renderSettingsModalState();
+        setTimeout(() => { settingsSuccess = ''; renderSettingsModalState(); settingsModal.style.display = 'none'; }, 1200);
+      } catch (err) {
+        settingsLoading = false;
+        settingsError = 'Failed to save settings: ' + (err.message || 'Unknown error');
+        renderSettingsModalState();
+      }
+    };
   </script>
 </body>
 </html>

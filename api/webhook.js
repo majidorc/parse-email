@@ -5,7 +5,7 @@ const axios = require('axios');
 const { sql } = require('@vercel/postgres');
 const { convert } = require('html-to-text');
 const configData = require('../config.json');
-const NotificationManager = require('./notificationManager');
+const NotificationManager = require('../notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;
@@ -20,57 +20,101 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
 
-    if (action !== 'toggle' || !['op', 'ri', 'customer'].includes(buttonType)) {
+    // Accept op, ri, customer, parkfee
+    if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee'].includes(buttonType)) {
         console.error('Invalid callback data:', data);
         return res.status(400).send('Invalid callback data');
     }
 
     try {
-        const newKeyboard = JSON.parse(JSON.stringify(message.reply_markup.inline_keyboard));
-        let buttonIndex = buttonType === 'op' ? 0 : buttonType === 'ri' ? 1 : 2;
-        const button = newKeyboard[0][buttonIndex];
-        if (button) {
-            const isChecked = button.text.endsWith('✓');
-            button.text = buttonType.toUpperCase() + (isChecked ? ' X' : ' ✓');
-            // Update the database
-            let column;
-            if (buttonType === 'op') column = 'op';
-            else if (buttonType === 'ri') column = 'ri';
-            else if (buttonType === 'customer') column = 'customer';
-            else return res.status(400).send('Invalid column');
-            if (buttonType === 'customer' && !isChecked) {
+        // Fetch the latest booking state
+        const { rows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
+        if (!rows.length) {
+            console.error('Booking not found for callback:', bookingId);
+            return res.status(404).send('Booking not found');
+        }
+        const booking = rows[0];
+        console.log('Booking before update:', booking);
+        let update = {};
+        if (buttonType === 'op') {
+            update.op = !booking.op;
+            // If OP is turned off, also turn off Customer
+            if (!update.op) update.customer = false;
+            console.log(`Toggling OP to ${update.op}, Customer to ${update.customer}`);
+        } else if (buttonType === 'ri') {
+            update.ri = !booking.ri;
+            console.log(`Toggling RI to ${update.ri}`);
+        } else if (buttonType === 'customer') {
                 // Only allow setting customer to true if op is true
-                const { rows } = await sql.query('SELECT op FROM bookings WHERE booking_number = $1', [bookingId]);
-                if (!rows.length || !rows[0].op) {
+            if (!booking.op) {
                     // Send error to Telegram with a short message and log the response
                     const popupText = 'OP must be ✓ first.';
                     try {
-                        const popupResp = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+                    const token = await getTelegramBotToken();
+                    await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
                             callback_query_id: callbackQuery.id,
                             text: popupText,
                             show_alert: true
                         });
-                        console.log('Sent Telegram popup alert:', popupResp.data);
                     } catch (popupErr) {
                         console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
                     }
+                console.warn('Tried to toggle Customer but OP is not enabled.');
                     return res.status(200).send('OP not send yet');
                 }
-            }
-            const query = `UPDATE bookings SET ${column} = $1 WHERE booking_number = $2`;
-            const result = await sql.query(query, [!isChecked, bookingId]);
-            if (result.rowCount !== undefined) {
-              console.log('Rows affected:', result.rowCount);
-            }
-        } else {
-            console.error(`Button at index ${buttonIndex} not found in keyboard.`);
+            update.customer = !booking.customer;
+            console.log(`Toggling Customer to ${update.customer}`);
+        } else if (buttonType === 'parkfee') {
+            update.national_park_fee = !booking.national_park_fee;
+            console.log(`Toggling National Park Fee to ${update.national_park_fee}`);
         }
-        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`, {
+        // Build the update query
+        const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
+        const values = [bookingId, ...Object.values(update)];
+        if (setClauses.length > 0) {
+            console.log('Updating booking with:', update);
+            await sql.query(`UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`, values);
+        }
+        // Fetch the updated booking
+        const { rows: updatedRows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
+        const updatedBooking = updatedRows[0];
+        console.log('Booking after update:', updatedBooking);
+        // Rebuild the message and keyboard
+        const nm = new NotificationManager();
+        const newMessage = nm.constructNotificationMessage(updatedBooking);
+        const opText = `OP${updatedBooking.op ? ' ✓' : ' X'}`;
+        const riText = `RI${updatedBooking.ri ? ' ✓' : ' X'}`;
+        const customerText = `Customer${updatedBooking.customer ? ' ✓' : ' X'}`;
+        const parkFeeText = `Cash on tour : National Park Fee ${updatedBooking.national_park_fee ? '✅' : '❌'}`;
+        const monoMessage = '```' + newMessage + '```';
+        const newKeyboard = {
+            inline_keyboard: [
+                [
+                    { text: opText, callback_data: `toggle:op:${bookingId}` },
+                    { text: riText, callback_data: `toggle:ri:${bookingId}` },
+                    { text: customerText, callback_data: `toggle:customer:${bookingId}` }
+                ],
+                [
+                    { text: parkFeeText, callback_data: `toggle:parkfee:${bookingId}` }
+                ]
+            ]
+        };
+        // Edit the message (monospace)
+        try {
+            const token = await getTelegramBotToken();
+            const editResp = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
-            reply_markup: { inline_keyboard: newKeyboard }
+                text: monoMessage,
+                parse_mode: 'Markdown',
+                reply_markup: newKeyboard
         });
-        await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            console.log('editMessageText response:', editResp.data);
+        } catch (editErr) {
+            console.error('Error editing Telegram message:', editErr.response ? editErr.response.data : editErr.message);
+        }
+        const token = await getTelegramBotToken();
+        await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
             callback_query_id: callbackQuery.id
         });
         return res.status(200).send('OK');
@@ -228,6 +272,17 @@ class BokunParser extends BaseEmailParser {
     }
     return null;
   }
+  extractBookDate() {
+    // Look for a line like 'Created\tFri, July 04 2025 @ 23:17'
+    const match = this.textContent.match(/Created\s*[\t:]*\s*([A-Za-z]+,?\s+[A-Za-z]+\s+\d{1,2}\s+\d{4})/);
+    if (match && match[1]) {
+      // Remove day of week if present (e.g., 'Fri, July 04 2025' -> 'July 04 2025')
+      const dateStr = match[1].replace(/^[A-Za-z]+,?\s+/, '');
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    }
+    return null;
+  }
   extractAll() {
     const passengers = this.extractPassengers();
     const tourDate = this.extractTourDate();
@@ -240,7 +295,8 @@ class BokunParser extends BaseEmailParser {
       adult: passengers.adult, child: passengers.child, infant: passengers.infant,
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
       isoDate: this._getISODate(tourDate),
-      paid: this.extractPaid()
+      paid: this.extractPaid(),
+      book_date: this.extractBookDate()
     };
   }
   formatBookingDetails() {
@@ -292,7 +348,6 @@ class ThailandToursParser extends BaseEmailParser {
 
     extractPassengers() {
         const pax = { adult: '0', child: '0', infant: '0' };
-        // Match lines like 'Adult (11+) 1399: 1', 'Adults: 1', 'Child: 0', etc.
         for (const line of this.lines) {
             // Adult
             const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
@@ -308,6 +363,11 @@ class ThailandToursParser extends BaseEmailParser {
             const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
             if (infantMatch && infantMatch[1]) {
                 pax.infant = infantMatch[1];
+            }
+            // Person (+4 Years): N (treat as adult)
+            const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
+            if (personPlusMatch && personPlusMatch[1]) {
+                pax.adult = personPlusMatch[1];
             }
         }
         // If no explicit adult/child/infant found, fallback to 'Person: N'
@@ -396,6 +456,19 @@ class ThailandToursParser extends BaseEmailParser {
       return null;
     }
 
+    extractBookDate() {
+      // Look for a line like 'Order date: July 5, 2025'
+      const line = this.lines.find(l => l.toLowerCase().startsWith('order date:'));
+      if (line) {
+        const match = line.match(/Order date:\s*([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
+        if (match && match[1]) {
+          const d = new Date(match[1]);
+          if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+        }
+      }
+      return null;
+    }
+
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
@@ -411,7 +484,8 @@ class ThailandToursParser extends BaseEmailParser {
             hotel: this.extractHotel(),
             phoneNumber: this.extractPhone(),
             isoDate: this._getISODate(tourDate),
-            paid: this.extractPaid()
+            paid: this.extractPaid(),
+            book_date: this.extractBookDate()
         };
     }
 
@@ -430,8 +504,18 @@ class EmailParserFactory {
   static create(parsedEmail) {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
+    let channel = null;
+    if (fromAddress && fromAddress.includes('bokun.io')) {
+      channel = 'bokun';
+    } else if (fromAddress && fromAddress.includes('tours.co.th')) {
+      channel = 'tours.co.th';
+    } else if (fromAddress && fromAddress.includes('getyourguide')) {
+      channel = 'getyourguide';
+    } else {
+      channel = 'other';
+    }
 
-    if (!subject || !subject.toLowerCase().includes('new booking')) {
+    if (!subject || (!subject.toLowerCase().startsWith('new booking') && !subject.toLowerCase().startsWith('updated booking'))) {
       return null;
     }
 
@@ -502,6 +586,65 @@ class FallbackParser extends BaseEmailParser {
     }
 }
 
+async function searchBookings(query) {
+  // Try booking number (exact)
+  let sqlQuery = 'SELECT * FROM bookings WHERE booking_number = $1';
+  let params = [query];
+  let { rows } = await sql.query(sqlQuery, params);
+  if (rows.length > 0) return rows;
+  // Try customer name (partial, case-insensitive)
+  sqlQuery = 'SELECT * FROM bookings WHERE customer_name ILIKE $1 ORDER BY tour_date DESC LIMIT 3';
+  params = [`%${query}%`];
+  rows = (await sql.query(sqlQuery, params)).rows;
+  if (rows.length > 0) return rows;
+  // Try date (YYYY-MM-DD)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(query)) {
+    sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
+    params = [query];
+    rows = (await sql.query(sqlQuery, params)).rows;
+    if (rows.length > 0) return rows;
+  }
+  // Try date in 'D MMM YY' or 'DD MMM YY' format (e.g., '17 May 25')
+  const moment = require('moment');
+  const parsed = moment(query, ['D MMM YY', 'DD MMM YY', 'D MMMM YY', 'DD MMMM YY'], true);
+  if (parsed.isValid()) {
+    const dateStr = parsed.format('YYYY-MM-DD');
+    sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
+    params = [dateStr];
+    rows = (await sql.query(sqlQuery, params)).rows;
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+function extractQuery(text, botUsername) {
+  if (!text) return '';
+  text = text.trim();
+  // Handle /search command
+  if (text.startsWith('/search')) {
+    return text.replace(/^\/search(@\w+)?\s*/i, '');
+  }
+  // Handle mention (e.g., @botname query)
+  if (text.startsWith('@')) {
+    // Remove @botname and any whitespace
+    return text.replace(/^@\w+\s*/i, '');
+  }
+  // Otherwise, return as is
+  return text;
+}
+
+// Helper to get Telegram Bot Token from settings
+async function getTelegramBotToken() {
+  const { rows } = await sql`SELECT telegram_bot_token FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+  return rows[0]?.telegram_bot_token || '';
+}
+
+// Helper to get Telegram Chat ID from settings
+async function getTelegramChatId() {
+  const { rows } = await sql`SELECT telegram_chat_id FROM settings ORDER BY updated_at DESC LIMIT 1;`;
+  return rows[0]?.telegram_chat_id || '';
+}
+
 async function handler(req, res) {
     console.log('WEBHOOK REQUEST RECEIVED:', req.method, new Date().toISOString());
     if (req.method !== 'POST') {
@@ -517,8 +660,80 @@ async function handler(req, res) {
             jsonData = null;
         }
 
+        // Handle Telegram callback queries (inline keyboard)
         if (jsonData && jsonData.callback_query) {
             return handleTelegramCallback(jsonData.callback_query, res);
+        }
+
+        // Handle Telegram /search command and general search
+        if (jsonData && jsonData.message && jsonData.message.chat && jsonData.message.text) {
+            const chat_id = jsonData.message.chat.id;
+            const reply_to_message_id = jsonData.message.message_id;
+            const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
+            const text = jsonData.message.text.trim();
+            const query = extractQuery(text, botUsername);
+            if (text.startsWith('/search')) {
+                if (!query) {
+                    // Send help message
+                    const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
+                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        chat_id: chatId,
+                        text: 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const results = await searchBookings(query);
+                if (results.length === 0) {
+                    const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
+                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        chat_id: chatId,
+                        text: 'No bookings found for your query.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const nm = new NotificationManager();
+                for (const booking of results) {
+                    await nm.sendTelegramWithButtons(booking, chat_id);
+                }
+                return res.json({ ok: true });
+            } else if (!text.startsWith('/')) {
+                // If not a command, treat as search
+                if (!query) {
+                    const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
+                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        chat_id: chatId,
+                        text: 'Please send a booking number, customer name, or date to search.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const results = await searchBookings(query);
+                if (results.length === 0) {
+                    const token = await getTelegramBotToken();
+                    const chatId = await getTelegramChatId();
+                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                        chat_id: chatId,
+                        text: 'No bookings found for your query.',
+                        reply_to_message_id,
+                        parse_mode: 'Markdown'
+                    });
+                    return res.json({ ok: true });
+                }
+                const nm = new NotificationManager();
+                for (const booking of results) {
+                    await nm.sendTelegramWithButtons(booking, chat_id);
+                }
+                return res.json({ ok: true });
+            }
+            // Ignore other commands (like /start, /help, etc.)
         }
         
         const parsedEmail = await simpleParser(rawBody);
@@ -529,9 +744,11 @@ async function handler(req, res) {
             const match = parsedEmail.subject.match(/Ext\. booking ref: ([A-Z0-9]+)/);
             if (match && match[1]) {
                 const bookingNumber = match[1];
+                console.log(`[CANCEL] Removing booking: ${bookingNumber}`);
                 await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
                 return res.status(200).send(`Webhook processed: Booking ${bookingNumber} removed (cancelled).`);
             } else {
+                console.warn('[CANCEL] Cancelled booking email, but booking number not found in subject:', parsedEmail.subject);
                 return res.status(400).send('Webhook processed: Cancelled booking email, but booking number not found in subject.');
             }
         }
@@ -539,13 +756,27 @@ async function handler(req, res) {
         const parser = EmailParserFactory.create(parsedEmail);
 
         if (!parser) {
+            console.warn('[SKIP] No suitable parser found or subject incorrect:', {
+                subject: parsedEmail.subject,
+                from: parsedEmail.from?.value?.[0]?.address,
+            });
             return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
         }
 
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+        console.log('[PARSE] Extracted info:', extractedInfo);
 
         if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+            console.warn('[SKIP] Skipped due to invalid date:', {
+                bookingNumber: extractedInfo?.bookingNumber,
+                tourDate: extractedInfo?.tourDate,
+                isoDate: extractedInfo?.isoDate,
+            });
             return res.status(200).send('Webhook processed: Skipped due to invalid date.');
+        }
+        if (!extractedInfo.bookingNumber) {
+            console.warn('[SKIP] Skipped due to missing booking number:', extractedInfo);
+            return res.status(200).send('Webhook processed: Skipped due to missing booking number.');
         }
 
         try {
@@ -573,7 +804,8 @@ async function handler(req, res) {
                   ['hotel', extractedInfo.hotel],
                   ['phone_number', extractedInfo.phoneNumber],
                   ['raw_tour_date', extractedInfo.tourDate],
-                  ['paid', paid]
+                  ['paid', paid],
+                  ['book_date', extractedInfo.book_date]
                 ];
                 for (const [key, value] of fields) {
                   if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
@@ -582,29 +814,64 @@ async function handler(req, res) {
                   }
                 }
                 if (changed) {
+                  console.log(`[UPDATE] Updating booking: ${extractedInfo.bookingNumber}`);
                   await sql`
-                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}
+                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');
                 } else {
+                  console.log(`[UNCHANGED] Booking unchanged (no update needed): ${extractedInfo.bookingNumber}`);
                   return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
                 }
             }
-
-            const { rows: [newBooking] } = await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid})
-                RETURNING *;
-            `;
+            
             if (adult === 0) {
+                console.log(`[REMOVE] Removing booking (adult=0): ${extractedInfo.bookingNumber}`);
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
-            return res.status(200).send('Webhook processed: Booking saved.');
+            
+            // Determine channel based on sender or booking number
+            let channel = 'Website';
+            if (parsedEmail.from && parsedEmail.from.value && parsedEmail.from.value[0]) {
+              const sender = parsedEmail.from.value[0].address || '';
+              if (sender.includes('bokun.io')) channel = 'Bokun';
+              else if (sender.includes('tours.co.th')) channel = 'tours.co.th';
+              else if (sender.includes('getyourguide.com')) channel = 'GYG';
+            }
+            if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('GYG')) {
+              channel = 'GYG';
+            } else if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('6')) {
+              channel = 'Website';
+            } else if (!['Bokun', 'tours.co.th', 'GYG', 'Website'].includes(channel)) {
+              channel = 'OTA';
+            }
+
+            console.log(`[INSERT] Inserting new booking: ${extractedInfo.bookingNumber}`);
+            await sql`
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel})
+                ON CONFLICT (booking_number) DO UPDATE SET
+                  tour_date = EXCLUDED.tour_date,
+                  sku = EXCLUDED.sku,
+                  program = EXCLUDED.program,
+                  customer_name = EXCLUDED.customer_name,
+                  adult = EXCLUDED.adult,
+                  child = EXCLUDED.child,
+                  infant = EXCLUDED.infant,
+                  hotel = EXCLUDED.hotel,
+                  phone_number = EXCLUDED.phone_number,
+                  notification_sent = EXCLUDED.notification_sent,
+                  raw_tour_date = EXCLUDED.raw_tour_date,
+                  paid = EXCLUDED.paid,
+                  book_date = EXCLUDED.book_date,
+                  channel = EXCLUDED.channel;
+            `;
+            return res.status(200).send('Webhook processed: Booking upserted.');
 
         } catch (error) {
-            console.error(`Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
+            console.error(`[ERROR][DB] Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
             return res.status(500).send({ error: 'Database processing failed.', details: error.message });
         }
 

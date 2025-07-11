@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import NotificationManager from './notificationManager';
+const NotificationManager = require('../notificationManager');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -110,6 +110,7 @@
       <button id="toggle-bookings" class="px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Bookings</button>
       <button id="toggle-programs" class="px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Programs</button>
       <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Accounting</button>
+      <button id="toggle-prices" class="px-4 py-2 rounded font-semibold bg-yellow-200 text-orange-600 w-full sm:w-auto transition-colors duration-200" type="button">Prices</button>
     </div>
     <!-- Programs Section (pixel-perfect match) -->
     <div id="programs-section" style="display:none;">
@@ -328,6 +329,35 @@
           <div class="text-base font-semibold text-indigo-800 mb-2">Booking Channels</div>
           <canvas id="channelsPieChart" width="180" height="180"></canvas>
           <div id="channels-booking-counts" class="mt-2 text-sm text-gray-700"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Prices Section (hidden by default) -->
+    <div id="prices-section" style="display:none;">
+      <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="mb-6 flex justify-between items-center">
+          <h2 class="text-2xl sm:text-3xl font-bold text-orange-700">Prices</h2>
+        </div>
+        <div class="bg-yellow-50 rounded-2xl shadow-lg overflow-hidden border border-yellow-200">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-yellow-200">
+              <thead class="bg-yellow-100">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">SKU</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">ID</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Company</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Tour</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Adult Net</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Child Net</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Remark</th>
+                  <th class="px-6 py-3 text-left text-xs font-bold text-orange-600 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody id="prices-table-body" class="bg-yellow-50 divide-y divide-yellow-100">
+                <tr><td colspan="8" class="text-center text-orange-300">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1887,6 +1917,126 @@
         renderSettingsModalState();
       }
     };
+
+    // --- PRICES TAB LOGIC ---
+    const pricesBtn = document.getElementById('toggle-prices');
+    const pricesSection = document.getElementById('prices-section');
+    const pricesTableBody = document.getElementById('prices-table-body');
+
+    pricesBtn.onclick = () => {
+      // Tab button color logic
+      dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+      programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
+      accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+      pricesBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-300 text-orange-700 w-full sm:w-auto transition-colors duration-200';
+      // Section logic
+      dashboardSection.style.display = 'none';
+      bookingsTableSection.style.display = 'none';
+      summarySection.style.display = 'none';
+      accountingTableContainer.style.display = 'none';
+      programsSection.style.display = 'none';
+      searchBarSection.style.display = 'none';
+      document.getElementById('pagination-controls').style.display = 'none';
+      document.getElementById('booking-cards-container').style.display = 'none';
+      pricesSection.style.display = '';
+      fetchPrices();
+    };
+
+    async function fetchPrices() {
+      pricesTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-orange-300">Loading...</td></tr>';
+      try {
+        const res = await fetch('/api/prices');
+        const data = await res.json();
+        if (!data.prices || !data.prices.length) {
+          pricesTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-orange-300">No prices found.</td></tr>';
+          return;
+        }
+        pricesTableBody.innerHTML = '';
+        data.prices.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-6 py-4 text-sm text-orange-900">${row.SKU || ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.tour_id || ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.company || ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.tour || ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.adult_net !== null && row.adult_net !== undefined ? Number(row.adult_net).toFixed(2) : ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.child_net !== null && row.child_net !== undefined ? Number(row.child_net).toFixed(2) : ''}</td>
+            <td class="px-6 py-4 text-sm text-orange-900">${row.remark || ''}</td>
+            <td class="px-6 py-4 text-sm text-right">
+              <button class="edit-price-btn px-2 py-1 bg-orange-500 text-white rounded" data-id="${row.id}">Edit</button>
+            </td>
+          `;
+          pricesTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        pricesTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-red-400">Failed to load prices.</td></tr>';
+      }
+    }
+
+    // Inline edit logic
+    pricesTableBody.addEventListener('click', function(e) {
+      const btn = e.target.closest('.edit-price-btn');
+      if (!btn) return;
+      const tr = btn.closest('tr');
+      if (!tr) return;
+      // Get current values
+      const tds = tr.querySelectorAll('td');
+      const id = btn.getAttribute('data-id');
+      const SKU = tds[0].textContent.trim();
+      const tour_id = tds[1].textContent.trim();
+      const company = tds[2].textContent.trim();
+      const tour = tds[3].textContent.trim();
+      const adult_net = tds[4].textContent.trim();
+      const child_net = tds[5].textContent.trim();
+      const remark = tds[6].textContent.trim();
+      // Replace row with editable inputs
+      tr.innerHTML = `
+        <td class="px-6 py-4"><input type="text" class="form-input w-full px-2 py-1 border rounded" value="${SKU}"></td>
+        <td class="px-6 py-4"><input type="text" class="form-input w-full px-2 py-1 border rounded" value="${tour_id}"></td>
+        <td class="px-6 py-4"><input type="text" class="form-input w-full px-2 py-1 border rounded" value="${company}"></td>
+        <td class="px-6 py-4"><input type="text" class="form-input w-full px-2 py-1 border rounded" value="${tour}"></td>
+        <td class="px-6 py-4"><input type="number" step="0.01" class="form-input w-full px-2 py-1 border rounded" value="${adult_net}"></td>
+        <td class="px-6 py-4"><input type="number" step="0.01" class="form-input w-full px-2 py-1 border rounded" value="${child_net}"></td>
+        <td class="px-6 py-4"><input type="text" class="form-input w-full px-2 py-1 border rounded" value="${remark}"></td>
+        <td class="px-6 py-4 text-right">
+          <button class="save-price-btn px-2 py-1 bg-green-600 text-white rounded" data-id="${id}">Save</button>
+          <button class="cancel-price-btn px-2 py-1 bg-gray-400 text-white rounded ml-2">Cancel</button>
+        </td>
+      `;
+    });
+
+    pricesTableBody.addEventListener('click', async function(e) {
+      // Save
+      const saveBtn = e.target.closest('.save-price-btn');
+      if (saveBtn) {
+        const tr = saveBtn.closest('tr');
+        const id = saveBtn.getAttribute('data-id');
+        const inputs = tr.querySelectorAll('input');
+        const [SKU, tour_id, company, tour, adult_net, child_net, remark] = Array.from(inputs).map(i => i.value);
+        saveBtn.disabled = true;
+        try {
+          const res = await fetch('/api/prices', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, SKU, tour_id, company, tour, adult_net: adult_net ? Number(adult_net) : null, child_net: child_net ? Number(child_net) : null, remark })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || 'Failed to update');
+          fetchPrices();
+        } catch (err) {
+          alert('Failed to update: ' + (err.message || 'Unknown error'));
+          saveBtn.disabled = false;
+        }
+        return;
+      }
+      // Cancel
+      const cancelBtn = e.target.closest('.cancel-price-btn');
+      if (cancelBtn) {
+        fetchPrices();
+        return;
+      }
+    });
   </script>
 </body>
 </html>

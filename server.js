@@ -1,12 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const handler = require('./api/webhook.js');
+const pricesHandler = require('./api/prices.js');
 const { sql } = require('@vercel/postgres');
 
 const app = express();
 app.use(bodyParser.raw({ type: '*/*' }));
+app.use('/api/prices', bodyParser.json());
 
 app.post('/api/webhook', (req, res) => handler(req, res));
+app.all('/api/prices', (req, res) => pricesHandler(req, res));
 app.get('/', (req, res) => res.send('Parse Email API is running!'));
 app.get('/booking/:booking_number', async (req, res) => {
   const { booking_number } = req.params;

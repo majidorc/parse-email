@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+//// test 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1383,7 +1384,7 @@
             // Show booking counts for Website and OTA (only if count > 0)
             let html = '';
             filteredChannels.forEach(c => {
-              html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span></div>`;
+              html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span> bookings, <span class='font-bold'>${c.passengers}</span> passengers</div>`;
             });
             document.getElementById('channels-booking-counts').innerHTML = html;
           } else if (channelsPieCtx) {

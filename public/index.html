@@ -223,15 +223,15 @@
             <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
             <th data-col="customer_name" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
             <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-            <th data-col="program" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-            <th data-col="hotel" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</th>
+            <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Program</th>
+            <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Rate</th>
+            <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Hotel</th>
             <th data-col="op" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OP</th>
             <th data-col="ri" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">RI</th>
             <th data-col="customer" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
             <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
-            <th data-col="rate" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
         </tr>
       </thead>
@@ -501,15 +501,15 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
-            <td class="px-4 py-3 text-sm">${b.program || ''}</td>
-            <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.program || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.hotel || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>

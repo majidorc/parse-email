@@ -65,5 +65,6 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     sku VARCHAR,
     ri BOOLEAN DEFAULT false,
     paid NUMERIC,
-    book_date DATE
+    book_date DATE,
+    rate TEXT -- Label for rate, not a price
 ); 

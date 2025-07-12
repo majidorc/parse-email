@@ -1,20 +1,20 @@
 # Bookings Management & Notification System
 
-A modern Node.js/Postgres system for automated bookings management, email parsing, and real-time multi-channel notifications. Features a static HTML/JS dashboard for operations, accounting, and program management.
+A modern Node.js & PostgreSQL system for automated bookings management, email parsing, and real-time notifications. Features a static HTML/JS dashboard for operations, accounting, and program management. All configuration is managed via the dashboard and stored in the database.
 
 ---
 
 ## Features
 
 - **Automated Email Parsing:** Extracts bookings from Bokun.io and Thailand Tours emails with robust parser rules.
-- **Database-Driven Settings:** All sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the web UI and stored in the database. No .env for notification targets.
+- **Database-Driven Settings:** All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
 - **Multi-Channel Notifications:** Sends booking notifications via Email, Telegram, and LINE. Telegram notifications are sent for bookings made for today (Bangkok time), not just future bookings.
 - **Dashboard:**
   - Summary cards for Total Bookings (by tour_date) and New Bookings (by book_date) in the selected period
   - Booking channels breakdown (counts and passenger totals)
   - Accounting and program management
   - Secure login-protected access
-- **No Prices Tab:** All Prices-related features and code have been removed for simplicity and clarity.
+- **No Prices Tab:** All price-related features have been removed for simplicity and clarity.
 
 ---
 
@@ -29,9 +29,12 @@ A modern Node.js/Postgres system for automated bookings management, email parsin
    ```sh
    npm install
    ```
-3. **Configure database:**
-   - Set up a Postgres database and import the schema (see `migrations/` if available).
-   - All notification and sensitive settings are managed via the dashboard UI (Settings modal).
+3. **Set up the database:**
+   - Create a Neon (or standard Postgres) database.
+   - Run the schema in `db_sample.sql` to initialize all tables and types:
+     ```sh
+     psql <your-connection-string> -f db_sample.sql
+     ```
 4. **Run the server:**
    ```sh
    npm start
@@ -45,7 +48,7 @@ A modern Node.js/Postgres system for automated bookings management, email parsin
 ## Admin Guide
 
 - **Settings Management:**
-  - Open the Settings modal in the dashboard to update Telegram, Email, and LINE notification settings. All values are stored in the database.
+  - Use the Settings modal in the dashboard to update Telegram, Email, and LINE notification settings. All values are stored in the database.
   - Toggle notification channels and edit all fields directly in the UI.
 - **Dashboard Usage:**
   - View summary cards for Total Bookings (by tour_date) and New Bookings (by book_date) for any period.
@@ -56,22 +59,17 @@ A modern Node.js/Postgres system for automated bookings management, email parsin
 
 ---
 
-## Migration Notes
+## Database Schema
 
-- **Settings Table:**
-  - All notification targets and sensitive settings are now stored in the `settings` table. No longer use `.env` for these values.
-  - If upgrading, migrate your settings to the database via the dashboard UI.
-- **Dashboard Logic:**
-  - 'Total Bookings' counts bookings by `tour_date` in the selected period.
-  - 'New Bookings' counts bookings by `book_date` in the selected period.
-- **Removed Features:**
-  - The Prices tab/section and all related backend/frontend code have been removed.
+- See `db_sample.sql` for a complete schema, including all tables, types, and constraints.
+- The `bookings` table includes a `rate` column (text label, not a price).
+- All configuration is stored in the database, not in environment files.
 
 ---
 
 ## Development & Contribution
 
-- Standard Node.js/Express backend, static HTML/JS frontend.
+- Node.js/Express backend, static HTML/JS frontend.
 - All configuration is database-driven for easy updates.
 - See `CHANGELOG.md` for recent changes.
 

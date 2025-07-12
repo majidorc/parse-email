@@ -329,6 +329,8 @@
           <div class="text-base font-semibold text-indigo-800 mb-2">Booking Channels</div>
           <canvas id="channelsPieChart" width="180" height="180"></canvas>
           <div id="channels-booking-counts" class="mt-2 text-sm text-gray-700"></div>
+          <!-- Booking Channels Table -->
+          <div id="channels-booking-table" class="w-full mt-4"></div>
         </div>
       </div>
     </div>
@@ -698,8 +700,8 @@
           btn.title = newValue ? 'Warning' : 'No';
         } else {
           btn.textContent = newValue ? '✅' : '❌';
-          btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
-          btn.title = newValue ? 'Yes' : 'No';
+      btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      btn.title = newValue ? 'Yes' : 'No';
         }
       } catch (err) {
         alert('Failed to update: ' + (err.message || 'Unknown error'));
@@ -1424,9 +1426,18 @@
               html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span> bookings, <span class='font-bold'>${c.passengers}</span> passengers</div>`;
             });
             document.getElementById('channels-booking-counts').innerHTML = html;
+            // Render booking channels table
+            let tableHtml = `<table class='w-full border border-black mt-2' style='border-collapse:collapse;'>` +
+              `<thead><tr><th></th><th style='color:red;'>Booking</th><th style='color:red;'>Passengers</th></tr></thead><tbody>`;
+            filteredChannels.forEach(c => {
+              tableHtml += `<tr><td style='color:red;'>${c.channel}</td><td>${c.count}</td><td>${c.passengers}</td></tr>`;
+            });
+            tableHtml += `</tbody></table>`;
+            document.getElementById('channels-booking-table').innerHTML = tableHtml;
           } else if (channelsPieCtx) {
             channelsPieCtx.clearRect(0, 0, 180, 180);
             document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';
+            document.getElementById('channels-booking-table').innerHTML = '';
           }
         })
         .catch(err => {

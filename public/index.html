@@ -334,9 +334,16 @@
   </div>
   <script>
     function iconButton(column, bookingId, value) {
-      const icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✅' : '❌';
-      const title = (value === true || value === 1 || value === '1' || value === 'true') ? 'Yes' : 'No';
-      const btnClass = (icon === '✅') ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      let icon, title, btnClass;
+      if (column === 'ri') {
+        icon = (value === true || value === 1 || value === '1' || value === 'true') ? '⚠️' : '❌';
+        title = (value === true || value === 1 || value === '1' || value === 'true') ? 'Warning' : 'No';
+        btnClass = (icon === '⚠️') ? 'icon-btn icon-warning' : 'icon-btn icon-false';
+      } else {
+        icon = (value === true || value === 1 || value === '1' || value === 'true') ? '✅' : '❌';
+        title = (value === true || value === 1 || value === '1' || value === 'true') ? 'Yes' : 'No';
+        btnClass = (icon === '✅') ? 'icon-btn icon-true' : 'icon-btn icon-false';
+      }
       return `<button class="${btnClass}" title="${title}" onclick="handleToggle('${column}', '${bookingId}', this)">${icon}</button>`;
     }
     function isBoolLike(val) {
@@ -676,9 +683,15 @@
         }
         // Update local data and UI
         booking[column] = newValue;
-        btn.textContent = newValue ? '✅' : '❌';
-      btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
-      btn.title = newValue ? 'Yes' : 'No';
+        if (column === 'ri') {
+          btn.textContent = newValue ? '⚠️' : '❌';
+          btn.className = newValue ? 'icon-btn icon-warning' : 'icon-btn icon-false';
+          btn.title = newValue ? 'Warning' : 'No';
+        } else {
+          btn.textContent = newValue ? '✅' : '❌';
+          btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
+          btn.title = newValue ? 'Yes' : 'No';
+        }
       } catch (err) {
         alert('Failed to update: ' + (err.message || 'Unknown error'));
       } finally {
@@ -690,6 +703,7 @@
     style.innerHTML = `.icon-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0; margin: 0; }
     .icon-btn.icon-true { color: #388e3c; }
     .icon-btn.icon-false { color: #d32f2f; }
+    .icon-btn.icon-warning { color: #f59e42; }
     .icon-btn:focus { outline: 2px solid #1976d2; }`;
     document.head.appendChild(style);
     function updateSortIndicators() {

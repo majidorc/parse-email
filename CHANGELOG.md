@@ -139,6 +139,12 @@ All notable changes to this project will be documented in this file.
 - Improved notification templates and business rules.
 - Robust HTML-to-text conversion for email parsing.
 
+## [1.10.0] - 2025-07-08
+### Changed
+- Telegram notifications are now sent for bookings made for today (Bangkok time), not just future bookings.
+- The Prices tab/section and all related backend/frontend code have been removed.
+- Dashboard logic clarified: 'Total Bookings' = bookings by tour_date in period, 'New Bookings' = bookings by book_date in period.
+
 ## [1.0.0] - 2025-06-20
 ### Added
 - Project initialization.

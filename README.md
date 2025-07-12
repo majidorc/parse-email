@@ -8,7 +8,7 @@ A full-stack automated email processing and bookings management system, designed
 - **Automated Email Parsing:** Extracts booking details from Bokun.io and Thailand Tours emails.
 - **Bookings Table UI:** Modern, responsive table with search, sort, pagination, and status toggles, and Book Date column.
 - **Summary Stats:** Shows total, tomorrow, and day after tomorrow's bookings (Bangkok time), including unsent notifications. Summary cards always in sync with table and time. Percent change is displayed for all metrics, including Total Bookings.
-- **Multi-Channel Notifications:** Sends booking notifications via Email, Telegram, and LINE.
+- **Multi-Channel Notifications:** Sends booking notifications via Email, Telegram, and LINE. **Now also sends Telegram notifications for bookings made for today (Bangkok time), not just future bookings.**
 - **Timezone-Aware:** All date logic uses Asia/Bangkok timezone for accuracy, both in backend (Postgres SQL, Node.js) and frontend (UI, summary, search). Robust handling ensures summary cards, table, and search are always in sync with Bangkok time.
 - **API Endpoints:** RESTful endpoints for bookings, toggles, and notifications.
 - **Daily Scheduler:** Endpoint for scheduled notification jobs (e.g., via Vercel cron or external scheduler).
@@ -25,11 +25,15 @@ A full-stack automated email processing and bookings management system, designed
   - Product ID (Optional) field mapped to `product_id_optional` and shown in the table
   - CRUD for programs and rates, with validation and clean UI
 - **Dashboard:**
+  - 'Total Bookings' counts bookings by tour_date in the selected period; 'New Bookings' counts bookings by book_date in the selected period.
   - Robust error handling for missing percent change elements (see Troubleshooting)
   - All dashboard metrics and percent changes require their respective DOM elements
   - Percent change for Total Bookings metric
 - **Server Time Debug Endpoint:** `/api/server-time` returns current server time, UTC, and formatted Bangkok time for debugging timezone issues on Vercel.
-- **[2025-07-07] Latest Updates:**
+- **[2025-07-08] Latest Updates:**
+  - Telegram notifications are now sent for bookings made for today (Bangkok time), not just future bookings.
+  - The Prices tab/section and all related backend/frontend code have been removed.
+  - Dashboard logic clarified: 'Total Bookings' = bookings by tour_date in period, 'New Bookings' = bookings by book_date in period.
   - Each tab button (Dashboard, Bookings, Programs, Accounting) now has a unique color theme for better UX and clarity (indigo, blue, green, pink).
   - Summary cards (Today, Tomorrow, Day After Tomorrow) always show unfiltered (all bookings) counts, regardless of search or filter. Only the table/cards below are filtered.
   - Summary cards in bookings tab now match dashboard style and stack vertically on mobile (1 column, no horizontal scroll).

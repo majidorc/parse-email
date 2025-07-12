@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2025-07-09
+### Changed
+- Rewrite README for clarity and modern workflow.
+- Update db_sample.sql with complete schema and rate column.
+- Move 'Rate' column after 'Program' in bookings table.
+- Truncate long values for hotel, program, and rate fields in bookings table.
+- Add and style booking channels summary table.
+- Add PieChart click-to-filter.
+- Improve dashboard layout and theme colors.
+- Add Benefit summary card.
+- Top Destinations: show 15 by default, expand/collapse for full list.
+
 ## [1.10.0] - 2025-07-08
 ### Changed
 - Telegram notifications are now sent for bookings made for today (Bangkok time), not just future bookings.

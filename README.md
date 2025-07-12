@@ -1,6 +1,6 @@
 # Bookings Management & Notification System
 
-A modern Node.js & PostgreSQL system for automated bookings management, email parsing, and real-time notifications. Features a static HTML/JS dashboard for operations, accounting, and program management. All configuration is managed via the dashboard and stored in the database.
+A modern Node.js & PostgreSQL (Neon) system for automated bookings management, email parsing, and real-time notifications. Features a static HTML/JS dashboard for operations, accounting, and program management. All configuration is managed via the dashboard and stored in the database.
 
 ---
 
@@ -10,9 +10,10 @@ A modern Node.js & PostgreSQL system for automated bookings management, email pa
 - **Database-Driven Settings:** All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
 - **Multi-Channel Notifications:** Sends booking notifications via Email, Telegram, and LINE. Telegram notifications are sent for bookings made for today (Bangkok time), not just future bookings.
 - **Dashboard:**
-  - Summary cards for Total Bookings (by tour_date) and New Bookings (by book_date) in the selected period
-  - Booking channels breakdown (counts and passenger totals)
-  - Accounting and program management
+  - Summary cards for Total Bookings (by tour_date), New Bookings (by book_date), and Benefit (placeholder)
+  - Booking channels breakdown (counts and passenger totals) with PieChart and filter-on-click
+  - Top Destinations with accordion for long lists
+  - Responsive, modern UI with theme colors
   - Secure login-protected access
 - **No Prices Tab:** All price-related features have been removed for simplicity and clarity.
 
@@ -51,9 +52,10 @@ A modern Node.js & PostgreSQL system for automated bookings management, email pa
   - Use the Settings modal in the dashboard to update Telegram, Email, and LINE notification settings. All values are stored in the database.
   - Toggle notification channels and edit all fields directly in the UI.
 - **Dashboard Usage:**
-  - View summary cards for Total Bookings (by tour_date) and New Bookings (by book_date) for any period.
-  - See booking and passenger counts by channel.
+  - View summary cards for Total Bookings, New Bookings, and Benefit (coming soon).
+  - See booking and passenger counts by channel, with PieChart and filter-on-click.
   - Manage bookings, accounting, and programs from their respective tabs.
+  - Top Destinations section shows 15 by default, expandable for more.
 - **Security:**
   - Dashboard is protected by a login system. Only authorized users can access admin features.
 

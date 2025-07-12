@@ -109,11 +109,16 @@ module.exports = async (req, res) => {
   const period = req.query.period || 'thisMonth';
   const [start, end] = getBangkokDateRange(period);
   try {
+    // Total Bookings: bookings with tour_date in period
     const { rows: totalRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
-    const newBookings = totalBookings;
+    // New Bookings: bookings with book_date in period
+    const { rows: newRows } = await sql.query(
+      `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2`, [start, end]
+    );
+    const newBookings = parseInt(newRows[0].count, 10);
     const booked = totalBookings;
     const { rows: doneRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE`, [start, end]

@@ -658,8 +658,14 @@
       const booking = bookingsData.find(b => b.booking_number == bookingId);
       if (!booking) return alert('Booking not found.');
 
-      const current = (btn.textContent === '✅');
-      const newValue = !current;
+      let current, newValue;
+      if (column === 'ri') {
+        current = (btn.textContent === '⚠️');
+        newValue = !current;
+      } else {
+        current = (btn.textContent === '✅');
+        newValue = !current;
+      }
 
       // Business rule: Customer can only be set to true if OP is true
       if (column === 'customer' && newValue === true && !(booking.op === true || booking.op === 1 || booking.op === '1' || booking.op === 'true')) {

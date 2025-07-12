@@ -108,34 +108,48 @@ module.exports = async (req, res) => {
   // Default: dashboard analytics
   const period = req.query.period || 'thisMonth';
   const [start, end] = getBangkokDateRange(period);
+  const channel = req.query.channel;
+  // Helper to get channel filter SQL and params
+  function getChannelFilterSql(col = 'booking_number') {
+    if (!channel) return { sql: '', params: [] };
+    if (channel === 'Website') return { sql: `AND ${col} LIKE '6%'`, params: [] };
+    if (channel === 'OTA') return { sql: `AND (${col} LIKE 'GYG%' OR ${col} NOT LIKE '6%')`, params: [] };
+    return { sql: '', params: [] };
+  }
   try {
     // Total Bookings: bookings with tour_date in period
+    const channelFilter = getChannelFilterSql();
     const { rows: totalRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
     // New Bookings: bookings with book_date in period
+    const newRowsFilter = getChannelFilterSql();
     const { rows: newRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2 ${newRowsFilter.sql}`,
+      [start, end, ...newRowsFilter.params]
     );
     const newBookings = parseInt(newRows[0].count, 10);
     const booked = totalBookings;
     const { rows: doneRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE`, [start, end]
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
     );
     const done = parseInt(doneRows[0].count, 10);
     const { rows: paidRows } = await sql.query(
-      `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
     const { rows: revenueRows } = await sql.query(
       `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
-       FROM bookings WHERE tour_date >= $1 AND tour_date < $2
-       GROUP BY day ORDER BY day`, [start, end]
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}
+       GROUP BY day ORDER BY day`, [start, end, ...channelFilter.params]
     );
     const { rows: destRows } = await sql.query(
       `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax
-       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} GROUP BY program ORDER BY count DESC`, [start, end, ...channelFilter.params]
     );
     let percentNew = null, percentEarnings = null, percentTotal = null;
     let prevPeriod = null;
@@ -200,13 +214,15 @@ module.exports = async (req, res) => {
       percentTotal = lastTotal === 0 ? null : ((totalBookings - lastTotal) / lastTotal) * 100;
     }
     const { rows: paxRows } = await sql.query(
-      `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
     );
     const totalAdults = parseInt(paxRows[0].adults, 10);
     const totalChildren = parseInt(paxRows[0].children, 10);
     const { rows: allRows } = await sql.query(
       `SELECT booking_number, COALESCE(adult,0) AS adult, COALESCE(child,0) AS child, COALESCE(infant,0) AS infant, rate
-       FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
     );
     let websiteCount = 0, otaCount = 0, websitePassengers = 0, otaPassengers = 0;
     allRows.forEach(row => {

@@ -1421,16 +1421,20 @@
               }
             });
             // Show booking counts for Website and OTA (only if count > 0)
-            let html = '';
-            filteredChannels.forEach(c => {
-              html += `<div>${c.channel}: <span class='font-bold'>${c.count}</span> bookings, <span class='font-bold'>${c.passengers}</span> passengers</div>`;
-            });
-            document.getElementById('channels-booking-counts').innerHTML = html;
+            document.getElementById('channels-booking-counts').innerHTML = '';
             // Render booking channels table
-            let tableHtml = `<table class='w-full border border-black mt-2' style='border-collapse:collapse;'>` +
-              `<thead><tr><th></th><th style='color:red;'>Booking</th><th style='color:red;'>Passengers</th></tr></thead><tbody>`;
+            let tableHtml = `<table class='w-full mt-2 border border-black' style='border-collapse:collapse;'>` +
+              `<thead><tr>` +
+                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'></th>` +
+                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'>Booking</th>` +
+                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'>Passengers</th>` +
+              `</tr></thead><tbody>`;
             filteredChannels.forEach(c => {
-              tableHtml += `<tr><td style='color:red;'>${c.channel}</td><td>${c.count}</td><td>${c.passengers}</td></tr>`;
+              tableHtml += `<tr>` +
+                `<td class='border border-black px-3 py-1 text-center font-bold text-red-600'>${c.channel}</td>` +
+                `<td class='border border-black px-3 py-1 text-center'>${c.count}</td>` +
+                `<td class='border border-black px-3 py-1 text-center'>${c.passengers}</td>` +
+              `</tr>`;
             });
             tableHtml += `</tbody></table>`;
             document.getElementById('channels-booking-table').innerHTML = tableHtml;

@@ -235,23 +235,25 @@ class BokunParser extends BaseEmailParser {
     let lines = [];
     const paxHtml = paxCell.html();
     if (paxHtml) {
-      // Split by <br>, then by \n, then flatten
       lines = paxHtml.split(/<br\s*\/?>/i).map(l => this.$(`<div>${l}</div>`).text()).join('\n').split(/\n|\r/).map(l => l.trim()).filter(Boolean);
     } else {
       lines = paxCell.text().split(/\n|\r/).map(l => l.trim()).filter(Boolean);
     }
     if (lines.length === 0) {
-      // fallback: try to parse whole text
       lines = [paxCell.text().trim()];
     }
     lines.forEach(line => {
       let m;
       m = line.match(/(\d+)\s*Adult/i);
-      if (m) pax.adult = m[1];
+      if (m) pax.adult = (parseInt(pax.adult, 10) + parseInt(m[1], 10)).toString();
       m = line.match(/(\d+)\s*Child/i);
-      if (m) pax.child = m[1];
+      if (m) pax.child = (parseInt(pax.child, 10) + parseInt(m[1], 10)).toString();
       m = line.match(/(\d+)\s*Infant/i);
-      if (m) pax.infant = m[1];
+      if (m) pax.infant = (parseInt(pax.infant, 10) + parseInt(m[1], 10)).toString();
+      m = line.match(/(\d+)\s*Rider/i);
+      if (m) pax.adult = (parseInt(pax.adult, 10) + parseInt(m[1], 10)).toString();
+      m = line.match(/(\d+)\s*Passenger/i);
+      if (m) pax.child = (parseInt(pax.child, 10) + parseInt(m[1], 10)).toString();
     });
     return pax;
   }
@@ -352,22 +354,22 @@ class ThailandToursParser extends BaseEmailParser {
             // Adult
             const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
             if (adultMatch && adultMatch[1]) {
-                pax.adult = adultMatch[1];
+                pax.adult = (parseInt(pax.adult, 10) + parseInt(adultMatch[1], 10)).toString();
             }
             // Child
             const childMatch = line.match(/child[ren|s]?[^\d]*(\d+)\s*$/i) || line.match(/child[ren|s]?.*?:\s*(\d+)/i);
             if (childMatch && childMatch[1]) {
-                pax.child = childMatch[1];
+                pax.child = (parseInt(pax.child, 10) + parseInt(childMatch[1], 10)).toString();
             }
             // Infant
             const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
             if (infantMatch && infantMatch[1]) {
-                pax.infant = infantMatch[1];
+                pax.infant = (parseInt(pax.infant, 10) + parseInt(infantMatch[1], 10)).toString();
             }
             // Person (+4 Years): N (treat as adult)
             const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
             if (personPlusMatch && personPlusMatch[1]) {
-                pax.adult = personPlusMatch[1];
+                pax.adult = (parseInt(pax.adult, 10) + parseInt(personPlusMatch[1], 10)).toString();
             }
         }
         // If no explicit adult/child/infant found, fallback to 'Person: N'
@@ -376,7 +378,7 @@ class ThailandToursParser extends BaseEmailParser {
             if (personLine) {
                 const personMatch = personLine.match(/person\s*:\s*(\d+)/i);
                 if (personMatch && personMatch[1]) {
-                    pax.adult = personMatch[1];
+                    pax.adult = (parseInt(pax.adult, 10) + parseInt(personMatch[1], 10)).toString();
                     pax.child = '0';
                     pax.infant = '0';
                 }
@@ -555,10 +557,17 @@ class FallbackParser extends BaseEmailParser {
       const adults = paxLine.match(/(\d+)\s*Adult/i);
       const children = paxLine.match(/(\d+)\s*Child/i);
       const infants = paxLine.match(/(\d+)\s*Infant/i);
+      const riders = paxLine.match(/(\d+)\s*Rider/i);
+      const passengers = paxLine.match(/(\d+)\s*Passenger/i);
+      let adultCount = adults ? parseInt(adults[1], 10) : 0;
+      let childCount = children ? parseInt(children[1], 10) : 0;
+      let infantCount = infants ? parseInt(infants[1], 10) : 0;
+      if (riders && riders[1]) adultCount += parseInt(riders[1], 10);
+      if (passengers && passengers[1]) childCount += parseInt(passengers[1], 10);
       return {
-        adult: adults ? adults[1] : '0',
-        child: children ? children[1] : '0',
-        infant: infants ? infants[1] : '0'
+        adult: adultCount.toString(),
+        child: childCount.toString(),
+        infant: infantCount.toString()
       };
     }
     extractHotel() { return this._findLineValue('hotel :'); }

@@ -137,20 +137,63 @@ module.exports = async (req, res) => {
       `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
     );
     let percentNew = null, percentEarnings = null, percentTotal = null;
-    if (period === 'thisMonth') {
-      const [lastStart, lastEnd] = getBangkokDateRange('lastMonth');
+    let prevPeriod = null;
+    switch (period) {
+      case 'thisWeek': prevPeriod = 'lastWeek'; break;
+      case 'lastWeek': prevPeriod = 'prevLastWeek'; break;
+      case 'thisMonth': prevPeriod = 'lastMonth'; break;
+      case 'lastMonth': prevPeriod = 'prevLastMonth'; break;
+      case 'thisYear': prevPeriod = 'lastYear'; break;
+      case 'lastYear': prevPeriod = 'prevLastYear'; break;
+      case 'all':
+      default:
+        prevPeriod = null;
+        break;
+    }
+    if (prevPeriod) {
+      let prevStart, prevEnd;
+      if (period === 'lastWeek') {
+        // prevLastWeek: week before last
+        const now = new Date();
+        const end = getBangkokDateRange('lastWeek')[0];
+        const start = new Date(end);
+        start.setUTCDate(start.getUTCDate() - 7);
+        prevStart = start.toISOString().slice(0, 10);
+        prevEnd = end;
+      } else if (period === 'lastMonth') {
+        // prevLastMonth: month before last
+        const now = new Date();
+        const end = getBangkokDateRange('lastMonth')[0];
+        const start = new Date(end);
+        start.setUTCMonth(start.getUTCMonth() - 1);
+        prevStart = start.toISOString().slice(0, 10);
+        prevEnd = end;
+      } else if (period === 'lastYear') {
+        // prevLastYear: year before last
+        const now = new Date();
+        const end = getBangkokDateRange('lastYear')[0];
+        const start = new Date(end);
+        start.setUTCFullYear(start.getUTCFullYear() - 1);
+        prevStart = start.toISOString().slice(0, 10);
+        prevEnd = end;
+      } else {
+        [prevStart, prevEnd] = getBangkokDateRange(prevPeriod);
+      }
+      // New Bookings percent change
       const { rows: lastNewRows } = await sql.query(
-        `SELECT COUNT(*) AS count FROM bookings WHERE created_at >= $1 AND created_at < $2`, [lastStart, lastEnd]
+        `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2`, [prevStart, prevEnd]
       );
       const lastNew = parseInt(lastNewRows[0].count, 10);
       percentNew = lastNew === 0 ? null : ((newBookings - lastNew) / lastNew) * 100;
+      // Earnings percent change
       const { rows: lastPaidRows } = await sql.query(
-        `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [lastStart, lastEnd]
+        `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [prevStart, prevEnd]
       );
       const lastEarnings = parseFloat(lastPaidRows[0].sum);
       percentEarnings = lastEarnings === 0 ? null : ((totalEarnings - lastEarnings) / lastEarnings) * 100;
+      // Total Bookings percent change
       const { rows: lastTotalRows } = await sql.query(
-        `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [lastStart, lastEnd]
+        `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [prevStart, prevEnd]
       );
       const lastTotal = parseInt(lastTotalRows[0].count, 10);
       percentTotal = lastTotal === 0 ? null : ((totalBookings - lastTotal) / lastTotal) * 100;

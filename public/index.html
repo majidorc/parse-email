@@ -1330,7 +1330,7 @@
           } else { console.error('revenueChart canvas or context missing'); }
           // Top Destinations
           if (data.topDestinations && data.topDestinations.length) {
-            const maxToShow = 5;
+            const maxToShow = 20;
             let expanded = false;
             function renderDestinations(showAll) {
               const rows = data.topDestinations;
@@ -1342,7 +1342,7 @@
                 return `<div class='flex justify-between'><span>${i+1}. ${name}</span><span class='font-semibold text-indigo-700'>${Number(row.count)} / ${Number(row.total_pax)}</span></div>`;
               }).join('');
               if (rows.length > maxToShow) {
-                html += `<div class='text-center mt-2'><button id='toggle-destinations' class='text-indigo-600 hover:underline text-sm font-semibold'>${showAll ? 'Show less' : 'Show more'}</button></div>`;
+                html += `<div class='text-center mt-2'><button id='toggle-destinations' class='text-indigo-600 hover:underline text-sm font-semibold'>${showAll ? 'Show less' : 'Show all'}</button></div>`;
               }
               dashboardTopDestinations.innerHTML = html;
               if (rows.length > maxToShow) {

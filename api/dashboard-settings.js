@@ -129,8 +129,7 @@ module.exports = async (req, res) => {
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
     const { rows: revenueRows } = await sql.query(
-      `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count,
-        COALESCE(SUM(CASE WHEN rate ~ '^[0-9]+(\\.[0-9]+)?$' THEN rate::float ELSE NULL END), 0) AS total_rate
+      `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2
        GROUP BY day ORDER BY day`, [start, end]
     );

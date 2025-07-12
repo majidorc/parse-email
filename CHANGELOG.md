@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.1] - 2025-07-09
+### Added
+- Add 'Clear Cache' button to Settings modal. Clears all PWA caches and unregisters service workers for troubleshooting and storage management.
+
 ## [1.11.0] - 2025-07-09
 ### Changed
 - Rewrite README for clarity and modern workflow.

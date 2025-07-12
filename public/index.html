@@ -93,7 +93,8 @@
           <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
           <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter notification email address(es)">
         </div>
-        <div class="flex justify-end mt-6">
+        <div class="flex justify-end mt-6 gap-2">
+          <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>
           <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
         </div>
       </form>
@@ -1973,6 +1974,23 @@
         settingsError = 'Failed to save settings: ' + (err.message || 'Unknown error');
         renderSettingsModalState();
       }
+    };
+
+    // Clear Cache Button Logic
+    document.getElementById('clear-cache-btn').onclick = async function() {
+      if (!confirm('Clear all cached data? This will log you out and reload the app.')) return;
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) await reg.unregister();
+      }
+      alert('Cache cleared! The app will now reload.');
+      window.location.reload();
     };
 
     // Add at the top of the script

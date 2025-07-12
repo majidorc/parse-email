@@ -51,6 +51,7 @@ A modern Node.js & PostgreSQL (Neon) system for automated bookings management, e
 - **Settings Management:**
   - Use the Settings modal in the dashboard to update Telegram, Email, and LINE notification settings. All values are stored in the database.
   - Toggle notification channels and edit all fields directly in the UI.
+  - **Clear Cache Button:** Use the 'Clear Cache' button in Settings to remove all locally cached data and force the app to reload. This is useful for troubleshooting, freeing up storage, or ensuring you have the latest version.
 - **Dashboard Usage:**
   - View summary cards for Total Bookings, New Bookings, and Benefit (coming soon).
   - See booking and passenger counts by channel, with PieChart and filter-on-click.

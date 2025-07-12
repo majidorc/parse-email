@@ -1244,7 +1244,9 @@
       const bookingsChange = document.getElementById('dashboard-total-bookings-change');
       const newChange = document.getElementById('dashboard-new-bookings-change');
       const earningsChange = document.getElementById('dashboard-total-earnings-change');
-      fetch(`/api/dashboard-settings?period=${period}`)
+      let url = `/api/dashboard-settings?period=${period}`;
+      if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           // Total Bookings
@@ -1438,6 +1440,14 @@
                         return `${label}: ${value} (${percent}%)`;
                       }
                     }
+                  }
+                },
+                onClick: function(evt, elements, chart) {
+                  const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                  if (points && points.length > 0) {
+                    const idx = points[0].index;
+                    const selectedChannel = channelLabels[idx];
+                    setDashboardChannelFilter(selectedChannel);
                   }
                 }
               }
@@ -1964,6 +1974,34 @@
         renderSettingsModalState();
       }
     };
+
+    // Add at the top of the script
+    let dashboardChannelFilter = null;
+    function setDashboardChannelFilter(channel) {
+      dashboardChannelFilter = channel;
+      fetchDashboardAnalytics();
+      renderDashboardChannelFilter();
+    }
+    function clearDashboardChannelFilter() {
+      dashboardChannelFilter = null;
+      fetchDashboardAnalytics();
+      renderDashboardChannelFilter();
+    }
+    function renderDashboardChannelFilter() {
+      let filterDiv = document.getElementById('dashboard-channel-filter');
+      if (!filterDiv) {
+        const parent = document.getElementById('dashboard-section');
+        filterDiv = document.createElement('div');
+        filterDiv.id = 'dashboard-channel-filter';
+        filterDiv.className = 'flex justify-center mb-2';
+        parent.insertBefore(filterDiv, parent.firstChild.nextSibling);
+      }
+      if (dashboardChannelFilter) {
+        filterDiv.innerHTML = `<span class='bg-indigo-100 text-indigo-800 px-3 py-1 rounded font-semibold text-sm'>Filtered by: ${dashboardChannelFilter} <button onclick='clearDashboardChannelFilter()' class='ml-2 text-red-500 hover:underline' title='Clear filter'>&times;</button></span>`;
+      } else {
+        filterDiv.innerHTML = '';
+      }
+    }
   </script>
 </body>
 </html>

@@ -285,6 +285,18 @@ class BokunParser extends BaseEmailParser {
     }
     return null;
   }
+  extractRate() {
+    // Try to find a line or cell labeled 'Rate' and extract its value
+    let rate = '';
+    this.$('td').each((i, el) => {
+      const strongText = this.$(el).find('strong').text().trim();
+      if (strongText.toLowerCase() === 'rate') {
+        rate = this.$(el).next('td').text().trim();
+        if (rate) return false;
+      }
+    });
+    return rate;
+  }
   extractAll() {
     const passengers = this.extractPassengers();
     const tourDate = this.extractTourDate();
@@ -298,7 +310,8 @@ class BokunParser extends BaseEmailParser {
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
       isoDate: this._getISODate(tourDate),
       paid: this.extractPaid(),
-      book_date: this.extractBookDate()
+      book_date: this.extractBookDate(),
+      rate: this.extractRate()
     };
   }
   formatBookingDetails() {
@@ -859,8 +872,8 @@ async function handler(req, res) {
 
             console.log(`[INSERT] Inserting new booking: ${extractedInfo.bookingNumber}`);
             await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel})
+                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
+                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${extractedInfo.rate})
                 ON CONFLICT (booking_number) DO UPDATE SET
                   tour_date = EXCLUDED.tour_date,
                   sku = EXCLUDED.sku,
@@ -875,7 +888,8 @@ async function handler(req, res) {
                   raw_tour_date = EXCLUDED.raw_tour_date,
                   paid = EXCLUDED.paid,
                   book_date = EXCLUDED.book_date,
-                  channel = EXCLUDED.channel;
+                  channel = EXCLUDED.channel,
+                  rate = EXCLUDED.rate;
             `;
             // Send Telegram notification if booking is for today (Bangkok time)
             const bangkokNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));

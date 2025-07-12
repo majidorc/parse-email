@@ -231,6 +231,7 @@
             <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
             <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
             <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
+            <th data-col="rate" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
         </tr>
       </thead>
@@ -500,6 +501,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.infant || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
@@ -537,6 +539,7 @@
               ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
               ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
             </div>
+            <div class="mb-1 flex items-center"><span class="font-bold">🏷️ Rate:</span> <span style="margin-left:4px;">${b.rate || ''}</span></div>
             <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button></div>
           </div>
           `;

@@ -129,12 +129,12 @@ module.exports = async (req, res) => {
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
     const { rows: revenueRows } = await sql.query(
-      `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
+      `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count, rate
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2
        GROUP BY day ORDER BY day`, [start, end]
     );
     const { rows: destRows } = await sql.query(
-      `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
+      `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax, COALESCE(SUM(rate),0) AS total_rate FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
     );
     let percentNew = null, percentEarnings = null, percentTotal = null;
     let prevPeriod = null;
@@ -204,7 +204,8 @@ module.exports = async (req, res) => {
     const totalAdults = parseInt(paxRows[0].adults, 10);
     const totalChildren = parseInt(paxRows[0].children, 10);
     const { rows: allRows } = await sql.query(
-      `SELECT booking_number, COALESCE(adult,0) AS adult, COALESCE(child,0) AS child, COALESCE(infant,0) AS infant FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
+      `SELECT booking_number, COALESCE(adult,0) AS adult, COALESCE(child,0) AS child, COALESCE(infant,0) AS infant, rate
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2`, [start, end]
     );
     let websiteCount = 0, otaCount = 0, websitePassengers = 0, otaPassengers = 0;
     allRows.forEach(row => {

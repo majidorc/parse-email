@@ -1423,17 +1423,19 @@
             // Show booking counts for Website and OTA (only if count > 0)
             document.getElementById('channels-booking-counts').innerHTML = '';
             // Render booking channels table
-            let tableHtml = `<table class='w-full mt-2 border border-black' style='border-collapse:collapse;'>` +
-              `<thead><tr>` +
-                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'></th>` +
-                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'>Booking</th>` +
-                `<th class='border border-black px-3 py-1 text-center font-bold text-red-600 bg-gray-50'>Passengers</th>` +
-              `</tr></thead><tbody>`;
-            filteredChannels.forEach(c => {
-              tableHtml += `<tr>` +
-                `<td class='border border-black px-3 py-1 text-center font-bold text-red-600'>${c.channel}</td>` +
-                `<td class='border border-black px-3 py-1 text-center'>${c.count}</td>` +
-                `<td class='border border-black px-3 py-1 text-center'>${c.passengers}</td>` +
+            let tableHtml = `<table class='w-full mt-2 rounded-lg overflow-hidden shadow-sm'>` +
+              `<thead class='bg-indigo-50'>` +
+                `<tr>` +
+                  `<th class='px-3 py-2 text-center font-bold text-indigo-700'></th>` +
+                  `<th class='px-3 py-2 text-center font-bold text-indigo-700'>Booking</th>` +
+                  `<th class='px-3 py-2 text-center font-bold text-indigo-700'>Passengers</th>` +
+                `</tr>` +
+              `</thead><tbody>`;
+            filteredChannels.forEach((c, i) => {
+              tableHtml += `<tr class='${i % 2 === 0 ? 'bg-white' : 'bg-indigo-50'} hover:bg-indigo-100 transition'>` +
+                `<td class='px-3 py-2 text-center font-bold text-indigo-700'>${c.channel}</td>` +
+                `<td class='px-3 py-2 text-center text-indigo-900'>${c.count}</td>` +
+                `<td class='px-3 py-2 text-center text-indigo-900'>${c.passengers}</td>` +
               `</tr>`;
             });
             tableHtml += `</tbody></table>`;

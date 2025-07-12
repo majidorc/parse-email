@@ -1317,18 +1317,33 @@
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes
-          if (data.percentNew !== null && data.percentNew !== undefined) {
-            const percentVal = Number(data.percentNew);
-            const up = percentVal >= 0;
-            if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
+          let periodLabel = '';
+          switch (period) {
+            case 'thisWeek': periodLabel = 'last week'; break;
+            case 'lastWeek': periodLabel = 'week before last'; break;
+            case 'thisMonth': periodLabel = 'last month'; break;
+            case 'lastMonth': periodLabel = 'month before last'; break;
+            case 'thisYear': periodLabel = 'last year'; break;
+            case 'lastYear': periodLabel = 'year before last'; break;
+            default: periodLabel = '';
+          }
+          if (period !== 'all') {
+            if (data.percentNew !== null && data.percentNew !== undefined) {
+              const percentVal = Number(data.percentNew);
+              const up = percentVal >= 0;
+              if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs ${periodLabel}`;
+            } else {
+              if (newChange) newChange.textContent = '';
+            }
+            if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
+              const percentVal = Number(data.percentEarnings);
+              const up = percentVal >= 0;
+              if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs ${periodLabel}`;
+            } else {
+              if (earningsChange) earningsChange.textContent = '';
+            }
           } else {
             if (newChange) newChange.textContent = '';
-          }
-          if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
-            const percentVal = Number(data.percentEarnings);
-            const up = percentVal >= 0;
-            if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
-          } else {
             if (earningsChange) earningsChange.textContent = '';
           }
           if (bookingsChange) bookingsChange.textContent = '';

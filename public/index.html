@@ -503,7 +503,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.program || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate || ''}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.hotel || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('customer', b.booking_number, b.customer)}</td>
@@ -534,7 +534,7 @@
             <hr class="my-2">
             <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span> <span>${b.customer_name || ''}</span></div>
             <div class="mb-1 flex items-center"><span class="font-bold">📝Program:</span> <span style="margin-left:4px;">${(b.program || '').trim()}</span></div>
-            <div class="mb-1 flex items-center"><span class="font-bold">🏨Hotel:</span> <span>${b.hotel || ''}</span></div>
+            <div class="mb-1 flex items-center"><span class="font-bold">🏨Hotel:</span> <span>${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</span></div>
             <hr class="my-2">
             <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
               <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
@@ -984,7 +984,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 text-sm">${b.program || ''}</td>
-            <td class="px-4 py-3 text-sm">${b.hotel || ''}</td>
+            <td class="px-4 py-3 text-sm">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
             <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
             <td class="px-4 py-3 text-center"><button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button></td>
           </tr>

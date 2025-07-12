@@ -305,7 +305,7 @@
       <div class="flex flex-wrap gap-8 justify-center mb-6 mx-auto max-w-5xl">
         <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
           <div class="flex justify-between items-center mb-2">
-            <div class="text-base font-semibold text-indigo-800">Revenue by Day</div>
+            <div class="text-base font-semibold text-indigo-800">Revenue by</div>
             <select id="dashboard-period" class="border rounded px-2 py-1 text-sm">
               <option value="thisWeek">This Week</option>
               <option value="lastWeek">Last Week</option>
@@ -1317,23 +1317,18 @@
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes
-          if (period === 'thisMonth') {
-            if (data.percentNew !== null && data.percentNew !== undefined) {
-              const percentVal = Number(data.percentNew);
-              const up = percentVal >= 0;
-              if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
-            } else {
-              if (newChange) newChange.textContent = '';
-            }
-            if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
-              const percentVal = Number(data.percentEarnings);
-              const up = percentVal >= 0;
-              if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
-            } else {
-              if (earningsChange) earningsChange.textContent = '';
-            }
+          if (data.percentNew !== null && data.percentNew !== undefined) {
+            const percentVal = Number(data.percentNew);
+            const up = percentVal >= 0;
+            if (newChange) newChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
           } else {
             if (newChange) newChange.textContent = '';
+          }
+          if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
+            const percentVal = Number(data.percentEarnings);
+            const up = percentVal >= 0;
+            if (earningsChange) earningsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
+          } else {
             if (earningsChange) earningsChange.textContent = '';
           }
           if (bookingsChange) bookingsChange.textContent = '';

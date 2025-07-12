@@ -868,6 +868,32 @@ async function handler(req, res) {
                   book_date = EXCLUDED.book_date,
                   channel = EXCLUDED.channel;
             `;
+            // Send Telegram notification if booking is for today (Bangkok time)
+            const bangkokNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+            const bookingTourDate = new Date(extractedInfo.isoDate);
+            if (
+              bangkokNow.getFullYear() === bookingTourDate.getFullYear() &&
+              bangkokNow.getMonth() === bookingTourDate.getMonth() &&
+              bangkokNow.getDate() === bookingTourDate.getDate()
+            ) {
+              const nm = new NotificationManager();
+              await nm.sendTelegramWithButtons({
+                booking_number: extractedInfo.bookingNumber,
+                tour_date: extractedInfo.isoDate,
+                sku: extractedInfo.sku,
+                program: extractedInfo.program,
+                customer_name: extractedInfo.name,
+                adult,
+                child,
+                infant,
+                hotel: extractedInfo.hotel,
+                phone_number: extractedInfo.phoneNumber,
+                raw_tour_date: extractedInfo.tourDate,
+                paid,
+                book_date: extractedInfo.book_date,
+                channel
+              });
+            }
             return res.status(200).send('Webhook processed: Booking upserted.');
 
         } catch (error) {

@@ -1,7 +1,7 @@
 const { sql } = require('@vercel/postgres');
 
 const ALLOWED_SORT_COLUMNS = [
-  'booking_number', 'tour_date', 'customer_name', 'sku', 'program', 'hotel', 'paid'
+  'booking_number', 'tour_date', 'book_date', 'customer_name', 'sku', 'program', 'hotel', 'paid'
 ];
 
 module.exports = async (req, res) => {

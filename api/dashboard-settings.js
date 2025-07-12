@@ -134,7 +134,8 @@ module.exports = async (req, res) => {
        GROUP BY day ORDER BY day`, [start, end]
     );
     const { rows: destRows } = await sql.query(
-      `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax, COALESCE(SUM(rate),0) AS total_rate FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
+      `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 GROUP BY program ORDER BY count DESC`, [start, end]
     );
     let percentNew = null, percentEarnings = null, percentTotal = null;
     let prevPeriod = null;

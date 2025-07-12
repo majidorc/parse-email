@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
     const { rows: bookings } = await sql.query(dataQuery, dataParams);
     console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
 
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       bookings,
       total,

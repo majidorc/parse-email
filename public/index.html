@@ -502,7 +502,7 @@
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('op', b.booking_number, b.op)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">${iconButton('ri', b.booking_number, b.ri)}</td>
@@ -547,7 +547,7 @@
               ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
               ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
             </div>
-            <div class="mb-1 flex items-center"><span class="font-bold">🏷️ Rate:</span> <span style="margin-left:4px;">${b.rate || ''}</span></div>
+            <div class="mb-1 flex items-center"><span class="font-bold">🏷️Rate:</span> <span>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</span></div>
             <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button></div>
           </div>
           `;

@@ -1413,8 +1413,8 @@
             const channelLabels = filteredChannels.map(row => row.channel);
             const channelCounts = filteredChannels.map(row => row.count);
             const channelColors = [
-              '#0f172a', // Website
-              '#f59e42'  // OTA
+              '#6366f1', // Website (indigo-500)
+              '#f472b6'  // OTA (pink-400)
             ];
             window.channelsPieChartInstance = new Chart(channelsPieCtx, {
               type: 'pie',

@@ -2177,20 +2177,9 @@
     ['bokun-access-key','bokun-secret-key','woocommerce-consumer-key','woocommerce-consumer-secret','telegram-bot-token'].forEach(id => {
       const input = document.getElementById(id);
       if (!input) return;
-      const wrapper = input.parentElement;
       input.type = 'password';
-      const showBtn = document.createElement('button');
-      showBtn.type = 'button';
-      showBtn.textContent = 'Show';
-      showBtn.className = 'ml-2 text-xs text-indigo-600 underline';
-      showBtn.onclick = function(e) {
-        e.preventDefault();
-        input.type = input.type === 'password' ? 'text' : 'password';
-        showBtn.textContent = input.type === 'password' ? 'Show' : 'Hide';
-      };
-      wrapper.appendChild(showBtn);
       // Only show Remove if value present
-      let removeBtn = wrapper.querySelector('.remove-key-btn');
+      let removeBtn = input.parentElement.querySelector('.remove-key-btn');
       if (!removeBtn) {
         removeBtn = document.createElement('button');
         removeBtn.type = 'button';
@@ -2201,7 +2190,7 @@
           input.value = '';
           showToast('Key cleared. Don\'t forget to Save!', 'info');
         };
-        wrapper.appendChild(removeBtn);
+        input.parentElement.appendChild(removeBtn);
       }
       function updateRemoveBtn() {
         removeBtn.style.display = input.value ? '' : 'none';

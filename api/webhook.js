@@ -843,12 +843,20 @@ async function handler(req, res) {
                 if (existing.tour_date) {
                   const today = new Date();
                   today.setHours(0,0,0,0);
-                  const tourDate = new Date(existing.tour_date.substring(0,10));
-                  const dayAfterTour = new Date(tourDate);
-                  dayAfterTour.setDate(tourDate.getDate() + 1);
-                  if (today > dayAfterTour) {
-                    updatedFields = {};
-                    clearHighlight = true;
+                  let tourDateStr = '';
+                  if (typeof existing.tour_date === 'string') {
+                    tourDateStr = existing.tour_date.substring(0, 10);
+                  } else if (existing.tour_date instanceof Date) {
+                    tourDateStr = existing.tour_date.toISOString().substring(0, 10);
+                  }
+                  if (tourDateStr) {
+                    const tourDate = new Date(tourDateStr);
+                    const dayAfterTour = new Date(tourDate);
+                    dayAfterTour.setDate(tourDate.getDate() + 1);
+                    if (today > dayAfterTour) {
+                      updatedFields = {};
+                      clearHighlight = true;
+                    }
                   }
                 }
                 if (anyFieldChanged || clearHighlight) {

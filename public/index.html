@@ -2069,6 +2069,8 @@
     }
 
     // --- Whitelist Management Logic ---
+    const roleColors = { admin: 'bg-indigo-100 text-indigo-700', accounting: 'bg-green-100 text-green-700', programs_manager: 'bg-yellow-100 text-yellow-700', reservation: 'bg-pink-100 text-pink-700' };
+    let editingEmail = null;
     async function fetchWhitelist() {
       const res = await fetch('/api/dashboard-settings?type=whitelist');
       const data = await res.json();
@@ -2077,8 +2079,20 @@
         tableDiv.innerHTML = '<span class="text-gray-400">No whitelist entries.</span>';
         return;
       }
-      tableDiv.innerHTML = `<table class='w-full text-xs border rounded overflow-hidden'><thead><tr class='bg-indigo-50'><th class='px-2 py-1'>Email</th><th class='px-2 py-1'>Phone</th><th class='px-2 py-1'>Role</th><th class='px-2 py-1'>Status</th><th class='px-2 py-1'></th></tr></thead><tbody>${data.whitelist.map((u,i) => `<tr class='${i%2===0?'bg-white':'bg-gray-50'}'><td class='px-2 py-1'>${u.email}</td><td class='px-2 py-1'>${u.phone_number||''}</td><td class='px-2 py-1'>${u.role}</td><td class='px-2 py-1'>${u.is_active ? '<span class=\'text-green-700\'>Active</span>' : '<span class=\'text-gray-400\'>Inactive</span>'}</td><td class='px-2 py-1'><button class='text-red-600 font-bold hover:underline' onclick='removeWhitelistEntry("${u.email}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
+      tableDiv.innerHTML = `<table class='w-full text-xs border rounded overflow-hidden'><thead><tr class='bg-indigo-50'><th class='px-2 py-1'>Email</th><th class='px-2 py-1'>Phone</th><th class='px-2 py-1'>Role</th><th class='px-2 py-1'>Status</th><th class='px-2 py-1'></th></tr></thead><tbody>${data.whitelist.map((u,i) => `<tr class='${i%2===0?'bg-white':'bg-gray-50'}'><td class='px-2 py-1'>${u.email}</td><td class='px-2 py-1'>${u.phone_number||''}</td><td class='px-2 py-1'><span class='inline-block px-2 py-1 rounded text-xs font-semibold ${roleColors[u.role]||'bg-gray-100 text-gray-700'}'>${u.role}</span></td><td class='px-2 py-1'>${u.is_active ? '<span class=\'text-green-700\'>Active</span>' : '<span class=\'text-gray-400\'>Inactive</span>'}</td><td class='px-2 py-1'><button class='text-blue-600 font-bold hover:underline mr-2' onclick='editWhitelistEntry("${u.email}")'>Edit</button><button class='text-red-600 font-bold hover:underline' onclick='removeWhitelistEntry("${u.email}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
     }
+    window.editWhitelistEntry = function(email) {
+      fetch('/api/dashboard-settings?type=whitelist').then(r=>r.json()).then(data => {
+        const entry = data.whitelist.find(u => u.email === email);
+        if (!entry) return;
+        document.getElementById('whitelist-email').value = entry.email;
+        document.getElementById('whitelist-phone').value = entry.phone_number || '';
+        document.getElementById('whitelist-role').value = entry.role;
+        document.getElementById('whitelist-active').checked = !!entry.is_active;
+        editingEmail = entry.email;
+        showToast('Editing entry: ' + entry.email, 'info');
+      });
+    };
     window.removeWhitelistEntry = async function(email) {
       if (!confirm('Remove this email from whitelist?')) return;
       const msgDiv = document.getElementById('whitelist-message');
@@ -2087,14 +2101,10 @@
       try {
         const res = await fetch('/api/dashboard-settings?type=whitelist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
         if (!res.ok) throw new Error('Failed to remove');
-        msgDiv.textContent = 'Removed!';
-        msgDiv.className = 'text-green-700 font-semibold mb-1';
-        msgDiv.style.display = '';
+        showToast('Removed!', 'success');
         fetchWhitelist();
       } catch (err) {
-        msgDiv.textContent = 'Error removing entry.';
-        msgDiv.className = 'text-red-600 font-semibold mb-1';
-        msgDiv.style.display = '';
+        showToast('Error removing entry.', 'error');
       }
     };
     document.getElementById('whitelist-form').onsubmit = async function(e) {
@@ -2103,25 +2113,103 @@
       const phone = document.getElementById('whitelist-phone').value.trim();
       const role = document.getElementById('whitelist-role').value;
       const isActive = document.getElementById('whitelist-active').checked;
-      const msgDiv = document.getElementById('whitelist-message');
-      msgDiv.textContent = '';
-      msgDiv.style.display = 'none';
       if (!email || !role) return;
       try {
         const res = await fetch('/api/dashboard-settings?type=whitelist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, phone_number: phone, role, is_active: isActive }) });
         if (!res.ok) throw new Error('Failed to save');
-        msgDiv.textContent = 'Saved!';
-        msgDiv.className = 'text-green-700 font-semibold mb-1';
-        msgDiv.style.display = '';
+        showToast(editingEmail ? 'Updated!' : 'Saved!', 'success');
         fetchWhitelist();
         this.reset();
+        editingEmail = null;
       } catch (err) {
-        msgDiv.textContent = 'Error saving entry.';
-        msgDiv.className = 'text-red-600 font-semibold mb-1';
-        msgDiv.style.display = '';
+        showToast('Error saving entry.', 'error');
       }
     };
-    document.getElementById('settings-gear-btn').addEventListener('click', fetchWhitelist);
+    function showToast(msg, type) {
+      let toast = document.getElementById('toast-msg');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-msg';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '32px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.zIndex = 9999;
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '8px';
+        toast.style.fontWeight = 'bold';
+        toast.style.fontSize = '1rem';
+        toast.style.boxShadow = '0 2px 12px rgba(0,0,0,0.12)';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.background = type === 'success' ? '#d1fae5' : type === 'error' ? '#fee2e2' : '#e0e7ff';
+      toast.style.color = type === 'success' ? '#065f46' : type === 'error' ? '#991b1b' : '#3730a3';
+      toast.style.display = '';
+      setTimeout(() => { toast.style.display = 'none'; }, 1800);
+    }
+    // Modern toggle for Active
+    const whitelistActive = document.getElementById('whitelist-active');
+    const toggleLabel = whitelistActive.parentElement;
+    toggleLabel.classList.add('relative');
+    whitelistActive.classList.add('sr-only');
+    const toggleDiv = document.createElement('div');
+    toggleDiv.className = 'w-10 h-5 bg-gray-200 rounded-full shadow-inner cursor-pointer transition-all duration-200';
+    toggleDiv.style.position = 'relative';
+    toggleDiv.innerHTML = '<div class="dot absolute left-0 top-0 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"></div>';
+    toggleLabel.appendChild(toggleDiv);
+    function updateToggle() {
+      if (whitelistActive.checked) {
+        toggleDiv.classList.remove('bg-gray-200');
+        toggleDiv.classList.add('bg-green-400');
+        toggleDiv.querySelector('.dot').style.left = 'calc(100% - 1.25rem)';
+      } else {
+        toggleDiv.classList.remove('bg-green-400');
+        toggleDiv.classList.add('bg-gray-200');
+        toggleDiv.querySelector('.dot').style.left = '0';
+      }
+    }
+    whitelistActive.addEventListener('change', updateToggle);
+    toggleDiv.addEventListener('click', () => { whitelistActive.checked = !whitelistActive.checked; updateToggle(); });
+    updateToggle();
+    // ... existing code ...
+    // --- API Key Show/Hide Logic ---
+    ['bokun-access-key','bokun-secret-key','woocommerce-consumer-key','woocommerce-consumer-secret','telegram-bot-token'].forEach(id => {
+      const input = document.getElementById(id);
+      if (!input) return;
+      const wrapper = input.parentElement;
+      input.type = 'password';
+      const showBtn = document.createElement('button');
+      showBtn.type = 'button';
+      showBtn.textContent = 'Show';
+      showBtn.className = 'ml-2 text-xs text-indigo-600 underline';
+      showBtn.onclick = function(e) {
+        e.preventDefault();
+        input.type = input.type === 'password' ? 'text' : 'password';
+        showBtn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+      };
+      wrapper.appendChild(showBtn);
+      // Only show Remove if value present
+      let removeBtn = wrapper.querySelector('.remove-key-btn');
+      if (!removeBtn) {
+        removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = 'Remove';
+        removeBtn.className = 'ml-2 text-xs text-red-600 bg-red-100 rounded px-2 py-1 remove-key-btn';
+        removeBtn.onclick = function(e) {
+          e.preventDefault();
+          input.value = '';
+          showToast('Key cleared. Don\'t forget to Save!', 'info');
+        };
+        wrapper.appendChild(removeBtn);
+      }
+      function updateRemoveBtn() {
+        removeBtn.style.display = input.value ? '' : 'none';
+      }
+      input.addEventListener('input', updateRemoveBtn);
+      updateRemoveBtn();
+    });
+    // ... existing code ...
 
     // --- Auth/session logic ---
     async function checkSession() {

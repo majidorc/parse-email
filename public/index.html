@@ -1969,6 +1969,7 @@
       settingsModal.style.display = 'flex';
       settingsLoading = true; settingsError = ''; settingsSuccess = '';
       renderSettingsModalState();
+      fetchWhitelist(); // Always show whitelist table by default
       // Load settings from backend
       try {
         const res = await fetch('/api/dashboard-settings?type=settings');
@@ -2243,6 +2244,13 @@
       checkSession();
     };
     document.addEventListener('DOMContentLoaded', checkSession);
+
+    const whitelistSection = document.getElementById('whitelist-section');
+    whitelistSection.classList.add('flex', 'flex-col');
+    const whitelistTableContainer = document.getElementById('whitelist-table-container');
+    whitelistTableContainer.classList.add('mb-3');
+    const whitelistForm = document.getElementById('whitelist-form');
+    whitelistForm.classList.add('mb-2');
   </script>
 </body>
 </html>

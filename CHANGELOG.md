@@ -63,3 +63,11 @@ All notable changes to this project will be documented in this file.
 ## [1.0.0] - 2025-06-20
 ### Added
 - Initial release: bookings parsing, notifications, and dashboard. 
+
+## [Unreleased]
+- Role-based access control is now fully implemented:
+  - Admin: Full access to everything (all tabs, settings, whitelist, delete, edit, etc.)
+  - Accounting: Access Dashboard, Bookings, and Accounting tabs. Cannot delete bookings or edit/remove programs. No access to settings or whitelist.
+  - Programs Manager: Only access to Programs tab (can add/edit programs, but cannot delete unless Admin).
+  - Reservation: Only access to Bookings tab.
+- Backend and frontend both enforce these permissions. UI hides tabs and actions not allowed for the current role. 

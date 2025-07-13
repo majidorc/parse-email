@@ -62,6 +62,19 @@ A modern Node.js & PostgreSQL (Neon) system for automated bookings management, e
 
 ---
 
+## User Roles & Permissions
+
+The dashboard now supports robust role-based access control. There are four roles:
+
+- **Admin**: Full access to everything (all tabs, settings, whitelist, delete, edit, etc.)
+- **Accounting**: Access Dashboard, Bookings, and Accounting tabs. Cannot delete bookings or edit/remove programs. No access to settings or whitelist.
+- **Programs Manager**: Only access to Programs tab (can add/edit programs, but cannot delete unless Admin).
+- **Reservation**: Only access to Bookings tab.
+
+Both backend and frontend enforce these permissions. The UI hides tabs and actions not allowed for the current role.
+
+---
+
 ## Database Schema
 
 - See `db_sample.sql` for a complete schema, including all tables, types, and constraints.

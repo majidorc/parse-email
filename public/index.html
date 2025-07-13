@@ -67,23 +67,23 @@
         <button id="settings-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
         <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
         <div id="whitelist-section" class="mb-6">
-          <h3 class="text-lg font-semibold mb-2 text-indigo-700">Whitelist Management</h3>
-          <div id="whitelist-table-container" class="mb-2"></div>
-          <form id="whitelist-form" class="flex flex-col gap-2 mb-2">
-            <div class="flex gap-2">
-              <input type="email" id="whitelist-email" placeholder="Email (e.g. user@email.com)" class="form-input flex-1 px-2 py-1 border rounded" required />
-              <input type="text" id="whitelist-phone" placeholder="Phone number (optional)" class="form-input flex-1 px-2 py-1 border rounded" />
-              <select id="whitelist-role" class="form-input px-2 py-1 border rounded" required>
+          <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-4 mb-4">
+            <h3 class="text-lg font-semibold mb-3 text-indigo-700">Whitelist Management</h3>
+            <div id="whitelist-table-container" class="mb-3"></div>
+            <form id="whitelist-form" class="flex flex-wrap gap-2 items-end mb-2">
+              <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-2 py-1 border rounded w-40" required />
+              <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-2 py-1 border rounded w-32" />
+              <select id="whitelist-role" class="form-input px-2 py-1 border rounded w-36" required>
                 <option value="admin">Admin</option>
                 <option value="accounting">Accounting</option>
                 <option value="programs_manager">Programs Manager</option>
                 <option value="reservation">Reservation</option>
               </select>
               <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="whitelist-active" checked /> Active</label>
-              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1 rounded">Add/Update</button>
-            </div>
-          </form>
-          <div id="whitelist-message" class="text-xs text-green-700 font-semibold mb-1" style="display:none;"></div>
+              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1 rounded">Add/Update</button>
+            </form>
+            <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
+          </div>
         </div>
         <form id="settings-form" class="space-y-4">
           <div>
@@ -2073,12 +2073,25 @@
         tableDiv.innerHTML = '<span class="text-gray-400">No whitelist entries.</span>';
         return;
       }
-      tableDiv.innerHTML = `<table class='w-full text-xs border'><thead><tr><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${data.whitelist.map(u => `<tr><td>${u.email}</td><td>${u.phone_number || ''}</td><td>${u.role}</td><td>${u.is_active ? 'Active' : 'Inactive'}</td><td><button class='text-red-600 font-bold' onclick='removeWhitelistEntry("${u.email}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
+      tableDiv.innerHTML = `<table class='w-full text-xs border rounded overflow-hidden'><thead><tr class='bg-indigo-50'><th class='px-2 py-1'>Email</th><th class='px-2 py-1'>Phone</th><th class='px-2 py-1'>Role</th><th class='px-2 py-1'>Status</th><th class='px-2 py-1'></th></tr></thead><tbody>${data.whitelist.map((u,i) => `<tr class='${i%2===0?'bg-white':'bg-gray-50'}'><td class='px-2 py-1'>${u.email}</td><td class='px-2 py-1'>${u.phone_number||''}</td><td class='px-2 py-1'>${u.role}</td><td class='px-2 py-1'>${u.is_active ? '<span class=\'text-green-700\'>Active</span>' : '<span class=\'text-gray-400\'>Inactive</span>'}</td><td class='px-2 py-1'><button class='text-red-600 font-bold hover:underline' onclick='removeWhitelistEntry("${u.email}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
     }
     window.removeWhitelistEntry = async function(email) {
       if (!confirm('Remove this email from whitelist?')) return;
-      await fetch('/api/dashboard-settings?type=whitelist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
-      fetchWhitelist();
+      const msgDiv = document.getElementById('whitelist-message');
+      msgDiv.textContent = '';
+      msgDiv.style.display = 'none';
+      try {
+        const res = await fetch('/api/dashboard-settings?type=whitelist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+        if (!res.ok) throw new Error('Failed to remove');
+        msgDiv.textContent = 'Removed!';
+        msgDiv.className = 'text-green-700 font-semibold mb-1';
+        msgDiv.style.display = '';
+        fetchWhitelist();
+      } catch (err) {
+        msgDiv.textContent = 'Error removing entry.';
+        msgDiv.className = 'text-red-600 font-semibold mb-1';
+        msgDiv.style.display = '';
+      }
     };
     document.getElementById('whitelist-form').onsubmit = async function(e) {
       e.preventDefault();
@@ -2086,13 +2099,23 @@
       const phone = document.getElementById('whitelist-phone').value.trim();
       const role = document.getElementById('whitelist-role').value;
       const isActive = document.getElementById('whitelist-active').checked;
+      const msgDiv = document.getElementById('whitelist-message');
+      msgDiv.textContent = '';
+      msgDiv.style.display = 'none';
       if (!email || !role) return;
-      await fetch('/api/dashboard-settings?type=whitelist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, phone_number: phone, role, is_active: isActive }) });
-      document.getElementById('whitelist-message').textContent = 'Saved!';
-      document.getElementById('whitelist-message').style.display = '';
-      setTimeout(() => { document.getElementById('whitelist-message').style.display = 'none'; }, 1200);
-      fetchWhitelist();
-      this.reset();
+      try {
+        const res = await fetch('/api/dashboard-settings?type=whitelist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, phone_number: phone, role, is_active: isActive }) });
+        if (!res.ok) throw new Error('Failed to save');
+        msgDiv.textContent = 'Saved!';
+        msgDiv.className = 'text-green-700 font-semibold mb-1';
+        msgDiv.style.display = '';
+        fetchWhitelist();
+        this.reset();
+      } catch (err) {
+        msgDiv.textContent = 'Error saving entry.';
+        msgDiv.className = 'text-red-600 font-semibold mb-1';
+        msgDiv.style.display = '';
+      }
     };
     document.getElementById('settings-gear-btn').addEventListener('click', fetchWhitelist);
 

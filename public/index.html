@@ -1044,7 +1044,7 @@
             <td class="px-4 py-3 text-sm">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
             <td class="px-4 py-3 text-sm">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
             <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
-            <td class="px-4 py-3 text-center"><button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button></td>
+            <td class="px-4 py-3 text-center">${userRole === 'admin' ? `<button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button>` : ''}</td>
           </tr>
         `).join('');
         // Add inline edit handlers

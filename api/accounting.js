@@ -1,7 +1,7 @@
 const { sql } = require('@vercel/postgres');
 
 const ALLOWED_SORT_COLUMNS = [
-  'booking_number', 'tour_date', 'book_date', 'customer_name', 'sku', 'program', 'hotel', 'paid'
+  'booking_number', 'tour_date', 'book_date', 'sku', 'program', 'rate', 'hotel', 'paid'
 ];
 
 module.exports = async (req, res) => {
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
 
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
-      SELECT booking_number, book_date, tour_date, customer_name, sku, program, hotel, paid, rate
+      SELECT booking_number, book_date, tour_date, sku, program, rate, hotel, paid
       FROM bookings
       ${whereClause}
       ORDER BY ${sort} ${dirStr}

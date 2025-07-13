@@ -85,6 +85,20 @@ module.exports = async (req, res) => {
     if (!message || !message.text) return res.json({ ok: true });
     const chat_id = message.chat.id;
     const reply_to_message_id = message.message_id;
+    // Get sender's phone number via Telegram (if available)
+    const from = message.from || {};
+    // If phone number is not available, deny access
+    const phone = from.phone_number || null;
+    if (!phone) {
+      await sendTelegram(chat_id, 'Access denied. Please share your phone number with the bot.', reply_to_message_id);
+      return res.json({ ok: true });
+    }
+    // Check whitelist
+    const { rows } = await sql`SELECT is_active FROM user_whitelist WHERE phone_number = ${phone}`;
+    if (!rows.length || !rows[0].is_active) {
+      await sendTelegram(chat_id, 'You are not authorized to use this bot.', reply_to_message_id);
+      return res.json({ ok: true });
+    }
     // Try to get bot username from environment (optional, fallback to generic)
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
     const text = message.text.trim();

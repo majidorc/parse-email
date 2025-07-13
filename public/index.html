@@ -55,7 +55,7 @@
 <body class="antialiased">
   <div id="login-section" style="display:none; text-align:center; margin-top: 80px;">
     <h2 class="text-2xl font-bold mb-4">Login Required</h2>
-    <div id="telegram-login-widget"></div>
+    <div id="google-login-btn"></div>
     <div id="login-error" class="text-red-600 font-semibold mt-2"></div>
   </div>
   <div id="dashboard-root">
@@ -71,7 +71,8 @@
           <div id="whitelist-table-container" class="mb-2"></div>
           <form id="whitelist-form" class="flex flex-col gap-2 mb-2">
             <div class="flex gap-2">
-              <input type="text" id="whitelist-phone" placeholder="Phone number (e.g. +66936497990)" class="form-input flex-1 px-2 py-1 border rounded" required />
+              <input type="email" id="whitelist-email" placeholder="Email (e.g. user@email.com)" class="form-input flex-1 px-2 py-1 border rounded" required />
+              <input type="text" id="whitelist-phone" placeholder="Phone number (optional)" class="form-input flex-1 px-2 py-1 border rounded" />
               <select id="whitelist-role" class="form-input px-2 py-1 border rounded" required>
                 <option value="admin">Admin</option>
                 <option value="accounting">Accounting</option>
@@ -369,7 +370,7 @@
     </div>
     <button id="logout-btn" style="position: fixed; top: 18px; left: 24px; z-index: 50; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6366f1; display:none;">Logout</button>
   </div>
-  <script src="https://telegram.org/js/telegram-widget.js?7" data-telegram-login="bookingnoticebot" data-size="large" data-userpic="false" data-request-access="write" data-userpic="false" onlogin="onTelegramAuth(user)"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     function iconButton(column, bookingId, value) {
       let icon, title, btnClass;
@@ -2072,20 +2073,21 @@
         tableDiv.innerHTML = '<span class="text-gray-400">No whitelist entries.</span>';
         return;
       }
-      tableDiv.innerHTML = `<table class='w-full text-xs border'><thead><tr><th>Phone</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${data.whitelist.map(u => `<tr><td>${u.phone_number}</td><td>${u.role}</td><td>${u.is_active ? 'Active' : 'Inactive'}</td><td><button class='text-red-600 font-bold' onclick='removeWhitelistEntry("${u.phone_number}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
+      tableDiv.innerHTML = `<table class='w-full text-xs border'><thead><tr><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${data.whitelist.map(u => `<tr><td>${u.email}</td><td>${u.phone_number || ''}</td><td>${u.role}</td><td>${u.is_active ? 'Active' : 'Inactive'}</td><td><button class='text-red-600 font-bold' onclick='removeWhitelistEntry("${u.email}")'>Remove</button></td></tr>`).join('')}</tbody></table>`;
     }
-    window.removeWhitelistEntry = async function(phone) {
-      if (!confirm('Remove this phone number from whitelist?')) return;
-      await fetch('/api/dashboard-settings?type=whitelist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone_number: phone }) });
+    window.removeWhitelistEntry = async function(email) {
+      if (!confirm('Remove this email from whitelist?')) return;
+      await fetch('/api/dashboard-settings?type=whitelist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
       fetchWhitelist();
     };
     document.getElementById('whitelist-form').onsubmit = async function(e) {
       e.preventDefault();
+      const email = document.getElementById('whitelist-email').value.trim();
       const phone = document.getElementById('whitelist-phone').value.trim();
       const role = document.getElementById('whitelist-role').value;
       const isActive = document.getElementById('whitelist-active').checked;
-      if (!phone || !role) return;
-      await fetch('/api/dashboard-settings?type=whitelist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone_number: phone, role, is_active: isActive }) });
+      if (!email || !role) return;
+      await fetch('/api/dashboard-settings?type=whitelist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, phone_number: phone, role, is_active: isActive }) });
       document.getElementById('whitelist-message').textContent = 'Saved!';
       document.getElementById('whitelist-message').style.display = '';
       setTimeout(() => { document.getElementById('whitelist-message').style.display = 'none'; }, 1200);
@@ -2106,25 +2108,24 @@
         document.getElementById('login-section').style.display = '';
         document.getElementById('dashboard-root').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'none';
-        // Render Telegram login widget
-        document.getElementById('telegram-login-widget').innerHTML = '';
-        const script = document.createElement('script');
-        script.src = 'https://telegram.org/js/telegram-widget.js?7';
-        script.setAttribute('data-telegram-login', 'bookingnoticebot');
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-userpic', 'false');
-        script.setAttribute('data-request-access', 'write');
-        script.setAttribute('onlogin', 'onTelegramAuth(user)');
-        document.getElementById('telegram-login-widget').appendChild(script);
+        // Render Google Sign-In button
+        document.getElementById('google-login-btn').innerHTML = '';
+        window.google.accounts.id.initialize({
+          client_id: '342250702349-vff0rim280bq31rer6vpm3u7gps965om.apps.googleusercontent.com',
+          callback: onGoogleAuth
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-login-btn'),
+          { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill' }
+        );
       }
     }
-    window.onTelegramAuth = async function(user) {
-      // user: Telegram login data
+    window.onGoogleAuth = async function(response) {
       try {
         const res = await fetch('/api/auth?type=login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(user)
+          body: JSON.stringify({ id_token: response.credential })
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'Login failed');

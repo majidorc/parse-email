@@ -1,10 +1,16 @@
 const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
 const ALLOWED_SORT_COLUMNS = [
   'booking_number', 'tour_date', 'customer_name', 'sku', 'program', 'op', 'ri', 'customer', 'hotel', 'adult', 'child', 'infant'
 ];
 
 module.exports = async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const userRole = session.role;
+  if (!["admin", "accounting", "reservation"].includes(userRole)) return res.status(403).json({ error: 'Forbidden: Admin, Accounting, or Reservation only' });
+
   // Toggle OP/RI/Customer logic (from toggle-op-customer.js)
   if (req.method === 'POST' && req.body && req.body.type === 'toggle') {
     try {
@@ -113,6 +119,8 @@ module.exports = async (req, res) => {
       }
     }
     if (req.method === 'DELETE') {
+      // Only Admin can delete bookings
+      if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
       try {
         await sql`DELETE FROM bookings WHERE booking_number = ${booking_number}`;
         return res.status(200).json({ success: true });

@@ -2212,14 +2212,39 @@
     // ... existing code ...
 
     // --- Auth/session logic ---
+    let userRole = null;
     async function checkSession() {
       const res = await fetch('/api/auth?type=session');
       const data = await res.json();
       if (data.isAuthenticated) {
+        userRole = data.role;
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('dashboard-root').style.display = '';
         document.getElementById('logout-btn').style.display = '';
+        // Role-based UI
+        // Tabs
+        document.getElementById('toggle-dashboard').style.display = (userRole === 'admin' || userRole === 'accounting') ? '' : 'none';
+        document.getElementById('toggle-bookings').style.display = (['admin','accounting','reservation'].includes(userRole)) ? '' : 'none';
+        document.getElementById('toggle-accounting').style.display = (userRole === 'admin' || userRole === 'accounting') ? '' : 'none';
+        document.getElementById('toggle-programs').style.display = (userRole === 'admin' || userRole === 'programs_manager') ? '' : 'none';
+        // Settings gear
+        document.getElementById('settings-gear-btn').style.display = (userRole === 'admin') ? '' : 'none';
+        // Hide whitelist section in modal for non-admins
+        if (userRole !== 'admin') {
+          document.getElementById('whitelist-section').style.display = 'none';
+        } else {
+          document.getElementById('whitelist-section').style.display = '';
+        }
+        // Hide add/edit/delete program buttons for non-admin/non-programs_manager
+        const addProgramBtn = document.getElementById('add-program-btn');
+        if (addProgramBtn) addProgramBtn.style.display = (userRole === 'admin' || userRole === 'programs_manager') ? '' : 'none';
+        const deleteProgramBtn = document.getElementById('delete-program-btn');
+        if (deleteProgramBtn) deleteProgramBtn.style.display = (userRole === 'admin') ? '' : 'none';
+        // Hide Save button in settings for non-admins
+        const saveBtn = document.querySelector('#settings-form button[type="submit"]');
+        if (saveBtn) saveBtn.style.display = (userRole === 'admin') ? '' : 'none';
       } else {
+        userRole = null;
         document.getElementById('login-section').style.display = '';
         document.getElementById('dashboard-root').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'none';

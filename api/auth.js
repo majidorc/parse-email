@@ -67,4 +67,13 @@ module.exports = async (req, res) => {
     return res.status(200).json({ isAuthenticated: true, email: session.email, role: session.role });
   }
   res.status(405).json({ error: 'Method Not Allowed' });
+};
+
+// Export helpers for use in other APIs
+module.exports.verifySession = verifySession;
+module.exports.getSession = function(req) {
+  const cookie = req.headers.cookie || '';
+  const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+  const token = match ? match[1] : null;
+  return verifySession(token);
 }; 

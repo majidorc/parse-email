@@ -1,10 +1,15 @@
 const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
 const ALLOWED_SORT_COLUMNS = [
   'booking_number', 'tour_date', 'book_date', 'sku', 'program', 'rate', 'hotel', 'paid'
 ];
 
 module.exports = async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const userRole = session.role;
+  if (userRole !== 'admin' && userRole !== 'accounting') return res.status(403).json({ error: 'Forbidden: Admins or Accounting only' });
   const bookingNumber = req.query.booking_number;
   if (bookingNumber) {
     if (req.method === 'PATCH') {
@@ -20,6 +25,8 @@ module.exports = async (req, res) => {
         return res.status(500).json({ success: false, error: err.message });
       }
     } else if (req.method === 'DELETE') {
+      // Only Admin can delete bookings
+      if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
       try {
         await sql.query('DELETE FROM bookings WHERE booking_number = $1', [bookingNumber]);
         res.setHeader('Cache-Control', 'no-store');

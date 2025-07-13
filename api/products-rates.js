@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -8,6 +9,9 @@ const pool = new Pool({
 
 module.exports = async (req, res) => {
   const type = req.query.type;
+  const session = getSession(req);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const userRole = session.role;
 
   // --- RATES LOGIC ---
   if (type === 'rate') {
@@ -21,6 +25,7 @@ module.exports = async (req, res) => {
       return;
     }
     if (req.method === 'POST') {
+      if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
       const { name, net_adult, net_child, fee_type, fee_adult, fee_child, product_id } = req.body;
       if (!name || net_adult === undefined || net_child === undefined || !fee_type) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -42,6 +47,7 @@ module.exports = async (req, res) => {
 
   // --- PRODUCTS LOGIC ---
   if (type === 'product') {
+    if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
     if (req.method !== 'POST') {
       res.status(405).json({ error: 'Method not allowed' });
       return;
@@ -118,6 +124,7 @@ module.exports = async (req, res) => {
       return;
     }
     if (req.method === 'POST') {
+      if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
       const product_id_optional = req.body.productId || req.body.product_id_optional || null;
       const { sku, program, remark, id } = req.body;
       const rates = req.body.rates || [];
@@ -166,10 +173,10 @@ module.exports = async (req, res) => {
       return;
     }
     if (req.method === 'PUT') {
-      res.status(501).json({ error: 'Not implemented' });
-      return;
+      return res.status(501).json({ error: 'Not implemented' });
     }
     if (req.method === 'DELETE') {
+      if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
       const { id } = req.body;
       if (!id) {
         res.status(400).json({ error: 'Missing id' });

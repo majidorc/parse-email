@@ -1,4 +1,5 @@
 const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
 function getBangkokDateRange(period) {
   const now = new Date();
@@ -61,6 +62,9 @@ function getBangkokDateRange(period) {
 
 module.exports = async (req, res) => {
   const type = req.query.type;
+  const session = getSession(req);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const userRole = session.role;
   if (type === 'settings') {
     if (req.method === 'GET') {
       const { rows } = await sql`SELECT * FROM settings ORDER BY updated_at DESC LIMIT 1;`;
@@ -86,6 +90,7 @@ module.exports = async (req, res) => {
       });
     }
     if (req.method === 'POST') {
+      if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
       const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id, notification_email_to } = req.body || {};
       await sql`
         INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id, notification_email_to, updated_at)
@@ -106,6 +111,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
   if (type === 'whitelist') {
+    if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
     if (req.method === 'GET') {
       const { rows } = await sql`SELECT email, phone_number, role, is_active FROM user_whitelist ORDER BY role, email`;
       return res.status(200).json({ whitelist: rows });

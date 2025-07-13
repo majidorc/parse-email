@@ -54,23 +54,33 @@
 </head>
 <body class="antialiased">
   <div id="login-section" style="display:none; text-align:center; margin-top: 80px;">
-    <h2 class="text-2xl font-bold mb-4">Login Required</h2>
-    <div id="google-login-btn"></div>
-    <div id="login-error" class="text-red-600 font-semibold mt-2"></div>
+    <div class="flex items-center justify-center min-h-screen bg-gray-50">
+      <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto border border-indigo-100">
+        <div class="flex flex-col items-center">
+          <div class="bg-indigo-100 rounded-full p-4 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.21 0-4 1.79-4 4v1h8v-1c0-2.21-1.79-4-4-4z"/></svg>
+          </div>
+          <h2 class="text-2xl font-bold mb-2 text-gray-800">Login Required</h2>
+          <p class="text-gray-500 mb-6">Please sign in with your Google account to access the dashboard.</p>
+          <div id="google-login-btn" class="mb-2 w-full flex justify-center"></div>
+          <div id="login-error" class="text-red-600 font-semibold mt-2"></div>
+        </div>
+      </div>
+    </div>
   </div>
   <div id="dashboard-root">
     <!-- Settings Gear Icon -->
     <button id="settings-gear-btn" title="Settings" style="position: absolute; top: 18px; right: 24px; z-index: 50; background: none; border: none; font-size: 2rem; cursor: pointer; color: #6366f1; transition: color 0.2s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6366f1'">⚙️</button>
     <!-- Settings Modal -->
     <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
-      <div style="background: #fff; border-radius: 1rem; max-width: 95vw; width: 800px; margin: auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); position: relative; max-height: 90vh; overflow-y: auto;">
+      <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto" style="max-height: 95vh; min-width: 0;">
         <button id="settings-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
         <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div id="whitelist-section" class="mb-0 md:mb-0">
-            <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
+          <div id="whitelist-section" class="mb-0 md:mb-0 min-w-0">
+            <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-4 min-w-0">
               <h3 class="text-lg font-semibold mb-3 text-indigo-700">Whitelist Management</h3>
-              <div id="whitelist-table-container" class="mb-3"></div>
+              <div id="whitelist-table-container" class="mb-3 overflow-x-auto"></div>
               <form id="whitelist-form" class="flex flex-wrap gap-2 items-end mb-2">
                 <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-2 py-1 border rounded w-40" required />
                 <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-2 py-1 border rounded w-32" />
@@ -86,31 +96,31 @@
               <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
             </div>
           </div>
-          <div>
-            <form id="settings-form" class="space-y-4">
+          <div class="min-w-0">
+            <form id="settings-form" class="space-y-4 min-w-0">
               <div>
                 <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
-                <input type="password" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
+                <input type="password" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter Bokun Access Key" style="min-width:0;">
               </div>
               <div>
                 <label for="bokun-secret-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Secret Key</label>
-                <input type="password" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Secret Key">
+                <input type="password" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter Bokun Secret Key" style="min-width:0;">
               </div>
               <div>
                 <label for="woocommerce-consumer-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Key</label>
-                <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Key">
+                <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter WooCommerce Consumer Key" style="min-width:0;">
               </div>
               <div>
                 <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
-                <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
+                <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter WooCommerce Consumer Secret" style="min-width:0;">
               </div>
               <div>
                 <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
-                <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
+                <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter Telegram Bot Token" style="min-width:0;">
               </div>
               <div>
                 <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
-                <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Chat ID">
+                <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter Telegram Chat ID" style="min-width:0;">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
@@ -118,7 +128,7 @@
               </div>
               <div>
                 <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
-                <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter notification email address(es)">
+                <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter notification email address(es)" style="min-width:0;">
               </div>
               <div class="flex justify-end mt-6 gap-2">
                 <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>

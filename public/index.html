@@ -63,66 +63,70 @@
     <button id="settings-gear-btn" title="Settings" style="position: absolute; top: 18px; right: 24px; z-index: 50; background: none; border: none; font-size: 2rem; cursor: pointer; color: #6366f1; transition: color 0.2s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6366f1'">⚙️</button>
     <!-- Settings Modal -->
     <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
-      <div style="background: #fff; border-radius: 1rem; max-width: 95vw; width: 400px; margin: auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); position: relative;">
+      <div style="background: #fff; border-radius: 1rem; max-width: 95vw; width: 800px; margin: auto; padding: 2rem 1.5rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); position: relative;">
         <button id="settings-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
         <h2 class="text-xl font-bold mb-4 text-gray-800">Settings</h2>
-        <div id="whitelist-section" class="mb-6">
-          <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-4 mb-4">
-            <h3 class="text-lg font-semibold mb-3 text-indigo-700">Whitelist Management</h3>
-            <div id="whitelist-table-container" class="mb-3"></div>
-            <form id="whitelist-form" class="flex flex-wrap gap-2 items-end mb-2">
-              <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-2 py-1 border rounded w-40" required />
-              <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-2 py-1 border rounded w-32" />
-              <select id="whitelist-role" class="form-input px-2 py-1 border rounded w-36" required>
-                <option value="admin">Admin</option>
-                <option value="accounting">Accounting</option>
-                <option value="programs_manager">Programs Manager</option>
-                <option value="reservation">Reservation</option>
-              </select>
-              <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="whitelist-active" checked /> Active</label>
-              <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1 rounded">Add/Update</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div id="whitelist-section" class="mb-0 md:mb-0">
+            <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-4">
+              <h3 class="text-lg font-semibold mb-3 text-indigo-700">Whitelist Management</h3>
+              <div id="whitelist-table-container" class="mb-3"></div>
+              <form id="whitelist-form" class="flex flex-wrap gap-2 items-end mb-2">
+                <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-2 py-1 border rounded w-40" required />
+                <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-2 py-1 border rounded w-32" />
+                <select id="whitelist-role" class="form-input px-2 py-1 border rounded w-36" required>
+                  <option value="admin">Admin</option>
+                  <option value="accounting">Accounting</option>
+                  <option value="programs_manager">Programs Manager</option>
+                  <option value="reservation">Reservation</option>
+                </select>
+                <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="whitelist-active" checked /> Active</label>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1 rounded">Add/Update</button>
+              </form>
+              <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
+            </div>
+          </div>
+          <div>
+            <form id="settings-form" class="space-y-4">
+              <div>
+                <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
+                <input type="password" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
+              </div>
+              <div>
+                <label for="bokun-secret-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Secret Key</label>
+                <input type="password" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Secret Key">
+              </div>
+              <div>
+                <label for="woocommerce-consumer-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Key</label>
+                <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Key">
+              </div>
+              <div>
+                <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
+                <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
+              </div>
+              <div>
+                <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
+                <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
+              </div>
+              <div>
+                <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
+                <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Chat ID">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
+                <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
+              </div>
+              <div>
+                <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
+                <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter notification email address(es)">
+              </div>
+              <div class="flex justify-end mt-6 gap-2">
+                <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
+              </div>
             </form>
-            <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
           </div>
         </div>
-        <form id="settings-form" class="space-y-4">
-          <div>
-            <label for="bokun-access-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Access Key</label>
-            <input type="password" id="bokun-access-key" name="bokun_access_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Access Key">
-          </div>
-          <div>
-            <label for="bokun-secret-key" class="block text-sm font-medium text-gray-700 mb-1">Bokun Secret Key</label>
-            <input type="password" id="bokun-secret-key" name="bokun_secret_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Bokun Secret Key">
-          </div>
-          <div>
-            <label for="woocommerce-consumer-key" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Key</label>
-            <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Key">
-          </div>
-          <div>
-            <label for="woocommerce-consumer-secret" class="block text-sm font-medium text-gray-700 mb-1">WooCommerce Consumer Secret</label>
-            <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter WooCommerce Consumer Secret">
-          </div>
-          <div>
-            <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
-            <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Bot Token">
-          </div>
-          <div>
-            <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
-            <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter Telegram Chat ID">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Use Bokun API for Bookings</label>
-            <input type="checkbox" id="use-bokun-api" name="use_bokun_api" class="mr-2"> <span class="text-gray-600">Enable Bokun API (disable email parsing for Bokun)</span>
-          </div>
-          <div>
-            <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
-            <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Enter notification email address(es)">
-          </div>
-          <div class="flex justify-end mt-6 gap-2">
-            <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
-          </div>
-        </form>
       </div>
     </div>
     <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">

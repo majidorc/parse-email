@@ -163,8 +163,8 @@
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
-          </tr>
-        </thead>
+        </tr>
+      </thead>
                   <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
                     <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
                   </tbody>
@@ -262,10 +262,10 @@
           </tr>
         </thead>
           <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
-          <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
-        </tbody>
-      </table>
-      </div>
+        <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
       <hr class="border-gray-200 mt-6 mb-6">
       <div id="pagination-controls" class="flex justify-center items-center space-x-2 text-base"></div>
       <div id="accounting-table-container" style="display:none;">
@@ -2096,7 +2096,7 @@
 
     // --- Auth/session logic ---
     async function checkSession() {
-      const res = await fetch('/api/auth/session');
+      const res = await fetch('/api/auth?type=session');
       const data = await res.json();
       if (data.isAuthenticated) {
         document.getElementById('login-section').style.display = 'none';
@@ -2121,7 +2121,7 @@
     window.onTelegramAuth = async function(user) {
       // user: Telegram login data
       try {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch('/api/auth?type=login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(user)
@@ -2134,7 +2134,7 @@
       }
     };
     document.getElementById('logout-btn').onclick = async function() {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth?type=logout', { method: 'POST' });
       checkSession();
     };
     document.addEventListener('DOMContentLoaded', checkSession);

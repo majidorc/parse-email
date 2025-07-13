@@ -39,7 +39,8 @@ function verifySession(token) {
 }
 
 module.exports = async (req, res) => {
-  if (req.method === 'POST' && req.url.endsWith('/login')) {
+  const type = req.query.type;
+  if (type === 'login' && req.method === 'POST') {
     const data = req.body || {};
     if (!verifyTelegramAuth(data)) return res.status(401).json({ error: 'Invalid Telegram login' });
     const phone = data.phone_number;
@@ -51,11 +52,11 @@ module.exports = async (req, res) => {
     res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
     return res.status(200).json({ success: true, phone, role });
   }
-  if (req.method === 'POST' && req.url.endsWith('/logout')) {
+  if (type === 'logout' && req.method === 'POST') {
     res.setHeader('Set-Cookie', `${COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0`);
     return res.status(200).json({ success: true });
   }
-  if (req.method === 'GET' && req.url.endsWith('/session')) {
+  if (type === 'session' && req.method === 'GET') {
     const cookie = req.headers.cookie || '';
     const match = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
     const token = match ? match[1] : null;

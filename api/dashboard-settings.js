@@ -105,6 +105,29 @@ module.exports = async (req, res) => {
     }
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+  if (type === 'whitelist') {
+    if (req.method === 'GET') {
+      const { rows } = await sql`SELECT phone_number, role, is_active FROM user_whitelist ORDER BY role, phone_number`;
+      return res.status(200).json({ whitelist: rows });
+    }
+    if (req.method === 'POST') {
+      const { phone_number, role, is_active } = req.body || {};
+      if (!phone_number || !role) return res.status(400).json({ error: 'Missing phone_number or role' });
+      await sql`
+        INSERT INTO user_whitelist (phone_number, role, is_active)
+        VALUES (${phone_number}, ${role}, COALESCE(${is_active}, TRUE))
+        ON CONFLICT (phone_number) DO UPDATE SET role = EXCLUDED.role, is_active = EXCLUDED.is_active;
+      `;
+      return res.status(200).json({ success: true });
+    }
+    if (req.method === 'DELETE') {
+      const { phone_number } = req.body || {};
+      if (!phone_number) return res.status(400).json({ error: 'Missing phone_number' });
+      await sql`DELETE FROM user_whitelist WHERE phone_number = ${phone_number}`;
+      return res.status(200).json({ success: true });
+    }
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
   // Default: dashboard analytics
   const period = req.query.period || 'thisMonth';
   const [start, end] = getBangkokDateRange(period);

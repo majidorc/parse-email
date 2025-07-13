@@ -67,4 +67,5 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     paid NUMERIC,
     book_date DATE,
     rate TEXT -- Label for rate, not a price
+    , updated_fields JSONB DEFAULT '{}' -- Tracks changed fields for highlighting
 ); 

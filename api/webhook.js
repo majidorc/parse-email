@@ -827,18 +827,34 @@ async function handler(req, res) {
                   ['phone_number', extractedInfo.phoneNumber],
                   ['raw_tour_date', extractedInfo.tourDate],
                   ['paid', paid],
-                  ['book_date', extractedInfo.book_date]
+                  ['book_date', extractedInfo.book_date],
+                  ['rate', extractedInfo.rate]
                 ];
+                let updatedFields = existing.updated_fields || {};
+                let anyFieldChanged = false;
                 for (const [key, value] of fields) {
                   if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
-                    changed = true;
-                    break;
+                    updatedFields[key] = true;
+                    anyFieldChanged = true;
                   }
                 }
-                if (changed) {
+                // Remove highlights if more than one day after tour_date
+                let clearHighlight = false;
+                if (existing.tour_date) {
+                  const today = new Date();
+                  today.setHours(0,0,0,0);
+                  const tourDate = new Date(existing.tour_date.substring(0,10));
+                  const dayAfterTour = new Date(tourDate);
+                  dayAfterTour.setDate(tourDate.getDate() + 1);
+                  if (today > dayAfterTour) {
+                    updatedFields = {};
+                    clearHighlight = true;
+                  }
+                }
+                if (anyFieldChanged || clearHighlight) {
                   console.log(`[UPDATE] Updating booking: ${extractedInfo.bookingNumber}`);
                   await sql`
-                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}
+                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${extractedInfo.rate}, updated_fields=${JSON.stringify(updatedFields)}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');

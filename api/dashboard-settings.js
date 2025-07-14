@@ -113,16 +113,16 @@ module.exports = async (req, res) => {
   if (type === 'whitelist') {
     if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
     if (req.method === 'GET') {
-      const { rows } = await sql`SELECT email, phone_number, role, is_active FROM user_whitelist ORDER BY role, email`;
+      const { rows } = await sql`SELECT email, phone_number, telegram_user_id, role, is_active FROM user_whitelist ORDER BY role, email`;
       return res.status(200).json({ whitelist: rows });
     }
     if (req.method === 'POST') {
-      const { email, phone_number, role, is_active } = req.body || {};
+      const { email, phone_number, telegram_user_id, role, is_active } = req.body || {};
       if (!email || !role) return res.status(400).json({ error: 'Missing email or role' });
       await sql`
-        INSERT INTO user_whitelist (email, phone_number, role, is_active)
-        VALUES (${email}, ${phone_number || null}, ${role}, COALESCE(${is_active}, TRUE))
-        ON CONFLICT (email) DO UPDATE SET phone_number = EXCLUDED.phone_number, role = EXCLUDED.role, is_active = EXCLUDED.is_active;
+        INSERT INTO user_whitelist (email, phone_number, telegram_user_id, role, is_active)
+        VALUES (${email}, ${phone_number || null}, ${telegram_user_id || null}, ${role}, COALESCE(${is_active}, TRUE))
+        ON CONFLICT (email) DO UPDATE SET phone_number = EXCLUDED.phone_number, telegram_user_id = EXCLUDED.telegram_user_id, role = EXCLUDED.role, is_active = EXCLUDED.is_active;
       `;
       return res.status(200).json({ success: true });
     }

@@ -87,16 +87,15 @@ module.exports = async (req, res) => {
     const reply_to_message_id = message.message_id;
     // Get sender's phone number via Telegram (if available)
     const from = message.from || {};
-    // If phone number is not available, deny access
-    const phone = from.phone_number || null;
-    if (!phone) {
-      await sendTelegram(chat_id, 'Access denied. Please share your phone number with the bot.', reply_to_message_id);
+    const telegramUserId = from.id;
+    if (!telegramUserId) {
+      await sendTelegram(chat_id, 'Access denied. Telegram user ID not found.', reply_to_message_id);
       return res.json({ ok: true });
     }
-    // Check whitelist
-    const { rows } = await sql`SELECT is_active FROM user_whitelist WHERE phone_number = ${phone}`;
+    // Check whitelist by telegram_user_id
+    const { rows } = await sql`SELECT is_active FROM user_whitelist WHERE telegram_user_id = ${telegramUserId}`;
     if (!rows.length || !rows[0].is_active) {
-      await sendTelegram(chat_id, 'You are not authorized to use this bot.', reply_to_message_id);
+      await sendTelegram(chat_id, 'You are not authorized to use this bot. Please contact the admin to be whitelisted.', reply_to_message_id);
       return res.json({ ok: true });
     }
     // Try to get bot username from environment (optional, fallback to generic)

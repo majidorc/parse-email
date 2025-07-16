@@ -2,7 +2,7 @@ const { sql } = require('@vercel/postgres');
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 
-const GOOGLE_CLIENT_ID = '342250702349-vff0rim280bq31rer6vpm3u7gps965om.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '573507279019-n1752vi49u9i4ceht9ie6m5imuji3ikk.apps.googleusercontent.com';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'changeme';
 const COOKIE_NAME = 'session_token';
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);

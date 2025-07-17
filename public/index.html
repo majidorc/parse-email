@@ -1562,8 +1562,14 @@
           document.getElementById('dashboard-benefit').textContent = '-';
         });
     }
-    document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);
-    document.getElementById('dashboard-refresh').addEventListener('click', fetchDashboardAnalytics);
+    document.getElementById('dashboard-period').addEventListener('change', function() {
+      fetchDashboardAnalytics();
+      updateDashboardBenefitCard();
+    });
+    document.getElementById('dashboard-refresh').addEventListener('click', function() {
+      fetchDashboardAnalytics();
+      updateDashboardBenefitCard();
+    });
 
     // --- Programs Tab Logic (merged) ---
     let allRates = [];

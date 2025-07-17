@@ -2323,6 +2323,24 @@
         accountingClearBtn.style.display = accountingSearchBar.value ? '' : 'none';
       });
     }
+
+    // Fetch and display real benefit in dashboard card
+    async function updateDashboardBenefitCard() {
+      try {
+        const res = await fetch('/api/accounting?page=1&limit=1');
+        const data = await res.json();
+        if (data.totalBenefit !== undefined) {
+          document.getElementById('dashboard-benefit').textContent = Number(data.totalBenefit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else {
+          document.getElementById('dashboard-benefit').textContent = '-';
+        }
+      } catch (err) {
+        document.getElementById('dashboard-benefit').textContent = '-';
+      }
+    }
+    // Call on dashboard load and refresh
+    window.addEventListener('DOMContentLoaded', updateDashboardBenefitCard);
+    document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
   </script>
 </body>
 </html>

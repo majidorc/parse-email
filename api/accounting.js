@@ -51,6 +51,8 @@ module.exports = async (req, res) => {
   const dirStr = dir === 'asc' ? 'ASC' : 'DESC';
 
   const search = req.query.search ? req.query.search.trim() : '';
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
 
   try {
     // Build WHERE clause for both aliased and unaliased queries
@@ -150,16 +152,22 @@ module.exports = async (req, res) => {
         child: b.child
       };
     });
-    // Calculate total benefit for all bookings (not just current page or filtered)
+    // Calculate total benefit for all bookings or for a period if startDate/endDate provided
     let totalBenefit = 0;
+    let prevPeriodBenefit = null;
     try {
-      const allDataQuery = `
-        SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child
+      let allDataQuery = `
+        SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child, b.tour_date
         FROM bookings b
         LEFT JOIN products p ON b.sku = p.sku
         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
       `;
-      const { rows: allRows } = await sql.query(allDataQuery);
+      let allParams = [];
+      if (startDate && endDate) {
+        allDataQuery += ` WHERE b.tour_date >= $1 AND b.tour_date < $2`;
+        allParams = [startDate, endDate];
+      }
+      const { rows: allRows } = await sql.query(allDataQuery, allParams);
       totalBenefit = allRows.reduce((sum, b) => {
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;
@@ -169,8 +177,33 @@ module.exports = async (req, res) => {
         const netTotal = netAdult * adult + netChild * child;
         return sum + (paid - netTotal);
       }, 0);
+      // Previous period benefit for percent change
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diff = end.getTime() - start.getTime();
+        const prevStart = new Date(start.getTime() - diff);
+        const prevEnd = new Date(start.getTime());
+        const prevStartStr = prevStart.toISOString().slice(0, 10);
+        const prevEndStr = prevEnd.toISOString().slice(0, 10);
+        let prevQuery = allDataQuery.replace('b.tour_date >= $1 AND b.tour_date < $2', 'b.tour_date >= $1 AND b.tour_date < $2');
+        const { rows: prevRows } = await sql.query(
+          allDataQuery.replace('b.tour_date >= $1 AND b.tour_date < $2', 'b.tour_date >= $1 AND b.tour_date < $2'),
+          [prevStartStr, prevEndStr]
+        );
+        prevPeriodBenefit = prevRows.reduce((sum, b) => {
+          const netAdult = Number(b.net_adult) || 0;
+          const netChild = Number(b.net_child) || 0;
+          const adult = Number(b.adult) || 0;
+          const child = Number(b.child) || 0;
+          const paid = Number(b.paid) || 0;
+          const netTotal = netAdult * adult + netChild * child;
+          return sum + (paid - netTotal);
+        }, 0);
+      }
     } catch (e) {
       totalBenefit = 0;
+      prevPeriodBenefit = null;
     }
     console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
 
@@ -184,7 +217,8 @@ module.exports = async (req, res) => {
       lastMonthOpNotSentPaid: parseFloat(lastMonthPaidRes.rows[0].sum),
       thisMonthCount: parseInt(thisMonthCountRes.rows[0].count, 10),
       thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum),
-      totalBenefit
+      totalBenefit,
+      prevPeriodBenefit
     });
   } catch (err) {
     console.error('Accounting API error:', err);

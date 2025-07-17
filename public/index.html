@@ -2324,23 +2324,79 @@
       });
     }
 
-    // Fetch and display real benefit in dashboard card
+    // Helper to get period start/end dates
+    function getDashboardPeriodRange() {
+      const period = document.getElementById('dashboard-period').value;
+      const now = new Date();
+      let startDate, endDate;
+      if (period === 'thisWeek') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
+        startDate = new Date(now.setDate(diff));
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7);
+      } else if (period === 'lastWeek') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1) - 7;
+        startDate = new Date(now.setDate(diff));
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7);
+      } else if (period === 'thisMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      } else if (period === 'lastMonth') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else if (period === 'thisYear') {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear() + 1, 0, 1);
+      } else if (period === 'lastYear') {
+        startDate = new Date(now.getFullYear() - 1, 0, 1);
+        endDate = new Date(now.getFullYear(), 0, 1);
+      } else {
+        startDate = null;
+        endDate = null;
+      }
+      return {
+        startDate: startDate ? startDate.toISOString().slice(0, 10) : null,
+        endDate: endDate ? endDate.toISOString().slice(0, 10) : null
+      };
+    }
+    // Fetch and display real benefit in dashboard card for selected period
     async function updateDashboardBenefitCard() {
+      const { startDate, endDate } = getDashboardPeriodRange();
+      let url = '/api/accounting?page=1&limit=1';
+      if (startDate && endDate) url += `&startDate=${startDate}&endDate=${endDate}`;
       try {
-        const res = await fetch('/api/accounting?page=1&limit=1');
+        const res = await fetch(url);
         const data = await res.json();
         if (data.totalBenefit !== undefined) {
           document.getElementById('dashboard-benefit').textContent = Number(data.totalBenefit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          // Percent change
+          let percent = null;
+          if (typeof data.prevPeriodBenefit === 'number' && data.prevPeriodBenefit !== 0) {
+            percent = ((data.totalBenefit - data.prevPeriodBenefit) / Math.abs(data.prevPeriodBenefit)) * 100;
+          }
+          const benefitChange = document.getElementById('dashboard-benefit-change');
+          if (percent !== null) {
+            const up = percent >= 0;
+            benefitChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${percent.toFixed(2)}%</span> vs previous period`;
+          } else {
+            benefitChange.textContent = '-- %';
+          }
         } else {
           document.getElementById('dashboard-benefit').textContent = '-';
+          document.getElementById('dashboard-benefit-change').textContent = '-- %';
         }
       } catch (err) {
         document.getElementById('dashboard-benefit').textContent = '-';
+        document.getElementById('dashboard-benefit-change').textContent = '-- %';
       }
     }
-    // Call on dashboard load and refresh
+    // Call on dashboard load and refresh and period change
     window.addEventListener('DOMContentLoaded', updateDashboardBenefitCard);
     document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
+    document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
   </script>
 </body>
 </html>

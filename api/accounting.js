@@ -53,27 +53,32 @@ module.exports = async (req, res) => {
   const search = req.query.search ? req.query.search.trim() : '';
 
   try {
+    // Build WHERE clause for both aliased and unaliased queries
     let whereClause = '';
+    let whereClauseUnaliased = '';
     let params = [];
     // Date-only search support
     const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
     if (dateRangeMatch) {
       whereClause = `WHERE b.tour_date >= $1 AND b.tour_date < $2`;
+      whereClauseUnaliased = `WHERE tour_date >= $1 AND tour_date < $2`;
       params = [dateRangeMatch[1], dateRangeMatch[2]];
       console.log('[DEBUG] Last Month filter:', params);
     } else {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
         whereClause = `WHERE b.tour_date::date = $1`;
+        whereClauseUnaliased = `WHERE tour_date::date = $1`;
         params = [search];
       } else if (search) {
         whereClause = `WHERE b.booking_number ILIKE $1 OR b.customer_name ILIKE $1 OR b.sku ILIKE $1 OR b.program ILIKE $1 OR b.hotel ILIKE $1`;
+        whereClauseUnaliased = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
         params = [`%${search}%`];
       }
     }
 
     // Get total count
-    const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased}`;
     console.log('[DEBUG] Count Query:', countQuery, params);
     const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
@@ -88,16 +93,16 @@ module.exports = async (req, res) => {
     const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
 
     // Summary queries for all matching bookings (not just current page)
-    let summaryWhere = whereClause;
+    let summaryWhere = whereClauseUnaliased;
     let summaryParams = [...params];
     // Last Month
     const lastMonthParams = [...params, lastMonthStartStr, thisMonthStartStr];
-    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     // This Month
     const thisMonthParams = [...params, thisMonthStartStr, nextMonthStartStr];
-    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClause ? whereClause + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
       sql.query(lastMonthCountQuery, lastMonthParams),
       sql.query(lastMonthPaidQuery, lastMonthParams),

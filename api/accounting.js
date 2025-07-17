@@ -58,16 +58,16 @@ module.exports = async (req, res) => {
     // Date-only search support
     const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
     if (dateRangeMatch) {
-      whereClause = `WHERE tour_date >= $1 AND tour_date < $2`;
+      whereClause = `WHERE b.tour_date >= $1 AND b.tour_date < $2`;
       params = [dateRangeMatch[1], dateRangeMatch[2]];
       console.log('[DEBUG] Last Month filter:', params);
     } else {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
-        whereClause = `WHERE tour_date::date = $1`;
+        whereClause = `WHERE b.tour_date::date = $1`;
         params = [search];
       } else if (search) {
-        whereClause = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
+        whereClause = `WHERE b.booking_number ILIKE $1 OR b.customer_name ILIKE $1 OR b.sku ILIKE $1 OR b.program ILIKE $1 OR b.hotel ILIKE $1`;
         params = [`%${search}%`];
       }
     }
@@ -114,7 +114,7 @@ module.exports = async (req, res) => {
       LEFT JOIN products p ON b.sku = p.sku
       LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
       ${whereClause}
-      ORDER BY ${sort} ${dirStr}
+      ORDER BY b.${sort} ${dirStr}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     const dataParams = [...params, limit, offset];

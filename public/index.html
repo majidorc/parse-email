@@ -1658,7 +1658,6 @@
     // Restore Programs tab logic (add, edit, delete, form, and event listeners)
     document.addEventListener('DOMContentLoaded', function () {
       const addProgramBtn = document.getElementById('add-program-btn');
-      const programsSection = document.getElementById('programs-section');
       const addProgramSection = document.getElementById('add-program-section');
       const cancelAddProgramBtn = document.getElementById('cancel-add-program');
       // Show form, hide table
@@ -1899,7 +1898,7 @@
       .then(result => {
         alert('Program deleted successfully!');
         document.getElementById('add-program-section').style.display = 'none';
-        document.getElementById('programs-section').style.display = '';
+        programsSection.style.display = '';
         if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
       })
       .catch(err => {

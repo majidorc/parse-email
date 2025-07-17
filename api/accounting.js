@@ -107,14 +107,44 @@ module.exports = async (req, res) => {
 
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
-      SELECT booking_number, book_date, tour_date, sku, program, rate, hotel, paid
-      FROM bookings
+      SELECT b.booking_number, b.book_date, b.tour_date, b.sku, b.program, b.rate, b.hotel, b.paid,
+             b.adult, b.child,
+             r.net_adult, r.net_child
+      FROM bookings b
+      LEFT JOIN products p ON b.sku = p.sku
+      LEFT JOIN rates r ON r.product_id = p.id AND r.name = b.rate
       ${whereClause}
       ORDER BY ${sort} ${dirStr}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     const dataParams = [...params, limit, offset];
-    const { rows: bookings } = await sql.query(dataQuery, dataParams);
+    const { rows: bookingsRaw } = await sql.query(dataQuery, dataParams);
+    // Calculate benefit for each booking
+    const bookings = bookingsRaw.map(b => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      const netTotal = netAdult * adult + netChild * child;
+      const benefit = paid - netTotal;
+      return {
+        booking_number: b.booking_number,
+        book_date: b.book_date,
+        tour_date: b.tour_date,
+        sku: b.sku,
+        program: b.program,
+        rate: b.rate,
+        hotel: b.hotel,
+        paid: b.paid,
+        benefit,
+        net_total: netTotal,
+        net_adult: b.net_adult,
+        net_child: b.net_child,
+        adult: b.adult,
+        child: b.child
+      };
+    });
     console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
 
     res.setHeader('Cache-Control', 'no-store');

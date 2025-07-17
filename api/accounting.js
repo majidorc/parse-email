@@ -145,6 +145,29 @@ module.exports = async (req, res) => {
         child: b.child
       };
     });
+    // Calculate total benefit for all bookings (not just current page)
+    let totalBenefit = 0;
+    try {
+      const allDataQuery = `
+        SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child
+        FROM bookings b
+        LEFT JOIN products p ON b.sku = p.sku
+        LEFT JOIN rates r ON r.product_id = p.id AND r.name = b.rate
+        ${whereClause}
+      `;
+      const { rows: allRows } = await sql.query(allDataQuery, params);
+      totalBenefit = allRows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = netAdult * adult + netChild * child;
+        return sum + (paid - netTotal);
+      }, 0);
+    } catch (e) {
+      totalBenefit = 0;
+    }
     console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
 
     res.setHeader('Cache-Control', 'no-store');
@@ -156,7 +179,8 @@ module.exports = async (req, res) => {
       lastMonthCount: parseInt(lastMonthCountRes.rows[0].count, 10),
       lastMonthOpNotSentPaid: parseFloat(lastMonthPaidRes.rows[0].sum),
       thisMonthCount: parseInt(thisMonthCountRes.rows[0].count, 10),
-      thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum)
+      thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum),
+      totalBenefit
     });
   } catch (err) {
     console.error('Accounting API error:', err);

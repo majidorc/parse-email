@@ -1539,6 +1539,12 @@
             document.getElementById('channels-booking-counts').innerHTML = '<span class="text-gray-400">No data</span>';
             document.getElementById('channels-booking-table').innerHTML = '';
           }
+          // Update benefit card
+          if (data.totalBenefit !== undefined) {
+            document.getElementById('dashboard-benefit').textContent = Number(data.totalBenefit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          } else {
+            document.getElementById('dashboard-benefit').textContent = '-';
+          }
         })
         .catch(err => {
           if (dashboardTotalBookings) dashboardTotalBookings.textContent = '-';
@@ -1553,6 +1559,7 @@
           if (bookingsChange) bookingsChange.textContent = '';
           if (newChange) newChange.textContent = '';
           if (earningsChange) earningsChange.textContent = '';
+          document.getElementById('dashboard-benefit').textContent = '-';
         });
     }
     document.getElementById('dashboard-period').addEventListener('change', fetchDashboardAnalytics);

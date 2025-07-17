@@ -2397,6 +2397,34 @@
     window.addEventListener('DOMContentLoaded', updateDashboardBenefitCard);
     document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
     document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
+
+    // Add import and sample download buttons to Programs tab
+    const programsSection = document.getElementById('programs-section');
+    if (programsSection && !document.getElementById('import-excel-btn')) {
+      const importDiv = document.createElement('div');
+      importDiv.className = 'flex gap-4 mb-4';
+      importDiv.innerHTML = `
+        <button id="import-excel-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Import from Excel</button>
+        <input type="file" id="excel-file-input" accept=".xlsx,.csv" style="display:none;" />
+        <button id="download-sample-excel" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Download Sample Excel</button>
+      `;
+      programsSection.insertBefore(importDiv, programsSection.firstChild);
+      document.getElementById('import-excel-btn').onclick = () => document.getElementById('excel-file-input').click();
+      document.getElementById('download-sample-excel').onclick = () => {
+        const sample =
+          'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
+          'HKT0041,Sample Program,Optional remark,With transfer,900,900,none,,\n' +
+          'HKT0041,Sample Program,Optional remark,Without transfer,800,800,entrance,100,50\n';
+        const blob = new Blob([sample], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'programs-sample.xlsx.csv';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      };
+    }
   </script>
 </body>
 </html>

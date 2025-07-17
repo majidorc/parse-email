@@ -150,7 +150,7 @@ module.exports = async (req, res) => {
         child: b.child
       };
     });
-    // Calculate total benefit for all bookings (not just current page)
+    // Calculate total benefit for all bookings (not just current page or filtered)
     let totalBenefit = 0;
     try {
       const allDataQuery = `
@@ -158,9 +158,8 @@ module.exports = async (req, res) => {
         FROM bookings b
         LEFT JOIN products p ON b.sku = p.sku
         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-        ${whereClause}
       `;
-      const { rows: allRows } = await sql.query(allDataQuery, params);
+      const { rows: allRows } = await sql.query(allDataQuery);
       totalBenefit = allRows.reduce((sum, b) => {
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;

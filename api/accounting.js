@@ -112,7 +112,7 @@ module.exports = async (req, res) => {
              r.net_adult, r.net_child
       FROM bookings b
       LEFT JOIN products p ON b.sku = p.sku
-      LEFT JOIN rates r ON r.product_id = p.id AND r.name = b.rate
+      LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
       ${whereClause}
       ORDER BY ${sort} ${dirStr}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
         SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child
         FROM bookings b
         LEFT JOIN products p ON b.sku = p.sku
-        LEFT JOIN rates r ON r.product_id = p.id AND r.name = b.rate
+        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
         ${whereClause}
       `;
       const { rows: allRows } = await sql.query(allDataQuery, params);

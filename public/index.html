@@ -1395,7 +1395,7 @@
               }
             });
           } else if (ctx) {
-            console.warn('revenueByDay missing or empty:', data.revenueByDay);
+            // console.warn('revenueByDay missing or empty:', data.revenueByDay);
             ctx.clearRect(0, 0, 400, 220);
           } else { console.error('revenueChart canvas or context missing'); }
           // Top Destinations
@@ -1424,7 +1424,7 @@
             }
             renderDestinations(false);
           } else {
-            console.warn('topDestinations missing or empty:', data.topDestinations);
+            // console.warn('topDestinations missing or empty:', data.topDestinations);
             if (dashboardTopDestinations) dashboardTopDestinations.innerHTML = '<span class="text-gray-400">No data</span>';
           }
           // Percent changes

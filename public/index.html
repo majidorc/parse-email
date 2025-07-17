@@ -2299,6 +2299,30 @@
     whitelistTableContainer.classList.add('mb-3');
     const whitelistForm = document.getElementById('whitelist-form');
     whitelistForm.classList.add('mb-2');
+
+    // --- ACCOUNTING SEARCH BAR LOGIC ---
+    const accountingSearchBar = document.getElementById('search-bar');
+    const accountingClearBtn = document.getElementById('clear-search-btn');
+    if (accountingSearchBar && accountingClearBtn) {
+      accountingSearchBar.addEventListener('input', function(e) {
+        if (accountingTableContainer.style.display !== 'none') {
+          accountingSearch = e.target.value;
+          fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+          accountingClearBtn.style.display = e.target.value ? '' : 'none';
+        }
+      });
+      accountingClearBtn.addEventListener('click', function() {
+        accountingSearchBar.value = '';
+        accountingSearch = '';
+        fetchAccounting(1, accountingSort, accountingDir, '');
+        accountingClearBtn.style.display = 'none';
+        accountingSearchBar.focus();
+      });
+      // Always show/hide clear button on tab switch
+      accountingBtn.addEventListener('click', function() {
+        accountingClearBtn.style.display = accountingSearchBar.value ? '' : 'none';
+      });
+    }
   </script>
 </body>
 </html>

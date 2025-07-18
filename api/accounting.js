@@ -126,22 +126,35 @@ module.exports = async (req, res) => {
     const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
 
     // Summary queries for all matching bookings (not just current page)
-    let summaryWhere = whereClauseUnaliased;
-    let summaryParams = [...params];
     // Last Month
     const lastMonthParams = [...params, lastMonthStartStr, thisMonthStartStr];
-    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const lastMonthWhereClause = whereClauseUnaliased ? `${whereClauseUnaliased} AND tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}` : `WHERE tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${lastMonthWhereClause}`;
+    const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${lastMonthWhereClause}`;
+    
     // This Month
     const thisMonthParams = [...params, thisMonthStartStr, nextMonthStartStr];
-    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
-    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${whereClauseUnaliased ? whereClauseUnaliased + ' AND' : 'WHERE'} tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const thisMonthWhereClause = whereClauseUnaliased ? `${whereClauseUnaliased} AND tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}` : `WHERE tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
+    const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${thisMonthWhereClause}`;
+    const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${thisMonthWhereClause}`;
+    console.log('[DEBUG] Last Month Query:', lastMonthCountQuery, lastMonthParams);
+    console.log('[DEBUG] This Month Query:', thisMonthCountQuery, thisMonthParams);
+    
     const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
       sql.query(lastMonthCountQuery, lastMonthParams),
       sql.query(lastMonthPaidQuery, lastMonthParams),
       sql.query(thisMonthCountQuery, thisMonthParams),
       sql.query(thisMonthPaidQuery, thisMonthParams)
     ]);
+    
+    console.log('[DEBUG] Last Month Results:', {
+      count: lastMonthCountRes.rows[0].count,
+      paid: lastMonthPaidRes.rows[0].sum
+    });
+    console.log('[DEBUG] This Month Results:', {
+      count: thisMonthCountRes.rows[0].count,
+      paid: thisMonthPaidRes.rows[0].sum
+    });
 
     // Check if net_total column exists
     let hasNetTotalColumn = false;

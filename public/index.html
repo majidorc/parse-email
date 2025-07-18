@@ -2403,13 +2403,14 @@
     document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
     document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
 
-    // Add import and sample download buttons to Programs tab
+    // Add import, export, and sample download buttons to Programs tab
     if (programsSection && !document.getElementById('import-excel-btn')) {
       const importDiv = document.createElement('div');
       importDiv.className = 'flex gap-4 mb-4';
       importDiv.innerHTML = `
         <button id="import-excel-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Import from Excel</button>
         <input type="file" id="excel-file-input" accept=".xlsx,.csv" style="display:none;" />
+        <button id="export-programs-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">Export Programs</button>
         <button id="download-sample-excel" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Download Sample Excel</button>
       `;
       programsSection.insertBefore(importDiv, programsSection.firstChild);
@@ -2530,6 +2531,48 @@
         document.body.appendChild(a);
         a.click();
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      };
+      
+      // Export programs functionality
+      document.getElementById('export-programs-btn').onclick = async () => {
+        try {
+          // Fetch all programs from the API
+          const response = await fetch('/api/products-rates?type=tour');
+          const data = await response.json();
+          
+          if (!data.tours || data.tours.length === 0) {
+            alert('No programs found to export.');
+            return;
+          }
+          
+          // Convert programs to CSV format
+          let csv = 'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
+          
+          data.tours.forEach(program => {
+            if (program.rates && program.rates.length > 0) {
+              program.rates.forEach(rate => {
+                csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${rate.fee_type || 'none'}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
+              });
+            } else {
+              // If no rates, still export the program with empty rate fields
+              csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","",0,0,"none",,\n`;
+            }
+          });
+          
+          // Create and download the CSV file
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `programs-export-${new Date().toISOString().slice(0, 10)}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+          
+        } catch (error) {
+          console.error('Export error:', error);
+          alert('Error exporting programs. Please try again.');
+        }
       };
     }
   </script>

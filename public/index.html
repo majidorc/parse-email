@@ -969,32 +969,46 @@
       
       function statCard(label, value, color, bg, border, valueClass, id = "") {
         return `
-        <div class="p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
-          <p class="${color} font-semibold mb-2 text-lg">${label}</p>
-          <div class="text-2xl font-bold ${valueClass}">${typeof value === 'number' ? value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : value}</div>
+        <div class="p-6 rounded-xl ${bg} shadow-lg border-2 ${border} flex flex-col items-center justify-center cursor-pointer transform hover:scale-105 transition-all duration-200" id="${id}">
+          <p class="${color} font-bold mb-3 text-lg">${label}</p>
+          <div class="text-3xl font-bold ${valueClass}">${typeof value === 'number' ? value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : value}</div>
         </div>`;
       }
       
       document.getElementById('accounting-summary').innerHTML = `
-        <div class="mb-4 flex justify-center">
-          <select id="accounting-period-selector" class="border rounded px-3 py-2 text-sm bg-white shadow-sm">
-            <option value="all">All Time</option>
-            <option value="thisWeek">This Week</option>
-            <option value="lastWeek">Last Week</option>
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="thisYear">This Year</option>
-            <option value="lastYear">Last Year</option>
-            <option value="custom">Custom Range</option>
-          </select>
-          <div id="custom-date-range" class="ml-2 hidden">
-            <input type="date" id="start-date" class="border rounded px-2 py-2 text-sm">
-            <span class="mx-2 text-gray-500">to</span>
-            <input type="date" id="end-date" class="border rounded px-2 py-2 text-sm">
-            <button id="apply-date-range" class="ml-2 px-3 py-2 bg-blue-600 text-white rounded text-sm">Apply</button>
+        <div class="mb-6 flex flex-col items-center space-y-4">
+          <div class="flex items-center space-x-4 bg-white rounded-lg shadow-md p-4 border border-gray-200">
+            <label for="accounting-period-selector" class="text-sm font-semibold text-gray-700 whitespace-nowrap">
+              📅 Select Period:
+            </label>
+            <select id="accounting-period-selector" class="border-2 border-blue-200 rounded-lg px-4 py-2 text-sm bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 min-w-[150px]">
+              <option value="all">🕐 All Time</option>
+              <option value="thisWeek">📅 This Week</option>
+              <option value="lastWeek">📅 Last Week</option>
+              <option value="thisMonth">📅 This Month</option>
+              <option value="lastMonth">📅 Last Month</option>
+              <option value="thisYear">📅 This Year</option>
+              <option value="lastYear">📅 Last Year</option>
+              <option value="custom">📅 Custom Range</option>
+            </select>
+          </div>
+          <div id="custom-date-range" class="hidden bg-white rounded-lg shadow-md p-4 border border-gray-200">
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-2">
+                <label for="start-date" class="text-sm font-medium text-gray-700">From:</label>
+                <input type="date" id="start-date" class="border-2 border-blue-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+              </div>
+              <div class="flex items-center space-x-2">
+                <label for="end-date" class="text-sm font-medium text-gray-700">To:</label>
+                <input type="date" id="end-date" class="border-2 border-blue-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200">
+              </div>
+              <button id="apply-date-range" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                ✅ Apply
+              </button>
+            </div>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 text-sm md:text-base">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm md:text-base">
           ${statCard('Total Booking', totalBookings, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'total-booking-card')}
           ${statCard('Sale', totalPaid, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'sale-card')}
           ${statCard('Benefit', totalBenefit, 'text-yellow-700', 'bg-yellow-50', 'border-yellow-100', 'text-yellow-800', 'benefit-card')}

@@ -13,17 +13,34 @@ module.exports = async (req, res) => {
   const bookingNumber = req.query.booking_number;
   if (bookingNumber) {
     if (req.method === 'PATCH') {
-      const { paid } = req.body;
-      if (paid === undefined) {
-        return res.status(400).json({ success: false, error: 'Missing paid' });
+      const { paid, net_total } = req.body;
+      
+      // Handle paid amount update
+      if (paid !== undefined) {
+        try {
+          await sql.query('UPDATE bookings SET paid = $1 WHERE booking_number = $2', [paid, bookingNumber]);
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(200).json({ success: true });
+        } catch (err) {
+          return res.status(500).json({ success: false, error: err.message });
+        }
       }
-      try {
-        await sql.query('UPDATE bookings SET paid = $1 WHERE booking_number = $2', [paid, bookingNumber]);
-        res.setHeader('Cache-Control', 'no-store');
-        return res.status(200).json({ success: true });
-      } catch (err) {
-        return res.status(500).json({ success: false, error: err.message });
+      
+      // Handle net_total update (admin only)
+      if (net_total !== undefined) {
+        if (userRole !== 'admin') {
+          return res.status(403).json({ success: false, error: 'Forbidden: Admins only' });
+        }
+        try {
+          await sql.query('UPDATE bookings SET net_total = $1 WHERE booking_number = $2', [net_total, bookingNumber]);
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(200).json({ success: true });
+        } catch (err) {
+          return res.status(500).json({ success: false, error: err.message });
+        }
       }
+      
+      return res.status(400).json({ success: false, error: 'Missing paid or net_total' });
     } else if (req.method === 'DELETE') {
       // Only Admin can delete bookings
       if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
@@ -115,7 +132,7 @@ module.exports = async (req, res) => {
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
       SELECT b.booking_number, b.book_date, b.tour_date, b.sku, b.program, b.rate, b.hotel, b.paid,
-             b.adult, b.child,
+             b.adult, b.child, b.net_total,
              r.net_adult, r.net_child
       FROM bookings b
       LEFT JOIN products p ON b.sku = p.sku
@@ -133,7 +150,8 @@ module.exports = async (req, res) => {
       const adult = Number(b.adult) || 0;
       const child = Number(b.child) || 0;
       const paid = Number(b.paid) || 0;
-      const netTotal = netAdult * adult + netChild * child;
+      // Use stored net_total if available, otherwise calculate from rates
+      const netTotal = b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
       const benefit = paid - netTotal;
       return {
         booking_number: b.booking_number,

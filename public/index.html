@@ -97,31 +97,7 @@
               <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
             </div>
           </div>
-          <div id="price-tiers-section" class="mb-0 md:mb-0 min-w-0">
-            <div class="bg-white border border-green-200 rounded-xl shadow-md p-4 min-w-0">
-              <h3 class="text-lg font-semibold mb-3 text-green-700">Price Tiers Management</h3>
-              <div id="price-tiers-table-container" class="mb-3 overflow-x-auto"></div>
-              <form id="price-tiers-form" class="space-y-3">
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="text" id="tier-name" placeholder="Tier Name" class="form-input px-2 py-1 border rounded" required />
-                  <select id="tier-type" class="form-input px-2 py-1 border rounded" required>
-                    <option value="simple">Simple</option>
-                    <option value="seasonal">Seasonal</option>
-                  </select>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="number" id="tier-multiplier" placeholder="Multiplier (e.g., 1.2)" step="0.01" min="0.01" class="form-input px-2 py-1 border rounded" required />
-                  <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="tier-active" checked /> Active</label>
-                </div>
-                <div id="seasonal-dates" class="grid grid-cols-2 gap-2" style="display:none;">
-                  <input type="date" id="tier-start-date" class="form-input px-2 py-1 border rounded" />
-                  <input type="date" id="tier-end-date" class="form-input px-2 py-1 border rounded" />
-                </div>
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1 rounded w-full">Add/Update Tier</button>
-              </form>
-              <div id="price-tiers-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
-            </div>
-          </div>
+
           <div class="min-w-0">
             <form id="settings-form" class="space-y-4 min-w-0">
               <div>
@@ -158,6 +134,7 @@
               </div>
               <div class="flex justify-end mt-6 gap-2">
                 <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>
+                <button type="button" id="run-migration-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-lg shadow" style="display: none;">Run Migration</button>
                 <button type="button" id="export-programs-settings-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow">Export Programs</button>
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
               </div>
@@ -183,7 +160,10 @@
         <div class="container mx-auto p-4 sm:p-6 lg:p-8">
           <div class="mb-6 flex justify-between items-center">
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Programs</h2>
-            <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
+            <div class="flex gap-2">
+              <button id="manage-price-tiers-btn" class="px-3 py-1 rounded bg-purple-600 text-white font-semibold">Manage Price Tiers</button>
+              <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
+            </div>
           </div>
           <!-- Search bar for Programs -->
           <div class="mb-4 flex justify-end">
@@ -211,6 +191,40 @@
                     <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Price Tiers Management Modal (hidden by default) -->
+      <div id="price-tiers-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto" style="max-height: 95vh; min-width: 0;">
+          <button id="price-tiers-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Price Tiers Management</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
+            <div class="min-w-0">
+              <div class="bg-white border border-purple-200 rounded-xl shadow-md p-4 min-w-0">
+                <h3 class="text-lg font-semibold mb-3 text-purple-700">Price Tiers</h3>
+                <div id="price-tiers-table-container" class="mb-3 overflow-x-auto"></div>
+                <form id="price-tiers-form" class="space-y-3">
+                  <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="tier-name" placeholder="Tier Name" class="form-input px-2 py-1 border rounded" required />
+                    <select id="tier-type" class="form-input px-2 py-1 border rounded" required>
+                      <option value="simple">Simple</option>
+                      <option value="seasonal">Seasonal</option>
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="tier-multiplier" placeholder="Multiplier (e.g., 1.2)" step="0.01" min="0.01" class="form-input px-2 py-1 border rounded" required />
+                    <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="tier-active" checked /> Active</label>
+                  </div>
+                  <div id="seasonal-dates" class="grid grid-cols-2 gap-2" style="display:none;">
+                    <input type="date" id="tier-start-date" class="form-input px-2 py-1 border rounded" />
+                    <input type="date" id="tier-end-date" class="form-input px-2 py-1 border rounded" />
+                  </div>
+                  <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-1 rounded w-full">Add/Update Tier</button>
+                </form>
+                <div id="price-tiers-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
               </div>
             </div>
           </div>
@@ -1072,7 +1086,7 @@
             <td class="px-4 py-3 text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
             <td class="px-4 py-3 text-sm">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
             <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
-            <td class="px-4 py-3 text-sm text-blue-900 font-semibold">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : ''}</td>
+            <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
             <td class="px-4 py-3 text-sm text-yellow-900 font-semibold">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>
             <td class="px-4 py-3 text-center">${userRole === 'admin' ? `<button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button>` : ''}</td>
           </tr>
@@ -1120,6 +1134,52 @@
             };
             cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
           });
+          
+          // Add net price editing handlers (admin only)
+          if (userRole === 'admin') {
+            document.querySelectorAll('.accounting-net-cell').forEach(cell => {
+              cell.onclick = function(e) {
+                if (cell.querySelector('input')) return;
+                const bookingNumber = cell.getAttribute('data-booking');
+                const currentValue = cell.textContent.trim() === 'Click to add' ? '' : cell.textContent.trim();
+                cell.innerHTML = `<input type='number' step='0.01' min='0' class='border px-2 py-1 w-24' value='${currentValue}' autofocus />`;
+                const input = cell.querySelector('input');
+                input.focus();
+                input.select();
+                let hasSaved = false;
+                function saveNetInput() {
+                  if (hasSaved) return;
+                  hasSaved = true;
+                  const newValue = input.value.trim();
+                  if (newValue === '' || isNaN(newValue)) {
+                    cell.innerHTML = `<span class='text-gray-400'>Click to add</span>`;
+                    return;
+                  }
+                  cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+                  fetch(`/api/accounting?booking_number=${bookingNumber}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ net_total: parseFloat(newValue).toFixed(2) })
+                  }).then(r => r.json()).then(data => {
+                    if (data.success) {
+                      // Add cache-busting param to ensure fresh data
+                      fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+                    } else {
+                      cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                    }
+                  }).catch(() => {
+                    cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                  });
+                }
+                input.onblur = saveNetInput;
+                input.onkeydown = function(ev) {
+                  if (ev.key === 'Enter') saveNetInput();
+                };
+              };
+              cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
+            });
+          }
+          
           // Add cancel button handlers
           document.querySelectorAll('.cancel-btn').forEach(btn => {
             btn.onclick = function() {
@@ -2041,7 +2101,6 @@
       settingsLoading = true; settingsError = ''; settingsSuccess = '';
       renderSettingsModalState();
       fetchWhitelist(); // Always show whitelist table by default
-      fetchPriceTiers(); // Load price tiers table
       // Load settings from backend
       try {
         const res = await fetch('/api/dashboard-settings?type=settings');
@@ -2111,6 +2170,29 @@
       }
       alert('Cache cleared! The app will now reload.');
       window.location.reload();
+    };
+
+    // Migration Button Logic
+    document.getElementById('run-migration-btn').onclick = async function() {
+      if (!confirm('Run database migration to add net_total column? This will allow manual net price editing for admin users.')) return;
+      
+      try {
+        const response = await fetch('/api/migrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          showToast('Migration completed successfully! Net price editing is now available.', 'success');
+        } else {
+          throw new Error(data.error || 'Migration failed');
+        }
+      } catch (error) {
+        console.error('Migration error:', error);
+        showToast('Migration failed: ' + error.message, 'error');
+      }
     };
 
     // Export Programs Button Logic
@@ -2506,6 +2588,9 @@
         // Hide Save button in settings for non-admins
         const saveBtn = document.querySelector('#settings-form button[type="submit"]');
         if (saveBtn) saveBtn.style.display = (userRole === 'admin') ? '' : 'none';
+        // Show migration button for admins
+        const migrationBtn = document.getElementById('run-migration-btn');
+        if (migrationBtn) migrationBtn.style.display = (userRole === 'admin') ? '' : 'none';
       } else {
         userRole = null;
         document.getElementById('login-section').style.display = '';
@@ -2647,6 +2732,30 @@
     window.addEventListener('DOMContentLoaded', updateDashboardBenefitCard);
     document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
     document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
+
+    // Price Tiers Modal Logic for Programs tab
+    const priceTiersModal = document.getElementById('price-tiers-modal');
+    const priceTiersModalClose = document.getElementById('price-tiers-modal-close');
+    const managePriceTiersBtn = document.getElementById('manage-price-tiers-btn');
+    
+    if (managePriceTiersBtn) {
+      managePriceTiersBtn.onclick = () => {
+        priceTiersModal.style.display = 'flex';
+        fetchPriceTiers();
+      };
+    }
+    
+    if (priceTiersModalClose) {
+      priceTiersModalClose.onclick = () => { 
+        priceTiersModal.style.display = 'none'; 
+      };
+    }
+    
+    if (priceTiersModal) {
+      priceTiersModal.onclick = (e) => { 
+        if (e.target === priceTiersModal) priceTiersModal.style.display = 'none'; 
+      };
+    }
 
     // Add import, export, and sample download buttons to Programs tab
     if (programsSection && !document.getElementById('import-excel-btn')) {

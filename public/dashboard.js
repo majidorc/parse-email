@@ -1952,29 +1952,6 @@ document.getElementById('clear-cache-btn').onclick = async function() {
   window.location.reload();
 };
 
-// Migration Button Logic
-document.getElementById('run-migration-btn').onclick = async function() {
-  if (!confirm('Run database migration to add net_total column? This will allow manual net price editing for admin users.')) return;
-  
-  try {
-    const response = await fetch('/api/migrate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok && data.success) {
-      showToast('Migration completed successfully! Net price editing is now available.', 'success');
-    } else {
-      throw new Error(data.error || 'Migration failed');
-    }
-  } catch (error) {
-    console.error('Migration error:', error);
-    showToast('Migration failed: ' + error.message, 'error');
-  }
-};
-
 // Export Programs Button Logic
 document.getElementById('export-programs-settings-btn').onclick = async function() {
   try {

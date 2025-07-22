@@ -107,13 +107,7 @@ module.exports = async (req, res) => {
         const products = productsResult.rows;
         
         // Get rates with price tier information
-        const ratesResult = await client.query(`
-          SELECT r.*,
-                 COALESCE(r.net_adult, r.base_net_adult) as calculated_net_adult,
-                 COALESCE(r.net_child, r.base_net_child) as calculated_net_child
-          FROM rates r
-          ORDER BY r.name
-        `);
+        const ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
         const rates = ratesResult.rows;
         
         const ratesByProduct = {};
@@ -132,7 +126,7 @@ module.exports = async (req, res) => {
         }));
         
         client.release();
-        res.status(200).json({ tours: productsWithRates, price_tiers: tiers });
+        res.status(200).json({ tours: productsWithRates });
       } catch (err) {
         res.status(500).json({ error: 'Failed to fetch programs', details: err.stack });
       }

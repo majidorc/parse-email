@@ -51,6 +51,9 @@ export default async function handler(req, res) {
     // OTA Sale (sum of paid for OTA bookings)
     const otaResult = await client.query("SELECT COALESCE(SUM(paid),0) AS ota_sale FROM bookings WHERE booking_number NOT LIKE '6%'");
     const otaSale = parseFloat(otaResult.rows[0].ota_sale);
+    // Website Sale (sum of paid for Website bookings)
+    const websiteResult = await client.query("SELECT COALESCE(SUM(paid),0) AS website_sale FROM bookings WHERE booking_number LIKE '6%'");
+    const websiteSale = parseFloat(websiteResult.rows[0].website_sale);
     res.status(200).json({
       bySender: bySenderResult.rows,
       bySupplier: bySellerResult.rows,
@@ -58,7 +61,8 @@ export default async function handler(req, res) {
       byChannel: byChannelResult.rows,
       totalSale,
       totalBookings,
-      otaSale
+      otaSale,
+      websiteSale
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

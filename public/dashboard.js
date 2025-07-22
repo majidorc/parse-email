@@ -1066,51 +1066,67 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-ota-count').textContent = data.otaCount !== undefined ? data.otaCount : '-';
       document.getElementById('analytics-website-count').textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
       // Render bySender table
-      const bySender = data.bySender || [];
+      const bySender = data.bySender;
       let senderTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Sender</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
-      if (bySender.length === 0) {
+      if (!bySender) {
+        senderTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
+      } else if (bySender.length === 0) {
         senderTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
       } else {
         bySender.forEach(row => {
-          senderTable += `<tr><td class="px-2 py-1">${row.sender || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          senderTable += `<tr><td class="px-2 py-1">${row.sender || "<span class='text-gray-400'>Unknown</span>"}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
         });
       }
       senderTable += '</tbody></table>';
       document.getElementById('analytics-by-sender').innerHTML = senderTable;
       // Render bySupplier table
-      const bySupplier = data.bySupplier || [];
+      const bySupplier = data.bySupplier;
       let supplierTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Seller</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
-      if (bySupplier.length === 0) {
+      if (!bySupplier) {
+        supplierTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
+      } else if (bySupplier.length === 0) {
         supplierTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
       } else {
         bySupplier.forEach(row => {
-          supplierTable += `<tr><td class="px-2 py-1">${row.seller || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          supplierTable += `<tr><td class="px-2 py-1">${row.seller || "<span class='text-gray-400'>Unknown</span>"}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
         });
       }
       supplierTable += '</tbody></table>';
       document.getElementById('analytics-by-supplier').innerHTML = supplierTable;
       // Render bySource (inbox) summary
-      const bySource = data.bySource || [];
+      const bySource = data.bySource;
       let sourceTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Inbox</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
       let totalSource = 0;
-      bySource.forEach(row => {
-        let label = row.source_email;
-        if (label === 'o0dr.orc0o@gmail.com') label = 'Majid';
-        sourceTable += `<tr><td class="px-2 py-1">${label || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
-        totalSource += Number(row.count);
-      });
-      sourceTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalSource}</td></tr>`;
+      if (!bySource) {
+        sourceTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
+      } else if (bySource.length === 0) {
+        sourceTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
+      } else {
+        bySource.forEach(row => {
+          let label = row.source_email;
+          if (label === 'o0dr.orc0o@gmail.com') label = 'Majid';
+          sourceTable += `<tr><td class="px-2 py-1">${label || "<span class='text-gray-400'>Unknown</span>"}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          totalSource += Number(row.count);
+        });
+        sourceTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalSource}</td></tr>`;
+      }
       sourceTable += '</tbody></table>';
       document.getElementById('analytics-by-source').innerHTML = sourceTable;
       // Render byChannel summary
-      const byChannel = data.byChannel || [];
+      const byChannel = data.byChannel;
       let channelTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Channel</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
       let totalChannel = 0;
-      byChannel.forEach(row => {
-        channelTable += `<tr><td class="px-2 py-1">${row.channel || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
-        totalChannel += Number(row.count);
-      });
-      channelTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalChannel}</td></tr>`;
+      if (!byChannel) {
+        channelTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
+      } else if (byChannel.length === 0) {
+        channelTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
+      } else {
+        byChannel.forEach(row => {
+          channelTable += `<tr><td class="px-2 py-1">${row.channel || "<span class='text-gray-400'>Unknown</span>"}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          totalChannel += Number(row.count);
+        });
+        channelTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalChannel}</td></tr>`;
+      }
       channelTable += '</tbody></table>';
       document.getElementById('analytics-by-channel').innerHTML = channelTable;
     })

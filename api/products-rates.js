@@ -117,9 +117,6 @@ module.exports = async (req, res) => {
         }
         
         // Get all price tiers for the frontend
-        const tiersResult = await client.query('SELECT * FROM price_tiers WHERE is_active = true ORDER BY tier_type, name');
-        const tiers = tiersResult.rows;
-        
         const productsWithRates = products.map(product => ({
           ...product,
           rates: ratesByProduct[product.id] || []

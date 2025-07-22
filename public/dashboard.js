@@ -1075,7 +1075,8 @@ analyticsBtn.onclick = () => {
       // Render bySender table
       const bySender = data.bySender;
       let senderTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Sender</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
-      if (!bySender) {
+      if (!Array.isArray(bySender)) {
+        console.error('bySender is not an array:', bySender);
         senderTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
       } else if (bySender.length === 0) {
         senderTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
@@ -1089,7 +1090,8 @@ analyticsBtn.onclick = () => {
       // Render bySupplier table
       const bySupplier = data.bySupplier;
       let supplierTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Seller</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
-      if (!bySupplier) {
+      if (!Array.isArray(bySupplier)) {
+        console.error('bySupplier is not an array:', bySupplier);
         supplierTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
       } else if (bySupplier.length === 0) {
         supplierTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
@@ -1104,7 +1106,8 @@ analyticsBtn.onclick = () => {
       const bySource = data.bySource;
       let sourceTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Inbox</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
       let totalSource = 0;
-      if (!bySource) {
+      if (!Array.isArray(bySource)) {
+        console.error('bySource is not an array:', bySource);
         sourceTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
       } else if (bySource.length === 0) {
         sourceTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
@@ -1123,7 +1126,8 @@ analyticsBtn.onclick = () => {
       const byChannel = data.byChannel;
       let channelTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Channel</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
       let totalChannel = 0;
-      if (!byChannel) {
+      if (!Array.isArray(byChannel)) {
+        console.error('byChannel is not an array:', byChannel);
         channelTable += '<tr><td colspan="2" class="text-center text-red-500">Error loading data</td></tr>';
       } else if (byChannel.length === 0) {
         channelTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';

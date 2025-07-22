@@ -1055,14 +1055,21 @@ analyticsBtn.onclick = () => {
 
   // Fetch analytics data and render summary cards and tables
   fetch('/api/parsed-emails-analytics')
-    .then(res => res.json())
+    .then(res => {
+      console.log('Analytics API response status:', res.status);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
+      console.log('Analytics data received:', data);
       // Populate summary cards
       document.getElementById('analytics-total-bookings').textContent = data.totalSale !== undefined ? Number(data.totalSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
       document.getElementById('analytics-new-bookings').textContent = data.otaSale !== undefined ? Number(data.otaSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
       document.getElementById('analytics-total-earnings').textContent = data.websiteSale !== undefined ? Number(data.websiteSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
-      document.getElementById('analytics-done').textContent = data.done !== undefined ? data.done : '-';
-      document.getElementById('analytics-booked').textContent = data.booked !== undefined ? data.booked : '-';
+      document.getElementById('analytics-done').textContent = data.otaCount !== undefined ? data.otaCount : '-';
+      document.getElementById('analytics-booked').textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
       document.getElementById('analytics-ota-count').textContent = data.otaCount !== undefined ? data.otaCount : '-';
       document.getElementById('analytics-website-count').textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
       // Render bySender table

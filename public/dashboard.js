@@ -1129,6 +1129,11 @@ analyticsBtn.onclick = () => {
       }
       channelTable += '</tbody></table>';
       document.getElementById('analytics-by-channel').innerHTML = channelTable;
+      // Debug logging for analytics data and elements
+      console.log('bySender:', data.bySender, document.getElementById('analytics-by-sender'));
+      console.log('bySupplier:', data.bySupplier, document.getElementById('analytics-by-supplier'));
+      console.log('bySource:', data.bySource, document.getElementById('analytics-by-source'));
+      console.log('byChannel:', data.byChannel, document.getElementById('analytics-by-channel'));
     })
     .catch(err => {
       document.getElementById('analytics-total-bookings').textContent = '-';

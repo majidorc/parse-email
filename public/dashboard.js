@@ -1,0 +1,2 @@
+// All dashboard JavaScript code that was previously in the <script>...</script> block of index.html goes here.
+// (Paste the full dashboard JS code here, as extracted from the previous version of index.html) 

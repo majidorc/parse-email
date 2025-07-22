@@ -795,7 +795,7 @@ async function handler(req, res) {
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
         console.log('[PARSE] Extracted info:', extractedInfo);
 
-        // Always insert into parsed_emails for analytics
+        // Always insert or update into parsed_emails for analytics
         await sql`
           INSERT INTO parsed_emails (sender, subject, body, source_email, booking_number, parsed_at)
           VALUES (
@@ -806,6 +806,12 @@ async function handler(req, res) {
             ${extractedInfo.bookingNumber || null},
             NOW()
           )
+          ON CONFLICT (booking_number) DO UPDATE
+            SET sender = EXCLUDED.sender,
+                subject = EXCLUDED.subject,
+                body = EXCLUDED.body,
+                source_email = EXCLUDED.source_email,
+                parsed_at = EXCLUDED.parsed_at;
         `;
 
         if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {

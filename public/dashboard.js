@@ -1186,10 +1186,10 @@ function fetchDashboardAnalytics() {
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      // Total Bookings
+      // Total Bookings (now Total Sale)
       if (dashboardTotalBookings) {
-        const val = Number(data.totalBookings);
-        dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString();
+        const val = Number(data.totalEarnings); // Use totalEarnings instead of totalBookings
+        dashboardTotalBookings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
       }
       if (dashboardNewBookings) {
         const val = Number(data.newBookings);
@@ -1199,9 +1199,9 @@ function fetchDashboardAnalytics() {
         const val = Number(data.totalEarnings);
         dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
       }
-      // Set percent change for Total Bookings
-      if (data.percentTotal !== null && data.percentTotal !== undefined) {
-        const percentVal = Number(data.percentTotal);
+      // Set percent change for Total Sale
+      if (data.percentEarnings !== null && data.percentEarnings !== undefined) {
+        const percentVal = Number(data.percentEarnings);
         const up = percentVal >= 0;
         if (bookingsChange) bookingsChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${isNaN(percentVal) ? '0.00' : percentVal.toFixed(2)}%</span> vs last month`;
       } else {

@@ -30,8 +30,7 @@ function forwardEmails() {
             'payload': JSON.stringify(payload)
           };
           UrlFetchApp.fetch(webhookUrl, options);
-          
-          // message.markRead(); // Keep email unread after forwarding
+          message.markRead(); // Mark email as read after forwarding
           
         } catch (error) {
           // Log the error to the Apps Script console for debugging

@@ -44,11 +44,17 @@ export default async function handler(req, res) {
       GROUP BY channel
       ORDER BY count DESC`
     );
+    // Total sale (sum of paid) and total bookings (count)
+    const totalResult = await client.query('SELECT COALESCE(SUM(paid),0) AS total_sale, COUNT(*) AS total_bookings FROM parsed_emails');
+    const totalSale = parseFloat(totalResult.rows[0].total_sale);
+    const totalBookings = parseInt(totalResult.rows[0].total_bookings, 10);
     res.status(200).json({
       bySender: bySenderResult.rows,
       bySupplier: bySellerResult.rows,
       bySource: bySourceResult.rows,
-      byChannel: byChannelResult.rows
+      byChannel: byChannelResult.rows,
+      totalSale,
+      totalBookings
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

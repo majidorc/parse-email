@@ -1059,7 +1059,7 @@ analyticsBtn.onclick = () => {
     .then(data => {
       // Populate summary cards
       document.getElementById('analytics-total-bookings').textContent = data.totalSale !== undefined ? Number(data.totalSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
-      document.getElementById('analytics-new-bookings').textContent = data.newBookings !== undefined ? data.newBookings : '-';
+      document.getElementById('analytics-new-bookings').textContent = data.otaSale !== undefined ? Number(data.otaSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
       document.getElementById('analytics-total-earnings').textContent = data.totalEarnings !== undefined ? data.totalEarnings : '-';
       document.getElementById('analytics-done').textContent = data.done !== undefined ? data.done : '-';
       document.getElementById('analytics-booked').textContent = data.booked !== undefined ? data.booked : '-';

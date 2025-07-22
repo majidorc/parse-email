@@ -1082,7 +1082,7 @@ analyticsBtn.onclick = () => {
         supplierTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
       } else {
         bySupplier.forEach(row => {
-          supplierTable += `<tr><td class="px-2 py-1">${row.supplier || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          supplierTable += `<tr><td class="px-2 py-1">${row.seller || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
         });
       }
       supplierTable += '</tbody></table>';

@@ -162,7 +162,6 @@
           <div class="mb-6 flex justify-between items-center">
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Programs</h2>
             <div class="flex gap-2">
-              <button id="manage-price-tiers-btn" class="px-3 py-1 rounded bg-purple-600 text-white font-semibold">Manage Price Tiers</button>
               <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
             </div>
           </div>
@@ -192,40 +191,6 @@
                     <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
                   </tbody>
                 </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- Price Tiers Management Modal (hidden by default) -->
-      <div id="price-tiers-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
-        <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto" style="max-height: 95vh; min-width: 0;">
-          <button id="price-tiers-modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #888;">&times;</button>
-          <h2 class="text-xl font-bold mb-4 text-gray-800">Price Tiers Management</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
-            <div class="min-w-0">
-              <div class="bg-white border border-purple-200 rounded-xl shadow-md p-4 min-w-0">
-                <h3 class="text-lg font-semibold mb-3 text-purple-700">Price Tiers</h3>
-                <div id="price-tiers-table-container" class="mb-3 overflow-x-auto"></div>
-                <form id="price-tiers-form" class="space-y-3">
-                  <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="tier-name" placeholder="Tier Name" class="form-input px-2 py-1 border rounded" required />
-                    <select id="tier-type" class="form-input px-2 py-1 border rounded" required>
-                      <option value="simple">Simple</option>
-                      <option value="seasonal">Seasonal</option>
-                    </select>
-                  </div>
-                  <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="tier-multiplier" placeholder="Multiplier (e.g., 1.2)" step="0.01" min="0.01" class="form-input px-2 py-1 border rounded" required />
-                    <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="tier-active" checked /> Active</label>
-                  </div>
-                  <div id="seasonal-dates" class="grid grid-cols-2 gap-2" style="display:none;">
-                    <input type="date" id="tier-start-date" class="form-input px-2 py-1 border rounded" />
-                    <input type="date" id="tier-end-date" class="form-input px-2 py-1 border rounded" />
-                  </div>
-                  <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-1 rounded w-full">Add/Update Tier</button>
-                </form>
-                <div id="price-tiers-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
               </div>
             </div>
           </div>

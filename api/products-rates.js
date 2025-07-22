@@ -108,11 +108,10 @@ module.exports = async (req, res) => {
         
         // Get rates with price tier information
         const ratesResult = await client.query(`
-          SELECT r.*, pt.name as tier_name, pt.tier_type, pt.multiplier,
-                 COALESCE(pt.multiplier * r.base_net_adult, r.net_adult) as calculated_net_adult,
-                 COALESCE(pt.multiplier * r.base_net_child, r.net_child) as calculated_net_child
+          SELECT r.*,
+                 COALESCE(r.net_adult, r.base_net_adult) as calculated_net_adult,
+                 COALESCE(r.net_child, r.base_net_child) as calculated_net_child
           FROM rates r
-          LEFT JOIN price_tiers pt ON r.price_tier_id = pt.id
           ORDER BY r.name
         `);
         const rates = ratesResult.rows;
@@ -166,7 +165,7 @@ module.exports = async (req, res) => {
           productId = prodResult.rows[0].id;
         }
         for (const rate of rates) {
-          const { name, net_adult, net_child, fee_type, fee_adult, fee_child, price_tier_id } = rate;
+          const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
           if (
             !name || net_adult == null || net_child == null || !fee_type ||
             ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))
@@ -174,8 +173,8 @@ module.exports = async (req, res) => {
             throw new Error('Invalid rate item: ' + JSON.stringify(rate));
           }
           await client.query(
-            `INSERT INTO rates (product_id, name, base_net_adult, base_net_child, net_adult, net_child, fee_type, fee_adult, fee_child, price_tier_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-            [productId, name, net_adult, net_child, net_adult, net_child, fee_type, fee_adult, fee_child, price_tier_id || null]
+            `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
           );
         }
         await client.query('COMMIT');

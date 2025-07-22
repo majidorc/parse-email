@@ -1,4 +1,3 @@
-<script>
 function iconButton(column, bookingId, value) {
   let icon, title, btnClass;
   if (column === 'ri') {
@@ -2551,4 +2550,3 @@ if (programsSection && !document.getElementById('import-excel-btn')) {
   
 
 }
-</script>

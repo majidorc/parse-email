@@ -1063,6 +1063,8 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-total-earnings').textContent = data.websiteSale !== undefined ? Number(data.websiteSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
       document.getElementById('analytics-done').textContent = data.done !== undefined ? data.done : '-';
       document.getElementById('analytics-booked').textContent = data.booked !== undefined ? data.booked : '-';
+      document.getElementById('analytics-ota-count').textContent = data.otaCount !== undefined ? data.otaCount : '-';
+      document.getElementById('analytics-website-count').textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
       // Render bySender table
       const bySender = data.bySender || [];
       let senderTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Sender</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
@@ -1118,6 +1120,8 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-total-earnings').textContent = '-';
       document.getElementById('analytics-done').textContent = '-';
       document.getElementById('analytics-booked').textContent = '-';
+      document.getElementById('analytics-ota-count').textContent = '-';
+      document.getElementById('analytics-website-count').textContent = '-';
       document.getElementById('analytics-by-sender').innerHTML = `<span class="text-red-500">Error loading data</span>`;
       document.getElementById('analytics-by-supplier').innerHTML = `<span class="text-red-500">Error loading data</span>`;
     });

@@ -1159,6 +1159,7 @@ analyticsBtn.onclick = () => {
       console.log('byChannel:', data.byChannel, document.getElementById('analytics-by-channel'));
     })
     .catch(err => {
+      console.error('Analytics fetch/render error:', err);
       document.getElementById('analytics-total-bookings').textContent = '-';
       document.getElementById('analytics-new-bookings').textContent = '-';
       document.getElementById('analytics-total-earnings').textContent = '-';

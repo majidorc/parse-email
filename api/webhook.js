@@ -795,6 +795,19 @@ async function handler(req, res) {
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
         console.log('[PARSE] Extracted info:', extractedInfo);
 
+        // Always insert into parsed_emails for analytics
+        await sql`
+          INSERT INTO parsed_emails (sender, subject, body, source_email, booking_number, parsed_at)
+          VALUES (
+            ${parsedEmail.from?.value?.[0]?.address || ''},
+            ${parsedEmail.subject || ''},
+            ${rawBody},
+            ${sourceEmail},
+            ${extractedInfo.bookingNumber || null},
+            NOW()
+          )
+        `;
+
         if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
             console.warn('[SKIP] Skipped due to invalid date:', {
                 bookingNumber: extractedInfo?.bookingNumber,

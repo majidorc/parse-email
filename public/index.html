@@ -2591,58 +2591,7 @@
     };
 
     // Price tier form submission
-    document.getElementById('price-tiers-form').onsubmit = async function(e) {
-      e.preventDefault();
-      
-      const name = document.getElementById('tier-name').value.trim();
-      const tierType = document.getElementById('tier-type').value;
-      const multiplier = parseFloat(document.getElementById('tier-multiplier').value);
-      const isActive = document.getElementById('tier-active').checked;
-      const startDate = document.getElementById('tier-start-date').value;
-      const endDate = document.getElementById('tier-end-date').value;
-      
-      if (!name || !multiplier) return;
-      
-      if (tierType === 'seasonal' && (!startDate || !endDate)) {
-        showToast('Seasonal tiers require start and end dates.', 'error');
-        return;
-      }
-      
-      try {
-        const method = editingTierId ? 'PUT' : 'POST';
-        const body = {
-          name,
-          tier_type: tierType,
-          multiplier,
-          is_active: isActive,
-          start_date: startDate || null,
-          end_date: endDate || null
-        };
-        
-        if (editingTierId) {
-          body.id = editingTierId;
-        }
-        
-        const res = await fetch('/api/price-tiers', { 
-          method, 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify(body) 
-        });
-        
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.error || 'Failed to save tier');
-        }
-        
-        showToast(editingTierId ? 'Tier updated!' : 'Tier created!', 'success');
-        fetchPriceTiers();
-        this.reset();
-        editingTierId = null;
-        document.getElementById('seasonal-dates').style.display = 'none';
-      } catch (err) {
-        showToast('Error saving tier: ' + err.message, 'error');
-      }
-    };
+
 
     // Show/hide seasonal dates based on tier type
     document.getElementById('tier-type').addEventListener('change', function() {

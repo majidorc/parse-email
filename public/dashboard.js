@@ -1064,6 +1064,18 @@ analyticsBtn.onclick = () => {
     })
     .then(data => {
       console.log('Analytics data received:', data);
+      console.log('Raw data values:', {
+        bySender: data.bySender,
+        bySupplier: data.bySupplier,
+        bySource: data.bySource,
+        byChannel: data.byChannel
+      });
+      console.log('Array checks:', {
+        bySender: Array.isArray(data.bySender),
+        bySupplier: Array.isArray(data.bySupplier),
+        bySource: Array.isArray(data.bySource),
+        byChannel: Array.isArray(data.byChannel)
+      });
       // Populate summary cards
       document.getElementById('analytics-total-bookings').textContent = data.totalSale !== undefined ? Number(data.totalSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
       document.getElementById('analytics-new-bookings').textContent = data.otaSale !== undefined ? Number(data.otaSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';

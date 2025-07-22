@@ -1092,7 +1092,9 @@ analyticsBtn.onclick = () => {
       let sourceTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Inbox</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
       let totalSource = 0;
       bySource.forEach(row => {
-        sourceTable += `<tr><td class="px-2 py-1">${row.source_email || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+        let label = row.source_email;
+        if (label === 'o0dr.orc0o@gmail.com') label = 'Majid';
+        sourceTable += `<tr><td class="px-2 py-1">${label || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
         totalSource += Number(row.count);
       });
       sourceTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalSource}</td></tr>`;

@@ -1788,8 +1788,6 @@
         .then(res => res.json())
         .then(data => {
           allRates = data.rates || [];
-          // Store price tiers globally for use in forms
-          window.priceTiers = data.price_tiers || [];
           fetchPrograms();
         });
     }

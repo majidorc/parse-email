@@ -1077,11 +1077,16 @@ analyticsBtn.onclick = () => {
         byChannel: Array.isArray(data.byChannel)
       });
       // Populate summary cards
-      document.getElementById('analytics-total-bookings').textContent = data.totalSale !== undefined ? Number(data.totalSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
-      document.getElementById('analytics-new-bookings').textContent = data.otaSale !== undefined ? Number(data.otaSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
-      document.getElementById('analytics-total-earnings').textContent = data.websiteSale !== undefined ? Number(data.websiteSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
-      document.getElementById('analytics-done').textContent = data.otaCount !== undefined ? data.otaCount : '-';
-      document.getElementById('analytics-booked').textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
+      const totalBookingsElem = document.getElementById('analytics-total-bookings');
+      if (totalBookingsElem) totalBookingsElem.textContent = data.totalSale !== undefined ? Number(data.totalSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
+      const newBookingsElem = document.getElementById('analytics-new-bookings');
+      if (newBookingsElem) newBookingsElem.textContent = data.otaSale !== undefined ? Number(data.otaSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
+      const totalEarningsElem = document.getElementById('analytics-total-earnings');
+      if (totalEarningsElem) totalEarningsElem.textContent = data.websiteSale !== undefined ? Number(data.websiteSale).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-';
+      const doneElem = document.getElementById('analytics-done');
+      if (doneElem) doneElem.textContent = data.otaCount !== undefined ? data.otaCount : '-';
+      const bookedElem = document.getElementById('analytics-booked');
+      if (bookedElem) bookedElem.textContent = data.websiteCount !== undefined ? data.websiteCount : '-';
       const otaCountElem = document.getElementById('analytics-ota-count');
       if (otaCountElem) otaCountElem.textContent = data.otaCount !== undefined ? data.otaCount : '-';
       const websiteCountElem = document.getElementById('analytics-website-count');
@@ -1162,9 +1167,16 @@ analyticsBtn.onclick = () => {
     })
     .catch(err => {
       console.error('Analytics fetch/render error:', err);
-      document.getElementById('analytics-total-bookings').textContent = '-';
-      document.getElementById('analytics-new-bookings').textContent = '-';
-      document.getElementById('analytics-total-earnings').textContent = '-';
+      const totalBookingsElem = document.getElementById('analytics-total-bookings');
+      if (totalBookingsElem) totalBookingsElem.textContent = '-';
+      const newBookingsElem = document.getElementById('analytics-new-bookings');
+      if (newBookingsElem) newBookingsElem.textContent = '-';
+      const totalEarningsElem = document.getElementById('analytics-total-earnings');
+      if (totalEarningsElem) totalEarningsElem.textContent = '-';
+      const doneElem = document.getElementById('analytics-done');
+      if (doneElem) doneElem.textContent = '-';
+      const bookedElem = document.getElementById('analytics-booked');
+      if (bookedElem) bookedElem.textContent = '-';
       const otaCountElem = document.getElementById('analytics-ota-count');
       if (otaCountElem) otaCountElem.textContent = '-';
       const websiteCountElem = document.getElementById('analytics-website-count');

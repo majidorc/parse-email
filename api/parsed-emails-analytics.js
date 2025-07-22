@@ -16,11 +16,10 @@ export default async function handler(req, res) {
     const bySellerResult = await client.query(
       `SELECT
         CASE
-          WHEN sender = 'no-reply@bokun.io' THEN 'Viator.com'
-          WHEN body ILIKE '%Sold by Viator.com%' THEN 'Viator.com'
           WHEN body ILIKE '%Sold by GetYourGuide%' THEN 'GetYourGuide'
+          WHEN body ILIKE '%Sold by Viator.com%' THEN 'Viator.com'
           WHEN sender = 'info@tours.co.th' THEN 'WebSite'
-          ELSE 'Other'
+          ELSE 'OTA'
         END AS seller,
         COUNT(*) AS count
       FROM parsed_emails
@@ -35,9 +34,8 @@ export default async function handler(req, res) {
     const byChannelResult = await client.query(
       `SELECT
         CASE
-          WHEN sender = 'no-reply@bokun.io' THEN 'Viator.com'
-          WHEN body ILIKE '%Sold by Viator.com%' THEN 'Viator.com'
           WHEN body ILIKE '%Sold by GetYourGuide%' THEN 'GetYourGuide'
+          WHEN body ILIKE '%Sold by Viator.com%' THEN 'Viator.com'
           WHEN sender = 'info@tours.co.th' THEN 'WebSite'
           ELSE 'OTA'
         END AS channel,

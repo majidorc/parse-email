@@ -1118,8 +1118,6 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-total-bookings').textContent = '-';
       document.getElementById('analytics-new-bookings').textContent = '-';
       document.getElementById('analytics-total-earnings').textContent = '-';
-      document.getElementById('analytics-done').textContent = '-';
-      document.getElementById('analytics-booked').textContent = '-';
       document.getElementById('analytics-ota-count').textContent = '-';
       document.getElementById('analytics-website-count').textContent = '-';
       document.getElementById('analytics-by-sender').innerHTML = `<span class="text-red-500">Error loading data</span>`;

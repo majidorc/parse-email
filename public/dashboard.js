@@ -1087,6 +1087,28 @@ analyticsBtn.onclick = () => {
       }
       supplierTable += '</tbody></table>';
       document.getElementById('analytics-by-supplier').innerHTML = supplierTable;
+      // Render bySource (inbox) summary
+      const bySource = data.bySource || [];
+      let sourceTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Inbox</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
+      let totalSource = 0;
+      bySource.forEach(row => {
+        sourceTable += `<tr><td class="px-2 py-1">${row.source_email || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+        totalSource += Number(row.count);
+      });
+      sourceTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalSource}</td></tr>`;
+      sourceTable += '</tbody></table>';
+      document.getElementById('analytics-by-source').innerHTML = sourceTable;
+      // Render byChannel summary
+      const byChannel = data.byChannel || [];
+      let channelTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Channel</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
+      let totalChannel = 0;
+      byChannel.forEach(row => {
+        channelTable += `<tr><td class="px-2 py-1">${row.channel || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+        totalChannel += Number(row.count);
+      });
+      channelTable += `<tr class='font-bold'><td class="px-2 py-1">Total</td><td class="px-2 py-1 text-right">${totalChannel}</td></tr>`;
+      channelTable += '</tbody></table>';
+      document.getElementById('analytics-by-channel').innerHTML = channelTable;
     })
     .catch(err => {
       document.getElementById('analytics-total-bookings').textContent = '-';

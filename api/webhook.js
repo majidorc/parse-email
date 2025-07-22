@@ -674,7 +674,14 @@ async function handler(req, res) {
     }
 
     try {
-        const rawBody = await getRawBody(req);
+        // In the webhook handler, parse JSON if content-type is application/json
+        let rawBody = req.body;
+        let sourceEmail = null;
+        if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+          rawBody = req.body.raw;
+          sourceEmail = req.body.source;
+        }
+
         let jsonData;
         try {
             jsonData = JSON.parse(rawBody.toString('utf-8'));

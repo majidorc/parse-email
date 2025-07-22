@@ -20,12 +20,15 @@ function forwardEmails() {
         
         // Send to webhook
         try {
+          var payload = {
+            raw: rawContent,
+            source: Session.getActiveUser().getEmail()
+          };
           var options = {
             'method': 'post',
-            'contentType': 'text/plain', // Set content type to plain text
-            'payload': rawContent        // Send the raw email content directly
+            'contentType': 'application/json',
+            'payload': JSON.stringify(payload)
           };
-          
           UrlFetchApp.fetch(webhookUrl, options);
           
           // message.markRead(); // Keep email unread after forwarding

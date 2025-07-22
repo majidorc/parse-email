@@ -1053,26 +1053,16 @@ analyticsBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
 
-  // Fetch analytics data and render tables
-  const analyticsContent = document.getElementById('analytics-section');
-  analyticsContent.innerHTML = `<div class="text-xl font-bold mb-4 text-yellow-700">Analytics</div>
-    <div class="flex flex-col md:flex-row gap-8">
-      <div class="flex-1">
-        <div class="bg-white rounded-lg shadow p-4 mb-4">
-          <div class="font-semibold text-lg mb-2 text-indigo-700">Bookings by Sender</div>
-          <div id="analytics-by-sender">Loading...</div>
-        </div>
-      </div>
-      <div class="flex-1">
-        <div class="bg-white rounded-lg shadow p-4 mb-4">
-          <div class="font-semibold text-lg mb-2 text-pink-700">Bookings by Seller</div>
-          <div id="analytics-by-supplier">Loading...</div>
-        </div>
-      </div>
-    </div>`;
+  // Fetch analytics data and render summary cards and tables
   fetch('/api/parsed-emails-analytics')
     .then(res => res.json())
     .then(data => {
+      // Populate summary cards
+      document.getElementById('analytics-total-bookings').textContent = data.totalBookings !== undefined ? data.totalBookings : '-';
+      document.getElementById('analytics-new-bookings').textContent = data.newBookings !== undefined ? data.newBookings : '-';
+      document.getElementById('analytics-total-earnings').textContent = data.totalEarnings !== undefined ? data.totalEarnings : '-';
+      document.getElementById('analytics-done').textContent = data.done !== undefined ? data.done : '-';
+      document.getElementById('analytics-booked').textContent = data.booked !== undefined ? data.booked : '-';
       // Render bySender table
       const bySender = data.bySender || [];
       let senderTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Sender</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
@@ -1099,6 +1089,11 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-by-supplier').innerHTML = supplierTable;
     })
     .catch(err => {
+      document.getElementById('analytics-total-bookings').textContent = '-';
+      document.getElementById('analytics-new-bookings').textContent = '-';
+      document.getElementById('analytics-total-earnings').textContent = '-';
+      document.getElementById('analytics-done').textContent = '-';
+      document.getElementById('analytics-booked').textContent = '-';
       document.getElementById('analytics-by-sender').innerHTML = `<span class="text-red-500">Error loading data</span>`;
       document.getElementById('analytics-by-supplier').innerHTML = `<span class="text-red-500">Error loading data</span>`;
     });
@@ -1619,12 +1614,6 @@ document.addEventListener('DOMContentLoaded', function () {
             <input type="text" id="rateName_${rateItemCounter}" name="rateName" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., Standard" value="Standard">
           </div>
           <div>
-            <label for="priceTier_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Price Tier</label>
-            <select id="priceTier_${rateItemCounter}" name="priceTier" class="form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
-              ${priceTierOptions}
-            </select>
-          </div>
-          <div>
             <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
             <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
           </div>
@@ -1724,8 +1713,7 @@ document.addEventListener('DOMContentLoaded', function () {
         net_child: Number(item.querySelector(`[name="netChild"]`).value),
         fee_type: feeType,
         fee_adult: null,
-        fee_child: null,
-        price_tier_id: item.querySelector(`[name="priceTier"]`).value || null
+        fee_child: null
       };
       if (feeType !== 'none') {
         rateData.fee_adult = Number(item.querySelector(`[name="feeAdult"]`).value);

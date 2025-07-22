@@ -105,23 +105,18 @@ module.exports = async (req, res) => {
         const client = await pool.connect();
         const productsResult = await client.query('SELECT * FROM products ORDER BY program, sku');
         const products = productsResult.rows;
-        
-        // Get rates with price tier information
+        // Get rates
         const ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
         const rates = ratesResult.rows;
-        
         const ratesByProduct = {};
         for (const rate of rates) {
           if (!ratesByProduct[rate.product_id]) ratesByProduct[rate.product_id] = [];
           ratesByProduct[rate.product_id].push(rate);
         }
-        
-        // Get all price tiers for the frontend
         const productsWithRates = products.map(product => ({
           ...product,
           rates: ratesByProduct[product.id] || []
         }));
-        
         client.release();
         res.status(200).json({ tours: productsWithRates });
       } catch (err) {

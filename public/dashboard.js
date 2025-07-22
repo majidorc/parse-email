@@ -1052,6 +1052,56 @@ analyticsBtn.onclick = () => {
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
+
+  // Fetch analytics data and render tables
+  const analyticsContent = document.getElementById('analytics-section');
+  analyticsContent.innerHTML = `<div class="text-xl font-bold mb-4 text-yellow-700">Analytics</div>
+    <div class="flex flex-col md:flex-row gap-8">
+      <div class="flex-1">
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+          <div class="font-semibold text-lg mb-2 text-indigo-700">Bookings by Sender</div>
+          <div id="analytics-by-sender">Loading...</div>
+        </div>
+      </div>
+      <div class="flex-1">
+        <div class="bg-white rounded-lg shadow p-4 mb-4">
+          <div class="font-semibold text-lg mb-2 text-pink-700">Bookings by Seller</div>
+          <div id="analytics-by-supplier">Loading...</div>
+        </div>
+      </div>
+    </div>`;
+  fetch('/api/parsed-emails-analytics')
+    .then(res => res.json())
+    .then(data => {
+      // Render bySender table
+      const bySender = data.bySender || [];
+      let senderTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Sender</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
+      if (bySender.length === 0) {
+        senderTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
+      } else {
+        bySender.forEach(row => {
+          senderTable += `<tr><td class="px-2 py-1">${row.sender || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+        });
+      }
+      senderTable += '</tbody></table>';
+      document.getElementById('analytics-by-sender').innerHTML = senderTable;
+      // Render bySupplier table
+      const bySupplier = data.bySupplier || [];
+      let supplierTable = '<table class="w-full text-sm"><thead><tr><th class="text-left px-2 py-1">Seller</th><th class="text-right px-2 py-1">Bookings</th></tr></thead><tbody>';
+      if (bySupplier.length === 0) {
+        supplierTable += '<tr><td colspan="2" class="text-center text-gray-400">No data</td></tr>';
+      } else {
+        bySupplier.forEach(row => {
+          supplierTable += `<tr><td class="px-2 py-1">${row.supplier || '<span class=\'text-gray-400\'>Unknown</span>'}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+        });
+      }
+      supplierTable += '</tbody></table>';
+      document.getElementById('analytics-by-supplier').innerHTML = supplierTable;
+    })
+    .catch(err => {
+      document.getElementById('analytics-by-sender').innerHTML = `<span class="text-red-500">Error loading data</span>`;
+      document.getElementById('analytics-by-supplier').innerHTML = `<span class="text-red-500">Error loading data</span>`;
+    });
 };
 // Search bar integration
 document.getElementById('search-bar').addEventListener('input', function(e) {

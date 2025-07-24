@@ -59,11 +59,29 @@ export default async function handler(req, res) {
     const otaCount = parseInt(otaCountResult.rows[0].ota_count, 10);
     const websiteCountResult = await client.query("SELECT COUNT(*) AS website_count FROM bookings WHERE booking_number LIKE '6%'");
     const websiteCount = parseInt(websiteCountResult.rows[0].website_count, 10);
+    
+    // NEW: Detailed breakdown by source_email (inbox) showing OTA vs Website
+    const bySourceChannelResult = await client.query(
+      `SELECT 
+        COALESCE(source_email, 'Unknown') AS source_email,
+        CASE
+          WHEN body ILIKE '%GetYourGuide%' THEN 'GetYourGuide'
+          WHEN body ILIKE '%Viator.com%' THEN 'Viator.com'
+          WHEN sender = 'info@tours.co.th' THEN 'WebSite'
+          ELSE 'OTA'
+        END AS channel,
+        COUNT(*) AS count
+      FROM parsed_emails
+      GROUP BY source_email, channel
+      ORDER BY source_email, count DESC`
+    );
+    
     res.status(200).json({
       bySender: bySenderResult.rows,
       bySupplier: bySellerResult.rows,
       bySource: bySourceResult.rows,
       byChannel: byChannelResult.rows,
+      bySourceChannel: bySourceChannelResult.rows, // NEW: detailed breakdown
       totalSale,
       totalBookings,
       otaSale,

@@ -1159,11 +1159,64 @@ analyticsBtn.onclick = () => {
       }
       channelTable += '</tbody></table>';
       document.getElementById('analytics-by-channel').innerHTML = channelTable;
+      
+      // NEW: Render detailed breakdown by source_email and channel
+      const bySourceChannel = data.bySourceChannel;
+      let sourceChannelTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Inbox</th><th class="text-left px-2 py-1">Channel</th><th class="text-right px-2 py-1">Count</th></tr></thead><tbody>';
+      
+      if (!Array.isArray(bySourceChannel)) {
+        console.error('bySourceChannel is not an array:', bySourceChannel);
+        sourceChannelTable += '<tr><td colspan="3" class="text-center text-red-500">Error loading data</td></tr>';
+      } else if (bySourceChannel.length === 0) {
+        sourceChannelTable += '<tr><td colspan="3" class="text-center text-gray-400">No data</td></tr>';
+      } else {
+        // Group by source_email for better display
+        const groupedBySource = {};
+        bySourceChannel.forEach(row => {
+          const source = row.source_email || 'Unknown';
+          if (!groupedBySource[source]) {
+            groupedBySource[source] = [];
+          }
+          groupedBySource[source].push(row);
+        });
+        
+        // Display each inbox with its channel breakdown
+        Object.keys(groupedBySource).forEach(source => {
+          const rows = groupedBySource[source];
+          const totalForSource = rows.reduce((sum, row) => sum + Number(row.count), 0);
+          
+          // First row with inbox name
+          sourceChannelTable += `<tr class="bg-gray-50"><td class="px-2 py-1 font-semibold">${source}</td><td class="px-2 py-1"></td><td class="px-2 py-1 text-right font-semibold">${totalForSource}</td></tr>`;
+          
+          // Channel breakdown rows
+          rows.forEach(row => {
+            const channelColor = row.channel === 'WebSite' ? 'text-green-600' : 
+                               row.channel === 'GetYourGuide' ? 'text-blue-600' : 
+                               row.channel === 'Viator.com' ? 'text-purple-600' : 'text-orange-600';
+            sourceChannelTable += `<tr><td class="px-2 py-1"></td><td class="px-2 py-1 ${channelColor}">${row.channel}</td><td class="px-2 py-1 text-right">${row.count}</td></tr>`;
+          });
+        });
+      }
+      sourceChannelTable += '</tbody></table>';
+      
+      // Add this new table to the analytics section
+      const analyticsSection = document.getElementById('analytics-section');
+      let sourceChannelDiv = document.getElementById('analytics-by-source-channel');
+      if (!sourceChannelDiv) {
+        sourceChannelDiv = document.createElement('div');
+        sourceChannelDiv.id = 'analytics-by-source-channel';
+        sourceChannelDiv.className = 'bg-white rounded-lg p-4 shadow min-w-[320px]';
+        sourceChannelDiv.innerHTML = '<div class="text-base font-semibold text-yellow-800 mb-2">Inbox Channel Breakdown</div>';
+        analyticsSection.appendChild(sourceChannelDiv);
+      }
+      sourceChannelDiv.innerHTML = '<div class="text-base font-semibold text-yellow-800 mb-2">Inbox Channel Breakdown</div>' + sourceChannelTable;
+      
       // Debug logging for analytics data and elements
       console.log('bySender:', data.bySender, document.getElementById('analytics-by-sender'));
       console.log('bySupplier:', data.bySupplier, document.getElementById('analytics-by-supplier'));
       console.log('bySource:', data.bySource, document.getElementById('analytics-by-source'));
       console.log('byChannel:', data.byChannel, document.getElementById('analytics-by-channel'));
+      console.log('bySourceChannel:', data.bySourceChannel, document.getElementById('analytics-by-source-channel'));
     })
     .catch(err => {
       console.error('Analytics fetch/render error:', err);

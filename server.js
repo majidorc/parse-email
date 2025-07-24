@@ -7,6 +7,7 @@ const app = express();
 app.use(bodyParser.raw({ type: '*/*' }));
 
 app.post('/api/webhook', (req, res) => handler(req, res));
+app.post('/api/telegram-bot', require('./api/telegram-bot.js'));
 app.get('/', (req, res) => res.send('Parse Email API is running!'));
 app.get('/booking/:booking_number', async (req, res) => {
   const { booking_number } = req.params;

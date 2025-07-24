@@ -150,43 +150,13 @@ module.exports = async (req, res) => {
     }
     
     // Check if the query matches a SKU in products_rates
-    const skuRows = (await sql.query('SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'', [query])).rows;
+    let skuRows = [];
+    try {
+      skuRows = (await sql.query('SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'', [query])).rows;
+    } catch (err) {
+      console.error('SKU lookup error:', err.message);
+      // Continue to booking search logic
+    }
     if (skuRows.length > 0) {
       const product = skuRows[0];
-      let msg = `*${product.program}*\nSKU: \`${product.sku}\``;
-      if (product.rates && Array.isArray(product.rates)) {
-        msg += `\n*Rates:*`;
-        product.rates.forEach(rate => {
-          const adultPrice = rate.net_adult ? `฿${rate.net_adult}` : 'N/A';
-          const childPrice = rate.net_child ? `฿${rate.net_child}` : 'N/A';
-          msg += `\n• ${rate.name}: Adult ${adultPrice}, Child ${childPrice}`;
-        });
-      }
-      await sendTelegram(chat_id, msg, reply_to_message_id);
-      return res.json({ ok: true });
-    }
-    // Continue with booking search logic...
-    
-    console.log('Searching for:', query);
-    const results = await searchBookings(query);
-    console.log('Search results:', results.length);
-    
-    if (results.length === 0) {
-      console.log('No results found, sending not found message');
-      const notFoundMessage = `❌ No bookings found for: *${query}*\n\nTry searching by:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 2024-01-15)`;
-      await sendTelegram(chat_id, notFoundMessage, reply_to_message_id);
-      return res.json({ ok: true });
-    }
-    
-    console.log('Sending results');
-    const nm = new NotificationManager();
-    for (const booking of results) {
-      // Use the unified inline keyboard with buttons, reply in the same chat
-      await nm.sendTelegramWithButtons(booking, chat_id);
-    }
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error('Telegram bot error:', err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
-}; 
+      let msg = `*${product.program}*\nSKU: \`

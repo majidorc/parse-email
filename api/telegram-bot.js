@@ -91,6 +91,15 @@ function extractQuery(text, botUsername) {
 }
 
 module.exports = async (req, res) => {
+  // Add a simple test endpoint
+  if (req.method === 'GET') {
+    return res.json({ 
+      ok: true, 
+      message: 'Telegram bot endpoint is working',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   try {
     console.log('Telegram bot received request:', req.body);
@@ -103,6 +112,9 @@ module.exports = async (req, res) => {
     const chat_id = message.chat.id;
     const reply_to_message_id = message.message_id;
     console.log('Processing message:', message.text, 'from chat:', chat_id);
+    
+    // TEST: Send a simple response to verify the bot is working
+    await sendTelegram(chat_id, '🤖 Bot received your message: ' + message.text, reply_to_message_id);
     
     // Get sender's phone number via Telegram (if available)
     const from = message.from || {};

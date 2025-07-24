@@ -168,6 +168,200 @@
   .settings-btn-group { gap: 0.5rem; }
   .settings-btn { width: 100%; justify-content: center; font-size: 1rem; padding: 0.8rem 1.2rem; }
 }
+
+/* New Settings Modal Styles - Exact Match to Screenshot */
+.settings-modal-2024 {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(60,60,130,0.08), 0 1.5px 4px rgba(60,60,130,0.04);
+  padding: 2.5rem 2rem 2rem 2rem;
+  max-width: 900px;
+  margin: 2rem auto;
+  position: relative;
+}
+.settings-modal-2024 h2 {
+  color: #6366f1;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+}
+.settings-modal-2024 table {
+  width: 100%;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #f8f8ff;
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
+}
+.settings-modal-2024 th, .settings-modal-2024 td {
+  padding: 0.7rem 1rem;
+  text-align: left;
+}
+.settings-modal-2024 th {
+  background: #f3f4f6;
+  color: #6366f1;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.settings-modal-2024 td {
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 1rem;
+}
+.settings-modal-2024 .role-badge {
+  background: #eef2ff;
+  color: #6366f1;
+  border-radius: 0.5rem;
+  padding: 0.1rem 0.7rem;
+  font-size: 0.9em;
+  font-weight: 600;
+  display: inline-block;
+}
+.settings-modal-2024 .status-active {
+  color: #22c55e;
+  font-weight: 600;
+}
+.settings-modal-2024 .action-link {
+  color: #6366f1;
+  font-weight: 600;
+  margin-right: 0.7em;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.settings-modal-2024 .action-link.remove {
+  color: #ef4444;
+}
+.settings-modal-2024 .settings-form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.settings-modal-2024 .settings-form-row input,
+.settings-modal-2024 .settings-form-row select {
+  border-radius: 0.75rem;
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+.settings-modal-2024 .toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  display: inline-block;
+  margin-right: 1rem;
+}
+.settings-modal-2024 .toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.settings-modal-2024 .toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #e0e0e0;
+  border-radius: 28px;
+  transition: background 0.2s;
+}
+.settings-modal-2024 .toggle-slider:before {
+  position: absolute;
+  content: '';
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(60,60,130,0.10);
+}
+.settings-modal-2024 .toggle-switch input:checked + .toggle-slider {
+  background: #8b5cf6;
+}
+.settings-modal-2024 .toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+.settings-modal-2024 .add-btn {
+  background: #8b5cf6;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 0.7rem;
+  padding: 0.8rem 2.2rem;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 8px rgba(60,60,130,0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.settings-modal-2024 .add-btn svg {
+  width: 1.3em;
+  height: 1.3em;
+}
+.settings-modal-2024 .settings-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.settings-modal-2024 .settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.9rem 2.2rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(60,60,130,0.08);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+.settings-modal-2024 .settings-btn.gray { background: #444654; color: #fff; }
+.settings-modal-2024 .settings-btn.green { background: #22c55e; color: #fff; }
+.settings-modal-2024 .settings-btn.blue { background: #2563eb; color: #fff; }
+.settings-modal-2024 .settings-btn.purple { background: #8b5cf6; color: #fff; }
+.settings-modal-2024 .settings-btn.save { background: #a21caf; color: #fff; }
+.settings-modal-2024 .settings-btn svg { width: 1.3em; height: 1.3em; }
+.settings-modal-2024 .settings-btn.save svg { color: #fff; }
+.settings-modal-2024 .settings-config-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.settings-modal-2024 .settings-config-row > div {
+  flex: 1 1 220px;
+  min-width: 220px;
+}
+.settings-modal-2024 label {
+  font-size: 1rem;
+  color: #6366f1;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+.settings-modal-2024 input[type='text'],
+.settings-modal-2024 input[type='password'],
+.settings-modal-2024 input[type='email'] {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+@media (max-width: 700px) {
+  .settings-modal-2024 { padding: 1rem; }
+  .settings-modal-2024 .settings-form-row,
+  .settings-modal-2024 .settings-config-row { flex-direction: column; gap: 0.5rem; }
+  .settings-modal-2024 .settings-btn-group { gap: 0.5rem; }
+  .settings-modal-2024 .settings-btn { width: 100%; justify-content: center; font-size: 1rem; padding: 0.8rem 1.2rem; }
+}
   </style>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
@@ -198,104 +392,122 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
       </svg>
     </button>
-    <!-- Settings Modal Modern Card -->
+    <!-- Settings Modal - Exact Match to Screenshot -->
 <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
-  <div class="settings-card">
+  <div class="settings-modal-2024">
     <button id="settings-modal-close" style="position: absolute; top: 1.2rem; right: 1.2rem; background: none; border: none; font-size: 2rem; cursor: pointer; color: #888;">&times;</button>
-    <div class="settings-title">Settings</div>
-    <div class="settings-section-title">Whitelist Management</div>
-    <table style="width:100%; margin-bottom:1.5rem; border-radius:1rem; overflow:hidden; background:#fafaff;">
-      <thead style="background:#f3f4f6;">
-        <tr style="font-size:1rem; color:#7c3aed;">
-          <th style="padding:0.7rem 1rem; text-align:left;">EMAIL</th>
-          <th style="padding:0.7rem 1rem; text-align:left;">PHONE</th>
-          <th style="padding:0.7rem 1rem; text-align:left;">TELEGRAM USER ID</th>
+    <h2>Whitelist Management</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Telegram User ID</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th></th>
         </tr>
       </thead>
-      <tbody id="whitelist-table-container"></tbody>
+      <tbody id="whitelist-table-container">
+        <tr>
+          <td>info@tours.co.th</td>
+          <td></td>
+          <td></td>
+          <td><span class="role-badge" style="background:#d1fae5; color:#16a34a;">accounting</span></td>
+          <td><span class="status-active">Active</span></td>
+          <td>
+            <span class="action-link">Edit</span>
+            <span class="action-link remove">Remove</span>
+          </td>
+        </tr>
+        <tr>
+          <td>danials4385@gmail.com</td>
+          <td></td>
+          <td></td>
+          <td><span class="role-badge">admin</span></td>
+          <td><span class="status-active">Active</span></td>
+          <td>
+            <span class="action-link">Edit</span>
+            <span class="action-link remove">Remove</span>
+          </td>
+        </tr>
+        <tr>
+          <td>o0dr.orc0o@gmail.com</td>
+          <td>+66936497990</td>
+          <td>44636259</td>
+          <td><span class="role-badge">admin</span></td>
+          <td><span class="status-active">Active</span></td>
+          <td>
+            <span class="action-link">Edit</span>
+            <span class="action-link remove">Remove</span>
+          </td>
+        </tr>
+      </tbody>
     </table>
-    <form id="whitelist-form" class="settings-form-row" style="margin-bottom:1.2rem;">
-      <input type="email" id="whitelist-email" placeholder="Email" required />
-      <input type="text" id="whitelist-phone" placeholder="Phone (optional)" />
-      <input type="text" id="whitelist-telegram-id" placeholder="Telegram User ID" />
-      <select id="whitelist-role" required>
-        <option value="admin">Admin</option>
-        <option value="accounting">Accounting</option>
-        <option value="programs_manager">Programs Manager</option>
-        <option value="reservation">Reservation</option>
-      </select>
-      <label class="toggle-switch" style="margin-left:1rem; margin-right:0.5rem; align-self:center;">
-        <input type="checkbox" id="whitelist-active" checked />
+    <form class="settings-form-row" style="margin-bottom:1.2rem;">
+      <label class="toggle-switch">
+        <input type="checkbox" checked>
         <span class="toggle-slider"></span>
       </label>
-      <button type="submit" class="settings-btn purple" style="min-width:150px;">
+      <input type="email" placeholder="Email" />
+      <input type="text" placeholder="Phone (optional)" />
+      <input type="text" placeholder="Telegram User ID" />
+      <select>
+        <option>Admin</option>
+        <option>Accounting</option>
+      </select>
+      <button type="submit" class="add-btn">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add/Update
       </button>
     </form>
     <div class="settings-btn-group">
-      <button type="button" id="clear-cache-btn" class="settings-btn gray">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-        Clear Cache
-      </button>
-      <button type="button" id="import-excel-settings-btn" class="settings-btn green">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-        Import Excel
-      </button>
-      <input type="file" id="excel-file-input-settings" accept=".xlsx,.csv" style="display:none;" />
-      <button type="button" id="download-sample-excel-settings-btn" class="settings-btn blue">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        Download Sample
-      </button>
-      <button type="button" id="export-programs-settings-btn" class="settings-btn purple">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-        Export Programs
-      </button>
-      <button type="submit" form="settings-form" class="settings-btn save">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        Save Settings
-      </button>
+      <button class="settings-btn gray"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Clear Cache</button>
+      <button class="settings-btn green"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>Import Excel</button>
+      <button class="settings-btn blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download Sample</button>
+      <button class="settings-btn purple"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>Export Programs</button>
+      <button class="settings-btn save"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Save Settings</button>
     </div>
-    <form id="settings-form" style="margin-top:2.5rem;">
-      <div class="settings-section-title" style="margin-bottom:1.2rem;">Configuration</div>
-      <div class="settings-form-row">
-        <div style="flex:1; min-width:220px;">
-          <label for="bokun-access-key">Bokun Access Key</label>
-          <input type="password" id="bokun-access-key" name="bokun_access_key" placeholder="Enter Bokun Access Key" />
+    <div style="color:#6366f1; font-weight:700; font-size:1.1rem; margin-bottom:0.7rem;">Configuration</div>
+    <form>
+      <div class="settings-config-row">
+        <div>
+          <label>Bokun Access Key</label>
+          <input type="password" />
         </div>
-        <div style="flex:1; min-width:220px;">
-          <label for="bokun-secret-key">Bokun Secret Key</label>
-          <input type="password" id="bokun-secret-key" name="bokun_secret_key" placeholder="Enter Bokun Secret Key" />
-        </div>
-      </div>
-      <div class="settings-form-row">
-        <div style="flex:1; min-width:220px;">
-          <label for="woocommerce-consumer-key">WooCommerce Consumer Key</label>
-          <input type="password" id="woocommerce-consumer-key" name="woocommerce_consumer_key" placeholder="Enter WooCommerce Consumer Key" />
-        </div>
-        <div style="flex:1; min-width:220px;">
-          <label for="woocommerce-consumer-secret">WooCommerce Consumer Secret</label>
-          <input type="password" id="woocommerce-consumer-secret" name="woocommerce_consumer_secret" placeholder="Enter WooCommerce Consumer Secret" />
+        <div>
+          <label>Bokun Secret Key</label>
+          <input type="password" />
         </div>
       </div>
-      <div class="settings-form-row">
-        <div style="flex:1; min-width:220px;">
-          <label for="telegram-bot-token">Telegram Bot Token</label>
-          <input type="password" id="telegram-bot-token" name="telegram_bot_token" placeholder="Enter Telegram Bot Token" />
+      <div class="settings-config-row">
+        <div>
+          <label>WooCommerce Consumer Key</label>
+          <input type="password" />
         </div>
-        <div style="flex:1; min-width:220px;">
-          <label for="telegram-chat-id">Telegram Chat ID</label>
-          <input type="text" id="telegram-chat-id" name="telegram_chat_id" placeholder="Enter Telegram Chat ID" />
+        <div>
+          <label>WooCommerce Consumer Secret</label>
+          <input type="password" />
         </div>
       </div>
-      <div class="settings-form-row">
-        <div style="flex:1; min-width:220px; display:flex; align-items:center; gap:0.7rem;">
-          <input type="checkbox" id="use-bokun-api" name="use_bokun_api" style="width:1.2em; height:1.2em;">
-          <label for="use-bokun-api" style="margin-bottom:0;">Use Bokun API for Bookings (disable email parsing for Bokun)</label>
+      <div class="settings-config-row">
+        <div>
+          <label>Telegram Bot Token</label>
+          <input type="password" />
         </div>
-        <div style="flex:1; min-width:220px;">
-          <label for="notification-email-to">Notification Email To</label>
-          <input type="email" id="notification-email-to" name="notification_email_to" placeholder="Enter notification email address(es)" />
+        <div>
+          <label>Telegram Chat ID</label>
+          <input type="text" />
+        </div>
+      </div>
+      <div class="settings-config-row">
+        <div style="display:flex; align-items:center; gap:0.7rem;">
+          <input type="checkbox" style="width:1.2em; height:1.2em;">
+          <label style="margin-bottom:0;">Use Bokun API for Bookings (disable email parsing for Bokun)</label>
+        </div>
+        <div>
+          <label>Notification Email To</label>
+          <input type="email" />
         </div>
       </div>
     </form>

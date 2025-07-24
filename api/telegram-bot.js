@@ -114,7 +114,8 @@ module.exports = async (req, res) => {
     console.log('Processing message:', message.text, 'from chat:', chat_id);
     
     // TEST: Send a simple response to verify the bot is working
-    await sendTelegram(chat_id, '🤖 Bot received your message: ' + message.text, reply_to_message_id);
+    // await sendTelegram(chat_id, '🤖 Bot received your message: ' + message.text, reply_to_message_id);
+    // (Remove this test line, keep only booking search logic)
     
     // Get sender's phone number via Telegram (if available)
     const from = message.from || {};

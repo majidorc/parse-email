@@ -17,16 +17,29 @@ async function getTelegramChatId() {
 
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
-  const token = await getTelegramBotToken();
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
-  const chatId = chat_id || await getTelegramChatId();
-  const payload = {
-    chat_id: chatId,
-    text,
-    parse_mode: 'Markdown'
-  };
-  if (reply_to_message_id) payload.reply_to_message_id = reply_to_message_id;
-  await axios.post(url, payload);
+  try {
+    const token = await getTelegramBotToken();
+    if (!token) {
+      console.error('No Telegram bot token found');
+      return;
+    }
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const chatId = chat_id || await getTelegramChatId();
+    const payload = {
+      chat_id: chatId,
+      text,
+      parse_mode: 'Markdown'
+    };
+    if (reply_to_message_id) payload.reply_to_message_id = reply_to_message_id;
+    console.log('Sending Telegram message:', { chat_id: chatId, text: text.substring(0, 50) + '...' });
+    const response = await axios.post(url, payload);
+    console.log('Telegram response:', response.status);
+  } catch (error) {
+    console.error('Error sending Telegram message:', error.message);
+    if (error.response) {
+      console.error('Telegram API error:', error.response.data);
+    }
+  }
 }
 
 // Helper to search bookings
@@ -118,7 +131,8 @@ module.exports = async (req, res) => {
     
     if (!query) {
       console.log('No query extracted, sending help message');
-      await sendTelegram(chat_id, 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.', reply_to_message_id);
+      const helpMessage = `🔍 *Booking Search Bot*\n\nSend me:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 2024-01-15)\n\nOr use /search <query> for explicit search`;
+      await sendTelegram(chat_id, helpMessage, reply_to_message_id);
       return res.json({ ok: true });
     }
     
@@ -128,7 +142,8 @@ module.exports = async (req, res) => {
     
     if (results.length === 0) {
       console.log('No results found, sending not found message');
-      await sendTelegram(chat_id, 'No bookings found for your query.', reply_to_message_id);
+      const notFoundMessage = `❌ No bookings found for: *${query}*\n\nTry searching by:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 2024-01-15)`;
+      await sendTelegram(chat_id, notFoundMessage, reply_to_message_id);
       return res.json({ ok: true });
     }
     

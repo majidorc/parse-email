@@ -2059,6 +2059,128 @@ document.getElementById('export-programs-settings-btn').onclick = async function
   }
 };
 
+// Import from Excel Button Logic (Settings Modal)
+document.getElementById('import-excel-settings-btn').onclick = function() {
+  document.getElementById('excel-file-input-settings').click();
+};
+
+// File input change handler for Excel import (Settings Modal)
+document.getElementById('excel-file-input-settings').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const csv = e.target.result;
+    const lines = csv.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    // Validate headers
+    const expectedHeaders = ['SKU', 'Program Name', 'Remark', 'Rate Name', 'Net Adult', 'Net Child', 'Fee Type', 'Fee Adult', 'Fee Child'];
+    const isValid = expectedHeaders.every(h => headers.includes(h));
+    
+    if (!isValid) {
+      alert('Invalid CSV format. Please use the sample Excel file as a template.');
+      return;
+    }
+    
+    // Parse CSV data
+    const programs = {};
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const values = line.split(',').map(v => v.trim());
+      const sku = values[0];
+      const programName = values[1];
+      const remark = values[2];
+      const rateName = values[3];
+      const netAdult = parseFloat(values[4]) || 0;
+      const netChild = parseFloat(values[5]) || 0;
+      const feeType = values[6];
+      const feeAdult = parseFloat(values[7]) || 0;
+      const feeChild = parseFloat(values[8]) || 0;
+      
+      if (!programs[sku]) {
+        programs[sku] = {
+          sku: sku,
+          program: programName,
+          remark: remark,
+          rates: []
+        };
+      }
+      
+      programs[sku].rates.push({
+        name: rateName,
+        net_adult: netAdult,
+        net_child: netChild,
+        fee_type: feeType,
+        fee_adult: feeType !== 'none' ? feeAdult : null,
+        fee_child: feeType !== 'none' ? feeChild : null
+      });
+    }
+    
+    // Import programs
+    importProgramsFromSettings(programs);
+  };
+  
+  reader.readAsText(file);
+});
+
+// Function to import programs from settings modal
+async function importProgramsFromSettings(programs) {
+  const programList = Object.values(programs);
+  let successCount = 0;
+  let errorCount = 0;
+  
+  for (const program of programList) {
+    try {
+      const response = await fetch('/api/products-rates?type=tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(program)
+      });
+      
+      if (response.ok) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    } catch (error) {
+      errorCount++;
+    }
+  }
+  
+  // Show results
+  if (successCount > 0) {
+    alert(`Import completed!\nSuccessfully imported: ${successCount} programs\nErrors: ${errorCount}`);
+    showToast(`Successfully imported ${successCount} programs`, 'success');
+  } else {
+    alert(`Import failed!\nErrors: ${errorCount}`);
+    showToast('Import failed. Please check your file format.', 'error');
+  }
+  
+  // Clear the file input
+  document.getElementById('excel-file-input-settings').value = '';
+}
+
+// Download Sample Excel Button Logic (Settings Modal)
+document.getElementById('download-sample-excel-settings-btn').onclick = function() {
+  const sample =
+    'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
+    'HKT0041,Sample Program,Optional remark,With transfer,900,900,none,,\n' +
+    'HKT0041,Sample Program,Optional remark,Without transfer,800,800,entrance,100,50\n';
+  const blob = new Blob([sample], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'programs-sample.xlsx.csv';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  showToast('Sample Excel file downloaded!', 'success');
+};
+
 // Add at the top of the script
 let dashboardChannelFilter = null;
 function setDashboardChannelFilter(channel) {
@@ -2521,134 +2643,3 @@ if (priceTiersModal) {
   };
 }
 
-// Add import, export, and sample download buttons to Programs tab
-if (programsSection && !document.getElementById('import-excel-btn')) {
-  const importDiv = document.createElement('div');
-  importDiv.className = 'flex gap-4 mb-4';
-  importDiv.innerHTML = `
-    <button id="import-excel-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Import from Excel</button>
-    <input type="file" id="excel-file-input" accept=".xlsx,.csv" style="display:none;" />
-    <button id="download-sample-excel" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Download Sample Excel</button>
-  `;
-  programsSection.insertBefore(importDiv, programsSection.firstChild);
-  document.getElementById('import-excel-btn').onclick = () => document.getElementById('excel-file-input').click();
-  
-  // Add file input change handler for Excel import
-  document.getElementById('excel-file-input').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const csv = e.target.result;
-      const lines = csv.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
-      
-      // Validate headers
-      const expectedHeaders = ['SKU', 'Program Name', 'Remark', 'Rate Name', 'Net Adult', 'Net Child', 'Fee Type', 'Fee Adult', 'Fee Child'];
-      const isValid = expectedHeaders.every(h => headers.includes(h));
-      
-      if (!isValid) {
-        alert('Invalid CSV format. Please use the sample Excel file as a template.');
-        return;
-      }
-      
-      // Parse CSV data
-      const programs = {};
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        
-        const values = line.split(',').map(v => v.trim());
-        const sku = values[0];
-        const programName = values[1];
-        const remark = values[2];
-        const rateName = values[3];
-        const netAdult = parseFloat(values[4]) || 0;
-        const netChild = parseFloat(values[5]) || 0;
-        const feeType = values[6];
-        const feeAdult = parseFloat(values[7]) || 0;
-        const feeChild = parseFloat(values[8]) || 0;
-        
-        if (!programs[sku]) {
-          programs[sku] = {
-            sku: sku,
-            program: programName,
-            remark: remark,
-            rates: []
-          };
-        }
-        
-        programs[sku].rates.push({
-          name: rateName,
-          net_adult: netAdult,
-          net_child: netChild,
-          fee_type: feeType,
-          fee_adult: feeType !== 'none' ? feeAdult : null,
-          fee_child: feeType !== 'none' ? feeChild : null
-        });
-      }
-      
-      // Import programs
-      importPrograms(programs);
-    };
-    
-    reader.readAsText(file);
-  });
-  
-  // Function to import programs
-  async function importPrograms(programs) {
-    const programList = Object.values(programs);
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const program of programList) {
-      try {
-        const response = await fetch('/api/products-rates?type=tour', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(program)
-        });
-        
-        if (response.ok) {
-          successCount++;
-        } else {
-          errorCount++;
-        }
-      } catch (error) {
-        errorCount++;
-      }
-    }
-    
-    // Show results
-    if (successCount > 0) {
-      alert(`Import completed!\nSuccessfully imported: ${successCount} programs\nErrors: ${errorCount}`);
-      // Refresh the programs table
-      if (typeof fetchRatesAndPrograms === 'function') {
-        fetchRatesAndPrograms();
-      }
-    } else {
-      alert(`Import failed!\nErrors: ${errorCount}`);
-    }
-    
-    // Clear the file input
-    document.getElementById('excel-file-input').value = '';
-  }
-  
-  document.getElementById('download-sample-excel').onclick = () => {
-    const sample =
-      'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
-      'HKT0041,Sample Program,Optional remark,With transfer,900,900,none,,\n' +
-      'HKT0041,Sample Program,Optional remark,Without transfer,800,800,entrance,100,50\n';
-    const blob = new Blob([sample], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'programs-sample.xlsx.csv';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-  };
-  
-
-}

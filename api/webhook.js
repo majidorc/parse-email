@@ -669,107 +669,126 @@ async function getTelegramChatId() {
 
 async function handler(req, res) {
     console.log('WEBHOOK REQUEST RECEIVED:', req.method, new Date().toISOString());
+    console.log('Request headers:', req.headers);
+    
     if (req.method !== 'POST') {
         return res.status(405).send('Method Not Allowed');
     }
 
     try {
-        // In the webhook handler, parse JSON if content-type is application/json
-        let rawBody = req.body;
+        // Get the raw body for email parsing
+        let rawBody = await getRawBody(req);
         let sourceEmail = null;
+        
+        // Log the raw body for debugging
+        console.log('Raw body length:', rawBody ? rawBody.length : 'null/undefined');
+        console.log('Content-Type:', req.headers['content-type']);
+        
+        // Handle JSON payloads (for Telegram webhooks, etc.)
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
-          rawBody = req.body.raw;
-          sourceEmail = req.body.source;
-        }
+            try {
+                const jsonData = JSON.parse(rawBody.toString('utf-8'));
+                
+                // Handle Telegram callback queries (inline keyboard)
+                if (jsonData && jsonData.callback_query) {
+                    return handleTelegramCallback(jsonData.callback_query, res);
+                }
 
-        let jsonData;
-        try {
-            jsonData = JSON.parse(rawBody.toString('utf-8'));
-        } catch (error) {
-            jsonData = null;
-        }
-
-        // Handle Telegram callback queries (inline keyboard)
-        if (jsonData && jsonData.callback_query) {
-            return handleTelegramCallback(jsonData.callback_query, res);
-        }
-
-        // Handle Telegram /search command and general search
-        if (jsonData && jsonData.message && jsonData.message.chat && jsonData.message.text) {
-            const chat_id = jsonData.message.chat.id;
-            const reply_to_message_id = jsonData.message.message_id;
-            const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
-            const text = jsonData.message.text.trim();
-            const query = extractQuery(text, botUsername);
-            if (text.startsWith('/search')) {
-                if (!query) {
-                    // Send help message
-                    const token = await getTelegramBotToken();
-                    const chatId = await getTelegramChatId();
-                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id: chatId,
-                        text: 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.',
-                        reply_to_message_id,
-                        parse_mode: 'Markdown'
-                    });
+                // Handle Telegram /search command and general search
+                if (jsonData && jsonData.message && jsonData.message.chat && jsonData.message.text) {
+                    const chat_id = jsonData.message.chat.id;
+                    const reply_to_message_id = jsonData.message.message_id;
+                    const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
+                    const text = jsonData.message.text.trim();
+                    const query = extractQuery(text, botUsername);
+                    if (text.startsWith('/search')) {
+                        if (!query) {
+                            // Send help message
+                            const token = await getTelegramBotToken();
+                            const chatId = await getTelegramChatId();
+                            await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                                chat_id: chatId,
+                                text: 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.',
+                                reply_to_message_id,
+                                parse_mode: 'Markdown'
+                            });
+                            return res.json({ ok: true });
+                        }
+                        const results = await searchBookings(query);
+                        if (results.length === 0) {
+                            const token = await getTelegramBotToken();
+                            const chatId = await getTelegramChatId();
+                            await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                                chat_id: chatId,
+                                text: 'No bookings found for your query.',
+                                reply_to_message_id,
+                                parse_mode: 'Markdown'
+                            });
+                            return res.json({ ok: true });
+                        }
+                        const nm = new NotificationManager();
+                        for (const booking of results) {
+                            await nm.sendTelegramWithButtons(booking, chat_id);
+                        }
+                        return res.json({ ok: true });
+                    } else if (!text.startsWith('/')) {
+                        // If not a command, treat as search
+                        if (!query) {
+                            const token = await getTelegramBotToken();
+                            const chatId = await getTelegramChatId();
+                            await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                                chat_id: chatId,
+                                text: 'Please send a booking number, customer name, or date to search.',
+                                reply_to_message_id,
+                                parse_mode: 'Markdown'
+                            });
+                            return res.json({ ok: true });
+                        }
+                        const results = await searchBookings(query);
+                        if (results.length === 0) {
+                            const token = await getTelegramBotToken();
+                            const chatId = await getTelegramChatId();
+                            await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+                                chat_id: chatId,
+                                text: 'No bookings found for your query.',
+                                reply_to_message_id,
+                                parse_mode: 'Markdown'
+                            });
+                            return res.json({ ok: true });
+                        }
+                        const nm = new NotificationManager();
+                        for (const booking of results) {
+                            await nm.sendTelegramWithButtons(booking, chat_id);
+                        }
+                        return res.json({ ok: true });
+                    }
+                    // Ignore other commands (like /start, /help, etc.)
                     return res.json({ ok: true });
                 }
-                const results = await searchBookings(query);
-                if (results.length === 0) {
-                    const token = await getTelegramBotToken();
-                    const chatId = await getTelegramChatId();
-                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id: chatId,
-                        text: 'No bookings found for your query.',
-                        reply_to_message_id,
-                        parse_mode: 'Markdown'
-                    });
-                    return res.json({ ok: true });
+                
+                // Handle other JSON payloads (like email services that send JSON)
+                if (jsonData.raw) {
+                    rawBody = Buffer.from(jsonData.raw, 'utf-8');
+                    sourceEmail = jsonData.source;
                 }
-                const nm = new NotificationManager();
-                for (const booking of results) {
-                    await nm.sendTelegramWithButtons(booking, chat_id);
-                }
-                return res.json({ ok: true });
-            } else if (!text.startsWith('/')) {
-                // If not a command, treat as search
-                if (!query) {
-                    const token = await getTelegramBotToken();
-                    const chatId = await getTelegramChatId();
-                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id: chatId,
-                        text: 'Please send a booking number, customer name, or date to search.',
-                        reply_to_message_id,
-                        parse_mode: 'Markdown'
-                    });
-                    return res.json({ ok: true });
-                }
-                const results = await searchBookings(query);
-                if (results.length === 0) {
-                    const token = await getTelegramBotToken();
-                    const chatId = await getTelegramChatId();
-                    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-                        chat_id: chatId,
-                        text: 'No bookings found for your query.',
-                        reply_to_message_id,
-                        parse_mode: 'Markdown'
-                    });
-                    return res.json({ ok: true });
-                }
-                const nm = new NotificationManager();
-                for (const booking of results) {
-                    await nm.sendTelegramWithButtons(booking, chat_id);
-                }
-                return res.json({ ok: true });
+            } catch (jsonError) {
+                console.log('Failed to parse JSON, treating as raw email:', jsonError.message);
             }
-            // Ignore other commands (like /start, /help, etc.)
+        }
+        
+        // Check if we have raw body for email parsing
+        if (!rawBody) {
+            console.error('Webhook error: rawBody is null or undefined');
+            console.log('Request headers:', req.headers);
+            console.log('Request method:', req.method);
+            return res.status(400).json({ 
+                error: 'No email content received',
+                message: 'Please ensure the request contains email content in the body.',
+                headers: req.headers
+            });
         }
         
         // Parse the raw email
-        if (!rawBody) {
-            console.error('Webhook error: rawBody is null or undefined');
-            return res.status(400).json({ error: 'No email content received' });
-        }
         const parsedEmail = await simpleParser(rawBody);
 
         // Handle cancellation emails

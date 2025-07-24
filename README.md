@@ -6,24 +6,36 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
 
 ## 🚀 Features
 
-- **Automated Email Parsing:**  
+- **Automated Email Parsing:**
   Extracts bookings from Bokun.io and Thailand Tours emails with robust parser rules.
-
-- **Multi-Channel Notifications:**  
+- **Multi-Channel Notifications:**
   Sends booking notifications via Email, Telegram, and LINE. Telegram notifications are sent for bookings made for today (Bangkok time).
-
-- **Database-Driven Settings:**  
-  All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
-
-- **Modern Dashboard:**  
-  - Summary cards for Total Bookings, New Bookings, and Benefit (placeholder)
+- **Modern Dashboard:**
+  - Card-style settings modal with colorful buttons, toggles, and responsive design
+  - Summary cards for Total Bookings, New Bookings, and Benefit
   - Booking channels breakdown with PieChart and filter-on-click
   - Top Destinations with expandable list
   - Responsive, modern UI with theme colors
   - Secure login-protected access
-
-- **Role-Based Access Control:**  
+- **Role-Based Access Control:**
   Four user roles with granular permissions (see below).
+- **Database-Driven Settings:**
+  All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
+
+---
+
+## 📸 Screenshots
+
+> **Tip:** Place your screenshots in `public/screenshots/` and reference them below.
+
+### Dashboard
+![Dashboard](public/screenshots/dashboard.png)
+
+### Settings Modal
+![Settings Modal](public/screenshots/settings-modal.png)
+
+### Mobile Responsive
+![Mobile Settings](public/screenshots/mobile-settings.png)
 
 ---
 
@@ -56,49 +68,19 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
 
 ## 👤 User Roles & Permissions
 
-| Role             | Dashboard | Bookings | Accounting | Programs | Settings/Whitelist | Delete Bookings | Edit/Remove Programs |
-|------------------|:---------:|:--------:|:----------:|:--------:|:------------------:|:---------------:|:--------------------:|
-| **Admin**        | ✅        | ✅       | ✅         | ✅       | ✅                 | ✅              | ✅                   |
-| **Accounting**   | ✅        | ✅       | ✅         | ❌       | ❌                 | ❌              | ❌                   |
-| **Programs Mgr** | ❌        | ❌       | ❌         | ✅       | ❌                 | ❌              | ✅ (no delete)        |
-| **Reservation**  | ❌        | ✅       | ❌         | ❌       | ❌                 | ❌              | ❌                   |
-
-- **Admin:** Full access to everything (all tabs, settings, whitelist, delete, edit, etc.)
-- **Accounting:** Access Dashboard, Bookings, and Accounting tabs. Cannot delete bookings or edit/remove programs. No access to settings or whitelist.
-- **Programs Manager:** Only access to Programs tab (can add/edit programs, but cannot delete unless Admin).
-- **Reservation:** Only access to Bookings tab.
-
-Both backend and frontend enforce these permissions. The UI hides tabs and actions not allowed for the current role.
+- **Admin:** Full access to all features and settings
+- **Accounting:** Access to accounting and reporting features
+- **Programs Manager:** Manage programs and rates
+- **Reservation:** Manage bookings and notifications
 
 ---
 
-## 🛠️ Admin Guide
-
-- **Settings Management:**  
-  Use the Settings modal in the dashboard to update notification channels and sensitive settings. All values are stored in the database.
-- **Clear Cache Button:**  
-  Use the 'Clear Cache' button in Settings to remove all locally cached data and force the app to reload.
-- **Dashboard Usage:**  
-  View summary cards, booking and passenger counts by channel, and manage bookings, accounting, and programs from their respective tabs.
+## 🛠️ Development
+- All configuration is managed via the dashboard and stored in the database.
+- For customizations, edit the HTML/CSS/JS in the `public/` folder.
+- For backend logic, see the `api/` folder.
 
 ---
 
-## 🗄️ Database Schema
-
-- See `db_sample.sql` for a complete schema, including all tables, types, and constraints.
-- The `bookings` table includes a `rate` column (text label, not a price).
-- All configuration is stored in the database, not in environment files.
-
----
-
-## 👩‍💻 Development & Contribution
-
-- Node.js/Express backend, static HTML/JS frontend.
-- All configuration is database-driven for easy updates.
-- See `CHANGELOG.md` for recent changes.
-
----
-
-## 📄 License
-
-MIT 
+## 📬 Contact
+For support or questions, open an issue or contact the maintainer. 

@@ -73,44 +73,66 @@ function extractQuery(text, botUsername) {
     // Remove @botname and any whitespace
     return text.replace(/^@\w+\s*/i, '');
   }
-  // Otherwise, return as is
+  // For any other text, treat it as a search query
   return text;
 }
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   try {
+    console.log('Telegram bot received request:', req.body);
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const message = body.message;
-    if (!message || !message.text) return res.json({ ok: true });
+    if (!message || !message.text) {
+      console.log('No message or text found');
+      return res.json({ ok: true });
+    }
     const chat_id = message.chat.id;
     const reply_to_message_id = message.message_id;
+    console.log('Processing message:', message.text, 'from chat:', chat_id);
+    
     // Get sender's phone number via Telegram (if available)
     const from = message.from || {};
     const telegramUserId = from.id;
     if (!telegramUserId) {
+      console.log('No telegram user ID found');
       await sendTelegram(chat_id, 'Access denied. Telegram user ID not found.', reply_to_message_id);
       return res.json({ ok: true });
     }
+    console.log('Telegram user ID:', telegramUserId);
+    
     // Check whitelist by telegram_user_id
     const { rows } = await sql`SELECT is_active FROM user_whitelist WHERE telegram_user_id = ${telegramUserId}`;
     if (!rows.length || !rows[0].is_active) {
+      console.log('User not whitelisted or inactive');
       await sendTelegram(chat_id, 'You are not authorized to use this bot. Please contact the admin to be whitelisted.', reply_to_message_id);
       return res.json({ ok: true });
     }
+    console.log('User is whitelisted');
+    
     // Try to get bot username from environment (optional, fallback to generic)
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
     const text = message.text.trim();
     const query = extractQuery(text, botUsername);
+    console.log('Extracted query:', query);
+    
     if (!query) {
+      console.log('No query extracted, sending help message');
       await sendTelegram(chat_id, 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.', reply_to_message_id);
       return res.json({ ok: true });
     }
+    
+    console.log('Searching for:', query);
     const results = await searchBookings(query);
+    console.log('Search results:', results.length);
+    
     if (results.length === 0) {
+      console.log('No results found, sending not found message');
       await sendTelegram(chat_id, 'No bookings found for your query.', reply_to_message_id);
       return res.json({ ok: true });
     }
+    
+    console.log('Sending results');
     const nm = new NotificationManager();
     for (const booking of results) {
       // Use the unified inline keyboard with buttons, reply in the same chat

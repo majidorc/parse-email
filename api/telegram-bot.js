@@ -60,61 +60,6 @@ async function searchBookings(query) {
   return [];
 }
 
-// Helper to search products/programs
-async function searchProducts(query) {
-  // Try SKU (exact)
-  let sqlQuery = 'SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'';
-  let params = [query];
-  let { rows } = await sql.query(sqlQuery, params);
-  if (rows.length > 0) return rows;
-  
-  // Try program name (partial, case-insensitive)
-  sqlQuery = 'SELECT * FROM products_rates WHERE program ILIKE $1 AND type = \'tour\' ORDER BY program ASC LIMIT 5';
-  params = [`%${query}%`];
-  rows = (await sql.query(sqlQuery, params)).rows;
-  if (rows.length > 0) return rows;
-  
-  // Try rate name (partial, case-insensitive)
-  sqlQuery = `
-    SELECT DISTINCT p.* 
-    FROM products_rates p 
-    JOIN jsonb_array_elements(p.rates) AS rate ON true 
-    WHERE rate->>'name' ILIKE $1 AND p.type = 'tour' 
-    ORDER BY p.program ASC 
-    LIMIT 5
-  `;
-  params = [`%${query}%`];
-  rows = (await sql.query(sqlQuery, params)).rows;
-  if (rows.length > 0) return rows;
-  
-  return [];
-}
-
-// Helper to format product search results
-function formatProductResults(products) {
-  if (products.length === 0) return 'No products found.';
-  
-  let result = `*Found ${products.length} product(s):*\n\n`;
-  
-  products.forEach((product, index) => {
-    result += `*${index + 1}. ${product.program}*\n`;
-    result += `SKU: \`${product.sku}\`\n`;
-    
-    if (product.rates && Array.isArray(product.rates)) {
-      result += `*Rates:*\n`;
-      product.rates.forEach(rate => {
-        const adultPrice = rate.net_adult ? `฿${rate.net_adult}` : 'N/A';
-        const childPrice = rate.net_child ? `฿${rate.net_child}` : 'N/A';
-        result += `• ${rate.name}: Adult ${adultPrice}, Child ${childPrice}\n`;
-      });
-    }
-    
-    result += '\n';
-  });
-  
-  return result;
-}
-
 // Extract search query from message text
 function extractQuery(text, botUsername) {
   if (!text) return '';
@@ -156,25 +101,9 @@ module.exports = async (req, res) => {
     // Try to get bot username from environment (optional, fallback to generic)
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
     const text = message.text.trim();
-    
-    // Handle /products command
-    if (text.startsWith('/products')) {
-      const query = text.replace(/^\/products(@\w+)?\s*/i, '').trim();
-      if (!query) {
-        await sendTelegram(chat_id, 'Please send /products <search term> to search for tours and programs.\n\nExamples:\n/products Bangkok\n/products SKU123\n/products Adventure', reply_to_message_id);
-        return res.json({ ok: true });
-      }
-      
-      const products = await searchProducts(query);
-      const formattedResults = formatProductResults(products);
-      await sendTelegram(chat_id, formattedResults, reply_to_message_id);
-      return res.json({ ok: true });
-    }
-    
-    // Handle /search command (existing booking search)
     const query = extractQuery(text, botUsername);
     if (!query) {
-      await sendTelegram(chat_id, 'Available commands:\n\n/search <booking number/name/date> - Search bookings\n/products <search term> - Search tours and programs', reply_to_message_id);
+      await sendTelegram(chat_id, 'Please send /search <booking number>, customer name, or date (YYYY-MM-DD) to search.', reply_to_message_id);
       return res.json({ ok: true });
     }
     const results = await searchBookings(query);

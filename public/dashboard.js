@@ -2643,3 +2643,55 @@ if (priceTiersModal) {
   };
 }
 
+// Utility: Add missing programs from bookings
+async function addProgramsFromBookings() {
+  // 1. Get all unique {sku, program} from bookingsData
+  const uniquePrograms = {};
+  bookingsData.forEach(b => {
+    if (b.sku && b.program) {
+      uniquePrograms[b.sku] = b.program;
+    }
+  });
+  // 2. Fetch all current programs
+  let currentPrograms = [];
+  try {
+    const res = await fetch('/api/products-rates?type=tour');
+    if (res.ok) {
+      const data = await res.json();
+      currentPrograms = data.tours || [];
+    }
+  } catch (e) { /* ignore */ }
+  const existingSKUs = new Set(currentPrograms.map(p => p.sku));
+  // 3. For each unique booking SKU, if not in programs, add it
+  let added = 0;
+  for (const sku in uniquePrograms) {
+    if (!existingSKUs.has(sku)) {
+      // Add program with just SKU and name
+      await fetch('/api/products-rates?type=tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sku, program: uniquePrograms[sku], rates: [] })
+      });
+      added++;
+    }
+  }
+  if (added > 0) {
+    showToast(`Added ${added} new program(s) from bookings!`, 'success');
+    if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+  }
+}
+
+// After bookings are loaded, add missing programs
+async function fetchBookingsWithPrograms(...args) {
+  await fetchBookings(...args);
+  await addProgramsFromBookings();
+}
+
+// Replace all fetchBookings() calls for initial load with fetchBookingsWithPrograms()
+document.addEventListener('DOMContentLoaded', function () {
+  // ... existing code ...
+  // Replace initial bookings load:
+  fetchBookingsWithPrograms();
+  // ... rest of DOMContentLoaded ...
+});
+

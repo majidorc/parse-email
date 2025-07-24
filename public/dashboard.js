@@ -2710,3 +2710,39 @@ document.addEventListener('DOMContentLoaded', function () {
   // ... rest of DOMContentLoaded ...
 });
 
+// Add a button to check for missing programs from bookings
+function addCheckMissingProgramsButton() {
+  const programsSection = document.getElementById('programs-section');
+  if (!programsSection) return;
+  let btn = document.getElementById('check-missing-programs-btn');
+  if (btn) return; // Already added
+  btn = document.createElement('button');
+  btn.id = 'check-missing-programs-btn';
+  btn.textContent = 'Check Missing Programs from Bookings';
+  btn.style = 'margin-bottom:16px; background:#f59e42; color:white; font-weight:bold; padding:8px 18px; border:none; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer;';
+  btn.onclick = async function() {
+    // 1. Get all unique SKUs from bookings
+    let bookingSKUs = new Set();
+    bookingsData.forEach(b => { if (b.sku) bookingSKUs.add(b.sku); });
+    // 2. Get all SKUs from programs
+    let programSKUs = new Set();
+    try {
+      const res = await fetch('/api/products-rates?type=tour');
+      if (res.ok) {
+        const data = await res.json();
+        (data.tours || []).forEach(p => { if (p.sku) programSKUs.add(p.sku); });
+      }
+    } catch (e) {}
+    // 3. Compare
+    const missing = Array.from(bookingSKUs).filter(sku => !programSKUs.has(sku));
+    if (missing.length) {
+      alert('Missing SKUs in Programs:\n' + missing.join('\n'));
+    } else {
+      alert('All programs from bookings are present!');
+    }
+  };
+  programsSection.insertBefore(btn, programsSection.firstChild);
+}
+// Call this after DOMContentLoaded
+addEventListener('DOMContentLoaded', addCheckMissingProgramsButton);
+

@@ -765,6 +765,12 @@ async function handler(req, res) {
             // Ignore other commands (like /start, /help, etc.)
         }
         
+        // Parse the raw email
+        const rawBody = await getRawBody(req);
+        if (!rawBody) {
+            console.error('Webhook error: rawBody is null or undefined');
+            return res.status(400).json({ error: 'No email content received' });
+        }
         const parsedEmail = await simpleParser(rawBody);
 
         // Handle cancellation emails

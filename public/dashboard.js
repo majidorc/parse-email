@@ -1198,18 +1198,6 @@ analyticsBtn.onclick = () => {
       }
       sourceChannelTable += '</tbody></table>';
       
-      // Add this new table to the analytics section
-      const analyticsSection = document.getElementById('analytics-section');
-      let sourceChannelDiv = document.getElementById('analytics-by-source-channel');
-      if (!sourceChannelDiv) {
-        sourceChannelDiv = document.createElement('div');
-        sourceChannelDiv.id = 'analytics-by-source-channel';
-        sourceChannelDiv.className = 'bg-white rounded-lg p-4 shadow min-w-[220px]';
-        sourceChannelDiv.innerHTML = '<div class="text-base font-semibold text-yellow-800 mb-2">Inbox Channel Breakdown</div>';
-        analyticsSection.appendChild(sourceChannelDiv);
-      }
-      sourceChannelDiv.innerHTML = '<div class="text-base font-semibold text-yellow-800 mb-2">Inbox Channel Breakdown</div>' + sourceChannelTable;
-      
       // Add detailed channel breakdown table
       let detailedChannelTable = '<table class="w-full text-sm mb-4"><thead><tr><th class="text-left px-2 py-1">Channel</th><th class="text-right px-2 py-1">Count</th></tr></thead><tbody>';
       
@@ -1241,8 +1229,11 @@ analyticsBtn.onclick = () => {
       }
       detailedChannelTable += '</tbody></table>';
       
-      // Add the detailed table to the same div
-      sourceChannelDiv.innerHTML += '<div class="text-base font-semibold text-yellow-800 mb-2 mt-4">Channel Details</div>' + detailedChannelTable;
+      // Populate the existing div (now in HTML structure)
+      const sourceChannelDiv = document.getElementById('analytics-by-source-channel');
+      if (sourceChannelDiv) {
+        sourceChannelDiv.innerHTML = sourceChannelTable + detailedChannelTable;
+      }
       
       // Debug logging for analytics data and elements
       console.log('bySender:', data.bySender, document.getElementById('analytics-by-sender'));

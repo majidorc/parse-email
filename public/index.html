@@ -70,7 +70,12 @@
   </div>
   <div id="dashboard-root">
     <!-- Settings Gear Icon -->
-    <button id="settings-gear-btn" title="Settings" style="position: absolute; top: 18px; right: 24px; z-index: 50; background: none; border: none; font-size: 2rem; cursor: pointer; color: #6366f1; transition: color 0.2s;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6366f1'">⚙️</button>
+    <button id="settings-gear-btn" title="Settings" class="fixed top-4 right-6 z-50 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+      <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+    </button>
     <!-- Settings Modal -->
     <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
       <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto" style="max-height: 95vh; min-width: 0;">
@@ -82,17 +87,22 @@
               <h3 class="text-lg font-semibold mb-3 text-indigo-700">Whitelist Management</h3>
               <div id="whitelist-table-container" class="mb-3 overflow-x-auto"></div>
               <form id="whitelist-form" class="flex flex-wrap gap-2 items-end mb-2">
-                <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-2 py-1 border rounded w-40" required />
-                <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-2 py-1 border rounded w-32" />
-                <input type="text" id="whitelist-telegram-id" placeholder="Telegram User ID (optional)" class="form-input px-2 py-1 border rounded w-40" />
-                <select id="whitelist-role" class="form-input px-2 py-1 border rounded w-36" required>
+                <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-40" required />
+                <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-32" />
+                <input type="text" id="whitelist-telegram-id" placeholder="Telegram User ID (optional)" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-40" />
+                <select id="whitelist-role" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-36" required>
                   <option value="admin">Admin</option>
                   <option value="accounting">Accounting</option>
                   <option value="programs_manager">Programs Manager</option>
                   <option value="reservation">Reservation</option>
                 </select>
-                <label class="flex items-center gap-1 text-xs"><input type="checkbox" id="whitelist-active" checked /> Active</label>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1 rounded">Add/Update</button>
+                <label class="flex items-center gap-2 text-sm text-gray-600"><input type="checkbox" id="whitelist-active" checked class="rounded" /> Active</label>
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  Add/Update
+                </button>
               </form>
               <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
             </div>
@@ -132,13 +142,38 @@
                 <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
                 <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis" placeholder="Enter notification email address(es)" style="min-width:0;">
               </div>
-              <div class="flex justify-end mt-6 gap-2">
-                <button type="button" id="clear-cache-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow border border-gray-300">Clear Cache</button>
-                <button type="button" id="import-excel-settings-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow">Import from Excel</button>
+              <div class="flex justify-end mt-6 gap-3">
+                <button type="button" id="clear-cache-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg shadow-sm border border-gray-200 transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  </svg>
+                  Clear Cache
+                </button>
+                <button type="button" id="import-excel-settings-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
+                  Import Excel
+                </button>
                 <input type="file" id="excel-file-input-settings" accept=".xlsx,.csv" style="display:none;" />
-                <button type="button" id="download-sample-excel-settings-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow">Download Sample Excel</button>
-                <button type="button" id="export-programs-settings-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow">Export Programs</button>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow">Save</button>
+                <button type="button" id="download-sample-excel-settings-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Download Sample
+                </button>
+                <button type="button" id="export-programs-settings-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2.5 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                  </svg>
+                  Export Programs
+                </button>
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  Save Settings
+                </button>
               </div>
             </form>
           </div>

@@ -36,7 +36,6 @@ let bookingsSummaryData = null;
 let bookingsSummaryDataUnfiltered = null;
 let bookingsSummaryLoading = false;
 let currentBangkokDate = null;
-let dashboardChannelFilter = null;
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
   const tbody = document.getElementById('bookings-body');
@@ -1888,15 +1887,15 @@ window.handleDelete = async function(bookingNumber, btn) {
 const settingsGearBtn = document.getElementById('settings-gear-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsModalClose = document.getElementById('settings-modal-close');
-const settingsForm = document.querySelector('.settings-modal-2024 form');
-const bokunAccessKeyInput = document.querySelector('.settings-modal-2024 input[type="password"]:nth-of-type(1)');
-const bokunSecretKeyInput = document.querySelector('.settings-modal-2024 input[type="password"]:nth-of-type(2)');
-const wooConsumerKeyInput = document.querySelector('.settings-modal-2024 input[type="password"]:nth-of-type(3)');
-const wooConsumerSecretInput = document.querySelector('.settings-modal-2024 input[type="password"]:nth-of-type(4)');
-const useBokunApiInput = document.querySelector('.settings-modal-2024 input[type="checkbox"]');
-const telegramBotTokenInput = document.querySelector('.settings-modal-2024 input[type="password"]:nth-of-type(5)');
-const telegramChatIdInput = document.querySelector('.settings-modal-2024 input[type="text"]:nth-of-type(1)');
-const notificationEmailToInput = document.querySelector('.settings-modal-2024 input[type="email"]');
+const settingsForm = document.getElementById('settings-form');
+const bokunAccessKeyInput = document.getElementById('bokun-access-key');
+const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
+const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
+const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
+const useBokunApiInput = document.getElementById('use-bokun-api');
+const telegramBotTokenInput = document.getElementById('telegram-bot-token');
+const telegramChatIdInput = document.getElementById('telegram-chat-id');
+const notificationEmailToInput = document.getElementById('notification-email-to');
 let settingsLoading = false;
 let settingsError = '';
 let settingsSuccess = '';
@@ -1917,22 +1916,22 @@ function renderSettingsModalState() {
 }
 // Add loading/error/success divs to modal
 (() => {
-  const form = document.querySelector('.settings-modal-2024 form');
-  if (form && !document.getElementById('settings-loading')) {
+  const form = document.getElementById('settings-form');
+  if (!document.getElementById('settings-loading')) {
     const loading = document.createElement('div');
     loading.id = 'settings-loading';
     loading.innerHTML = '<span class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-700 inline-block"></span> <span class="ml-2 text-gray-500">Loading...</span>';
     loading.style.display = 'none';
     form.prepend(loading);
   }
-  if (form && !document.getElementById('settings-error')) {
+  if (!document.getElementById('settings-error')) {
     const error = document.createElement('div');
     error.id = 'settings-error';
     error.className = 'text-red-600 font-semibold mb-2';
     error.style.display = 'none';
     form.prepend(error);
   }
-  if (form && !document.getElementById('settings-success')) {
+  if (!document.getElementById('settings-success')) {
     const success = document.createElement('div');
     success.id = 'settings-success';
     success.className = 'text-green-600 font-semibold mb-2';
@@ -1968,8 +1967,7 @@ settingsGearBtn.onclick = async () => {
 };
 settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
 settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
-if (settingsForm) {
-  settingsForm.onsubmit = async function(e) {
+settingsForm.onsubmit = async function(e) {
   e.preventDefault();
   settingsLoading = true; settingsError = ''; settingsSuccess = '';
   renderSettingsModalState();
@@ -1999,7 +1997,6 @@ if (settingsForm) {
     renderSettingsModalState();
   }
 };
-}
 
 // Clear Cache Button Logic
 document.getElementById('clear-cache-btn').onclick = async function() {
@@ -2185,6 +2182,7 @@ document.getElementById('download-sample-excel-settings-btn').onclick = function
 };
 
 // Add at the top of the script
+let dashboardChannelFilter = null;
 function setDashboardChannelFilter(channel) {
   dashboardChannelFilter = channel;
   fetchDashboardAnalytics();

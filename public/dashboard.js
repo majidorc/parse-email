@@ -1521,6 +1521,8 @@ function fetchRatesAndPrograms() {
 }
 let allPrograms = [];
 function renderProgramsTable(programs) {
+  // Sort by SKU
+  programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
   const tbody = document.getElementById('programs-table-body');
   if (!programs.length) {
     tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';

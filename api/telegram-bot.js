@@ -149,6 +149,24 @@ module.exports = async (req, res) => {
       return res.json({ ok: true });
     }
     
+    // Check if the query matches a SKU in products_rates
+    const skuRows = (await sql.query('SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'', [query])).rows;
+    if (skuRows.length > 0) {
+      const product = skuRows[0];
+      let msg = `*${product.program}*\nSKU: \`${product.sku}\``;
+      if (product.rates && Array.isArray(product.rates)) {
+        msg += `\n*Rates:*`;
+        product.rates.forEach(rate => {
+          const adultPrice = rate.net_adult ? `฿${rate.net_adult}` : 'N/A';
+          const childPrice = rate.net_child ? `฿${rate.net_child}` : 'N/A';
+          msg += `\n• ${rate.name}: Adult ${adultPrice}, Child ${childPrice}`;
+        });
+      }
+      await sendTelegram(chat_id, msg, reply_to_message_id);
+      return res.json({ ok: true });
+    }
+    // Continue with booking search logic...
+    
     console.log('Searching for:', query);
     const results = await searchBookings(query);
     console.log('Search results:', results.length);

@@ -2645,6 +2645,7 @@ if (priceTiersModal) {
 
 // Utility: Add missing programs from bookings
 async function addProgramsFromBookings() {
+  if (localStorage.getItem('programsSyncedFromBookings')) return;
   // 1. Get all unique {sku, program} from bookingsData
   const uniquePrograms = {};
   bookingsData.forEach(b => {
@@ -2666,11 +2667,22 @@ async function addProgramsFromBookings() {
   let added = 0;
   for (const sku in uniquePrograms) {
     if (!existingSKUs.has(sku)) {
-      // Add program with just SKU and name
+      // Find a booking with this SKU to get the rate name if available
+      const booking = bookingsData.find(b => b.sku === sku);
+      let rates = [];
+      if (booking && booking.rate) {
+        rates = [{ name: booking.rate, net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }];
+      } else {
+        rates = [{ name: 'Auto', net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }];
+      }
       await fetch('/api/products-rates?type=tour', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sku, program: uniquePrograms[sku], rates: [] })
+        body: JSON.stringify({
+          sku,
+          program: uniquePrograms[sku],
+          rates
+        })
       });
       added++;
     }
@@ -2679,6 +2691,7 @@ async function addProgramsFromBookings() {
     showToast(`Added ${added} new program(s) from bookings!`, 'success');
     if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
   }
+  localStorage.setItem('programsSyncedFromBookings', '1');
 }
 
 // After bookings are loaded, add missing programs

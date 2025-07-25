@@ -529,7 +529,7 @@ class ThailandToursParser extends BaseEmailParser {
         // Combine rate with optional add-ons
         if (optionalAddons.length > 0) {
             const addonsText = optionalAddons.join(', ');
-            rate = rate ? `${rate} (Optional: ${addonsText})` : `Optional: ${addonsText}`;
+            rate = rate ? `${rate} (${addonsText})` : addonsText;
         }
         
         // Debug logging

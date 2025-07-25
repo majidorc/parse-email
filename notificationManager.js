@@ -79,7 +79,7 @@ class NotificationManager {
         const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
         // Build message lines, omitting any with 'N/A'
         const lines = [
-            'Please confirm the *pickup time* for this booking:',
+            ' Please confirm the *pickup time* for this booking:', // Added back leading space
             `Booking no : ${bookingNumber}`,
             `Tour date : ${tourDate}`,
             programLine,

@@ -485,19 +485,40 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractRate() {
+        let rate = '';
+        
         // Look for a line starting with 'Program:' and extract the next non-empty line as the rate title
         const programIdx = this.lines.findIndex(line => line.toLowerCase().startsWith('program:'));
         if (programIdx !== -1) {
             // The rate title is usually on the same line or the next line
             const after = this.lines[programIdx].replace(/^program:/i, '').trim();
-            if (after) return after;
+            if (after) rate = after;
             // Or next line
-            if (this.lines[programIdx + 1]) return this.lines[programIdx + 1].trim();
+            else if (this.lines[programIdx + 1]) rate = this.lines[programIdx + 1].trim();
         }
+        
         // Fallback: look for a line like 'Program Rock 1'
-        const rateLine = this.lines.find(line => /program\s+rock/i.test(line));
-        if (rateLine) return rateLine.trim();
-        return '';
+        if (!rate) {
+            const rateLine = this.lines.find(line => /program\s+rock/i.test(line));
+            if (rateLine) rate = rateLine.trim();
+        }
+        
+        // Look for optional add-ons like "Optional: Boat trip + Longneck"
+        const optionalAddons = [];
+        for (const line of this.lines) {
+            if (line.toLowerCase().startsWith('optional:')) {
+                const addon = line.replace(/^optional:\s*/i, '').trim();
+                if (addon) optionalAddons.push(addon);
+            }
+        }
+        
+        // Combine rate with optional add-ons
+        if (optionalAddons.length > 0) {
+            const addonsText = optionalAddons.join(', ');
+            rate = rate ? `${rate} (Optional: ${addonsText})` : `Optional: ${addonsText}`;
+        }
+        
+        return rate;
     }
 
     extractStartTime() {

@@ -506,9 +506,23 @@ class ThailandToursParser extends BaseEmailParser {
         // Look for optional add-ons like "Optional: Boat trip + Longneck"
         const optionalAddons = [];
         for (const line of this.lines) {
+            // Check for exact "Optional:" prefix
             if (line.toLowerCase().startsWith('optional:')) {
                 const addon = line.replace(/^optional:\s*/i, '').trim();
                 if (addon) optionalAddons.push(addon);
+            }
+            // Also check for lines containing "Optional" anywhere (case insensitive)
+            else if (line.toLowerCase().includes('optional') && line.toLowerCase().includes('boat')) {
+                const addon = line.trim();
+                if (addon && !optionalAddons.includes(addon)) optionalAddons.push(addon);
+            }
+        }
+        
+        // Additional search for boat-related add-ons
+        for (const line of this.lines) {
+            if (line.toLowerCase().includes('boat') && line.toLowerCase().includes('longneck')) {
+                const addon = line.trim();
+                if (addon && !optionalAddons.includes(addon)) optionalAddons.push(addon);
             }
         }
         
@@ -517,6 +531,11 @@ class ThailandToursParser extends BaseEmailParser {
             const addonsText = optionalAddons.join(', ');
             rate = rate ? `${rate} (Optional: ${addonsText})` : `Optional: ${addonsText}`;
         }
+        
+        // Debug logging
+        console.log('[RATE EXTRACTION] Lines:', this.lines.slice(0, 10)); // First 10 lines
+        console.log('[RATE EXTRACTION] Optional addons found:', optionalAddons);
+        console.log('[RATE EXTRACTION] Final rate:', rate);
         
         return rate;
     }

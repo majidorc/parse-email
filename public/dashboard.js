@@ -518,16 +518,21 @@ function generateNotificationText(b) {
       programLine = `Program : ${program} - ${startTime}`;
     }
   }
-  return `705 Please confirm the *pickup time* for this booking:\n\n` +
-    `Booking no : ${bookingNumber}\n` +
-    `Tour date : ${tourDate}\n` +
-    `${programLine}\n` +
-    `Name : ${customerName}\n` +
-    `Pax : ${paxString} (Total: ${totalPax})\n` +
-    `Hotel : ${hotel}\n` +
-    `Phone Number : ${phoneNumber}\n` +
-    `Cash on tour : None\n\n` +
-    `Please mentioned if there is any additional charge for transfer collect from customer`;
+  // Build message lines, omitting any with 'N/A'
+  const lines = [
+    `✅ Please confirm the *pickup time* for this booking:\n`,
+    `Booking no : ${bookingNumber}`,
+    `Tour date : ${tourDate}`,
+    programLine,
+    `Name : ${customerName}`,
+    `Pax : ${paxString} (Total: ${totalPax})`,
+    hotel !== 'N/A' ? `Hotel : ${hotel}` : null,
+    phoneNumber !== 'N/A' ? `Phone Number : ${phoneNumber}` : null,
+    `Cash on tour : None`,
+    '',
+    `Please mentioned if there is any additional charge for transfer collect from customer`
+  ];
+  return lines.filter(Boolean).join('\n');
 }
 
 // --- ACCOUNTING TABLE LOGIC ---

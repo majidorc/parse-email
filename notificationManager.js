@@ -75,16 +75,21 @@ class NotificationManager {
         }
         // National Park Fee logic
         const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
-        return `✅ Please confirm the *pickup time* for this booking:\n\n` +
-            `Booking no : ${bookingNumber}\n` +
-            `Tour date : ${tourDate}\n` +
-            `${programLine}\n` +
-            `Name : ${customerName}\n` +
-            `Pax : ${paxString} (Total: ${totalPax})\n` +
-            `Hotel : ${hotel}\n` +
-            `Phone Number : ${phoneNumber}\n` +
-            `Cash on tour : ${cashOnTour}\n\n` +
-            `Please mentioned if there is any additional charge for transfer collect from customer`;
+        // Build message lines, omitting any with 'N/A'
+        const lines = [
+            `✅ Please confirm the *pickup time* for this booking:\n`,
+            `Booking no : ${bookingNumber}`,
+            `Tour date : ${tourDate}`,
+            programLine,
+            `Name : ${customerName}`,
+            `Pax : ${paxString} (Total: ${totalPax})`,
+            hotel !== 'N/A' ? `Hotel : ${hotel}` : null,
+            phoneNumber !== 'N/A' ? `Phone Number : ${phoneNumber}` : null,
+            `Cash on tour : ${cashOnTour}`,
+            '',
+            `Please mentioned if there is any additional charge for transfer collect from customer`
+        ];
+        return lines.filter(Boolean).join('\n');
     }
 
     // Helper to get the label for the tour date (Today/Tomorrow/Day After Tomorrow/Other)

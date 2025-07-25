@@ -516,11 +516,13 @@ function generateNotificationText(b) {
       programLine = `Program : ${program} - ${rate}`;
     } else if (startTime) {
       programLine = `Program : ${program} - ${startTime}`;
+    } else {
+      programLine = `Program : ${program}`;
     }
   }
   // Build message lines, omitting any with 'N/A'
   const lines = [
-    `✅ Please confirm the *pickup time* for this booking:\n`,
+    `Please confirm the *pickup time* for this booking:\n`,
     `Booking no : ${bookingNumber}`,
     `Tour date : ${tourDate}`,
     programLine,
@@ -529,7 +531,7 @@ function generateNotificationText(b) {
     hotel !== 'N/A' ? `Hotel : ${hotel}` : null,
     phoneNumber !== 'N/A' ? `Phone Number : ${phoneNumber}` : null,
     `Cash on tour : None`,
-    '',
+    '', // blank line between cash and next
     `Please mentioned if there is any additional charge for transfer collect from customer`
   ];
   return lines.filter(Boolean).join('\n');

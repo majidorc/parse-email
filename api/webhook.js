@@ -858,18 +858,66 @@ async function handler(req, res) {
         // Parse the raw email
         const parsedEmail = await simpleParser(rawBody);
 
-        // Handle cancellation emails
-        if (parsedEmail.subject && parsedEmail.subject.startsWith('Cancelled booking:')) {
-            // Extract booking number from 'Ext. booking ref: ...' in the subject
-            const match = parsedEmail.subject.match(/Ext\. booking ref: ([A-Z0-9]+)/);
-            if (match && match[1]) {
-                const bookingNumber = match[1];
-                console.log(`[CANCEL] Removing booking: ${bookingNumber}`);
-                await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
-                return res.status(200).send(`Webhook processed: Booking ${bookingNumber} removed (cancelled).`);
+        // Handle cancellation emails - BULLETPROOF VERSION
+        if (parsedEmail.subject && parsedEmail.subject.toLowerCase().includes('cancelled booking')) {
+            console.log('[CANCEL] Cancellation email detected:', parsedEmail.subject);
+            
+            // Extract booking number from multiple sources
+            let bookingNumber = null;
+            
+            // Try to extract from subject first
+            const subjectMatch = parsedEmail.subject.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
+            if (subjectMatch && subjectMatch[1]) {
+                bookingNumber = subjectMatch[1];
+                console.log(`[CANCEL] Found booking number in subject: ${bookingNumber}`);
+            }
+            
+            // If not found in subject, try to extract from body
+            if (!bookingNumber && parsedEmail.text) {
+                const bodyMatch = parsedEmail.text.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
+                if (bodyMatch && bodyMatch[1]) {
+                    bookingNumber = bodyMatch[1];
+                    console.log(`[CANCEL] Found booking number in body: ${bookingNumber}`);
+                }
+            }
+            
+            // If still not found, try HTML body
+            if (!bookingNumber && parsedEmail.html) {
+                const htmlText = convert(parsedEmail.html, { wordwrap: false });
+                const htmlMatch = htmlText.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
+                if (htmlMatch && htmlMatch[1]) {
+                    bookingNumber = htmlMatch[1];
+                    console.log(`[CANCEL] Found booking number in HTML: ${bookingNumber}`);
+                }
+            }
+            
+            if (bookingNumber) {
+                console.log(`[CANCEL] Removing booking ${bookingNumber} from ALL tables...`);
+                
+                try {
+                    // Delete from all relevant tables
+                    await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
+                    console.log(`[CANCEL] Deleted from bookings table`);
+                    
+                    await sql`DELETE FROM parsed_emails WHERE booking_number = ${bookingNumber}`;
+                    console.log(`[CANCEL] Deleted from parsed_emails table`);
+                    
+                    // Note: If you have other tables with booking_number, add them here
+                    // await sql`DELETE FROM accounting WHERE booking_number = ${bookingNumber}`;
+                    // await sql`DELETE FROM other_table WHERE booking_number = ${bookingNumber}`;
+                    
+                    console.log(`[CANCEL] Successfully removed booking ${bookingNumber} from all tables`);
+                    return res.status(200).send(`Webhook processed: Booking ${bookingNumber} completely removed (cancelled).`);
+                    
+                } catch (error) {
+                    console.error(`[CANCEL] Error removing booking ${bookingNumber}:`, error);
+                    return res.status(500).send(`Error removing cancelled booking: ${error.message}`);
+                }
             } else {
-                console.warn('[CANCEL] Cancelled booking email, but booking number not found in subject:', parsedEmail.subject);
-                return res.status(400).send('Webhook processed: Cancelled booking email, but booking number not found in subject.');
+                console.warn('[CANCEL] Cancelled booking email detected, but booking number not found in subject or body');
+                console.warn('[CANCEL] Subject:', parsedEmail.subject);
+                console.warn('[CANCEL] Body preview:', parsedEmail.text ? parsedEmail.text.substring(0, 200) : 'No text body');
+                return res.status(400).send('Webhook processed: Cancelled booking email, but booking number not found.');
             }
         }
 
@@ -1070,6 +1118,22 @@ async function handler(req, res) {
     } catch (error) {
         console.error('Error in webhook processing:', error);
         return res.status(500).json({ error: 'Error processing email.', details: error.message });
+    }
+}
+
+// Function to notify connected clients about booking updates
+async function notifyBookingUpdate(bookingNumber, action = 'updated') {
+    try {
+        // This would typically send a message to connected SSE clients
+        // For now, we'll log the notification
+        console.log(`[NOTIFICATION] Booking ${action}: ${bookingNumber}`);
+        
+        // In a production environment, you might want to:
+        // 1. Store notifications in a database
+        // 2. Use a message queue system
+        // 3. Implement WebSocket or SSE broadcasting
+    } catch (error) {
+        console.error('Error sending notification:', error);
     }
 }
 

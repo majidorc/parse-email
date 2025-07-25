@@ -36,8 +36,48 @@ let bookingsSummaryData = null;
 let bookingsSummaryDataUnfiltered = null;
 let bookingsSummaryLoading = false;
 let currentBangkokDate = null;
+let autoRefreshInterval = null;
+let lastRefreshTime = Date.now();
+let eventSource = null;
 
-async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false) {
+// SSE connection for real-time updates
+function connectSSE() {
+  if (eventSource) {
+    eventSource.close();
+  }
+  
+  eventSource = new EventSource('/api/notifications');
+  
+  eventSource.onopen = function(event) {
+    console.log('SSE connection established');
+  };
+  
+  eventSource.onmessage = function(event) {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'booking_update') {
+        // Trigger refresh when new booking is detected
+        console.log('New booking detected, refreshing data...');
+        lastRefreshTime = Date.now();
+        fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+        showRefreshIndicator();
+        if (data.bookingNumber) {
+          showNewBookingToast(data.bookingNumber);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing SSE message:', error);
+    }
+  };
+  
+  eventSource.onerror = function(event) {
+    console.error('SSE connection error:', event);
+    // Reconnect after 5 seconds
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
   const tbody = document.getElementById('bookings-body');
   const summaryDiv = document.getElementById('table-summary');
   // Always fetch unfiltered summary stats once (for default display)
@@ -101,6 +141,7 @@ async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, sea
       dir
     });
     if (search) params.append('search', search);
+    if (cacheBuster) params.append('_ts', cacheBuster);
     const res = await fetch(`/api/bookings?${params.toString()}`);
     const data = await res.json();
     if (!data.bookings || !data.bookings.length) {
@@ -120,6 +161,86 @@ async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, sea
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load bookings.</td></tr>';
     document.getElementById('pagination-controls').innerHTML = '';
+  }
+}
+
+// Auto-refresh functionality
+function startAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+  // Refresh every 30 seconds
+  autoRefreshInterval = setInterval(() => {
+    if (!document.hidden) { // Only refresh if tab is visible
+      lastRefreshTime = Date.now();
+      fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+      showRefreshIndicator();
+    }
+  }, 30000); // 30 seconds
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+}
+
+function showRefreshIndicator() {
+  const indicator = document.getElementById('refresh-indicator');
+  if (indicator) {
+    indicator.style.display = 'inline';
+    setTimeout(() => {
+      indicator.style.display = 'none';
+    }, 2000);
+  }
+}
+
+function showNewBookingToast(bookingNumber) {
+  const toast = document.createElement('div');
+  toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+  toast.innerHTML = `
+    <div class="flex items-center gap-3">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      <span>New booking received: ${bookingNumber}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => {
+    toast.classList.remove('translate-x-full');
+  }, 100);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    toast.classList.add('translate-x-full');
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.parentElement.removeChild(toast);
+      }
+    }, 300);
+  }, 5000);
+}
+
+function updateLastRefreshTime() {
+  const lastRefreshElement = document.getElementById('last-refresh-time');
+  if (lastRefreshElement) {
+    const timeAgo = Math.floor((Date.now() - lastRefreshTime) / 1000);
+    if (timeAgo < 60) {
+      lastRefreshElement.textContent = `${timeAgo}s ago`;
+    } else {
+      const minutes = Math.floor(timeAgo / 60);
+      lastRefreshElement.textContent = `${minutes}m ago`;
+    }
   }
 }
 
@@ -264,8 +385,12 @@ function renderTable() {
       ${statCard('Tomorrow', summary.tomorrowCount, summary.tomorrowOpNotSent, summary.tomorrowCustomerNotSent, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'tomorrow-card')}
       ${statCard('Day After Tomorrow', summary.dayAfterTomorrowCount || 0, summary.dayAfterTomorrowOpNotSent || 0, summary.dayAfterTomorrowCustomerNotSent || 0, 'text-teal-700', 'bg-teal-50', 'border-teal-100', 'text-teal-800', 'dayaftertomorrow-card')}
     </div>
-    <div class="flex justify-end mt-4">
+    <div class="flex justify-between items-center mt-4">
       <span class="text-xs text-gray-500">Showing <span class="font-semibold text-gray-800">${bookingsData.length}</span> of <span class="font-semibold text-gray-800">${totalRows}</span> results <span class="text-xs text-gray-400 ml-1">(Page ${currentPage})</span></span>
+      <div class="flex items-center gap-2">
+        <span id="refresh-indicator" class="text-xs text-green-600 font-medium" style="display: none;">🔄 Refreshing...</span>
+        <span class="text-xs text-gray-500">Last updated: <span id="last-refresh-time" class="font-medium">just now</span></span>
+      </div>
     </div>
   `;
   renderPagination();
@@ -379,6 +504,8 @@ window.handleToggle = async function(column, bookingId, btn) {
   btn.className = newValue ? 'icon-btn icon-true' : 'icon-btn icon-false';
   btn.title = newValue ? 'Yes' : 'No';
     }
+    // Refresh data to ensure consistency
+    fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
   } catch (err) {
     alert('Failed to update: ' + (err.message || 'Unknown error'));
   } finally {
@@ -1907,6 +2034,35 @@ document.getElementById('delete-program-btn').addEventListener('click', function
   });
 });
 
+// Initialize auto-refresh when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  startAutoRefresh();
+  // Update last refresh time every second
+  setInterval(updateLastRefreshTime, 1000);
+  
+  // Start SSE connection for real-time updates
+  connectSSE();
+  
+  // Manual refresh button
+  const manualRefreshBtn = document.getElementById('manual-refresh-btn');
+  if (manualRefreshBtn) {
+    manualRefreshBtn.addEventListener('click', function() {
+      lastRefreshTime = Date.now();
+      fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+      showRefreshIndicator();
+    });
+  }
+});
+
+// Stop auto-refresh when tab becomes hidden, restart when visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    stopAutoRefresh();
+  } else {
+    startAutoRefresh();
+  }
+});
+
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
@@ -1922,7 +2078,7 @@ window.handleDelete = async function(bookingNumber, btn) {
     const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
-    fetchBookings(currentPage, currentSort, currentDir, searchTerm);
+    fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
   } catch (err) {
     alert('Failed to delete: ' + (err.message || 'Unknown error'));
   } finally {

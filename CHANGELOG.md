@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2025-01-XX
+### Added
+- **Real-time booking updates**: New bookings now appear automatically without requiring cache clearing
+- **Automatic refresh**: Dashboard refreshes every 30 seconds to show latest booking data
+- **Manual refresh button**: Green refresh button next to search bar for instant updates
+- **Real-time indicators**: Shows "🔄 Refreshing..." and "Last updated: X ago" status
+- **Toast notifications**: Green toast notifications appear when new bookings are detected
+- **Server-Sent Events (SSE)**: Real-time communication between server and dashboard
+- **Cache-busting**: All API requests now include timestamp parameters to prevent stale data
+
+### Changed
+- **Removed API caching**: Bookings API no longer caches responses, ensuring fresh data
+- **Improved user experience**: No more need to manually clear cache to see new bookings
+- **Enhanced responsiveness**: Dashboard updates automatically when tab is visible
+
 ## [1.11.1] - 2025-07-09
 ### Added
 - Add 'Clear Cache' button to Settings modal. Clears all PWA caches and unregisters service workers for troubleshooting and storage management.

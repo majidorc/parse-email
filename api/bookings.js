@@ -281,7 +281,9 @@ module.exports = async (req, res) => {
     const { rows: bookings } = await sql.query(dataQuery, dataParams);
 
     // Edge cache for 60s
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.status(200).json({
       bookings,
       total,

@@ -1015,7 +1015,9 @@ async function handler(req, res) {
                 raw_tour_date: extractedInfo.tourDate,
                 paid,
                 book_date: extractedInfo.book_date,
-                channel
+                channel,
+                rate: extractedInfo.rate,
+                start_time: extractedInfo.start_time
               });
             }
             return res.status(200).send('Webhook processed: Booking upserted.');

@@ -18,19 +18,19 @@ async function getTelegramChatId() {
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
   try {
-    const token = await getTelegramBotToken();
+  const token = await getTelegramBotToken();
     if (!token) {
       console.error('No Telegram bot token found');
       return;
     }
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    const chatId = chat_id || await getTelegramChatId();
-    const payload = {
-      chat_id: chatId,
-      text,
-      parse_mode: 'Markdown'
-    };
-    if (reply_to_message_id) payload.reply_to_message_id = reply_to_message_id;
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const chatId = chat_id || await getTelegramChatId();
+  const payload = {
+    chat_id: chatId,
+    text,
+    parse_mode: 'Markdown'
+  };
+  if (reply_to_message_id) payload.reply_to_message_id = reply_to_message_id;
     console.log('Sending Telegram message:', { chat_id: chatId, text: text.substring(0, 50) + '...' });
     const response = await axios.post(url, payload);
     console.log('Telegram response:', response.status);
@@ -197,4 +197,4 @@ module.exports = async (req, res) => {
     }
     return res.status(500).json({ ok: false, error: 'Internal Server Error' });
   }
-};
+}; 

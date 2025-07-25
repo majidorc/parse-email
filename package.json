@@ -9,6 +9,7 @@
     "build": "echo 'No build step required'"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.5.0",
     "@vercel/postgres": "^0.9.0",
     "axios": "^1.10.0",
     "cheerio": "1.0.0-rc.10",

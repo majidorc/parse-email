@@ -505,10 +505,23 @@ function generateNotificationText(b) {
   const customerName = b.customer_name;
   const hotel = b.hotel;
   const phoneNumber = b.phone_number || '';
-  return `✅ Please confirm the *pickup time* for this booking:\n\n` +
+  // Compose program line for info@tours.co.th
+  let programLine = `Program : ${program}`;
+  if (b.channel && b.channel.includes('tours.co.th')) {
+    const rate = b.rate || '';
+    const startTime = b.start_time || '';
+    if (rate && startTime) {
+      programLine = `Program : ${program} - ${rate} - ${startTime}`;
+    } else if (rate) {
+      programLine = `Program : ${program} - ${rate}`;
+    } else if (startTime) {
+      programLine = `Program : ${program} - ${startTime}`;
+    }
+  }
+  return `705 Please confirm the *pickup time* for this booking:\n\n` +
     `Booking no : ${bookingNumber}\n` +
     `Tour date : ${tourDate}\n` +
-    `Program : ${program}\n` +
+    `${programLine}\n` +
     `Name : ${customerName}\n` +
     `Pax : ${paxString} (Total: ${totalPax})\n` +
     `Hotel : ${hotel}\n` +
@@ -2746,25 +2759,9 @@ function addCheckMissingProgramsButton() {
   btn.textContent = 'Check Missing Programs from Bookings';
   btn.style = 'margin-bottom:16px; background:#f59e42; color:white; font-weight:bold; padding:8px 18px; border:none; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer;';
   btn.onclick = async function() {
-    // 1. Get all unique SKUs from bookings
-    let bookingSKUs = new Set();
-    bookingsData.forEach(b => { if (b.sku) bookingSKUs.add(b.sku); });
-    // 2. Get all SKUs from programs
-    let programSKUs = new Set();
-    try {
-      const res = await fetch('/api/products-rates?type=tour');
-      if (res.ok) {
-        const data = await res.json();
-        (data.tours || []).forEach(p => { if (p.sku) programSKUs.add(p.sku); });
-      }
-    } catch (e) {}
-    // 3. Compare
-    const missing = Array.from(bookingSKUs).filter(sku => !programSKUs.has(sku));
-    if (missing.length) {
-      alert('Missing SKUs in Programs:\n' + missing.join('\n'));
-    } else {
-      alert('All programs from bookings are present!');
-    }
+    // Allow re-sync by clearing the flag
+    localStorage.removeItem('programsSyncedFromBookings');
+    await addProgramsFromBookings();
   };
   programsSection.insertBefore(btn, programsSection.firstChild);
 }

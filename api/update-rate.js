@@ -7,6 +7,49 @@ module.exports = async (req, res) => {
   const userRole = session.role;
   if (!["admin", "accounting", "reservation"].includes(userRole)) return res.status(403).json({ error: 'Forbidden: Admin, Accounting, or Reservation only' });
 
+  if (req.method === 'GET') {
+    // Debug mode - show booking and email info
+    const { booking_number } = req.query;
+    if (!booking_number) {
+      return res.status(400).json({ error: 'Missing booking_number parameter' });
+    }
+
+    try {
+      // Get booking info
+      const { rows: bookingRows } = await sql`SELECT * FROM bookings WHERE booking_number = ${booking_number}`;
+      if (!bookingRows.length) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Get email info
+      const { rows: emailRows } = await sql`
+        SELECT sender, subject, parsed_at 
+        FROM parsed_emails 
+        WHERE booking_number = ${booking_number}
+        ORDER BY parsed_at DESC
+        LIMIT 1
+      `;
+
+      return res.status(200).json({
+        booking: {
+          booking_number: bookingRows[0].booking_number,
+          rate: bookingRows[0].rate,
+          program: bookingRows[0].program,
+          sku: bookingRows[0].sku,
+          customer_name: bookingRows[0].customer_name
+        },
+        email: emailRows.length > 0 ? {
+          sender: emailRows[0].sender,
+          subject: emailRows[0].subject,
+          parsed_at: emailRows[0].parsed_at
+        } : null
+      });
+    } catch (err) {
+      console.error('Debug error:', err);
+      return res.status(500).json({ error: 'Failed to get debug info', details: err.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

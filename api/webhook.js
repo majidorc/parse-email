@@ -484,6 +484,31 @@ class ThailandToursParser extends BaseEmailParser {
       return null;
     }
 
+    extractRate() {
+        // Look for a line starting with 'Program:' and extract the next non-empty line as the rate title
+        const programIdx = this.lines.findIndex(line => line.toLowerCase().startsWith('program:'));
+        if (programIdx !== -1) {
+            // The rate title is usually on the same line or the next line
+            const after = this.lines[programIdx].replace(/^program:/i, '').trim();
+            if (after) return after;
+            // Or next line
+            if (this.lines[programIdx + 1]) return this.lines[programIdx + 1].trim();
+        }
+        // Fallback: look for a line like 'Program Rock 1'
+        const rateLine = this.lines.find(line => /program\s+rock/i.test(line));
+        if (rateLine) return rateLine.trim();
+        return '';
+    }
+
+    extractStartTime() {
+        // Look for a line starting with 'Start time:'
+        const timeLine = this.lines.find(line => line.toLowerCase().startsWith('start time:'));
+        if (timeLine) {
+            return timeLine.replace(/^start time:/i, '').trim();
+        }
+        return '';
+    }
+
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
@@ -500,7 +525,9 @@ class ThailandToursParser extends BaseEmailParser {
             phoneNumber: this.extractPhone(),
             isoDate: this._getISODate(tourDate),
             paid: this.extractPaid(),
-            book_date: this.extractBookDate()
+            book_date: this.extractBookDate(),
+            rate: this.extractRate(),
+            start_time: this.extractStartTime()
         };
     }
 

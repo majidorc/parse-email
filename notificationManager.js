@@ -60,12 +60,25 @@ class NotificationManager {
         const customerName = booking.customer_name;
         const hotel = booking.hotel;
         const phoneNumber = booking.phone_number || '';
+        // Compose program line for info@tours.co.th
+        let programLine = `Program : ${program}`;
+        if (booking.channel && booking.channel.includes('tours.co.th')) {
+            const rate = booking.rate || '';
+            const startTime = booking.start_time || '';
+            if (rate && startTime) {
+                programLine = `Program : ${program} - ${rate} - ${startTime}`;
+            } else if (rate) {
+                programLine = `Program : ${program} - ${rate}`;
+            } else if (startTime) {
+                programLine = `Program : ${program} - ${startTime}`;
+            }
+        }
         // National Park Fee logic
         const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
         return `✅ Please confirm the *pickup time* for this booking:\n\n` +
             `Booking no : ${bookingNumber}\n` +
             `Tour date : ${tourDate}\n` +
-            `Program : ${program}\n` +
+            `${programLine}\n` +
             `Name : ${customerName}\n` +
             `Pax : ${paxString} (Total: ${totalPax})\n` +
             `Hotel : ${hotel}\n` +

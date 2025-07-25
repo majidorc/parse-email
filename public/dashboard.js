@@ -583,47 +583,37 @@ function generateNotificationText(b) {
   const adult = parseInt(b.adult, 10) || 0;
   const child = parseInt(b.child, 10) || 0;
   const infant = parseInt(b.infant, 10) || 0;
-  const parts = [];
-  parts.push(`${adult} Adult${adult === 1 ? '' : 's'}`);
-  if (child > 0) parts.push(`${child} Child${child === 1 ? '' : 'ren'}`);
-  if (infant > 0) parts.push(`${infant} Infant${infant === 1 ? '' : 's'}`);
-  const paxString = parts.join(', ');
   const totalPax = adult + child + infant;
   const bookingNumber = b.booking_number;
   const program = b.program;
   const customerName = b.customer_name;
   const hotel = b.hotel;
   const phoneNumber = b.phone_number || '';
-  // Compose program line for info@tours.co.th
+  
+  // Compose program line with rate title for tours.co.th
   let programLine = `Program : ${program}`;
   if (b.channel && b.channel.includes('tours.co.th')) {
     const rate = b.rate || '';
-    const startTime = b.start_time || '';
-    if (rate && startTime) {
-      programLine = `Program : ${program} - ${rate} - ${startTime}`;
-    } else if (rate) {
-      programLine = `Program : ${program} - ${rate}`;
-    } else if (startTime) {
-      programLine = `Program : ${program} - ${startTime}`;
-    } else {
-      programLine = `Program : ${program}`;
+    if (rate) {
+      programLine = `Program : ${program} + {rate title}`;
     }
   }
-  // Build message lines, omitting any with 'N/A'
+  
+  // Build message lines exactly as requested
   const lines = [
-    ' Please confirm the *pickup time* for this booking:', // Added back leading space
+    'Please confirm the *pickup time* for this booking:',
     `Booking no : ${bookingNumber}`,
     `Tour date : ${tourDate}`,
     programLine,
     `Name : ${customerName}`,
-    `Pax : ${paxString} (Total: ${totalPax})`,
-    hotel !== 'N/A' ? `Hotel : ${hotel}` : null,
-    phoneNumber !== 'N/A' ? `Phone Number : ${phoneNumber}` : null,
-    `Cash on tour : None`,
-    '', // blank line between cash and next
-    `Please mentioned if there is any additional charge for transfer collect from customer`
+    `Pax : ${adult} Adults (Total: ${totalPax})`,
+    `Hotel : ${hotel}`,
+    `Phone Number : ${phoneNumber}`,
+    'Cash on tour : None',
+    '',
+    'Please mentioned if there is any additional charge for transfer collect from customer'
   ];
-  return lines.filter(Boolean).join('\n');
+  return lines.join('\n');
 }
 
 // --- ACCOUNTING TABLE LOGIC ---

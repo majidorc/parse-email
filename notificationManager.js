@@ -44,48 +44,42 @@ class NotificationManager {
     }
 
     constructNotificationMessage(booking) {
-        // Matches frontend format
+        // Format tour date as "6 May 26"
         const tourDate = booking.tour_date ? new Date(booking.tour_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A';
         const adult = parseInt(booking.adult, 10) || 0;
         const child = parseInt(booking.child, 10) || 0;
         const infant = parseInt(booking.infant, 10) || 0;
-        const parts = [];
-        parts.push(`${adult} Adult${adult === 1 ? '' : 's'}`);
-        if (child > 0) parts.push(`${child} Child${child === 1 ? '' : 'ren'}`);
-        if (infant > 0) parts.push(`${infant} Infant${infant === 1 ? '' : 's'}`);
-        const paxString = parts.join(', ');
         const totalPax = adult + child + infant;
         const bookingNumber = booking.booking_number;
         const program = booking.program;
         const customerName = booking.customer_name;
         const hotel = booking.hotel;
         const phoneNumber = booking.phone_number || '';
-        // Compose program line for info@tours.co.th
+        
+        // Compose program line with rate title for tours.co.th
         let programLine = `Program : ${program}`;
         if (booking.channel && booking.channel.includes('tours.co.th')) {
             const rate = booking.rate || '';
-            const startTime = booking.start_time || '';
-            // Build array of present fields
-            const fields = [program, rate, startTime].filter(Boolean);
-            programLine = `Program : ${fields.join(' + ')}`;
+            if (rate) {
+                programLine = `Program : ${program} + {rate title}`;
+            }
         }
-        // National Park Fee logic
-        const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';
-        // Build message lines, omitting any with 'N/A'
+        
+        // Build message lines exactly as requested
         const lines = [
-            ' Please confirm the *pickup time* for this booking:', // Added back leading space
+            'Please confirm the *pickup time* for this booking:',
             `Booking no : ${bookingNumber}`,
             `Tour date : ${tourDate}`,
             programLine,
             `Name : ${customerName}`,
-            `Pax : ${paxString} (Total: ${totalPax})`,
-            hotel !== 'N/A' ? `Hotel : ${hotel}` : null,
-            phoneNumber !== 'N/A' ? `Phone Number : ${phoneNumber}` : null,
-            `Cash on tour : ${cashOnTour}`,
-            '', // blank line between cash and next
-            `Please mentioned if there is any additional charge for transfer collect from customer`
+            `Pax : ${adult} Adults (Total: ${totalPax})`,
+            `Hotel : ${hotel}`,
+            `Phone Number : ${phoneNumber}`,
+            'Cash on tour : None',
+            '',
+            'Please mentioned if there is any additional charge for transfer collect from customer'
         ];
-        return lines.filter(Boolean).join('\n');
+        return lines.join('\n');
     }
 
     // Helper to get the label for the tour date (Today/Tomorrow/Day After Tomorrow/Other)

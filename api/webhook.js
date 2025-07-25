@@ -158,13 +158,8 @@ class BaseEmailParser {
     const adult = parseInt(extractedInfo.adult, 10) || 0;
     const child = parseInt(extractedInfo.child, 10) || 0;
     const infant = parseInt(extractedInfo.infant, 10) || 0;
-    const parts = [];
-    if (adult > 0) parts.push(`${adult} ${adult > 1 ? 'Adults' : 'Adult'}`);
-    if (child > 0) parts.push(`${child} ${child > 1 ? 'Children' : 'Child'}`);
-    if (infant > 0) parts.push(`${infant} ${infant > 1 ? 'Infants' : 'Infant'}`);
-    let paxString = parts.join(' , ');
-    if (!paxString) paxString = "0 Adults";
-    const responseTemplate = `Please confirm the *pickup time* for this booking:\n\nBooking no : ${extractedInfo.bookingNumber}\nTour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\nName : ${extractedInfo.name}\nPax : ${paxString}\nHotel : ${extractedInfo.hotel}\nPhone Number : ${extractedInfo.phoneNumber}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`;
+    const totalPax = adult + child + infant;
+    const responseTemplate = `Please confirm the *pickup time* for this booking:\n\nBooking no : ${extractedInfo.bookingNumber}\nTour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\nName : ${extractedInfo.name}\nPax : ${adult} Adults (Total: ${totalPax})\nHotel : ${extractedInfo.hotel}\nPhone Number : ${extractedInfo.phoneNumber}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`;
     return { responseTemplate, extractedInfo };
   }
 

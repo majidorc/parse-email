@@ -202,9 +202,10 @@ class NotificationManager {
         const riText = `RI${booking.ri ? ' ✓' : ' X'}`;
         const customerText = `Customer${booking.customer ? ' ✓' : ' X'}`;
         const parkFeeText = `Cash on tour : National Park Fee ${booking.national_park_fee ? '✅' : '❌'}`;
+        const monoMessage = '```' + message + '```';
         await axios.post(url, {
             chat_id: chatId,
-            text: message,
+            text: monoMessage,
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [

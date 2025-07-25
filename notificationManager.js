@@ -65,15 +65,9 @@ class NotificationManager {
         if (booking.channel && booking.channel.includes('tours.co.th')) {
             const rate = booking.rate || '';
             const startTime = booking.start_time || '';
-            if (rate && startTime) {
-                programLine = `Program : ${program} - ${rate} - ${startTime}`;
-            } else if (rate) {
-                programLine = `Program : ${program} - ${rate}`;
-            } else if (startTime) {
-                programLine = `Program : ${program} - ${startTime}`;
-            } else {
-                programLine = `Program : ${program}`;
-            }
+            // Build array of present fields
+            const fields = [program, rate, startTime].filter(Boolean);
+            programLine = `Program : ${fields.join(' + ')}`;
         }
         // National Park Fee logic
         const cashOnTour = booking.national_park_fee ? 'National Park Fee' : 'None';

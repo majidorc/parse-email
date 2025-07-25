@@ -290,4 +290,6 @@ module.exports = async (req, res) => {
     console.error('Dashboard/Settings API error:', err);
     res.status(500).json({ error: 'Failed to fetch dashboard analytics', details: err.message });
   }
-}; 
+};
+
+ 

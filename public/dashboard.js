@@ -38,44 +38,6 @@ let bookingsSummaryLoading = false;
 let currentBangkokDate = null;
 let autoRefreshInterval = null;
 let lastRefreshTime = Date.now();
-let eventSource = null;
-
-// SSE connection for real-time updates
-function connectSSE() {
-  if (eventSource) {
-    eventSource.close();
-  }
-  
-  eventSource = new EventSource('/api/notifications');
-  
-  eventSource.onopen = function(event) {
-    console.log('SSE connection established');
-  };
-  
-  eventSource.onmessage = function(event) {
-    try {
-      const data = JSON.parse(event.data);
-      if (data.type === 'booking_update') {
-        // Trigger refresh when new booking is detected
-        console.log('New booking detected, refreshing data...');
-        lastRefreshTime = Date.now();
-        fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
-        showRefreshIndicator();
-        if (data.bookingNumber) {
-          showNewBookingToast(data.bookingNumber);
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing SSE message:', error);
-    }
-  };
-  
-  eventSource.onerror = function(event) {
-    console.error('SSE connection error:', event);
-    // Reconnect after 5 seconds
-    setTimeout(connectSSE, 5000);
-  };
-}
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
   const tbody = document.getElementById('bookings-body');
@@ -2040,8 +2002,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update last refresh time every second
   setInterval(updateLastRefreshTime, 1000);
   
-  // Start SSE connection for real-time updates
-  connectSSE();
+
   
   // Manual refresh button
   const manualRefreshBtn = document.getElementById('manual-refresh-btn');

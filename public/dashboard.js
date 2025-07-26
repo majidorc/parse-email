@@ -685,6 +685,11 @@ function generateNotificationText(b) {
     `📞 Phone Number : ${phoneNumber}`,
     `💵 Cash on tour : ${cashOnTourText}`
   ];
+  
+  // If no_transfer is true, change the header text
+  if (b.no_transfer) {
+    lines[0] = '🆕 Please confirm for this booking (No Transfer):';
+  }
   return lines.join('\n');
 }
 

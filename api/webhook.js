@@ -167,7 +167,7 @@ async function handleTelegramCallback(callbackQuery, res) {
                     { text: parkFeeText, callback_data: `toggle:parkfee:${bookingId}` }
                 ],
                 [
-                    { text: `No Transfer${updatedBooking.no_transfer ? ' ✓' : ' X'}`, callback_data: `toggle:transfer:${bookingId}` }
+                    { text: `${updatedBooking.no_transfer ? 'Transfer' : 'No Transfer'}`, callback_data: `toggle:transfer:${bookingId}` }
                 ]
             ]
         };

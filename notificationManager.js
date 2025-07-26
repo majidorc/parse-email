@@ -88,6 +88,11 @@ class NotificationManager {
             `📞 Phone Number : ${phoneNumber}`,
             `💵 Cash on tour : ${cashOnTourText}`
         ];
+        
+        // If no_transfer is true, change the header text
+        if (booking.no_transfer) {
+            lines[0] = '🆕 Please confirm for this booking (No Transfer):';
+        }
         return lines.join('\n');
     }
 
@@ -221,7 +226,7 @@ class NotificationManager {
                         { text: `Cash on tour : ${cashOnTourButtonText} ${booking.national_park_fee ? '✅' : '❌'}`, callback_data: `toggle:parkfee:${booking.booking_number}` }
                     ],
                     [
-                        { text: 'No Transfer', callback_data: `toggle:transfer:${booking.booking_number}` }
+                        { text: `${booking.no_transfer ? 'Transfer' : 'No Transfer'}`, callback_data: `toggle:transfer:${booking.booking_number}` }
                     ]
                 ]
             }

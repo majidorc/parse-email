@@ -181,19 +181,16 @@ class NotificationManager {
         const message = this.constructNotificationMessage(booking);
         const chatId = chat_id || await this.getTelegramChatId();
         
-        // Send tour date label separately (not in monospace)
+        // Format tour date label
         const tourDateLabel = this.getTourDateLabel(booking.tour_date);
-        await axios.post(url, {
-            chat_id: chatId,
-            text: tourDateLabel
-        });
         
-        // Send booking details in monospace
-        const monoMessage = '```' + message + '```';
+        // Create one message with HTML formatting
+        const formattedMessage = `<b>${tourDateLabel}</b>\n<code>${message}</code>`;
+        
         await axios.post(url, {
             chat_id: chatId,
-            text: monoMessage,
-            parse_mode: 'Markdown',
+            text: formattedMessage,
+            parse_mode: 'HTML',
             reply_markup: {
                 inline_keyboard: [
                     [

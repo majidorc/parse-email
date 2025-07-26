@@ -2105,11 +2105,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
-const bokunAccessKeyInput = document.getElementById('bokun-access-key');
-const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
-const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');
-const wooConsumerSecretInput = document.getElementById('woocommerce-consumer-secret');
-const useBokunApiInput = document.getElementById('use-bokun-api');
 const telegramBotTokenInput = document.getElementById('telegram-bot-token');
 const telegramChatIdInput = document.getElementById('telegram-chat-id');
 const notificationEmailToInput = document.getElementById('notification-email-to');
@@ -2167,11 +2162,6 @@ settingsGearBtn.onclick = async () => {
     const res = await fetch('/api/dashboard-settings?type=settings');
     if (!res.ok) throw new Error('Failed to load settings');
     const data = await res.json();
-    bokunAccessKeyInput.value = data.bokun_access_key || '';
-    bokunSecretKeyInput.value = data.bokun_secret_key || '';
-    wooConsumerKeyInput.value = data.woocommerce_consumer_key || '';
-    wooConsumerSecretInput.value = data.woocommerce_consumer_secret || '';
-    useBokunApiInput.checked = !!data.use_bokun_api;
     telegramBotTokenInput.value = data.telegram_bot_token || '';
     telegramChatIdInput.value = data.telegram_chat_id || '';
     notificationEmailToInput.value = data.notification_email_to || '';
@@ -2201,11 +2191,6 @@ settingsForm.onsubmit = async function(e) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bokun_access_key: bokunAccessKeyInput.value,
-        bokun_secret_key: bokunSecretKeyInput.value,
-        woocommerce_consumer_key: wooConsumerKeyInput.value,
-        woocommerce_consumer_secret: wooConsumerSecretInput.value,
-        use_bokun_api: useBokunApiInput.checked,
         telegram_bot_token: telegramBotTokenInput.value,
         telegram_chat_id: telegramChatIdInput.value,
         notification_email_to: notificationEmailToInput.value,

@@ -70,11 +70,6 @@ module.exports = async (req, res) => {
       const { rows } = await sql`SELECT * FROM settings ORDER BY updated_at DESC LIMIT 1;`;
       if (rows.length === 0) {
         return res.status(200).json({
-          bokun_access_key: '',
-          bokun_secret_key: '',
-          woocommerce_consumer_key: '',
-          woocommerce_consumer_secret: '',
-          use_bokun_api: false,
           telegram_bot_token: '',
           telegram_chat_id: '',
           notification_email_to: '',
@@ -83,11 +78,6 @@ module.exports = async (req, res) => {
       }
       const s = rows[0];
       return res.status(200).json({
-        bokun_access_key: s.bokun_access_key || '',
-        bokun_secret_key: s.bokun_secret_key || '',
-        woocommerce_consumer_key: s.woocommerce_consumer_key || '',
-        woocommerce_consumer_secret: s.woocommerce_consumer_secret || '',
-        use_bokun_api: !!s.use_bokun_api,
         telegram_bot_token: s.telegram_bot_token || '',
         telegram_chat_id: s.telegram_chat_id || '',
         notification_email_to: s.notification_email_to || '',
@@ -96,16 +86,11 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
-      const { bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id, notification_email_to, google_analytics_id } = req.body || {};
+      const { telegram_bot_token, telegram_chat_id, notification_email_to, google_analytics_id } = req.body || {};
       await sql`
-        INSERT INTO settings (id, bokun_access_key, bokun_secret_key, woocommerce_consumer_key, woocommerce_consumer_secret, use_bokun_api, telegram_bot_token, telegram_chat_id, notification_email_to, google_analytics_id, updated_at)
-        VALUES (1, ${bokun_access_key || ''}, ${bokun_secret_key || ''}, ${woocommerce_consumer_key || ''}, ${woocommerce_consumer_secret || ''}, ${!!use_bokun_api}, ${telegram_bot_token || ''}, ${telegram_chat_id || ''}, ${notification_email_to || ''}, ${google_analytics_id || ''}, NOW())
+        INSERT INTO settings (id, telegram_bot_token, telegram_chat_id, notification_email_to, google_analytics_id, updated_at)
+        VALUES (1, ${telegram_bot_token || ''}, ${telegram_chat_id || ''}, ${notification_email_to || ''}, ${google_analytics_id || ''}, NOW())
         ON CONFLICT (id) DO UPDATE SET
-          bokun_access_key = EXCLUDED.bokun_access_key,
-          bokun_secret_key = EXCLUDED.bokun_secret_key,
-          woocommerce_consumer_key = EXCLUDED.woocommerce_consumer_key,
-          woocommerce_consumer_secret = EXCLUDED.woocommerce_consumer_secret,
-          use_bokun_api = EXCLUDED.use_bokun_api,
           telegram_bot_token = EXCLUDED.telegram_bot_token,
           telegram_chat_id = EXCLUDED.telegram_chat_id,
           notification_email_to = EXCLUDED.notification_email_to,

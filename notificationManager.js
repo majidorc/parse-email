@@ -181,16 +181,15 @@ class NotificationManager {
         const message = this.constructNotificationMessage(booking);
         const chatId = chat_id || await this.getTelegramChatId();
         
-        // Combine tour date and booking details into one message
+        // Send tour date label separately (not in monospace)
         const tourDateLabel = this.getTourDateLabel(booking.tour_date);
-        const combinedMessage = `${tourDateLabel}\n\n${message}`;
+        await axios.post(url, {
+            chat_id: chatId,
+            text: tourDateLabel
+        });
         
-        // Inline keyboard: first row OP | RI | Customer, second row National Park Fee
-        const opText = `OP${booking.op ? ' ✓' : ' X'}`;
-        const riText = `RI${booking.ri ? ' ✓' : ' X'}`;
-        const customerText = `Customer${booking.customer ? ' ✓' : ' X'}`;
-        const parkFeeText = `Cash on tour : None ${booking.national_park_fee ? '✅' : '❌'}`;
-        const monoMessage = '```' + combinedMessage + '```';
+        // Send booking details in monospace
+        const monoMessage = '```' + message + '```';
         await axios.post(url, {
             chat_id: chatId,
             text: monoMessage,
@@ -198,12 +197,12 @@ class NotificationManager {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: opText, callback_data: `toggle:op:${booking.booking_number}` },
-                        { text: riText, callback_data: `toggle:ri:${booking.booking_number}` },
-                        { text: customerText, callback_data: `toggle:customer:${booking.booking_number}` }
+                        { text: `OP${booking.op ? ' ✓' : ' X'}`, callback_data: `toggle:op:${booking.booking_number}` },
+                        { text: `RI${booking.ri ? ' ✓' : ' X'}`, callback_data: `toggle:ri:${booking.booking_number}` },
+                        { text: `Customer${booking.customer ? ' ✓' : ' X'}`, callback_data: `toggle:customer:${booking.booking_number}` }
                     ],
                     [
-                        { text: parkFeeText, callback_data: `toggle:parkfee:${booking.booking_number}` }
+                        { text: `Cash on tour : None ${booking.national_park_fee ? '✅' : '❌'}`, callback_data: `toggle:parkfee:${booking.booking_number}` }
                     ]
                 ]
             }

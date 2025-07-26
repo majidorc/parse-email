@@ -75,23 +75,37 @@ class NotificationManager {
         // Handle case where national_park_fee column doesn't exist
         const cashOnTourText = booking.national_park_fee !== undefined && booking.national_park_fee ? 'National Park Fee' : 'None';
         
-        // Build message lines exactly as requested - dynamic cash on tour text
-        const lines = [
-            '🆕 Please confirm for this booking:',
-            '',
-            `📋 Booking no : ${bookingNumber}`,
-            `📅 Tour date : ${tourDate}`,
-            programLine,
-            `👤 Name : ${customerName}`,
-            `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
-            `🏨 Hotel : ${cleanHotel}`,
-            `📞 Phone Number : ${phoneNumber}`,
-            `💵 Cash on tour : ${cashOnTourText}`
-        ];
+        // Build message lines based on transfer status
+        let lines;
         
-        // If no_transfer is true, change the header text
         if (booking.no_transfer) {
-            lines[0] = '🆕 Please confirm for this booking (No Transfer):';
+            // No Transfer version - shorter format
+            lines = [
+                '🆕 Please confirm for this booking:',
+                '',
+                `📋 Booking no : ${bookingNumber}`,
+                `📅 Tour date : ${tourDate}`,
+                programLine,
+                `👤 Name : ${customerName}`,
+                `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
+                `💵 Cash on tour : ${cashOnTourText}`
+            ];
+        } else {
+            // Transfer version - full format with pickup time
+            lines = [
+                '🆕 Please confirm the *pickup time* for this booking:',
+                '',
+                `📋 Booking no : ${bookingNumber}`,
+                `📅 Tour date : ${tourDate}`,
+                programLine,
+                `👤 Name : ${customerName}`,
+                `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
+                `🏨 Hotel : ${cleanHotel}`,
+                `📞 Phone Number : ${phoneNumber}`,
+                `💵 Cash on tour : ${cashOnTourText}`,
+                '',
+                '💡 Please mentioned if there is any additional charge for transfer collect from customer'
+            ];
         }
         return lines.join('\n');
     }

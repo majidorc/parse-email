@@ -208,8 +208,11 @@ class BaseEmailParser {
     const hotel = extractedInfo.hotel;
     const phoneNumber = extractedInfo.phoneNumber;
     
-    // Clean hotel name - remove "THAILAND" from the end
-    const cleanHotel = hotel ? hotel.replace(/\s*THAILAND\s*$/i, '').trim() : '';
+    // Clean hotel name - remove "THAILAND" from the end and zip codes like "Phuket 83150"
+    const cleanHotel = hotel ? hotel
+        .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" from the end
+        .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
+        .trim() : '';
     
     const responseTemplate = `🆕 Please confirm the *pickup time* for this booking:\n\n📋 Booking no : ${extractedInfo.bookingNumber}\n📅 Tour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\n👤 Name : ${extractedInfo.name}\n👥 Pax : ${adult} Adults (Total: ${totalPax})\n🏨 Hotel : ${cleanHotel}\n📞 Phone Number : ${extractedInfo.phoneNumber}\n💵 Cash on tour : None\n\n💡 Please mentioned if there is any additional charge for transfer collect from customer`;
     return { responseTemplate, extractedInfo };

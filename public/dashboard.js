@@ -590,8 +590,11 @@ function generateNotificationText(b) {
   const hotel = b.hotel;
   const phoneNumber = b.phone_number || '';
   
-  // Clean hotel name - remove "THAILAND" from the end
-  const cleanHotel = hotel ? hotel.replace(/\s*THAILAND\s*$/i, '').trim() : '';
+  // Clean hotel name - remove "THAILAND" from the end and zip codes like "Phuket 83150"
+  const cleanHotel = hotel ? hotel
+      .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" from the end
+      .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
+      .trim() : '';
   
   // Compose program line with rate title for tours.co.th
   let programLine = `Program : ${program}`;

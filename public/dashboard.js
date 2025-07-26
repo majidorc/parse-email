@@ -4,27 +4,55 @@ let gaInitialized = false;
 function initializeGoogleAnalytics(measurementId) {
   if (gaInitialized || !measurementId) return;
   
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-  ga('create', measurementId, 'auto');
-  ga('send', 'pageview');
+  // Modern GA4 implementation
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){dataLayer.push(arguments);}
+  window.gtagId = measurementId;
+  gtag('js', new Date());
+  gtag('config', measurementId);
+  
+  // Load GA4 script
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+  document.head.appendChild(script);
+  
   gaInitialized = true;
+  console.log('Google Analytics 4 initialized with ID:', measurementId);
 }
 
 // Track dashboard interactions
 function trackEvent(category, action, label) {
-  if (typeof ga !== 'undefined' && gaInitialized) {
-    ga('send', 'event', category, action, label);
+  if (typeof gtag !== 'undefined' && gaInitialized) {
+    gtag('event', action, {
+      event_category: category,
+      event_label: label
+    });
   }
 }
 
 // Track page views for different tabs
 function trackPageView(page) {
-  if (typeof ga !== 'undefined' && gaInitialized) {
-    ga('send', 'pageview', page);
+  if (typeof gtag !== 'undefined' && gaInitialized) {
+    gtag('config', window.gtagId, {
+      page_path: page
+    });
+  }
+}
+
+// Initialize Google Analytics on page load by fetching settings
+async function initializeGoogleAnalyticsOnLoad() {
+  try {
+    const res = await fetch('/api/dashboard-settings?type=settings');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.google_analytics_id) {
+        initializeGoogleAnalytics(data.google_analytics_id);
+        console.log('Google Analytics initialized with ID:', data.google_analytics_id);
+      }
+    }
+  } catch (err) {
+    console.log('Failed to initialize Google Analytics:', err.message);
   }
 }
 
@@ -2035,7 +2063,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Update last refresh time every second
   setInterval(updateLastRefreshTime, 1000);
   
-
+  // Initialize Google Analytics on page load
+  initializeGoogleAnalyticsOnLoad();
   
   // Manual refresh button
   const manualRefreshBtn = document.getElementById('manual-refresh-btn');

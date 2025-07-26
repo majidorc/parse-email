@@ -68,8 +68,36 @@ async function handleTelegramCallback(callbackQuery, res) {
             update.customer = !booking.customer;
             console.log(`Toggling Customer to ${update.customer}`);
         } else if (buttonType === 'parkfee') {
-            update.national_park_fee = !booking.national_park_fee;
-            console.log(`Toggling National Park Fee to ${update.national_park_fee}`);
+            // Check if national_park_fee column exists before trying to update it
+            try {
+                const columnCheck = await sql.query(`
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'bookings' AND column_name = 'national_park_fee'
+                `);
+                
+                if (columnCheck.rows.length > 0) {
+                    update.national_park_fee = !booking.national_park_fee;
+                    console.log(`Toggling National Park Fee to ${update.national_park_fee}`);
+                } else {
+                    console.log('national_park_fee column does not exist, skipping update');
+                    // Send a message to the user that this feature is not available
+                    try {
+                        const token = await getTelegramBotToken();
+                        await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+                            callback_query_id: callbackQuery.id,
+                            text: 'National Park Fee feature not available in this database',
+                            show_alert: true
+                        });
+                    } catch (popupErr) {
+                        console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
+                    }
+                    return res.status(200).send('Column not found');
+                }
+            } catch (err) {
+                console.error('Error checking column existence:', err.message);
+                return res.status(200).send('Error checking column');
+            }
         }
         // Build the update query
         const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);

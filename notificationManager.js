@@ -66,7 +66,8 @@ class NotificationManager {
         }
         
         // Dynamic cash on tour text based on national_park_fee value
-        const cashOnTourText = booking.national_park_fee ? 'National Park Fee' : 'None';
+        // Handle case where national_park_fee column doesn't exist
+        const cashOnTourText = booking.national_park_fee !== undefined && booking.national_park_fee ? 'National Park Fee' : 'None';
         
         // Build message lines exactly as requested - dynamic cash on tour text
         const lines = [

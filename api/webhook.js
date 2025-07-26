@@ -772,7 +772,7 @@ async function handleTelegramMessage(message, res) {
     // Check whitelist by telegram_user_id - handle gracefully if table doesn't exist
     let isWhitelisted = true; // Default to true if whitelist check fails
     try {
-        const { rows } = await sql`SELECT is_active FROM user_whitelist WHERE telegram_user_id = ${telegramUserId}`;
+        const { rows } = await sql.query('SELECT is_active FROM user_whitelist WHERE telegram_user_id = $1', [telegramUserId]);
         if (rows.length > 0) {
             isWhitelisted = rows[0].is_active;
         } else {
@@ -800,14 +800,37 @@ async function handleTelegramMessage(message, res) {
     if (text.startsWith('/whitelist')) {
         try {
             // Simple whitelist command for testing - add current user to whitelist
-            await sql`INSERT INTO user_whitelist (telegram_user_id, email, role, is_active) 
-                     VALUES (${telegramUserId}, 'telegram_user_${telegramUserId}@telegram.com', 'user', true)
-                     ON CONFLICT (telegram_user_id) DO UPDATE SET is_active = true`;
+            // Use proper parameterized query instead of template literals
+            await sql.query(
+                `INSERT INTO user_whitelist (telegram_user_id, email, role, is_active) 
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (telegram_user_id) DO UPDATE SET is_active = $4`,
+                [telegramUserId, `telegram_user_${telegramUserId}@telegram.com`, 'user', true]
+            );
             await sendTelegram(chat_id, '✅ You have been added to the whitelist!', reply_to_message_id);
             return res.json({ ok: true });
         } catch (err) {
             console.error('Whitelist add error:', err.message);
             await sendTelegram(chat_id, '❌ Failed to add to whitelist. Please contact admin.', reply_to_message_id);
+            return res.json({ ok: true });
+        }
+    }
+    
+    // Handle /debug command to check database tables
+    if (text.startsWith('/debug')) {
+        try {
+            const tablesResult = await sql.query(`
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                ORDER BY table_name
+            `);
+            const tables = tablesResult.rows.map(row => row.table_name).join(', ');
+            await sendTelegram(chat_id, `📊 Database tables: ${tables}`, reply_to_message_id);
+            return res.json({ ok: true });
+        } catch (err) {
+            console.error('Debug error:', err.message);
+            await sendTelegram(chat_id, '❌ Debug command failed.', reply_to_message_id);
             return res.json({ ok: true });
         }
     }
@@ -828,7 +851,27 @@ async function handleTelegramMessage(message, res) {
         // First check if the products_rates table exists
         const tableCheck = await sql.query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'products_rates')");
         if (tableCheck.rows[0].exists) {
-            skuRows = (await sql.query('SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'', [query])).rows;
+            console.log('products_rates table exists, searching for SKU:', query);
+            
+            // Try different possible column names for SKU
+            let skuQuery = 'SELECT * FROM products_rates WHERE sku = $1 AND type = \'tour\'';
+            skuRows = (await sql.query(skuQuery, [query])).rows;
+            
+            // If no results, try without the type filter
+            if (skuRows.length === 0) {
+                console.log('No results with type filter, trying without type filter');
+                skuQuery = 'SELECT * FROM products_rates WHERE sku = $1';
+                skuRows = (await sql.query(skuQuery, [query])).rows;
+            }
+            
+            // If still no results, try searching by program name
+            if (skuRows.length === 0) {
+                console.log('No results by SKU, trying to search by program name');
+                skuQuery = 'SELECT * FROM products_rates WHERE program ILIKE $1';
+                skuRows = (await sql.query(skuQuery, [`%${query}%`])).rows;
+            }
+            
+            console.log('SKU search results:', skuRows.length);
         } else {
             console.log('products_rates table does not exist, skipping SKU lookup');
         }

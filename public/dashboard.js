@@ -2182,6 +2182,31 @@ settingsGearBtn.onclick = async () => {
 };
 settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
 settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
+
+// Whitelist accordion functionality
+const whitelistToggle = document.getElementById('whitelist-toggle');
+const whitelistContent = document.getElementById('whitelist-content');
+const whitelistArrow = document.getElementById('whitelist-arrow');
+
+if (whitelistToggle && whitelistContent && whitelistArrow) {
+  whitelistToggle.onclick = () => {
+    const isExpanded = whitelistContent.style.maxHeight && whitelistContent.style.maxHeight !== '0px';
+    
+    if (isExpanded) {
+      // Collapse
+      whitelistContent.style.maxHeight = '0px';
+      whitelistArrow.style.transform = 'rotate(0deg)';
+    } else {
+      // Expand
+      whitelistContent.style.maxHeight = whitelistContent.scrollHeight + 'px';
+      whitelistArrow.style.transform = 'rotate(180deg)';
+    }
+  };
+  
+  // Initialize as expanded
+  whitelistContent.style.maxHeight = whitelistContent.scrollHeight + 'px';
+  whitelistArrow.style.transform = 'rotate(180deg)';
+}
 settingsForm.onsubmit = async function(e) {
   e.preventDefault();
   settingsLoading = true; settingsError = ''; settingsSuccess = '';

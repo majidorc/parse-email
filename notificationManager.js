@@ -94,10 +94,18 @@ class NotificationManager {
         const date = new Date(tourDateStr);
         const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const diffDays = Math.round((dateOnly - today) / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Tomorrow';
-        if (diffDays === 2) return 'Day After Tomorrow';
-        return '';
+        
+        // Format the date as "27 Jul 25"
+        const formattedDate = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+        
+        // Get the label
+        let label = '';
+        if (diffDays === 0) label = 'Today';
+        else if (diffDays === 1) label = 'Tomorrow';
+        else if (diffDays === 2) label = 'Day After Tomorrow';
+        
+        // Return formatted date with label
+        return `${formattedDate} - ${label}`;
     }
 
     // Helper to format the pre-message

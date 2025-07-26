@@ -674,7 +674,8 @@ function generateNotificationText(b) {
   
   // Build message lines exactly as requested
   const lines = [
-    '🆕 Please confirm the *pickup time* for this booking:',
+    '🆕 Please confirm for this booking:',
+    '',
     `📋 Booking no : ${bookingNumber}`,
     `📅 Tour date : ${tourDate}`,
     programLine,
@@ -682,9 +683,7 @@ function generateNotificationText(b) {
     `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
     `🏨 Hotel : ${cleanHotel}`,
     `📞 Phone Number : ${phoneNumber}`,
-    '💵 Cash on tour : None',
-    '',
-    '💡 Please mentioned if there is any additional charge for transfer collect from customer'
+    `💵 Cash on tour : ${cashOnTourText}`
   ];
   return lines.join('\n');
 }

@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   net_total NUMERIC(12,2),
   raw_tour_date TEXT,
   national_park_fee BOOLEAN DEFAULT FALSE,
+  no_transfer BOOLEAN DEFAULT FALSE,
   op BOOLEAN DEFAULT FALSE,
   ri BOOLEAN DEFAULT FALSE,
   customer BOOLEAN DEFAULT FALSE,
@@ -85,6 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_program ON bookings(program);
 CREATE INDEX IF NOT EXISTS idx_bookings_sku ON bookings(sku);
 CREATE INDEX IF NOT EXISTS idx_bookings_customer_name ON bookings(customer_name);
 CREATE INDEX IF NOT EXISTS idx_bookings_hotel ON bookings(hotel);
+CREATE INDEX IF NOT EXISTS idx_bookings_no_transfer ON bookings(no_transfer);
 CREATE INDEX IF NOT EXISTS idx_rates_product_id ON rates(product_id);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_role ON user_whitelist(role);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_email ON user_whitelist(email);

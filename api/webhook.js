@@ -23,8 +23,8 @@ async function handleTelegramCallback(callbackQuery, res) {
 
     console.log('Parsed callback data:', { action, buttonType, bookingId });
 
-    // Accept op, ri, customer, parkfee
-    if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee'].includes(buttonType)) {
+    // Accept op, ri, customer, parkfee, transfer
+    if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee', 'transfer'].includes(buttonType)) {
         console.error('Invalid callback data:', data);
         return res.status(400).send('Invalid callback data');
     }
@@ -92,13 +92,44 @@ async function handleTelegramCallback(callbackQuery, res) {
                     } catch (popupErr) {
                         console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
                     }
-                    return res.status(200).send('Column not found');
-                }
-            } catch (err) {
-                console.error('Error checking column existence:', err.message);
-                return res.status(200).send('Error checking column');
+                                    return res.status(200).send('Column not found');
             }
+        } catch (err) {
+            console.error('Error checking column existence:', err.message);
+            return res.status(200).send('Error checking column');
         }
+    } else if (buttonType === 'transfer') {
+        // Check if no_transfer column exists before trying to update it
+        try {
+            const columnCheck = await sql.query(`
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'bookings' AND column_name = 'no_transfer'
+            `);
+            
+            if (columnCheck.rows.length > 0) {
+                update.no_transfer = !booking.no_transfer;
+                console.log(`Toggling No Transfer to ${update.no_transfer}`);
+            } else {
+                console.log('no_transfer column does not exist, skipping update');
+                // Send a message to the user that this feature is not available
+                try {
+                    const token = await getTelegramBotToken();
+                    await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+                        callback_query_id: callbackQuery.id,
+                        text: 'No Transfer feature not available in this database',
+                        show_alert: true
+                    });
+                } catch (popupErr) {
+                    console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
+                }
+                return res.status(200).send('Column not found');
+            }
+        } catch (err) {
+            console.error('Error checking column existence:', err.message);
+            return res.status(200).send('Error checking column');
+        }
+    }
         // Build the update query
         const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
         const values = [bookingId, ...Object.values(update)];
@@ -134,6 +165,9 @@ async function handleTelegramCallback(callbackQuery, res) {
                 ],
                 [
                     { text: parkFeeText, callback_data: `toggle:parkfee:${bookingId}` }
+                ],
+                [
+                    { text: `No Transfer${updatedBooking.no_transfer ? ' ✓' : ' X'}`, callback_data: `toggle:transfer:${bookingId}` }
                 ]
             ]
         };
@@ -214,7 +248,7 @@ class BaseEmailParser {
         .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
         .trim() : '';
     
-    const responseTemplate = `🆕 Please confirm the *pickup time* for this booking:\n\n📋 Booking no : ${extractedInfo.bookingNumber}\n📅 Tour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\n👤 Name : ${extractedInfo.name}\n👥 Pax : ${adult} Adults (Total: ${totalPax})\n🏨 Hotel : ${cleanHotel}\n📞 Phone Number : ${extractedInfo.phoneNumber}\n💵 Cash on tour : None\n\n💡 Please mentioned if there is any additional charge for transfer collect from customer`;
+    const responseTemplate = `🆕 Please confirm for this booking:\n\n📋 Booking no : ${extractedInfo.bookingNumber}\n📅 Tour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\n👤 Name : ${extractedInfo.name}\n👥 Pax : ${adult} Adults (Total: ${totalPax})\n🏨 Hotel : ${cleanHotel}\n📞 Phone Number : ${extractedInfo.phoneNumber}\n💵 Cash on tour : None`;
     return { responseTemplate, extractedInfo };
   }
 

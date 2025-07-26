@@ -202,7 +202,7 @@ class BaseEmailParser {
     const child = parseInt(extractedInfo.child, 10) || 0;
     const infant = parseInt(extractedInfo.infant, 10) || 0;
     const totalPax = adult + child + infant;
-    const responseTemplate = `Please confirm the *pickup time* for this booking:\n\nBooking no : ${extractedInfo.bookingNumber}\nTour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\nName : ${extractedInfo.name}\nPax : ${adult} Adults (Total: ${totalPax})\nHotel : ${extractedInfo.hotel}\nPhone Number : ${extractedInfo.phoneNumber}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`;
+    const responseTemplate = `🆕 Please confirm the *pickup time* for this booking:\n\nBooking no : ${extractedInfo.bookingNumber}\nTour date : ${extractedInfo.tourDate}\nProgram : ${extractedInfo.program}\nName : ${extractedInfo.name}\nPax : ${adult} Adults (Total: ${totalPax})\nHotel : ${extractedInfo.hotel}\nPhone Number : ${extractedInfo.phoneNumber}\nCash on tour : None\n\nPlease mentioned if there is any additional charge for transfer collect from customer`;
     return { responseTemplate, extractedInfo };
   }
 

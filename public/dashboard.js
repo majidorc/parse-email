@@ -601,7 +601,7 @@ function generateNotificationText(b) {
   
   // Build message lines exactly as requested
   const lines = [
-    'Please confirm the *pickup time* for this booking:',
+    '🆕 Please confirm the *pickup time* for this booking:',
     `Booking no : ${bookingNumber}`,
     `Tour date : ${tourDate}`,
     programLine,

@@ -71,7 +71,7 @@ class NotificationManager {
         
         // Build message lines exactly as requested - dynamic cash on tour text
         const lines = [
-            'Please confirm the *pickup time* for this booking:',
+            '🆕 Please confirm the *pickup time* for this booking:',
             '',
             `Booking no : ${bookingNumber}`,
             `Tour date : ${tourDate}`,

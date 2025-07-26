@@ -65,7 +65,10 @@ class NotificationManager {
             }
         }
         
-        // Build message lines exactly as requested - ALWAYS show "None" for cash on tour
+        // Dynamic cash on tour text based on national_park_fee value
+        const cashOnTourText = booking.national_park_fee ? 'National Park Fee' : 'None';
+        
+        // Build message lines exactly as requested - dynamic cash on tour text
         const lines = [
             'Please confirm the *pickup time* for this booking:',
             '',
@@ -76,7 +79,7 @@ class NotificationManager {
             `Pax : ${adult} Adults (Total: ${totalPax})`,
             `Hotel : ${hotel}`,
             `Phone Number : ${phoneNumber}`,
-            'Cash on tour : None',
+            `Cash on tour : ${cashOnTourText}`,
             '',
             'Please mentioned if there is any additional charge for transfer collect from customer'
         ];
@@ -187,6 +190,9 @@ class NotificationManager {
         // Create one message with HTML formatting
         const formattedMessage = `<b>${tourDateLabel}</b>\n<code>${message}</code>`;
         
+        // Dynamic cash on tour text for button
+        const cashOnTourButtonText = booking.national_park_fee ? 'National Park Fee' : 'None';
+        
         await axios.post(url, {
             chat_id: chatId,
             text: formattedMessage,
@@ -199,7 +205,7 @@ class NotificationManager {
                         { text: `Customer${booking.customer ? ' ✓' : ' X'}`, callback_data: `toggle:customer:${booking.booking_number}` }
                     ],
                     [
-                        { text: `Cash on tour : None ${booking.national_park_fee ? '✅' : '❌'}`, callback_data: `toggle:parkfee:${booking.booking_number}` }
+                        { text: `Cash on tour : ${cashOnTourButtonText} ${booking.national_park_fee ? '✅' : '❌'}`, callback_data: `toggle:parkfee:${booking.booking_number}` }
                     ]
                 ]
             }

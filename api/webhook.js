@@ -88,7 +88,8 @@ async function handleTelegramCallback(callbackQuery, res) {
         const opText = `OP${updatedBooking.op ? ' ✓' : ' X'}`;
         const riText = `RI${updatedBooking.ri ? ' ✓' : ' X'}`;
         const customerText = `Customer${updatedBooking.customer ? ' ✓' : ' X'}`;
-        const parkFeeText = `Cash on tour : None ${updatedBooking.national_park_fee ? '✅' : '❌'}`;
+        const cashOnTourText = updatedBooking.national_park_fee ? 'National Park Fee' : 'None';
+        const parkFeeText = `Cash on tour : ${cashOnTourText} ${updatedBooking.national_park_fee ? '✅' : '❌'}`;
         const monoMessage = '```' + newMessage + '```';
         const newKeyboard = {
             inline_keyboard: [

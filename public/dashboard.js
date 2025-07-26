@@ -1,3 +1,26 @@
+// Google Analytics tracking
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'GA_MEASUREMENT_ID', 'auto'); // Replace with your GA ID
+ga('send', 'pageview');
+
+// Track dashboard interactions
+function trackEvent(category, action, label) {
+  if (typeof ga !== 'undefined') {
+    ga('send', 'event', category, action, label);
+  }
+}
+
+// Track page views for different tabs
+function trackPageView(page) {
+  if (typeof ga !== 'undefined') {
+    ga('send', 'pageview', page);
+  }
+}
+
 function iconButton(column, bookingId, value) {
   let icon, title, btnClass;
   if (column === 'ri') {
@@ -422,6 +445,9 @@ function gotoPage(page) {
 
 // Toggle and call function
 window.handleToggle = async function(column, bookingId, btn) {
+  // Track toggle action
+  trackEvent('Booking', 'Toggle', `${column}: ${bookingId}`);
+  
   // Find the booking row data
   const booking = bookingsData.find(b => b.booking_number == bookingId);
   if (!booking) return alert('Booking not found.');
@@ -557,6 +583,10 @@ window.addEventListener('resize', () => {
 // Copy notification text logic
 window.handleCopy = function(btn) {
   const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
+  
+  // Track copy action
+  trackEvent('Notification', 'Copy', booking.booking_number);
+  
   let text = generateNotificationText(booking);
   // Ensure copy always starts from 'Please confirm' (CONFIRM line)
   const confirmIdx = text.toLowerCase().indexOf('please confirm');
@@ -2030,6 +2060,10 @@ if ('serviceWorker' in navigator) {
 // Add button styles
 window.handleDelete = async function(bookingNumber, btn) {
   if (!confirm('Are you sure you want to delete this booking?')) return;
+  
+  // Track delete action
+  trackEvent('Booking', 'Delete', bookingNumber);
+  
   btn.disabled = true;
   try {
     const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
@@ -2048,6 +2082,22 @@ const settingsGearBtn = document.getElementById('settings-gear-btn');
 const settingsModal = document.getElementById('settings-modal');
 const settingsModalClose = document.getElementById('settings-modal-close');
 const settingsForm = document.getElementById('settings-form');
+
+// Add tracking to tab switches
+document.addEventListener('DOMContentLoaded', function() {
+  const tabButtons = ['toggle-dashboard', 'toggle-bookings', 'toggle-programs', 'toggle-accounting', 'toggle-analytics'];
+  
+  tabButtons.forEach(buttonId => {
+    const button = document.getElementById(buttonId);
+    if (button) {
+      button.addEventListener('click', function() {
+        const tabName = buttonId.replace('toggle-', '');
+        trackEvent('Navigation', 'Tab Switch', tabName);
+        trackPageView(`/${tabName}`);
+      });
+    }
+  });
+});
 const bokunAccessKeyInput = document.getElementById('bokun-access-key');
 const bokunSecretKeyInput = document.getElementById('bokun-secret-key');
 const wooConsumerKeyInput = document.getElementById('woocommerce-consumer-key');

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - 2025-01-XX
+### Added
+- **Database schema compatibility**: Added graceful handling for missing `national_park_fee` column in bookings table
+- **Column existence checks**: System now checks if `national_park_fee` column exists before attempting updates
+- **User-friendly error messages**: Shows popup alert when National Park Fee feature is not available in database
+- **Migration support**: Provided SQL migration script for adding missing columns
+
+### Changed
+- **Improved error handling**: Telegram button clicks no longer fail when database schema differs between deployments
+- **Enhanced robustness**: Application works seamlessly across different database configurations
+
 ## [1.12.0] - 2025-01-XX
 ### Added
 - **Real-time booking updates**: New bookings now appear automatically without requiring cache clearing

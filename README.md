@@ -21,6 +21,8 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
   Four user roles with granular permissions (see below).
 - **Database-Driven Settings:**
   All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
+- **Schema Compatibility:**
+  Graceful handling of different database schemas across deployments with automatic column existence checks.
 
 ---
 
@@ -63,6 +65,24 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
 5. **Access the dashboard:**
    - Open `public/index.html` in your browser (or deploy via static hosting).
    - Log in with your Google account (must be whitelisted).
+
+---
+
+## 🗄️ Database Migrations
+
+### Adding Missing Columns
+
+If you encounter errors related to missing columns (e.g., `national_park_fee`), run the following SQL in your Neon SQL Editor:
+
+```sql
+-- Add national_park_fee column for National Park Fee feature
+ALTER TABLE bookings
+ADD COLUMN IF NOT EXISTS national_park_fee BOOLEAN DEFAULT FALSE;
+```
+
+### Schema Compatibility
+
+The application automatically handles missing columns and provides user-friendly error messages when features are not available in your database schema. This ensures compatibility across different deployments with varying database configurations.
 
 ---
 

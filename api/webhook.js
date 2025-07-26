@@ -10,6 +10,7 @@ const NotificationManager = require('../notificationManager');
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;
     console.log('TELEGRAM CALLBACK DATA:', data);
+    console.log('TELEGRAM CALLBACK MESSAGE:', message);
     if (!data || !message) {
         console.error('Invalid callback query format');
         return res.status(400).send('Invalid callback query format');
@@ -19,6 +20,8 @@ async function handleTelegramCallback(callbackQuery, res) {
     const action = parts[0];
     const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
+
+    console.log('Parsed callback data:', { action, buttonType, bookingId });
 
     // Accept op, ri, customer, parkfee
     if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee'].includes(buttonType)) {
@@ -113,10 +116,15 @@ async function handleTelegramCallback(callbackQuery, res) {
         } catch (editErr) {
             console.error('Error editing Telegram message:', editErr.response ? editErr.response.data : editErr.message);
         }
-        const token = await getTelegramBotToken();
-        await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
-            callback_query_id: callbackQuery.id
-        });
+        // Answer the callback query to remove the loading state
+        try {
+            const token = await getTelegramBotToken();
+            await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+                callback_query_id: callbackQuery.id
+            });
+        } catch (answerErr) {
+            console.error('Error answering callback query:', answerErr.response ? answerErr.response.data : answerErr.message);
+        }
         return res.status(200).send('OK');
     } catch (error) {
         console.error('Callback handler error:', error);
@@ -750,9 +758,11 @@ async function handler(req, res) {
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
             try {
                 const jsonData = JSON.parse(rawBody.toString('utf-8'));
+                console.log('Received JSON data:', JSON.stringify(jsonData, null, 2));
                 
                 // Handle Telegram callback queries (inline keyboard)
                 if (jsonData && jsonData.callback_query) {
+                    console.log('Processing Telegram callback query...');
                     return handleTelegramCallback(jsonData.callback_query, res);
                 }
 

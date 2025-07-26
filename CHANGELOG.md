@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0] - 2025-07-26
+### Added
+- **Google Analytics integration**: Added Google Analytics Measurement ID field to settings for tracking dashboard usage
+- **Dynamic analytics initialization**: Google Analytics only initializes when a valid Measurement ID is provided
+- **User interaction tracking**: Tracks tab navigation, booking actions, and notification interactions
+- **Database migration**: Added `google_analytics_id` column to settings table
+
+### Changed
+- **Settings cleanup**: Removed Bokun and WooCommerce fields from settings (cancelled features)
+- **Simplified settings form**: Now only includes Telegram, Email, and Google Analytics configuration
+
 ## [1.13.0] - 2025-07-26
 ### Added
 - **Database schema compatibility**: Added graceful handling for missing `national_park_fee` column in bookings table

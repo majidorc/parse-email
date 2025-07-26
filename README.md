@@ -72,12 +72,16 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
 
 ### Adding Missing Columns
 
-If you encounter errors related to missing columns (e.g., `national_park_fee`), run the following SQL in your Neon SQL Editor:
+If you encounter errors related to missing columns, run the following SQL in your Neon SQL Editor:
 
 ```sql
 -- Add national_park_fee column for National Park Fee feature
 ALTER TABLE bookings
 ADD COLUMN IF NOT EXISTS national_park_fee BOOLEAN DEFAULT FALSE;
+
+-- Add google_analytics_id column for Google Analytics tracking
+ALTER TABLE settings 
+ADD COLUMN IF NOT EXISTS google_analytics_id TEXT;
 ```
 
 ### Schema Compatibility

@@ -90,7 +90,13 @@ async function handleTelegramCallback(callbackQuery, res) {
         const customerText = `Customer${updatedBooking.customer ? ' ✓' : ' X'}`;
         const cashOnTourText = updatedBooking.national_park_fee ? 'National Park Fee' : 'None';
         const parkFeeText = `Cash on tour : ${cashOnTourText} ${updatedBooking.national_park_fee ? '✅' : '❌'}`;
-        const monoMessage = '```' + newMessage + '```';
+        
+        // Format tour date label
+        const tourDateLabel = nm.getTourDateLabel(updatedBooking.tour_date);
+        
+        // Create formatted message with HTML formatting (same as initial message)
+        const formattedMessage = `<b>${tourDateLabel}</b>\n<code>${newMessage}</code>`;
+        
         const newKeyboard = {
             inline_keyboard: [
                 [
@@ -103,14 +109,14 @@ async function handleTelegramCallback(callbackQuery, res) {
                 ]
             ]
         };
-        // Edit the message (monospace)
+        // Edit the message with HTML formatting
         try {
             const token = await getTelegramBotToken();
             const editResp = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
             chat_id: message.chat.id,
             message_id: message.message_id,
-                text: monoMessage,
-                parse_mode: 'Markdown',
+                text: formattedMessage,
+                parse_mode: 'HTML',
                 reply_markup: newKeyboard
         });
             console.log('editMessageText response:', editResp.data);

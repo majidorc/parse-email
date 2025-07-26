@@ -1,22 +1,29 @@
-// Google Analytics tracking
-(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+// Google Analytics tracking - will be initialized with settings
+let gaInitialized = false;
 
-ga('create', 'GA_MEASUREMENT_ID', 'auto'); // Replace with your GA ID
-ga('send', 'pageview');
+function initializeGoogleAnalytics(measurementId) {
+  if (gaInitialized || !measurementId) return;
+  
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', measurementId, 'auto');
+  ga('send', 'pageview');
+  gaInitialized = true;
+}
 
 // Track dashboard interactions
 function trackEvent(category, action, label) {
-  if (typeof ga !== 'undefined') {
+  if (typeof ga !== 'undefined' && gaInitialized) {
     ga('send', 'event', category, action, label);
   }
 }
 
 // Track page views for different tabs
 function trackPageView(page) {
-  if (typeof ga !== 'undefined') {
+  if (typeof ga !== 'undefined' && gaInitialized) {
     ga('send', 'pageview', page);
   }
 }
@@ -2106,6 +2113,7 @@ const useBokunApiInput = document.getElementById('use-bokun-api');
 const telegramBotTokenInput = document.getElementById('telegram-bot-token');
 const telegramChatIdInput = document.getElementById('telegram-chat-id');
 const notificationEmailToInput = document.getElementById('notification-email-to');
+const googleAnalyticsIdInput = document.getElementById('google-analytics-id');
 let settingsLoading = false;
 let settingsError = '';
 let settingsSuccess = '';
@@ -2167,6 +2175,13 @@ settingsGearBtn.onclick = async () => {
     telegramBotTokenInput.value = data.telegram_bot_token || '';
     telegramChatIdInput.value = data.telegram_chat_id || '';
     notificationEmailToInput.value = data.notification_email_to || '';
+    googleAnalyticsIdInput.value = data.google_analytics_id || '';
+    
+    // Initialize Google Analytics if ID is provided
+    if (data.google_analytics_id) {
+      initializeGoogleAnalytics(data.google_analytics_id);
+    }
+    
     settingsLoading = false;
     renderSettingsModalState();
   } catch (err) {
@@ -2193,7 +2208,8 @@ settingsForm.onsubmit = async function(e) {
         use_bokun_api: useBokunApiInput.checked,
         telegram_bot_token: telegramBotTokenInput.value,
         telegram_chat_id: telegramChatIdInput.value,
-        notification_email_to: notificationEmailToInput.value
+        notification_email_to: notificationEmailToInput.value,
+        google_analytics_id: googleAnalyticsIdInput.value
       })
     });
     if (!res.ok) throw new Error('Failed to save settings');

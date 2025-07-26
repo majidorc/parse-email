@@ -602,16 +602,16 @@ function generateNotificationText(b) {
   // Build message lines exactly as requested
   const lines = [
     '🆕 Please confirm the *pickup time* for this booking:',
-    `Booking no : ${bookingNumber}`,
-    `Tour date : ${tourDate}`,
+    `📋 Booking no : ${bookingNumber}`,
+    `📅 Tour date : ${tourDate}`,
     programLine,
-    `Name : ${customerName}`,
-    `Pax : ${adult} Adults (Total: ${totalPax})`,
-    `Hotel : ${hotel}`,
-    `Phone Number : ${phoneNumber}`,
-    'Cash on tour : None',
+    `👤 Name : ${customerName}`,
+    `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
+    `🏨 Hotel : ${hotel}`,
+    `📞 Phone Number : ${phoneNumber}`,
+    '💵 Cash on tour : None',
     '',
-    'Please mentioned if there is any additional charge for transfer collect from customer'
+    '💡 Please mentioned if there is any additional charge for transfer collect from customer'
   ];
   return lines.join('\n');
 }

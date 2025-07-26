@@ -4,10 +4,9 @@ let gaInitialized = false;
 function initializeGoogleAnalytics(measurementId) {
   if (gaInitialized || !measurementId) return;
   
-  // Modern GA4 implementation
+  // Standard GA4 implementation that Google expects
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){dataLayer.push(arguments);}
-  window.gtagId = measurementId;
+  function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', measurementId);
   
@@ -18,6 +17,9 @@ function initializeGoogleAnalytics(measurementId) {
   document.head.appendChild(script);
   
   gaInitialized = true;
+  window.gtag = gtag; // Make gtag globally available
+  window.gtagId = measurementId;
+  
   console.log('Google Analytics 4 initialized with ID:', measurementId);
 }
 

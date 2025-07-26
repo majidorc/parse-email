@@ -56,6 +56,9 @@ class NotificationManager {
         const hotel = booking.hotel;
         const phoneNumber = booking.phone_number || '';
         
+        // Clean hotel name - remove "THAILAND" from the end
+        const cleanHotel = hotel ? hotel.replace(/\s*THAILAND\s*$/i, '').trim() : '';
+        
         // Compose program line with rate title for tours.co.th
         let programLine = `Program : ${program}`;
         if (booking.channel && booking.channel.includes('tours.co.th')) {
@@ -78,7 +81,7 @@ class NotificationManager {
             programLine,
             `👤 Name : ${customerName}`,
             `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
-            `🏨 Hotel : ${hotel}`,
+            `🏨 Hotel : ${cleanHotel}`,
             `📞 Phone Number : ${phoneNumber}`,
             `💵 Cash on tour : ${cashOnTourText}`,
             '',

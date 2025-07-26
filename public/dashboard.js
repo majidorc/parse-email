@@ -590,6 +590,9 @@ function generateNotificationText(b) {
   const hotel = b.hotel;
   const phoneNumber = b.phone_number || '';
   
+  // Clean hotel name - remove "THAILAND" from the end
+  const cleanHotel = hotel ? hotel.replace(/\s*THAILAND\s*$/i, '').trim() : '';
+  
   // Compose program line with rate title for tours.co.th
   let programLine = `Program : ${program}`;
   if (b.channel && b.channel.includes('tours.co.th')) {
@@ -607,7 +610,7 @@ function generateNotificationText(b) {
     programLine,
     `👤 Name : ${customerName}`,
     `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
-    `🏨 Hotel : ${hotel}`,
+    `🏨 Hotel : ${cleanHotel}`,
     `📞 Phone Number : ${phoneNumber}`,
     '💵 Cash on tour : None',
     '',

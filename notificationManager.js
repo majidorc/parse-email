@@ -68,6 +68,7 @@ class NotificationManager {
         // Build message lines exactly as requested - ALWAYS show "None" for cash on tour
         const lines = [
             'Please confirm the *pickup time* for this booking:',
+            '',
             `Booking no : ${bookingNumber}`,
             `Tour date : ${tourDate}`,
             programLine,
@@ -178,19 +179,18 @@ class NotificationManager {
         const token = await this.getTelegramBotToken();
         const url = `https://api.telegram.org/bot${token}/sendMessage`;
         const message = this.constructNotificationMessage(booking);
-        // Pre-message (tour date)
-        const preMessage = this.formatTourDatePreMessage(booking);
         const chatId = chat_id || await this.getTelegramChatId();
-        await axios.post(url, {
-            chat_id: chatId,
-            text: preMessage
-        });
+        
+        // Combine tour date and booking details into one message
+        const tourDateLabel = this.getTourDateLabel(booking.tour_date);
+        const combinedMessage = `${tourDateLabel}\n\n${message}`;
+        
         // Inline keyboard: first row OP | RI | Customer, second row National Park Fee
         const opText = `OP${booking.op ? ' ✓' : ' X'}`;
         const riText = `RI${booking.ri ? ' ✓' : ' X'}`;
         const customerText = `Customer${booking.customer ? ' ✓' : ' X'}`;
         const parkFeeText = `Cash on tour : None ${booking.national_park_fee ? '✅' : '❌'}`;
-        const monoMessage = '```' + message + '```';
+        const monoMessage = '```' + combinedMessage + '```';
         await axios.post(url, {
             chat_id: chatId,
             text: monoMessage,

@@ -1819,23 +1819,27 @@ function renderProgramsTable(programs) {
   }
   tbody.innerHTML = '';
   programs.forEach(product => {
-    // Sort rates within each product
-    const sortedRates = product.rates.slice().sort((a, b) => {
-      if (programsRateSort === 'name') {
-        return programsRateDir === 'asc' ? 
-          (a.name || '').localeCompare(b.name || '') : 
-          (b.name || '').localeCompare(a.name || '');
-      } else if (programsRateSort === 'net_adult') {
-        return programsRateDir === 'asc' ? 
-          (Number(a.net_adult) - Number(b.net_adult)) : 
-          (Number(b.net_adult) - Number(a.net_adult));
-      } else if (programsRateSort === 'net_child') {
-        return programsRateDir === 'asc' ? 
-          (Number(a.net_child) - Number(b.net_child)) : 
-          (Number(b.net_child) - Number(a.net_child));
-      }
-      return 0;
-    });
+    // Use rates in the order they come from database (preserving custom order)
+    // Only sort if user explicitly clicks sort buttons
+    let sortedRates = product.rates;
+    if (programsRateSort !== 'name' || programsRateDir !== 'asc') {
+      sortedRates = product.rates.slice().sort((a, b) => {
+        if (programsRateSort === 'name') {
+          return programsRateDir === 'asc' ? 
+            (a.name || '').localeCompare(b.name || '') : 
+            (b.name || '').localeCompare(a.name || '');
+        } else if (programsRateSort === 'net_adult') {
+          return programsRateDir === 'asc' ? 
+            (Number(a.net_adult) - Number(b.net_adult)) : 
+            (Number(b.net_adult) - Number(a.net_adult));
+        } else if (programsRateSort === 'net_child') {
+          return programsRateDir === 'asc' ? 
+            (Number(a.net_child) - Number(b.net_child)) : 
+            (Number(b.net_child) - Number(a.net_child));
+        }
+        return 0;
+      });
+    }
 
     const tr = document.createElement('tr');
     tr.className = '';

@@ -1101,7 +1101,8 @@ async function handler(req, res) {
                     if (existingBookings.length > 0) {
                         // Send cancellation notification to Telegram only if booking exists
                         const nm = new NotificationManager();
-                        await nm.sendCancellationNotification(bookingNumber, 'Email cancellation received');
+                        const tourDate = existingBookings[0].tour_date;
+                        await nm.sendCancellationNotification(bookingNumber, 'Email cancellation received', null, tourDate);
                     }
                     
                     // Delete from all relevant tables

@@ -4,23 +4,6 @@
 
 This feature automatically assigns the first available rate from the programs list when a booking comes in without a rate in the email parse but has a SKU that exists in the programs/rates tables.
 
-## Example Scenario
-
-**Booking:** 6872811444  
-**SKU:** HKT0076  
-**Program:** Everyday Banana Beach Tour  
-**Rate:** Everyday Banana Beach  
-
-When a booking email comes in for booking 6872811444 with SKU HKT0076 but the email parser doesn't extract a rate (rate field is empty/null), the system will:
-
-1. ✅ Check if SKU HKT0076 exists in the `products` table
-2. ✅ Look up the first available rate for HKT0076 in the `rates` table
-3. ✅ Automatically assign "Everyday Banana Beach" rate to the booking
-4. ✅ Save the booking with the auto-assigned rate
-5. ✅ Use the auto-assigned rate in Telegram notifications
-
-**Result:** Booking 6872811444 will have rate "Everyday Banana Beach" instead of null/empty.
-
 ## How It Works
 
 ### Trigger Conditions
@@ -97,27 +80,6 @@ CREATE TABLE IF NOT EXISTS rates (
   fee_child NUMERIC(12,2)
 );
 ```
-
-## Testing
-
-You can test the functionality using the provided test scripts:
-
-```bash
-# Test the specific booking scenario
-node test-specific-booking.js
-
-# Add SKU and rate to programs list
-node add-sku-rate.js
-
-# Test general auto-rate assignment
-node test-auto-rate.js
-```
-
-These scripts will:
-1. Check if the required tables exist
-2. Verify there are products with rates
-3. Test the auto-rate assignment logic
-4. Show existing bookings that could benefit from auto-assignment
 
 ## Logging
 

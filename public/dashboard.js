@@ -2151,7 +2151,7 @@ document.addEventListener('DOMContentLoaded', function () {
       remark: formData.get('remark'),
       rates: []
     };
-    const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
+    const rateItems = Array.from(ratesContainer.querySelectorAll('[id^="rate-item-"]'));
     if (rateItems.length === 0) {
       alert('Please add at least one rate item.');
       return;
@@ -2166,7 +2166,8 @@ document.addEventListener('DOMContentLoaded', function () {
         net_child: Number(item.querySelector(`[name="netChild"]`).value),
         fee_type: feeType,
         fee_adult: null,
-        fee_child: null
+        fee_child: null,
+        order: index // Add order to preserve the sequence
       };
       if (feeType !== 'none') {
         rateData.fee_adult = Number(item.querySelector(`[name="feeAdult"]`).value);

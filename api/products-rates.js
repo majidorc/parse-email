@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
         const productsResult = await client.query('SELECT * FROM products ORDER BY program, sku');
         const products = productsResult.rows;
         // Get rates
-        const ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
+        const ratesResult = await client.query('SELECT * FROM rates ORDER BY product_id, rate_order, name');
         const rates = ratesResult.rows;
         const ratesByProduct = {};
         for (const rate of rates) {
@@ -150,17 +150,19 @@ module.exports = async (req, res) => {
           );
           productId = prodResult.rows[0].id;
         }
-        for (const rate of rates) {
-          const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
+        for (let i = 0; i < rates.length; i++) {
+          const rate = rates[i];
+          const { name, net_adult, net_child, fee_type, fee_adult, fee_child, order } = rate;
           if (
             !name || net_adult == null || net_child == null || !fee_type ||
             ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))
           ) {
             throw new Error('Invalid rate item: ' + JSON.stringify(rate));
           }
+          const rateOrder = order !== undefined ? order : i;
           await client.query(
-            `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
+            `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child, rate_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child, rateOrder]
           );
         }
         await client.query('COMMIT');

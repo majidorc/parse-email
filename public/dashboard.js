@@ -2928,9 +2928,9 @@ function getDashboardPeriodRange() {
 }
 // Fetch and display real benefit in dashboard card for selected period
 async function updateDashboardBenefitCard() {
-  const { startDate, endDate } = getDashboardPeriodRange();
-  let url = '/api/accounting?page=1&limit=1';
-  if (startDate && endDate) url += `&startDate=${startDate}&endDate=${endDate}`;
+  const period = document.getElementById('dashboard-period').value;
+  let url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
+  if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
   try {
     const res = await fetch(url);
     const data = await res.json();

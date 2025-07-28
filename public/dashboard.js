@@ -1913,26 +1913,32 @@ document.addEventListener('DOMContentLoaded', function () {
         const ratesContainer = document.getElementById('ratesContainer');
         ratesContainer.innerHTML = '';
         if (program.rates && program.rates.length) {
-          program.rates.forEach(rate => {
-            // Add a rate item (reuse addRateBtn logic)
-            document.getElementById('addRateBtn').click();
-            // Fill the last added rate item
-            const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
-            const lastRateItem = rateItems[rateItems.length - 1];
-            if (lastRateItem) {
-              lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
-              lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
-              lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
-              lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
-              lastRateItem.querySelector('[name="priceTier"]').value = rate.price_tier_id || '';
-              // Trigger change to show/hide fee fields
-              lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
-              if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
-                lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
-                lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
+          // Use Promise to ensure rate items are created before filling
+          const fillRates = async () => {
+            for (const rate of program.rates) {
+              // Add a rate item (reuse addRateBtn logic)
+              document.getElementById('addRateBtn').click();
+              // Wait a bit for DOM to update
+              await new Promise(resolve => setTimeout(resolve, 10));
+              // Fill the last added rate item
+              const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
+              const lastRateItem = rateItems[rateItems.length - 1];
+              if (lastRateItem) {
+                lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
+                lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
+                lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
+                lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
+                lastRateItem.querySelector('[name="priceTier"]').value = rate.price_tier_id || '';
+                // Trigger change to show/hide fee fields
+                lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
+                if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
+                  lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
+                  lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
+                }
               }
             }
-          });
+          };
+          fillRates();
         }
         // Show Delete button if editing
         document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';

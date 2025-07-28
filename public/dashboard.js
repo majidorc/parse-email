@@ -101,6 +101,9 @@ let lastRefreshTime = Date.now();
 // Programs rate sorting variables
 let programsRateSort = 'name';
 let programsRateDir = 'asc';
+// Programs sorting variables
+let programsSort = 'sku';
+let programsDir = 'asc';
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
   const tbody = document.getElementById('bookings-body');
@@ -1806,12 +1809,62 @@ function getRateSortIcon(column) {
   return programsRateDir === 'asc' ? '↑' : '↓';
 }
 
+// Program sorting functions
+function sortPrograms(column) {
+  if (programsSort === column) {
+    programsDir = programsDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    programsSort = column;
+    programsDir = 'asc';
+  }
+  renderProgramsTable(allPrograms);
+}
+
+function getProgramSortIcon(column) {
+  if (programsSort !== column) return '';
+  return programsDir === 'asc' ? '↑' : '↓';
+}
+
+function updateProgramSortIcons() {
+  const columns = ['sku', 'program', 'min_rate', 'max_rate', 'avg_rate'];
+  columns.forEach(col => {
+    const iconElement = document.getElementById(`${col}-sort-icon`);
+    if (iconElement) {
+      iconElement.textContent = getProgramSortIcon(col);
+    }
+  });
+}
+
 function renderProgramsTable(programs) {
-  // Sort by SKU
-  programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
+  // Sort programs based on selected column
+  programs = programs.slice().sort((a, b) => {
+    if (programsSort === 'sku') {
+      return programsDir === 'asc' ? 
+        (a.sku || '').localeCompare(b.sku || '') : 
+        (b.sku || '').localeCompare(a.sku || '');
+    } else if (programsSort === 'program') {
+      return programsDir === 'asc' ? 
+        (a.program || '').localeCompare(b.program || '') : 
+        (b.program || '').localeCompare(a.program || '');
+    } else if (programsSort === 'min_rate') {
+      const aMinRate = Math.min(...(a.rates || []).map(r => Number(r.net_adult) || 0));
+      const bMinRate = Math.min(...(b.rates || []).map(r => Number(r.net_adult) || 0));
+      return programsDir === 'asc' ? aMinRate - bMinRate : bMinRate - aMinRate;
+    } else if (programsSort === 'max_rate') {
+      const aMaxRate = Math.max(...(a.rates || []).map(r => Number(r.net_adult) || 0));
+      const bMaxRate = Math.max(...(b.rates || []).map(r => Number(r.net_adult) || 0));
+      return programsDir === 'asc' ? aMaxRate - bMaxRate : bMaxRate - aMaxRate;
+    } else if (programsSort === 'avg_rate') {
+      const aAvgRate = (a.rates || []).reduce((sum, r) => sum + (Number(r.net_adult) || 0), 0) / (a.rates || []).length || 0;
+      const bAvgRate = (b.rates || []).reduce((sum, r) => sum + (Number(r.net_adult) || 0), 0) / (b.rates || []).length || 0;
+      return programsDir === 'asc' ? aAvgRate - bAvgRate : bAvgRate - aAvgRate;
+    }
+    return 0;
+  });
+  
   const tbody = document.getElementById('programs-table-body');
   if (!programs.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">No programs found.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
@@ -1834,6 +1887,12 @@ function renderProgramsTable(programs) {
       return 0;
     });
 
+    // Calculate rate statistics
+    const rates = product.rates || [];
+    const minRate = rates.length > 0 ? Math.min(...rates.map(r => Number(r.net_adult) || 0)) : 0;
+    const maxRate = rates.length > 0 ? Math.max(...rates.map(r => Number(r.net_adult) || 0)) : 0;
+    const avgRate = rates.length > 0 ? rates.reduce((sum, r) => sum + (Number(r.net_adult) || 0), 0) / rates.length : 0;
+
     const tr = document.createElement('tr');
     tr.className = '';
     tr.innerHTML = `
@@ -1843,6 +1902,15 @@ function renderProgramsTable(programs) {
       </td>
       <td class="px-6 py-4 whitespace-normal max-w-xs">
         <div class="text-sm font-medium text-gray-900">${product.program}</div>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        ${minRate.toFixed(2)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        ${maxRate.toFixed(2)}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+        ${avgRate.toFixed(2)}
       </td>
       <td class="px-6 py-4 whitespace-nowrap">
         <table class="min-w-full divide-y divide-gray-100 rounded-lg bg-gray-50">
@@ -1885,6 +1953,7 @@ function renderProgramsTable(programs) {
     `;
     tbody.appendChild(tr);
   });
+  updateProgramSortIcons();
 }
 function fetchPrograms() {
   const tbody = document.getElementById('programs-table-body');

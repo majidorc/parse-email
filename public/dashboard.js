@@ -98,6 +98,9 @@ let bookingsSummaryLoading = false;
 let currentBangkokDate = null;
 let autoRefreshInterval = null;
 let lastRefreshTime = Date.now();
+// Programs rate sorting variables
+let programsRateSort = 'name';
+let programsRateDir = 'asc';
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
   const tbody = document.getElementById('bookings-body');
@@ -1787,6 +1790,22 @@ function fetchRatesAndPrograms() {
     });
 }
 let allPrograms = [];
+// Rate sorting functions
+function sortRates(column) {
+  if (programsRateSort === column) {
+    programsRateDir = programsRateDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    programsRateSort = column;
+    programsRateDir = 'asc';
+  }
+  renderProgramsTable(allPrograms);
+}
+
+function getRateSortIcon(column) {
+  if (programsRateSort !== column) return '';
+  return programsRateDir === 'asc' ? '↑' : '↓';
+}
+
 function renderProgramsTable(programs) {
   // Sort by SKU
   programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
@@ -1797,6 +1816,24 @@ function renderProgramsTable(programs) {
   }
   tbody.innerHTML = '';
   programs.forEach(product => {
+    // Sort rates within each product
+    const sortedRates = product.rates.slice().sort((a, b) => {
+      if (programsRateSort === 'name') {
+        return programsRateDir === 'asc' ? 
+          (a.name || '').localeCompare(b.name || '') : 
+          (b.name || '').localeCompare(a.name || '');
+      } else if (programsRateSort === 'net_adult') {
+        return programsRateDir === 'asc' ? 
+          (Number(a.net_adult) - Number(b.net_adult)) : 
+          (Number(b.net_adult) - Number(a.net_adult));
+      } else if (programsRateSort === 'net_child') {
+        return programsRateDir === 'asc' ? 
+          (Number(a.net_child) - Number(b.net_child)) : 
+          (Number(b.net_child) - Number(a.net_child));
+      }
+      return 0;
+    });
+
     const tr = document.createElement('tr');
     tr.className = '';
     tr.innerHTML = `
@@ -1811,14 +1848,20 @@ function renderProgramsTable(programs) {
         <table class="min-w-full divide-y divide-gray-100 rounded-lg bg-gray-50">
           <thead class="bg-gray-100">
             <tr>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Name</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Adult</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Net Child</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-200" onclick="sortRates('name')">
+                Name ${getRateSortIcon('name')}
+              </th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-200" onclick="sortRates('net_adult')">
+                Net Adult ${getRateSortIcon('net_adult')}
+              </th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-200" onclick="sortRates('net_child')">
+                Net Child ${getRateSortIcon('net_child')}
+              </th>
               <th class="px-3 py-2 text-left text-xs font-semibold text-gray-500">Fee Details</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            ${product.rates.map(rate => `
+            ${sortedRates.map(rate => `
               <tr>
                 <td class="px-3 py-2 text-sm text-gray-800">${rate.name}</td>
                 <td class="px-3 py-2 text-sm text-gray-800">${Number(rate.net_adult).toFixed(2)}</td>

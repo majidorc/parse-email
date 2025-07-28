@@ -168,10 +168,23 @@ module.exports = async (req, res) => {
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
     
-    // Calculate benefit using the same logic as accounting.js (rates from database)
+    // Calculate benefit using the same logic as accounting.js (with fallback to net_total)
+    // Check if net_total column exists
+    let hasNetTotalColumn = false;
+    try {
+      const { rows: columnCheck } = await sql.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'bookings' AND column_name = 'net_total'
+      `);
+      hasNetTotalColumn = columnCheck.length > 0;
+    } catch (err) {
+      hasNetTotalColumn = false;
+    }
+
     const { rows: benefitRows } = await sql.query(
       `SELECT 
-        b.adult, b.child, b.paid, r.net_adult, r.net_child
+        b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
        FROM bookings b
        LEFT JOIN products p ON b.sku = p.sku
        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
@@ -185,7 +198,8 @@ module.exports = async (req, res) => {
       const adult = Number(b.adult) || 0;
       const child = Number(b.child) || 0;
       const paid = Number(b.paid) || 0;
-      const netTotal = netAdult * adult + netChild * child;
+      // Use stored net_total if available and column exists, otherwise calculate from rates
+      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
       return sum + (paid - netTotal);
     }, 0);
     const { rows: revenueRows } = await sql.query(

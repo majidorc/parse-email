@@ -1939,6 +1939,45 @@ document.addEventListener('DOMContentLoaded', function () {
     addProgramSection.style.display = 'none';
     programsSection.style.display = '';
   });
+  // Add button to update old bookings with missing rates
+  const updateOldBookingsBtn = document.createElement('button');
+  updateOldBookingsBtn.textContent = 'Update Old Bookings Rates';
+  updateOldBookingsBtn.className = 'px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 mb-4';
+  updateOldBookingsBtn.onclick = async function() {
+    if (!confirm('This will update all old bookings that have SKU but no rate. Continue?')) return;
+    
+    this.disabled = true;
+    this.textContent = 'Updating...';
+    
+    try {
+      const response = await fetch('/api/update-old-bookings-rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert(`Update completed!\n\nUpdated: ${result.updated} bookings\nSkipped: ${result.skipped} bookings\nTotal: ${result.total} bookings`);
+        // Refresh the bookings table
+        fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error updating bookings: ' + error.message);
+    } finally {
+      this.disabled = false;
+      this.textContent = 'Update Old Bookings Rates';
+    }
+  };
+  
+  // Add the button to the programs section
+  const programsSection = document.getElementById('programs-section');
+  if (programsSection) {
+    programsSection.insertBefore(updateOldBookingsBtn, programsSection.firstChild);
+  }
+  
   // Add event listener for Edit buttons in Programs table
   document.getElementById('programs-table-body').addEventListener('click', function(e) {
     const btn = e.target.closest('.edit-program-btn');

@@ -1912,6 +1912,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clear and fill rates
         const ratesContainer = document.getElementById('ratesContainer');
         ratesContainer.innerHTML = '';
+        // Reset counter for editing
+        rateItemCounter = 0;
         if (program.rates && program.rates.length) {
           // Use Promise to ensure rate items are created before filling
           const fillRates = async () => {
@@ -1927,8 +1929,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
                 lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
                 lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
-                lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
                 lastRateItem.querySelector('[name="priceTier"]').value = rate.price_tier_id || '';
+                lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
                 // Trigger change to show/hide fee fields
                 lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
                 if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
@@ -1982,6 +1984,12 @@ document.addEventListener('DOMContentLoaded', function () {
           <div>
             <label for="netChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Child <span class="text-red-500">*</span></label>
             <input type="number" step="0.01" id="netChild_${rateItemCounter}" name="netChild" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 50.25">
+          </div>
+          <div>
+            <label for="priceTier_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Price Tier</label>
+            <select id="priceTier_${rateItemCounter}" name="priceTier" class="form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md">
+              ${priceTierOptions}
+            </select>
           </div>
         </div>
         <div class="mt-4">

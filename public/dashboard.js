@@ -1888,7 +1888,6 @@ function renderProgramsTable(programs) {
     `;
     tbody.appendChild(tr);
   });
-  updateProgramSortIcons();
 }
 function fetchPrograms() {
   const tbody = document.getElementById('programs-table-body');

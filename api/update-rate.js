@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
     // Update the rate
     await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
     
-    console.log(`[UPDATE RATE] Updated booking ${booking_number} with rate: ${rate}`);
+    
     
     return res.status(200).json({ 
       success: true, 

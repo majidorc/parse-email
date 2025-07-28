@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
         const NotificationManager = require('../notificationManager');
         const nm = new NotificationManager();
         await nm.sendCancellationNotification(booking_number, 'Manual deletion by admin');
-        console.log(`[DELETE] Sent cancellation notification to Telegram for booking ${booking_number}`);
+
         
         await sql`DELETE FROM bookings WHERE booking_number = ${booking_number}`;
         return res.status(200).json({ success: true });

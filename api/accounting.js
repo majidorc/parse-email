@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
         const NotificationManager = require('../notificationManager');
         const nm = new NotificationManager();
         await nm.sendCancellationNotification(bookingNumber, 'Manual cancellation by admin');
-        console.log(`[CANCEL] Sent cancellation notification to Telegram for booking ${bookingNumber}`);
+
         
         await sql.query('DELETE FROM bookings WHERE booking_number = $1', [bookingNumber]);
         res.setHeader('Cache-Control', 'no-store');
@@ -102,7 +102,6 @@ module.exports = async (req, res) => {
       whereClause = `WHERE b.tour_date >= $1 AND b.tour_date < $2`;
       whereClauseUnaliased = `WHERE tour_date >= $1 AND tour_date < $2`;
       params = [dateRangeMatch[1], dateRangeMatch[2]];
-      console.log('[DEBUG] Last Month filter:', params);
     } else {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
@@ -118,7 +117,6 @@ module.exports = async (req, res) => {
 
     // Get total count
     const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased}`;
-    console.log('[DEBUG] Count Query:', countQuery, params);
     const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
 
@@ -143,24 +141,12 @@ module.exports = async (req, res) => {
     const thisMonthWhereClause = whereClauseUnaliased ? `${whereClauseUnaliased} AND tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}` : `WHERE tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${thisMonthWhereClause}`;
     const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${thisMonthWhereClause}`;
-    console.log('[DEBUG] Last Month Query:', lastMonthCountQuery, lastMonthParams);
-    console.log('[DEBUG] This Month Query:', thisMonthCountQuery, thisMonthParams);
-    
     const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
       sql.query(lastMonthCountQuery, lastMonthParams),
       sql.query(lastMonthPaidQuery, lastMonthParams),
       sql.query(thisMonthCountQuery, thisMonthParams),
       sql.query(thisMonthPaidQuery, thisMonthParams)
     ]);
-    
-    console.log('[DEBUG] Last Month Results:', {
-      count: lastMonthCountRes.rows[0].count,
-      paid: lastMonthPaidRes.rows[0].sum
-    });
-    console.log('[DEBUG] This Month Results:', {
-      count: thisMonthCountRes.rows[0].count,
-      paid: thisMonthPaidRes.rows[0].sum
-    });
 
     // Check if net_total column exists
     let hasNetTotalColumn = false;
@@ -270,7 +256,7 @@ module.exports = async (req, res) => {
       totalBenefit = 0;
       prevPeriodBenefit = null;
     }
-    console.log('[DEBUG] Data Query:', dataQuery, dataParams, 'Result count:', bookings.length);
+
 
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({

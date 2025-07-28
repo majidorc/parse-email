@@ -618,9 +618,7 @@ class ThailandToursParser extends BaseEmailParser {
         }
         
         // Debug logging
-        console.log('[RATE EXTRACTION] Lines:', this.lines.slice(0, 10)); // First 10 lines
-        console.log('[RATE EXTRACTION] Optional addons found:', optionalAddons);
-        console.log('[RATE EXTRACTION] Final rate:', rate);
+
         
         return rate;
     }
@@ -1018,7 +1016,7 @@ async function handler(req, res) {
         
         // Log the raw body for debugging
         console.log('Raw body length:', rawBody ? rawBody.length : 'null/undefined');
-        console.log('Content-Type:', req.headers['content-type']);
+
         
         // Handle JSON payloads (for Telegram webhooks, etc.)
         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
@@ -1064,24 +1062,22 @@ async function handler(req, res) {
 
         // Handle cancellation emails - BULLETPROOF VERSION
         if (parsedEmail.subject && parsedEmail.subject.toLowerCase().includes('cancelled booking')) {
-            console.log('[CANCEL] Cancellation email detected:', parsedEmail.subject);
+    
             
             // Extract booking number from multiple sources
             let bookingNumber = null;
             
             // Try to extract from subject first
             const subjectMatch = parsedEmail.subject.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
-            if (subjectMatch && subjectMatch[1]) {
-                bookingNumber = subjectMatch[1];
-                console.log(`[CANCEL] Found booking number in subject: ${bookingNumber}`);
-            }
+                            if (subjectMatch && subjectMatch[1]) {
+                    bookingNumber = subjectMatch[1];
+                }
             
             // If not found in subject, try to extract from body
             if (!bookingNumber && parsedEmail.text) {
                 const bodyMatch = parsedEmail.text.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
                 if (bodyMatch && bodyMatch[1]) {
                     bookingNumber = bodyMatch[1];
-                    console.log(`[CANCEL] Found booking number in body: ${bookingNumber}`);
                 }
             }
             
@@ -1091,12 +1087,10 @@ async function handler(req, res) {
                 const htmlMatch = htmlText.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
                 if (htmlMatch && htmlMatch[1]) {
                     bookingNumber = htmlMatch[1];
-                    console.log(`[CANCEL] Found booking number in HTML: ${bookingNumber}`);
                 }
             }
             
             if (bookingNumber) {
-                console.log(`[CANCEL] Removing booking ${bookingNumber} from ALL tables...`);
                 
                 try {
                     // Check if booking exists before sending notification
@@ -1108,23 +1102,17 @@ async function handler(req, res) {
                         // Send cancellation notification to Telegram only if booking exists
                         const nm = new NotificationManager();
                         await nm.sendCancellationNotification(bookingNumber, 'Email cancellation received');
-                        console.log(`[CANCEL] Sent cancellation notification to Telegram for booking ${bookingNumber}`);
-                    } else {
-                        console.log(`[CANCEL] Booking ${bookingNumber} not found in database, skipping notification`);
                     }
                     
                     // Delete from all relevant tables
                     await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
-                    console.log(`[CANCEL] Deleted from bookings table`);
                     
                     await sql`DELETE FROM parsed_emails WHERE booking_number = ${bookingNumber}`;
-                    console.log(`[CANCEL] Deleted from parsed_emails table`);
                     
                     // Note: If you have other tables with booking_number, add them here
                     // await sql`DELETE FROM accounting WHERE booking_number = ${bookingNumber}`;
                     // await sql`DELETE FROM other_table WHERE booking_number = ${bookingNumber}`;
                     
-                    console.log(`[CANCEL] Successfully removed booking ${bookingNumber} from all tables`);
                     return res.status(200).send(`Webhook processed: Booking ${bookingNumber} completely removed (cancelled).`);
                     
                 } catch (error) {
@@ -1150,7 +1138,7 @@ async function handler(req, res) {
         }
 
         const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
-        console.log('[PARSE] Extracted info:', extractedInfo);
+
 
         // Always insert or update into parsed_emails for analytics
         await sql`
@@ -1265,20 +1253,17 @@ async function handler(req, res) {
                   }
                 }
                 if (anyFieldChanged || clearHighlight) {
-                  console.log(`[UPDATE] Updating booking: ${extractedInfo.bookingNumber} with rate: ${comparisonRate || 'None'}`);
                   await sql`
                     UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, updated_fields=${JSON.stringify(updatedFields)}
                     WHERE booking_number = ${extractedInfo.bookingNumber}
                   `;
                   return res.status(200).send('Webhook processed: Booking updated.');
                 } else {
-                  console.log(`[UNCHANGED] Booking unchanged (no update needed): ${extractedInfo.bookingNumber}`);
                   return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
                 }
             }
             
             if (adult === 0) {
-                console.log(`[REMOVE] Removing booking (adult=0): ${extractedInfo.bookingNumber}`);
                 await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
                 return res.status(200).send('Webhook processed: Booking removed (adult=0).');
             }
@@ -1303,8 +1288,6 @@ async function handler(req, res) {
             let finalRate = extractedInfo.rate;
             if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                 try {
-                    console.log(`[AUTO-RATE] No rate provided for booking ${extractedInfo.bookingNumber}, checking programs list for SKU: ${extractedInfo.sku}`);
-                    
                     // Look up the first available rate for this SKU
                     const { rows: rateRows } = await sql`
                         SELECT r.name 
@@ -1317,16 +1300,13 @@ async function handler(req, res) {
                     
                     if (rateRows.length > 0) {
                         finalRate = rateRows[0].name;
-                        console.log(`[AUTO-RATE] Auto-assigned rate "${finalRate}" for booking ${extractedInfo.bookingNumber} with SKU ${extractedInfo.sku}`);
-                    } else {
-                        console.log(`[AUTO-RATE] No rates found for SKU ${extractedInfo.sku} in programs list`);
                     }
                 } catch (error) {
                     console.error(`[AUTO-RATE] Error looking up rate for SKU ${extractedInfo.sku}:`, error);
                 }
             }
 
-            console.log(`[INSERT] Inserting new booking: ${extractedInfo.bookingNumber} with rate: ${finalRate || 'None'}`);
+
             await sql`
                 INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
                 VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
@@ -1392,9 +1372,6 @@ async function handler(req, res) {
 async function notifyBookingUpdate(bookingNumber, action = 'updated') {
     try {
         // This would typically send a message to connected SSE clients
-        // For now, we'll log the notification
-        console.log(`[NOTIFICATION] Booking ${action}: ${bookingNumber}`);
-        
         // In a production environment, you might want to:
         // 1. Store notifications in a database
         // 2. Use a message queue system

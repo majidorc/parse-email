@@ -59,6 +59,12 @@ module.exports = async (req, res) => {
       // Only Admin can delete bookings
       if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
       try {
+        // Send cancellation notification to Telegram
+        const NotificationManager = require('../notificationManager');
+        const nm = new NotificationManager();
+        await nm.sendCancellationNotification(bookingNumber, 'Manual cancellation by admin');
+        console.log(`[CANCEL] Sent cancellation notification to Telegram for booking ${bookingNumber}`);
+        
         await sql.query('DELETE FROM bookings WHERE booking_number = $1', [bookingNumber]);
         res.setHeader('Cache-Control', 'no-store');
         return res.status(200).json({ success: true });

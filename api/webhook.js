@@ -1099,6 +1099,20 @@ async function handler(req, res) {
                 console.log(`[CANCEL] Removing booking ${bookingNumber} from ALL tables...`);
                 
                 try {
+                    // Check if booking exists before sending notification
+                    const { rows: existingBookings } = await sql`
+                        SELECT booking_number FROM bookings WHERE booking_number = ${bookingNumber}
+                    `;
+                    
+                    if (existingBookings.length > 0) {
+                        // Send cancellation notification to Telegram only if booking exists
+                        const nm = new NotificationManager();
+                        await nm.sendCancellationNotification(bookingNumber, 'Email cancellation received');
+                        console.log(`[CANCEL] Sent cancellation notification to Telegram for booking ${bookingNumber}`);
+                    } else {
+                        console.log(`[CANCEL] Booking ${bookingNumber} not found in database, skipping notification`);
+                    }
+                    
                     // Delete from all relevant tables
                     await sql`DELETE FROM bookings WHERE booking_number = ${bookingNumber}`;
                     console.log(`[CANCEL] Deleted from bookings table`);

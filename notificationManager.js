@@ -246,6 +246,26 @@ class NotificationManager {
             }
         });
     }
+
+    // New: Send cancellation notification to Telegram
+    async sendCancellationNotification(bookingNumber, reason = 'cancelled', chat_id = null) {
+        const token = await this.getTelegramBotToken();
+        const url = `https://api.telegram.org/bot${token}/sendMessage`;
+        const chatId = chat_id || await this.getTelegramChatId();
+        
+        // Create cancellation message
+        const cancellationMessage = `❌ <b>BOOKING CANCELLED</b> ❌\n\n` +
+            `📋 <b>Booking Number:</b> <code>${bookingNumber}</code>\n` +
+            `🕐 <b>Cancelled:</b> <code>${new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' })}</code>\n` +
+            `📝 <b>Reason:</b> <code>${reason}</code>\n\n` +
+            `⚠️ This booking has been removed from the system.`;
+        
+        await axios.post(url, {
+            chat_id: chatId,
+            text: cancellationMessage,
+            parse_mode: 'HTML'
+        });
+    }
 }
 
 module.exports = NotificationManager;

@@ -191,14 +191,32 @@ function startAutoRefresh() {
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval);
   }
-  // Refresh every 30 seconds
+  // Refresh every 10 seconds for more responsive updates
   autoRefreshInterval = setInterval(() => {
     if (!document.hidden) { // Only refresh if tab is visible
       lastRefreshTime = Date.now();
       fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
       showRefreshIndicator();
     }
-  }, 30000); // 30 seconds
+  }, 10000); // 10 seconds
+}
+
+// Force refresh function for immediate updates (e.g., when bookings are deleted)
+function forceRefresh() {
+  lastRefreshTime = Date.now();
+  // Clear cached summary data to force fresh fetch
+  bookingsSummaryDataUnfiltered = null;
+  bookingsSummaryData = null;
+  fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+  showRefreshIndicator();
+}
+
+// Force refresh dashboard analytics when bookings are modified
+function forceRefreshDashboard() {
+  // Refresh dashboard analytics
+  fetchDashboardAnalytics();
+  // Also refresh benefit card
+  updateDashboardBenefitCard();
 }
 
 function stopAutoRefresh() {
@@ -1066,7 +1084,13 @@ function renderAccountingTable() {
             method: 'DELETE'
           }).then(r => r.json()).then(data => {
             if (data.success) {
+              // Force refresh all data to reflect the cancellation
               fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+              forceRefresh();
+              forceRefreshDashboard();
+              
+              // Show success message
+              showToast(`Booking ${bookingNumber} cancelled successfully`, 'success');
             } else {
               alert('Failed to cancel: ' + (data.error || 'Unknown error'));
               btn.disabled = false;
@@ -1133,6 +1157,25 @@ window.addEventListener('DOMContentLoaded', () => {
   programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
   analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
   fetchDashboardAnalytics();
+  
+  // Add dashboard refresh button handler
+  const dashboardRefreshBtn = document.getElementById('dashboard-refresh');
+  if (dashboardRefreshBtn) {
+    dashboardRefreshBtn.onclick = function() {
+      this.disabled = true;
+      this.textContent = 'Refreshing...';
+      
+      // Force refresh all dashboard data
+      forceRefresh();
+      forceRefreshDashboard();
+      
+      // Re-enable button after a short delay
+      setTimeout(() => {
+        this.disabled = false;
+        this.textContent = 'Refresh';
+      }, 2000);
+    };
+  }
 });
 
 dashboardBtn.onclick = () => {
@@ -2125,7 +2168,13 @@ window.handleDelete = async function(bookingNumber, btn) {
     const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
-    fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+    
+    // Force refresh all data to reflect the deletion
+    forceRefresh();
+    forceRefreshDashboard();
+    
+    // Show success message
+    showToast(`Booking ${bookingNumber} deleted successfully`, 'success');
   } catch (err) {
     alert('Failed to delete: ' + (err.message || 'Unknown error'));
   } finally {

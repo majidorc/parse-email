@@ -1980,6 +1980,9 @@ document.addEventListener('DOMContentLoaded', function () {
                   lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
                   lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
                 }
+                
+                // Initialize drag-and-drop for existing rate items
+                initializeDragAndDrop(lastRateItem);
               }
             }
           };
@@ -2000,9 +2003,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     
     const rateItemHTML = `
-      <div id="${rateItemId}" class="p-4 border border-gray-200 rounded-lg bg-white shadow-sm fade-in">
+      <div id="${rateItemId}" class="rate-item p-4 border border-gray-200 rounded-lg bg-white shadow-sm fade-in" draggable="true" data-rate-id="${rateItemId}">
         <div class="flex justify-between items-start mb-4">
-          <!-- Removed Rate Item #N heading -->
+          <div class="flex items-center gap-2">
+            <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600 transition duration-150" title="Drag to reorder">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+              </svg>
+            </div>
+          </div>
           <button type="button" class="remove-rate-btn text-gray-400 hover:text-red-600 transition duration-150" data-remove-id="${rateItemId}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2048,7 +2057,61 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
     `;
     ratesContainer.insertAdjacentHTML('beforeend', rateItemHTML);
+    
+    // Initialize drag-and-drop for the new rate item
+    const newRateItem = document.getElementById(rateItemId);
+    if (newRateItem) {
+      initializeDragAndDrop(newRateItem);
+    }
   };
+  
+  // Drag-and-drop functionality
+  function initializeDragAndDrop(rateItem) {
+    let draggedElement = null;
+    
+    rateItem.addEventListener('dragstart', function(e) {
+      draggedElement = this;
+      this.style.opacity = '0.5';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    rateItem.addEventListener('dragend', function(e) {
+      this.style.opacity = '';
+      draggedElement = null;
+    });
+    
+    rateItem.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    
+    rateItem.addEventListener('dragenter', function(e) {
+      e.preventDefault();
+      this.style.borderTop = '3px solid #3b82f6';
+    });
+    
+    rateItem.addEventListener('dragleave', function(e) {
+      this.style.borderTop = '';
+    });
+    
+    rateItem.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.style.borderTop = '';
+      
+      if (draggedElement && draggedElement !== this) {
+        const allRateItems = Array.from(ratesContainer.querySelectorAll('.rate-item'));
+        const draggedIndex = allRateItems.indexOf(draggedElement);
+        const dropIndex = allRateItems.indexOf(this);
+        
+        if (draggedIndex < dropIndex) {
+          this.parentNode.insertBefore(draggedElement, this.nextSibling);
+        } else {
+          this.parentNode.insertBefore(draggedElement, this);
+        }
+      }
+    });
+  }
+  
   addRateBtn.addEventListener('click', addRateItem);
   ratesContainer.addEventListener('click', function(e) {
     if (e.target.closest('.remove-rate-btn')) {

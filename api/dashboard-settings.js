@@ -137,14 +137,15 @@ module.exports = async (req, res) => {
     return { sql: '', params: [] };
   }
   try {
-    // Total Bookings: bookings with tour_date in period
+    // Total Bookings: bookings with tour_date in period (exclude deleted/cancelled)
     const channelFilter = getChannelFilterSql();
     const { rows: totalRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
-    // New Bookings: bookings with book_date in period
+    
+    // New Bookings: bookings with book_date in period (exclude deleted/cancelled)
     const newRowsFilter = getChannelFilterSql();
     const { rows: newRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2 ${newRowsFilter.sql}`,
@@ -152,16 +153,31 @@ module.exports = async (req, res) => {
     );
     const newBookings = parseInt(newRows[0].count, 10);
     const booked = totalBookings;
+    
+    // Done bookings: customer = TRUE (exclude deleted/cancelled)
     const { rows: doneRows } = await sql.query(
       `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const done = parseInt(doneRows[0].count, 10);
+    
+    // Total Earnings: sum of paid (exclude deleted/cancelled)
     const { rows: paidRows } = await sql.query(
       `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
+    
+    // Calculate benefit (paid - net_total) for the period
+    const { rows: benefitRows } = await sql.query(
+      `SELECT 
+        COALESCE(SUM(paid),0) AS total_paid,
+        COALESCE(SUM(CASE WHEN net_total IS NOT NULL THEN net_total ELSE 0 END),0) AS total_net
+       FROM bookings 
+       WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+      [start, end, ...channelFilter.params]
+    );
+    const totalBenefit = parseFloat(benefitRows[0].total_paid) - parseFloat(benefitRows[0].total_net);
     const { rows: revenueRows } = await sql.query(
       `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}
@@ -259,10 +275,16 @@ module.exports = async (req, res) => {
       { channel: 'Website', count: websiteCount, passengers: websitePassengers },
       { channel: 'OTA', count: otaCount, passengers: otaPassengers }
     ];
+    // Add cache control headers to prevent caching
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     res.status(200).json({
       totalBookings,
       newBookings,
       totalEarnings,
+      totalBenefit,
       done,
       booked,
       revenueByDay: revenueRows,

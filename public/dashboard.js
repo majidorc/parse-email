@@ -1502,7 +1502,7 @@ function fetchDashboardAnalytics() {
   const bookingsChange = document.getElementById('dashboard-total-bookings-change');
   const newChange = document.getElementById('dashboard-new-bookings-change');
   const earningsChange = document.getElementById('dashboard-total-earnings-change');
-  let url = `/api/dashboard-settings?period=${period}`;
+  let url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
   if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
   fetch(url)
     .then(res => res.json())
@@ -1519,6 +1519,13 @@ function fetchDashboardAnalytics() {
       if (dashboardTotalEarnings) {
         const val = Number(data.totalEarnings);
         dashboardTotalEarnings.textContent = isNaN(val) ? '-' : val.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+      }
+      
+      // Update benefit card with real calculation
+      const dashboardBenefit = document.getElementById('dashboard-benefit');
+      if (dashboardBenefit && data.totalBenefit !== undefined) {
+        const benefitVal = Number(data.totalBenefit);
+        dashboardBenefit.textContent = isNaN(benefitVal) ? '-' : benefitVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
       }
       // Set percent change for Total Bookings
       if (data.percentTotal !== null && data.percentTotal !== undefined) {

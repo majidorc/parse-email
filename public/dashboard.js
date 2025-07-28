@@ -2082,24 +2082,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const moveUpBtn = rateItem.querySelector('.move-up-btn');
     const moveDownBtn = rateItem.querySelector('.move-down-btn');
     
+    // Remove existing event listeners to prevent duplicates
     if (moveUpBtn) {
-      moveUpBtn.addEventListener('click', function() {
-        const currentItem = this.closest('.rate-item');
-        const prevItem = currentItem.previousElementSibling;
-        if (prevItem && prevItem.classList.contains('rate-item')) {
-          currentItem.parentNode.insertBefore(currentItem, prevItem);
-        }
-      });
+      moveUpBtn.removeEventListener('click', moveUpHandler);
+      moveUpBtn.addEventListener('click', moveUpHandler);
     }
     
     if (moveDownBtn) {
-      moveDownBtn.addEventListener('click', function() {
-        const currentItem = this.closest('.rate-item');
-        const nextItem = currentItem.nextElementSibling;
-        if (nextItem && nextItem.classList.contains('rate-item')) {
-          currentItem.parentNode.insertBefore(nextItem, currentItem);
-        }
-      });
+      moveDownBtn.removeEventListener('click', moveDownHandler);
+      moveDownBtn.addEventListener('click', moveDownHandler);
+    }
+  }
+  
+  // Separate handler functions to prevent duplicate listeners
+  function moveUpHandler() {
+    const currentItem = this.closest('.rate-item');
+    const prevItem = currentItem.previousElementSibling;
+    if (prevItem && prevItem.classList.contains('rate-item')) {
+      currentItem.parentNode.insertBefore(currentItem, prevItem);
+    }
+  }
+  
+  function moveDownHandler() {
+    const currentItem = this.closest('.rate-item');
+    const nextItem = currentItem.nextElementSibling;
+    if (nextItem && nextItem.classList.contains('rate-item')) {
+      currentItem.parentNode.insertBefore(nextItem, currentItem);
     }
   }
   

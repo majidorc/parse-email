@@ -1966,20 +1966,21 @@ document.addEventListener('DOMContentLoaded', function () {
             </svg>
           </button>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4">
           <div>
             <label for="rateName_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Rate Name <span class="text-red-500">*</span></label>
             <input type="text" id="rateName_${rateItemCounter}" name="rateName" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., Standard" value="Standard">
           </div>
-          <div>
-            <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
-            <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
+            </div>
+            <div>
+              <label for="netChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Child <span class="text-red-500">*</span></label>
+              <input type="number" step="0.01" id="netChild_${rateItemCounter}" name="netChild" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 50.25">
+            </div>
           </div>
-          <div>
-            <label for="netChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Child <span class="text-red-500">*</span></label>
-            <input type="number" step="0.01" id="netChild_${rateItemCounter}" name="netChild" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 50.25">
-          </div>
-
         </div>
         <div class="mt-4">
           <div>

@@ -168,16 +168,26 @@ module.exports = async (req, res) => {
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
     
-    // Calculate benefit (paid - net_total) for the period
+    // Calculate benefit using the same logic as accounting.js (rates from database)
     const { rows: benefitRows } = await sql.query(
       `SELECT 
-        COALESCE(SUM(paid),0) AS total_paid,
-        COALESCE(SUM(CASE WHEN net_total IS NOT NULL THEN net_total ELSE 0 END),0) AS total_net
-       FROM bookings 
-       WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
+        b.adult, b.child, b.paid, r.net_adult, r.net_child
+       FROM bookings b
+       LEFT JOIN products p ON b.sku = p.sku
+       LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+       WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
-    const totalBenefit = parseFloat(benefitRows[0].total_paid) - parseFloat(benefitRows[0].total_net);
+    
+    const totalBenefit = benefitRows.reduce((sum, b) => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      const netTotal = netAdult * adult + netChild * child;
+      return sum + (paid - netTotal);
+    }, 0);
     const { rows: revenueRows } = await sql.query(
       `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}

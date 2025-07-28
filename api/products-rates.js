@@ -106,7 +106,17 @@ module.exports = async (req, res) => {
         const productsResult = await client.query('SELECT * FROM products ORDER BY program, sku');
         const products = productsResult.rows;
         // Get rates
-        const ratesResult = await client.query('SELECT * FROM rates ORDER BY product_id, rate_order, name');
+        let ratesResult;
+        try {
+          ratesResult = await client.query('SELECT * FROM rates ORDER BY product_id, rate_order, name');
+        } catch (err) {
+          // If rate_order column doesn't exist, use the old query
+          if (err.message.includes('rate_order')) {
+            ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
+          } else {
+            throw err;
+          }
+        }
         const rates = ratesResult.rows;
         const ratesByProduct = {};
         for (const rate of rates) {
@@ -160,10 +170,24 @@ module.exports = async (req, res) => {
             throw new Error('Invalid rate item: ' + JSON.stringify(rate));
           }
           const rateOrder = order !== undefined ? order : i;
-          await client.query(
-            `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child, rate_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child, rateOrder]
-          );
+          
+          // Check if rate_order column exists, if not use the old query
+          try {
+            await client.query(
+              `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child, rate_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+              [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child, rateOrder]
+            );
+          } catch (err) {
+            // If rate_order column doesn't exist, use the old query
+            if (err.message.includes('rate_order')) {
+              await client.query(
+                `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
+              );
+            } else {
+              throw err;
+            }
+          }
         }
         await client.query('COMMIT');
         res.status(201).json({ success: true, productId });

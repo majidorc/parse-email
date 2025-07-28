@@ -196,6 +196,8 @@ function startAutoRefresh() {
     if (!document.hidden) { // Only refresh if tab is visible
       lastRefreshTime = Date.now();
       fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+      // Also refresh dashboard analytics to keep benefit card updated
+      fetchDashboardAnalytics();
       showRefreshIndicator();
     }
   }, 10000); // 10 seconds

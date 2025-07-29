@@ -687,13 +687,11 @@ function generateNotificationText(b) {
       .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
       .trim() : '';
   
-  // Compose program line with rate title for tours.co.th
+  // Compose program line with rate title for all bookings
   let programLine = `Program : ${program}`;
-  if (b.channel && b.channel.includes('tours.co.th')) {
-    const rate = b.rate || '';
-    if (rate) {
-      programLine = `Program : ${program} - [${rate}]`;
-    }
+  const rate = b.rate || '';
+  if (rate) {
+    programLine = `Program : ${program} - [${rate}]`;
   }
   
   // Build message lines based on transfer status

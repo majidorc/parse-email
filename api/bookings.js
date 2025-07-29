@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
     <h1>Booking #${b.booking_number}</h1>
     <div class='row'><span class='label'>Tour Date:</span> <span class='value'>${b.tour_date ? b.tour_date.toISOString ? b.tour_date.toISOString().slice(0,10) : b.tour_date.substring(0,10) : ''}</span></div>
     <div class='row'><span class='label'>Customer:</span> <span class='value'>${b.customer_name || ''}</span></div>
-    <div class='row'><span class='label'>Program:</span> <span class='value'>${b.program || ''}</span></div>
+    <div class='row'><span class='label'>Program:</span> <span class='value'>${b.program || ''}${b.rate ? ` - [${b.rate}]` : ''}</span></div>
     <div class='row'><span class='label'>SKU:</span> <span class='value'>${b.sku || ''}</span></div>
     <div class='row'><span class='label'>Hotel:</span> <span class='value'>${b.hotel || ''}</span></div>
     <div class='row'><span class='label'>Phone:</span> <span class='value'>${b.phone_number || ''}</span></div>

@@ -62,13 +62,11 @@ class NotificationManager {
             .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
             .trim() : '';
         
-        // Compose program line with rate title for tours.co.th
+        // Compose program line with rate title for all bookings
         let programLine = `Program : ${program}`;
-        if (booking.channel && booking.channel.includes('tours.co.th')) {
-            const rate = booking.rate || '';
-            if (rate) {
-                programLine = `Program : ${program} - [${rate}]`;
-            }
+        const rate = booking.rate || '';
+        if (rate) {
+            programLine = `Program : ${program} - [${rate}]`;
         }
         
         // Dynamic cash on tour text based on national_park_fee value

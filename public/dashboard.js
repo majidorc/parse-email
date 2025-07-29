@@ -3308,9 +3308,15 @@ function initializeAddBooking() {
   cancelAddBookingBtn.onclick = function() {
     addBookingSection.style.display = 'none';
     // Show bookings section by default
-    document.getElementById('bookings-section').style.display = 'block';
+    const bookingsSection = document.getElementById('bookings-section');
+    if (bookingsSection) {
+      bookingsSection.style.display = 'block';
+    }
     // Reset button states
-    document.getElementById('toggle-bookings').className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+    const bookingsBtn = document.getElementById('toggle-bookings');
+    if (bookingsBtn) {
+      bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+    }
   };
   
   // Handle form submission
@@ -3348,7 +3354,10 @@ function initializeAddBooking() {
       if (response.ok) {
         showToast('Booking added successfully!', 'success');
         addBookingSection.style.display = 'none';
-        document.getElementById('bookings-section').style.display = 'block';
+        const bookingsSection = document.getElementById('bookings-section');
+        if (bookingsSection) {
+          bookingsSection.style.display = 'block';
+        }
         // Refresh bookings
         fetchBookings();
       } else {

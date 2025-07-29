@@ -3359,7 +3359,11 @@ function initializeAddBooking() {
         fetchBookings();
       } else {
         const error = await response.json();
-        showToast(`Error: ${error.error || 'Failed to add booking'}`, 'error');
+        if (response.status === 409) {
+          showToast(`Error: Booking number "${bookingData.booking_number}" already exists. Please use a different booking number.`, 'error');
+        } else {
+          showToast(`Error: ${error.error || 'Failed to add booking'}`, 'error');
+        }
       }
     } catch (error) {
       console.error('Error adding booking:', error);

@@ -777,11 +777,32 @@ async function searchBookings(query) {
         rows = (await sql.query(sqlQuery, params)).rows;
         if (rows.length > 0) return rows;
     }
-    // Try date in 'D MMM YY' or 'DD MMM YY' format (e.g., '17 May 25')
+    // Try various natural date formats
     const moment = require('moment');
-    const parsed = moment(query, ['D MMM YY', 'DD MMM YY', 'D MMMM YY', 'DD MMMM YY'], true);
-    if (parsed.isValid()) {
+    
+    // Define multiple date formats to try
+    const dateFormats = [
+        'D MMM YY', 'DD MMM YY', 'D MMMM YY', 'DD MMMM YY',  // 6 May 26, 06 May 26
+        'D MMM YYYY', 'DD MMM YYYY', 'D MMMM YYYY', 'DD MMMM YYYY',  // 6 May 2026, 06 May 2026
+        'MMM D YY', 'MMM DD YY', 'MMMM D YY', 'MMMM DD YY',  // May 6 26, May 06 26
+        'MMM D YYYY', 'MMM DD YYYY', 'MMMM D YYYY', 'MMMM DD YYYY',  // May 6 2026, May 06 2026
+        'D/MM/YY', 'DD/MM/YY', 'D/MM/YYYY', 'DD/MM/YYYY',  // 6/5/26, 06/05/26
+        'MM/DD/YY', 'MM/DD/YYYY',  // 5/6/26, 05/06/26
+        'D-MM-YY', 'DD-MM-YY', 'D-MM-YYYY', 'DD-MM-YYYY',  // 6-5-26, 06-05-26
+        'YY-MM-DD', 'YYYY-MM-DD'  // 26-05-06, 2026-05-06
+    ];
+    
+    let parsed = null;
+    for (const format of dateFormats) {
+        parsed = moment(query, format, true);
+        if (parsed.isValid()) {
+            break;
+        }
+    }
+    
+    if (parsed && parsed.isValid()) {
         const dateStr = parsed.format('YYYY-MM-DD');
+        console.log(`[DATE SEARCH] Parsed "${query}" to "${dateStr}"`);
         sqlQuery = 'SELECT * FROM bookings WHERE tour_date::date = $1 ORDER BY tour_date DESC LIMIT 3';
         params = [dateStr];
         rows = (await sql.query(sqlQuery, params)).rows;
@@ -877,7 +898,7 @@ async function handleTelegramMessage(message, res) {
     
     if (!query) {
         console.log('No query extracted, sending help message');
-        const helpMessage = `🔍 *Booking Search Bot*\n\nSend me:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 2024-01-15)\n\nOr use /search <query> for explicit search`;
+        const helpMessage = `🔍 *Booking Search Bot*\n\nSend me:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 6 May 2026, 2026-05-06, May 6 26)\n\nOr use /search <query> for explicit search`;
         await sendTelegram(chat_id, helpMessage, reply_to_message_id);
         return res.json({ ok: true });
     }
@@ -967,7 +988,7 @@ async function handleTelegramMessage(message, res) {
 
     if (results.length === 0) {
         console.log('No results found, sending not found message');
-        const notFoundMessage = `❌ No bookings found for: *${query}*\n\nTry searching by:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 2024-01-15)`;
+        const notFoundMessage = `❌ No bookings found for: *${query}*\n\nTry searching by:\n• Booking number (e.g., 12345)\n• Customer name (e.g., John Smith)\n• Date (e.g., 6 May 2026, 2026-05-06, May 6 26)`;
         await sendTelegram(chat_id, notFoundMessage, reply_to_message_id);
         return res.json({ ok: true });
     }

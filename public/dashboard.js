@@ -19,8 +19,6 @@ function initializeGoogleAnalytics(measurementId) {
   gaInitialized = true;
   window.gtag = gtag; // Make gtag globally available
   window.gtagId = measurementId;
-  
-  console.log('Google Analytics 4 initialized with ID:', measurementId);
 }
 
 // Track dashboard interactions
@@ -50,11 +48,10 @@ async function initializeGoogleAnalyticsOnLoad() {
       const data = await res.json();
       if (data.google_analytics_id) {
         initializeGoogleAnalytics(data.google_analytics_id);
-        console.log('Google Analytics initialized with ID:', data.google_analytics_id);
       }
     }
   } catch (err) {
-    console.log('Failed to initialize Google Analytics:', err.message);
+    // Failed to initialize Google Analytics
   }
 }
 

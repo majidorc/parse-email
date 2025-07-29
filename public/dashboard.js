@@ -643,20 +643,34 @@ window.addEventListener('resize', () => {
 });
 // Copy notification text logic
 window.handleCopy = function(btn) {
-  const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
-  
-  // Track copy action
-  trackEvent('Notification', 'Copy', booking.booking_number);
-  
-  let text = generateNotificationText(booking);
-  // Ensure copy always starts from 'Please confirm' (CONFIRM line)
-  const confirmIdx = text.toLowerCase().indexOf('please confirm');
-  if (confirmIdx !== -1) {
-    text = text.substring(confirmIdx);
-  }
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ Copied!';
-    setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+  try {
+    const booking = JSON.parse(btn.getAttribute('data-booking').replace(/&#39;/g, "'"));
+    
+    // Track copy action
+    trackEvent('Notification', 'Copy', booking.booking_number);
+    
+    let text = generateNotificationText(booking);
+    // Ensure copy always starts from 'Please confirm' (CONFIRM line)
+    const confirmIdx = text.toLowerCase().indexOf('please confirm');
+    if (confirmIdx !== -1) {
+      text = text.substring(confirmIdx);
+    }
+    
+    // Use modern clipboard API with fallback
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+      }).catch(err => {
+        console.error('Clipboard write failed:', err);
+        // Fallback to old method
+        fallbackCopyTextToClipboard(text, btn);
+      });
+    } else {
+      // Fallback for older browsers
+      fallbackCopyTextToClipboard(text, btn);
+    }
+    
     // If inside a modal or text area, close it or move focus out
     const modal = btn.closest('.modal, .text-area-modal');
     if (modal) {
@@ -666,7 +680,40 @@ window.handleCopy = function(btn) {
       const table = document.getElementById('bookings-table');
       if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  });
+  } catch (error) {
+    console.error('Copy function error:', error);
+    btn.textContent = '❌ Error';
+    setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+  }
+}
+
+// Fallback copy function for older browsers
+function fallbackCopyTextToClipboard(text, btn) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+    } else {
+      btn.textContent = '❌ Failed';
+      setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+    }
+  } catch (err) {
+    console.error('Fallback copy failed:', err);
+    btn.textContent = '❌ Error';
+    setTimeout(() => { btn.textContent = '📋 Copy'; }, 1200);
+  }
+  
+  document.body.removeChild(textArea);
 }
 // Notification text generator (matches NotificationManager.constructNotificationMessage)
 function generateNotificationText(b) {
@@ -693,6 +740,9 @@ function generateNotificationText(b) {
   if (rate) {
     programLine = `Program : ${program} - [${rate}]`;
   }
+  
+  // Dynamic cash on tour text based on national_park_fee value
+  const cashOnTourText = b.national_park_fee !== undefined && b.national_park_fee ? 'National Park Fee' : 'None';
   
   // Build message lines based on transfer status
   let lines;

@@ -67,7 +67,7 @@ class NotificationManager {
         if (booking.channel && booking.channel.includes('tours.co.th')) {
             const rate = booking.rate || '';
             if (rate) {
-                programLine = `Program : ${program} + {rate title}`;
+                programLine = `Program : ${program} - [${rate}]`;
             }
         }
         

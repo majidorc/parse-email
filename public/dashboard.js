@@ -692,7 +692,7 @@ function generateNotificationText(b) {
   if (b.channel && b.channel.includes('tours.co.th')) {
     const rate = b.rate || '';
     if (rate) {
-      programLine = `Program : ${program} + {rate title}`;
+      programLine = `Program : ${program} - [${rate}]`;
     }
   }
   

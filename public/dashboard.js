@@ -3265,6 +3265,105 @@ function addCheckMissingProgramsButton() {
   };
   programsSection.insertBefore(btn, programsSection.firstChild);
 }
+
+// Add Booking functionality
+function initializeAddBooking() {
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  const addBookingSection = document.getElementById('add-booking-section');
+  const cancelAddBookingBtn = document.getElementById('cancel-add-booking');
+  const bookingForm = document.getElementById('bookingForm');
+  
+  if (!addBookingBtn || !addBookingSection || !cancelAddBookingBtn || !bookingForm) return;
+  
+  // Show add booking form
+  addBookingBtn.onclick = function() {
+    // Hide all other sections
+    document.querySelectorAll('[id$="-section"]').forEach(section => {
+      section.style.display = 'none';
+    });
+    
+    // Reset form
+    bookingForm.reset();
+    
+    // Set default values
+    document.getElementById('adult').value = '1';
+    document.getElementById('child').value = '0';
+    document.getElementById('infant').value = '0';
+    document.getElementById('channel').value = 'Website';
+    
+    // Show add booking section
+    addBookingSection.style.display = 'block';
+    
+    // Update button states
+    document.querySelectorAll('.tab-btn-container button').forEach(btn => {
+      btn.className = btn.className.replace('bg-indigo-100 text-indigo-800', 'bg-indigo-600 text-white');
+      btn.className = btn.className.replace('bg-blue-100 text-blue-800', 'bg-blue-600 text-white');
+      btn.className = btn.className.replace('bg-green-100 text-green-800', 'bg-green-600 text-white');
+      btn.className = btn.className.replace('bg-pink-100 text-pink-800', 'bg-pink-600 text-white');
+      btn.className = btn.className.replace('bg-yellow-100 text-yellow-800', 'bg-yellow-600 text-white');
+    });
+  };
+  
+  // Cancel add booking
+  cancelAddBookingBtn.onclick = function() {
+    addBookingSection.style.display = 'none';
+    // Show bookings section by default
+    document.getElementById('bookings-section').style.display = 'block';
+    // Reset button states
+    document.getElementById('toggle-bookings').className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+  };
+  
+  // Handle form submission
+  bookingForm.onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(bookingForm);
+    const bookingData = {
+      booking_number: formData.get('booking_number'),
+      tour_date: formData.get('tour_date'),
+      customer_name: formData.get('customer_name'),
+      phone_number: formData.get('phone_number') || '',
+      sku: formData.get('sku') || '',
+      program: formData.get('program') || '',
+      rate: formData.get('rate') || '',
+      hotel: formData.get('hotel') || '',
+      adult: parseInt(formData.get('adult')) || 0,
+      child: parseInt(formData.get('child')) || 0,
+      infant: parseInt(formData.get('infant')) || 0,
+      paid: formData.get('paid') ? parseFloat(formData.get('paid')) : null,
+      channel: formData.get('channel') || 'Website',
+      national_park_fee: formData.get('national_park_fee') === 'on',
+      no_transfer: formData.get('no_transfer') === 'on'
+    };
+    
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bookingData)
+      });
+      
+      if (response.ok) {
+        showToast('Booking added successfully!', 'success');
+        addBookingSection.style.display = 'none';
+        document.getElementById('bookings-section').style.display = 'block';
+        // Refresh bookings
+        fetchBookings();
+      } else {
+        const error = await response.json();
+        showToast(`Error: ${error.error || 'Failed to add booking'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error adding booking:', error);
+      showToast('Error: Failed to add booking', 'error');
+    }
+  };
+}
 // Call this after DOMContentLoaded
-addEventListener('DOMContentLoaded', addCheckMissingProgramsButton);
+addEventListener('DOMContentLoaded', function() {
+  addCheckMissingProgramsButton();
+  initializeAddBooking();
+});
 

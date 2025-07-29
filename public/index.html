@@ -194,6 +194,10 @@
         <button id="toggle-accounting" class="px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Accounting</button>
         <button id="toggle-analytics" class="px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200" type="button">Analytics</button>
       </div>
+      <!-- Action Buttons -->
+      <div class="mb-4 flex justify-center gap-2">
+        <button id="add-booking-btn" class="px-4 py-2 rounded font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200" type="button">+ Add Booking</button>
+      </div>
       <!-- Programs Section (pixel-perfect match) -->
       <div id="programs-section" style="display:none;">
         <div class="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -275,6 +279,99 @@
               <button type="button" id="cancel-add-program" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
               <button type="button" id="delete-program-btn" style="display:none;" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Delete</button>
               <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Save Configuration</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <!-- Add Booking Form Section (hidden by default) -->
+      <div id="add-booking-section" style="display:none;">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto mt-8">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Add New Booking</h1>
+          <p class="text-gray-500 mb-8">Fill in the details below to add a new booking manually.</p>
+          <form id="bookingForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="booking_number" class="block text-sm font-medium text-gray-700 mb-1">Booking Number <span class="text-red-500">*</span></label>
+                <input type="text" id="booking_number" name="booking_number" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 1234567890">
+              </div>
+              <div>
+                <label for="tour_date" class="block text-sm font-medium text-gray-700 mb-1">Tour Date <span class="text-red-500">*</span></label>
+                <input type="date" id="tour_date" name="tour_date" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-1">Customer Name <span class="text-red-500">*</span></label>
+                <input type="text" id="customer_name" name="customer_name" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., John Smith">
+              </div>
+              <div>
+                <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="tel" id="phone_number" name="phone_number" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., +1234567890">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                <input type="text" id="sku" name="sku" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., HKT0041">
+              </div>
+              <div>
+                <label for="program" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                <input type="text" id="program" name="program" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Chiang Mai Tour">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="rate" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
+                <input type="text" id="rate" name="rate" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Standard">
+              </div>
+              <div>
+                <label for="hotel" class="block text-sm font-medium text-gray-700 mb-1">Hotel</label>
+                <input type="text" id="hotel" name="hotel" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Hilton Bangkok">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label for="adult" class="block text-sm font-medium text-gray-700 mb-1">Adults <span class="text-red-500">*</span></label>
+                <input type="number" id="adult" name="adult" required min="0" value="1" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
+              </div>
+              <div>
+                <label for="child" class="block text-sm font-medium text-gray-700 mb-1">Children</label>
+                <input type="number" id="child" name="child" min="0" value="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
+              </div>
+              <div>
+                <label for="infant" class="block text-sm font-medium text-gray-700 mb-1">Infants</label>
+                <input type="number" id="infant" name="infant" min="0" value="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label for="paid" class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
+                <input type="number" id="paid" name="paid" step="0.01" min="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 5000">
+              </div>
+              <div>
+                <label for="channel" class="block text-sm font-medium text-gray-700 mb-1">Channel</label>
+                <select id="channel" name="channel" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
+                  <option value="Website">Website</option>
+                  <option value="Bokun">Bokun</option>
+                  <option value="tours.co.th">tours.co.th</option>
+                  <option value="GYG">GYG</option>
+                  <option value="OTA">OTA</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center">
+                <input type="checkbox" id="national_park_fee" name="national_park_fee" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-700">National Park Fee</span>
+              </label>
+              <label class="flex items-center">
+                <input type="checkbox" id="no_transfer" name="no_transfer" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-700">No Transfer</span>
+              </label>
+            </div>
+            <div class="border-t border-gray-200 pt-6 flex justify-between">
+              <button type="button" id="cancel-add-booking" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
+              <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Add Booking</button>
             </div>
           </form>
         </div>

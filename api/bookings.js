@@ -42,6 +42,60 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Add new booking logic
+  if (req.method === 'POST' && req.body && !req.body.type) {
+    try {
+      const {
+        booking_number,
+        tour_date,
+        customer_name,
+        phone_number = '',
+        sku = '',
+        program = '',
+        rate = '',
+        hotel = '',
+        adult = 0,
+        child = 0,
+        infant = 0,
+        paid = null,
+        channel = 'Website',
+        national_park_fee = false,
+        no_transfer = false
+      } = req.body;
+
+      // Validate required fields
+      if (!booking_number || !tour_date || !customer_name || !adult) {
+        return res.status(400).json({ error: 'Missing required fields: booking_number, tour_date, customer_name, adult' });
+      }
+
+      // Check if booking already exists
+      const { rows: existing } = await sql`SELECT booking_number FROM bookings WHERE booking_number = ${booking_number}`;
+      if (existing.length > 0) {
+        return res.status(409).json({ error: 'Booking number already exists' });
+      }
+
+      // Insert new booking
+      await sql`
+        INSERT INTO bookings (
+          booking_number, tour_date, customer_name, phone_number, sku, program, rate, hotel,
+          adult, child, infant, paid, channel, national_park_fee, no_transfer, book_date
+        ) VALUES (
+          ${booking_number}, ${tour_date}, ${customer_name}, ${phone_number}, ${sku}, ${program}, ${rate}, ${hotel},
+          ${adult}, ${child}, ${infant}, ${paid}, ${channel}, ${national_park_fee}, ${no_transfer}, NOW()
+        )
+      `;
+
+      return res.status(201).json({ 
+        success: true, 
+        message: 'Booking added successfully',
+        booking_number 
+      });
+    } catch (err) {
+      console.error('Error adding booking:', err);
+      return res.status(500).json({ error: 'Failed to add booking', details: err.message });
+    }
+  }
+
   const { booking_number } = req.query;
 
   // If booking_number is present, handle single booking logic

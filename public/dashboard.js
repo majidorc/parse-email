@@ -380,7 +380,6 @@ function renderTable() {
         </tr>
         `;
       }).join('');
-    }
     // Render cards for mobile
     cardsContainer.innerHTML = bookingsData.map(b => {
       const showChild = b.child && Number(b.child) > 0;

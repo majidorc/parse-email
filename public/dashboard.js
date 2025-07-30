@@ -1807,9 +1807,27 @@ document.getElementById('dashboard-refresh').addEventListener('click', function(
 let allRates = [];
 function fetchRatesAndPrograms() {
   fetch('/api/products-rates?type=tour')
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       allRates = data.rates || [];
+      fetchPrograms();
+    })
+    .catch(error => {
+      console.error('Error fetching rates and programs:', error);
+      // Show user-friendly error message
+      const programsSection = document.getElementById('programs-section');
+      if (programsSection) {
+        const tbody = document.getElementById('programs-table-body');
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Error loading programs. Please try again later.</td></tr>';
+        }
+      }
+      // Still try to fetch programs even if rates fail
       fetchPrograms();
     });
 }
@@ -1921,13 +1939,19 @@ function fetchPrograms() {
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>';
   fetch('/api/products-rates?type=tour')
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       allPrograms = data.tours || [];
       renderProgramsTable(allPrograms);
     })
-    .catch(() => {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs.</td></tr>';
+    .catch(error => {
+      console.error('Error fetching programs:', error);
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs. Please try again later.</td></tr>';
     });
 }
 document.getElementById('programs-search-bar').addEventListener('input', function(e) {

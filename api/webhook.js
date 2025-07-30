@@ -464,8 +464,8 @@ class ThailandToursParser extends BaseEmailParser {
         console.log('[DEBUG] _findBookingSections - Total lines:', this.lines.length);
         
         for (const line of this.lines) {
-            // Check if this line starts a new booking (contains "#XXXXX" or "Booking #XXXXX")
-            if ((line.includes('#') && /\d{4,}/.test(line)) || (line.includes('Booking #') && /\d+/.test(line))) {
+            // Check if this line starts a new booking (look for "Booking #XXXXX" specifically)
+            if (line.includes('Booking #') && /\d+/.test(line)) {
                 console.log('[DEBUG] _findBookingSections - Found booking line:', line);
                 // If we were in a booking section, save it
                 if (inBookingSection && currentSection.length > 0) {
@@ -537,8 +537,8 @@ class ThailandToursParser extends BaseEmailParser {
     // NEW: Extract booking number from a section
     _extractBookingNumberFromSection(sectionLines) {
         for (const line of sectionLines) {
-            // Look for "Booking #XXXXX" or "#XXXXX" pattern
-            const match = line.match(/Booking\s+#(\d+)/i) || line.match(/#(\d{4,})/);
+            // Look for "Booking #XXXXX" pattern specifically
+            const match = line.match(/Booking\s+#(\d+)/i);
             if (match) {
                 return match[1];
             }

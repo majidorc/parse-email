@@ -62,11 +62,65 @@ class NotificationManager {
             .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
             .trim() : '';
         
+        // Get program icon based on program name
+        const getProgramIcon = (programName) => {
+            if (!programName) return '🎯';
+            
+            const lowerProgram = programName.toLowerCase();
+            
+            // Adventure/Outdoor activities
+            if (lowerProgram.includes('jungle') || lowerProgram.includes('adventure')) return '🌿';
+            if (lowerProgram.includes('rock') || lowerProgram.includes('climbing')) return '🧗';
+            if (lowerProgram.includes('zip') || lowerProgram.includes('zipline')) return '🦅';
+            if (lowerProgram.includes('rafting') || lowerProgram.includes('raft')) return '🛶';
+            if (lowerProgram.includes('trekking') || lowerProgram.includes('hike')) return '🥾';
+            
+            // Water activities
+            if (lowerProgram.includes('snorkel') || lowerProgram.includes('diving')) return '🤿';
+            if (lowerProgram.includes('boat') || lowerProgram.includes('cruise')) return '⛵';
+            if (lowerProgram.includes('fishing')) return '🎣';
+            if (lowerProgram.includes('kayak') || lowerProgram.includes('canoe')) return '🛶';
+            
+            // Cultural activities
+            if (lowerProgram.includes('temple') || lowerProgram.includes('buddha')) return '🏛️';
+            if (lowerProgram.includes('cooking') || lowerProgram.includes('food')) return '👨‍🍳';
+            if (lowerProgram.includes('market') || lowerProgram.includes('shopping')) return '🛍️';
+            if (lowerProgram.includes('village') || lowerProgram.includes('local')) return '🏘️';
+            
+            // Transportation
+            if (lowerProgram.includes('transfer') || lowerProgram.includes('pickup')) return '🚐';
+            if (lowerProgram.includes('airport')) return '✈️';
+            
+            // Nature/Wildlife
+            if (lowerProgram.includes('elephant') || lowerProgram.includes('safari')) return '🐘';
+            if (lowerProgram.includes('tiger') || lowerProgram.includes('zoo')) return '🐯';
+            if (lowerProgram.includes('monkey') || lowerProgram.includes('gibbon')) return '🐒';
+            if (lowerProgram.includes('bird') || lowerProgram.includes('birdwatching')) return '🦜';
+            
+            // Beach/Island activities
+            if (lowerProgram.includes('island') || lowerProgram.includes('beach')) return '🏝️';
+            if (lowerProgram.includes('sunset') || lowerProgram.includes('sunrise')) return '🌅';
+            
+            // Spa/Wellness
+            if (lowerProgram.includes('spa') || lowerProgram.includes('massage')) return '💆';
+            if (lowerProgram.includes('yoga') || lowerProgram.includes('meditation')) return '🧘';
+            
+            // Default icons for common words
+            if (lowerProgram.includes('tour')) return '🗺️';
+            if (lowerProgram.includes('trip')) return '🎒';
+            if (lowerProgram.includes('excursion')) return '🚶';
+            if (lowerProgram.includes('experience')) return '✨';
+            
+            return '🎯'; // Default icon
+        };
+        
+        const programIcon = getProgramIcon(program);
+        
         // Compose program line with rate title for all bookings
-        let programLine = `Program : ${program}`;
+        let programLine = `${programIcon} Program : ${program}`;
         const rate = booking.rate || '';
         if (rate) {
-            programLine = `Program : ${program} - [${rate}]`;
+            programLine = `${programIcon} Program : ${program} - [${rate}]`;
         }
         
         // Dynamic cash on tour text based on national_park_fee value

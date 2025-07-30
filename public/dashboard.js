@@ -1330,40 +1330,7 @@ let addProgramBtn = document.getElementById('add-program-btn');
 const analyticsBtn = document.getElementById('toggle-analytics');
 const analyticsSection = document.getElementById('analytics-section');
 
-// On page load, show Dashboard by default
-window.addEventListener('DOMContentLoaded', () => {
-  dashboardSection.style.display = '';
-  bookingsTableSection.style.display = 'none';
-  summarySection.style.display = 'none';
-  accountingTableContainer.style.display = 'none';
-  searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
-  document.getElementById('pagination-controls').style.display = 'none';
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
-  fetchDashboardAnalytics();
-  
-  // Add dashboard refresh button handler
-  const dashboardRefreshBtn = document.getElementById('dashboard-refresh');
-  if (dashboardRefreshBtn) {
-    dashboardRefreshBtn.onclick = function() {
-      this.disabled = true;
-      this.textContent = 'Refreshing...';
-      
-      // Force refresh all dashboard data
-      forceRefresh();
-      forceRefreshDashboard();
-      
-      // Re-enable button after a short delay
-      setTimeout(() => {
-        this.disabled = false;
-        this.textContent = 'Refresh';
-      }, 2000);
-    };
-  }
-});
+// Dashboard initialization will be handled in initializeApp
 
 dashboardBtn.onclick = () => {
   dashboardBtn.setAttribute('data-active', 'true');
@@ -2497,6 +2464,7 @@ if ('serviceWorker' in navigator) {
 
 // Add button styles
 window.handleDelete = async function(bookingNumber, btn) {
+  console.log('[DEBUG] handleDelete called with bookingNumber:', bookingNumber);
   if (!confirm('Are you sure you want to delete this booking?')) return;
   
   // Track delete action
@@ -2504,8 +2472,11 @@ window.handleDelete = async function(bookingNumber, btn) {
   
   btn.disabled = true;
   try {
+    console.log('[DEBUG] Sending DELETE request to /api/bookings');
     const res = await fetch(`/api/bookings?booking_number=${bookingNumber}`, { method: 'DELETE' });
+    console.log('[DEBUG] DELETE response status:', res.status);
     const data = await res.json();
+    console.log('[DEBUG] DELETE response data:', data);
     if (!res.ok || !data.success) throw new Error(data.error || 'Failed to delete');
     
     // Force refresh all data to reflect the deletion
@@ -2515,6 +2486,7 @@ window.handleDelete = async function(bookingNumber, btn) {
     // Show success message
     showToast(`Booking ${bookingNumber} deleted successfully`, 'success');
   } catch (err) {
+    console.error('[DEBUG] Delete error:', err);
     alert('Failed to delete: ' + (err.message || 'Unknown error'));
   } finally {
     btn.disabled = false;
@@ -2671,22 +2643,7 @@ settingsForm.onsubmit = async function(e) {
   }
 };
 
-// Clear Cache Button Logic
-document.getElementById('clear-cache-btn').onclick = async function() {
-  if (!confirm('Clear all cached data? This will log you out and reload the app.')) return;
-  // Clear all caches
-  if ('caches' in window) {
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames.map(name => caches.delete(name)));
-  }
-  // Unregister all service workers
-  if ('serviceWorker' in navigator) {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    for (const reg of regs) await reg.unregister();
-  }
-  alert('Cache cleared! The app will now reload.');
-  window.location.reload();
-};
+// Clear Cache Button Logic - will be initialized in DOMContentLoaded
 
 // Export Programs Button Logic
 document.getElementById('export-programs-settings-btn').onclick = async function() {
@@ -3185,7 +3142,7 @@ document.getElementById('logout-btn').onclick = async function() {
   await fetch('/api/auth?type=logout', { method: 'POST' });
   checkSession();
 };
-document.addEventListener('DOMContentLoaded', checkSession);
+// checkSession will be called in initializeApp
 
 const whitelistSection = document.getElementById('whitelist-section');
 whitelistSection.classList.add('flex', 'flex-col');
@@ -3288,7 +3245,7 @@ async function updateDashboardBenefitCard() {
   }
 }
 // Call on dashboard load and refresh and period change
-window.addEventListener('DOMContentLoaded', updateDashboardBenefitCard);
+// updateDashboardBenefitCard will be called in initializeApp
 document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
 document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
 
@@ -3507,9 +3464,86 @@ function initializeAddBooking() {
     }
   };
 }
-// Call this after DOMContentLoaded
-addEventListener('DOMContentLoaded', function() {
+// Main initialization function
+function initializeApp() {
+  // Initialize clear cache button
+  const clearCacheBtn = document.getElementById('clear-cache-btn');
+  if (clearCacheBtn) {
+    clearCacheBtn.onclick = async function() {
+      console.log('[DEBUG] Clear cache button clicked');
+      if (!confirm('Clear all cached data? This will log you out and reload the app.')) return;
+      
+      console.log('[DEBUG] Starting cache clearing process');
+      // Clear all caches
+      if ('caches' in window) {
+        try {
+          const cacheNames = await caches.keys();
+          console.log('[DEBUG] Found caches:', cacheNames);
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+          console.log('[DEBUG] All caches deleted');
+        } catch (cacheError) {
+          console.error('[DEBUG] Cache clearing error:', cacheError);
+        }
+      }
+      
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          console.log('[DEBUG] Found service workers:', regs.length);
+          for (const reg of regs) await reg.unregister();
+          console.log('[DEBUG] All service workers unregistered');
+        } catch (swError) {
+          console.error('[DEBUG] Service worker unregister error:', swError);
+        }
+      }
+      
+      console.log('[DEBUG] Cache clearing completed, reloading page');
+      alert('Cache cleared! The app will now reload.');
+      window.location.reload();
+    };
+  }
+
+  // Initialize dashboard on page load
+  dashboardSection.style.display = '';
+  bookingsTableSection.style.display = 'none';
+  summarySection.style.display = 'none';
+  accountingTableContainer.style.display = 'none';
+  searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
+  document.getElementById('pagination-controls').style.display = 'none';
+  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
+  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
+  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
+  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  fetchDashboardAnalytics();
+  
+  // Add dashboard refresh button handler
+  const dashboardRefreshBtn = document.getElementById('dashboard-refresh');
+  if (dashboardRefreshBtn) {
+    dashboardRefreshBtn.onclick = function() {
+      this.disabled = true;
+      this.textContent = 'Refreshing...';
+      
+      // Force refresh all dashboard data
+      forceRefresh();
+      forceRefreshDashboard();
+      
+      // Re-enable button after a short delay
+      setTimeout(() => {
+        this.disabled = false;
+        this.textContent = 'Refresh';
+      }, 2000);
+    };
+  }
+
+  // Initialize other components
   addCheckMissingProgramsButton();
   initializeAddBooking();
-});
+  checkSession();
+  updateDashboardBenefitCard();
+}
+
+// Call this after DOMContentLoaded
+addEventListener('DOMContentLoaded', initializeApp);
 

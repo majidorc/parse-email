@@ -1208,6 +1208,7 @@ const analyticsSection = document.getElementById('analytics-section');
 // Dashboard initialization will be handled in initializeApp
 
 dashboardBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
   dashboardBtn.setAttribute('data-active', 'true');
   bookingsBtn.removeAttribute('data-active');
   programsBtn.removeAttribute('data-active');
@@ -1230,6 +1231,7 @@ dashboardBtn.onclick = () => {
   fetchDashboardAnalytics();
 };
 bookingsBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
   dashboardBtn.removeAttribute('data-active');
   bookingsBtn.setAttribute('data-active', 'true');
   programsBtn.removeAttribute('data-active');
@@ -1253,6 +1255,7 @@ bookingsBtn.onclick = () => {
   fetchBookings();
 };
 accountingBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
   dashboardBtn.removeAttribute('data-active');
   bookingsBtn.removeAttribute('data-active');
   programsBtn.removeAttribute('data-active');
@@ -1274,6 +1277,7 @@ accountingBtn.onclick = () => {
   fetchAccounting();
 };
 programsBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
   dashboardBtn.removeAttribute('data-active');
   bookingsBtn.removeAttribute('data-active');
   programsBtn.setAttribute('data-active', 'true');
@@ -1295,6 +1299,7 @@ programsBtn.onclick = () => {
   fetchRatesAndPrograms();
 };
 analyticsBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
   dashboardBtn.removeAttribute('data-active');
   bookingsBtn.removeAttribute('data-active');
   programsBtn.removeAttribute('data-active');
@@ -3256,6 +3261,14 @@ function addCheckMissingProgramsButton() {
 }
 
 // Add Booking functionality
+// Function to close add booking form
+function closeAddBookingForm() {
+  const addBookingSection = document.getElementById('add-booking-section');
+  if (addBookingSection) {
+    addBookingSection.style.display = 'none';
+  }
+}
+
 function initializeAddBooking() {
   const addBookingBtn = document.getElementById('add-booking-btn');
   const addBookingSection = document.getElementById('add-booking-section');
@@ -3295,7 +3308,7 @@ function initializeAddBooking() {
   
   // Cancel add booking
   cancelAddBookingBtn.onclick = function() {
-    addBookingSection.style.display = 'none';
+    closeAddBookingForm();
     // Show bookings section by default
     const bookingsSection = document.getElementById('bookings-section');
     if (bookingsSection) {
@@ -3342,7 +3355,7 @@ function initializeAddBooking() {
       
       if (response.ok) {
         showToast('Booking added successfully!', 'success');
-        addBookingSection.style.display = 'none';
+        closeAddBookingForm();
         const bookingsSection = document.getElementById('bookings-section');
         if (bookingsSection) {
           bookingsSection.style.display = 'block';

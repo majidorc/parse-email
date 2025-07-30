@@ -1,0 +1,3 @@
+[33m4f33a9c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix products-rates.js structure - moved merged code inside module.exports function
+[33md480144[m Add proper error handling for API calls to prevent JSON parsing errors
+[33m224bed7[m Remove Show Grouped button from HTML

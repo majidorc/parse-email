@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS user_whitelist (
 -- BOOKINGS TABLE
 CREATE TABLE IF NOT EXISTS bookings (
   booking_number TEXT PRIMARY KEY,
+  order_number TEXT, -- NEW: To link multiple bookings from same order
   book_date DATE,
   tour_date DATE,
   sku TEXT,
@@ -87,6 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_sku ON bookings(sku);
 CREATE INDEX IF NOT EXISTS idx_bookings_customer_name ON bookings(customer_name);
 CREATE INDEX IF NOT EXISTS idx_bookings_hotel ON bookings(hotel);
 CREATE INDEX IF NOT EXISTS idx_bookings_no_transfer ON bookings(no_transfer);
+CREATE INDEX IF NOT EXISTS idx_bookings_order_number ON bookings(order_number); -- NEW: Index for order_number
 CREATE INDEX IF NOT EXISTS idx_rates_product_id ON rates(product_id);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_role ON user_whitelist(role);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_email ON user_whitelist(email);

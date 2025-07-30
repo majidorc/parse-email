@@ -419,6 +419,248 @@ class ThailandToursParser extends BaseEmailParser {
         return this._findLineValue('ORDER NUMBER:');
     }
 
+    // NEW: Extract multiple bookings from the same email
+    extractMultipleBookings() {
+        const bookings = [];
+        const orderNumber = this.extractBookingNumber();
+        
+        console.log('[DEBUG] extractMultipleBookings - Order Number:', orderNumber);
+        
+        // Find all booking sections in the email
+        const bookingSections = this._findBookingSections();
+        console.log('[DEBUG] extractMultipleBookings - Found booking sections:', bookingSections.length);
+        
+        for (const section of bookingSections) {
+            console.log('[DEBUG] extractMultipleBookings - Processing section:', section[0]);
+            const booking = this._extractSingleBooking(section, orderNumber);
+            if (booking && booking.bookingNumber) {
+                console.log('[DEBUG] extractMultipleBookings - Extracted booking:', booking.bookingNumber, 'with', booking.adult, 'adults');
+                bookings.push(booking);
+            } else {
+                console.log('[DEBUG] extractMultipleBookings - Failed to extract booking from section');
+            }
+        }
+        
+        console.log('[DEBUG] extractMultipleBookings - Total bookings extracted:', bookings.length);
+        
+        // If no multiple bookings found, fall back to single booking extraction
+        if (bookings.length === 0) {
+            console.log('[DEBUG] extractMultipleBookings - No bookings found, falling back to single booking');
+            const singleBooking = this.extractAll();
+            if (singleBooking.bookingNumber && singleBooking.bookingNumber !== 'N/A') {
+                bookings.push(singleBooking);
+            }
+        }
+        
+        return bookings;
+    }
+
+    // NEW: Find all booking sections in the email
+    _findBookingSections() {
+        const sections = [];
+        let currentSection = [];
+        let inBookingSection = false;
+        
+        console.log('[DEBUG] _findBookingSections - Total lines:', this.lines.length);
+        
+        for (const line of this.lines) {
+            // Check if this line starts a new booking (contains "Booking #XXXXX")
+            if (line.includes('Booking #') && /\d+/.test(line)) {
+                console.log('[DEBUG] _findBookingSections - Found booking line:', line);
+                // If we were in a booking section, save it
+                if (inBookingSection && currentSection.length > 0) {
+                    sections.push([...currentSection]);
+                    console.log('[DEBUG] _findBookingSections - Saved section with', currentSection.length, 'lines');
+                }
+                // Start new section
+                currentSection = [line];
+                inBookingSection = true;
+            } else if (inBookingSection) {
+                currentSection.push(line);
+            }
+        }
+        
+        // Add the last section
+        if (inBookingSection && currentSection.length > 0) {
+            sections.push(currentSection);
+            console.log('[DEBUG] _findBookingSections - Saved final section with', currentSection.length, 'lines');
+        }
+        
+        console.log('[DEBUG] _findBookingSections - Total sections found:', sections.length);
+        return sections;
+    }
+
+    // NEW: Extract a single booking from a section
+    _extractSingleBooking(sectionLines, orderNumber) {
+        // Extract booking number from the section
+        const bookingNumber = this._extractBookingNumberFromSection(sectionLines);
+        if (!bookingNumber) return null;
+        
+        // Extract passengers from this section only
+        const passengers = this._extractPassengersFromSection(sectionLines);
+        
+        // Extract tour date from this section
+        const tourDate = this._extractTourDateFromSection(sectionLines);
+        
+        // Extract SKU from this section
+        const sku = this._extractSKUFromSection(sectionLines);
+        
+        // Extract program from this section
+        const program = this._extractProgramFromSection(sectionLines);
+        
+        // Use main email for customer details
+        const name = this.extractName();
+        const hotel = this.extractHotel();
+        const phoneNumber = this.extractPhone();
+        const paid = this._extractPaidForBooking(sectionLines);
+        
+        return {
+            bookingNumber: bookingNumber,
+            orderNumber: orderNumber,
+            tourDate: tourDate,
+            sku: sku,
+            program: program,
+            name: name,
+            adult: passengers.adult,
+            child: passengers.child,
+            infant: passengers.infant,
+            hotel: hotel,
+            phoneNumber: phoneNumber,
+            isoDate: this._getISODate(tourDate),
+            paid: paid,
+            book_date: this.extractBookDate(),
+            rate: this._extractRateFromSection(sectionLines),
+            start_time: this._extractStartTimeFromSection(sectionLines)
+        };
+    }
+
+    // NEW: Extract booking number from a section
+    _extractBookingNumberFromSection(sectionLines) {
+        for (const line of sectionLines) {
+            // Look for "Booking #XXXXX" pattern
+            const match = line.match(/Booking\s+#(\d+)/i);
+            if (match) {
+                return match[1];
+            }
+        }
+        return null;
+    }
+
+    // NEW: Extract paid amount for a specific booking
+    _extractPaidForBooking(sectionLines) {
+        // Look for price in the section
+        for (const line of sectionLines) {
+            // Match Thai Baht symbol followed by number
+            const match = line.match(/[฿=E0=B8=BF]?\s*([\d,\.]+)/i);
+            if (match && match[1]) {
+                return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
+            }
+        }
+        return null;
+    }
+
+    // NEW: Extract passengers from a specific section
+    _extractPassengersFromSection(sectionLines) {
+        const pax = { adult: '0', child: '0', infant: '0' };
+        
+        console.log('[DEBUG] _extractPassengersFromSection - Processing section with', sectionLines.length, 'lines');
+        
+        // Look for the specific passenger line in this section
+        for (const line of sectionLines) {
+            // Look for patterns like "Adult: 4", "Adults: 4", "Person (+4 Years): 4"
+            const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
+            if (adultMatch && adultMatch[1]) {
+                console.log('[DEBUG] _extractPassengersFromSection - Found adult match:', line, '->', adultMatch[1]);
+                pax.adult = adultMatch[1]; // Take the first match, don't accumulate
+                break; // Found adult count, stop looking
+            }
+            
+            // Person (+4 Years): N (treat as adult)
+            const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
+            if (personPlusMatch && personPlusMatch[1]) {
+                console.log('[DEBUG] _extractPassengersFromSection - Found person+ match:', line, '->', personPlusMatch[1]);
+                pax.adult = personPlusMatch[1];
+                break; // Found adult count, stop looking
+            }
+        }
+        
+        // Look for child count
+        for (const line of sectionLines) {
+            const childMatch = line.match(/child[ren|s]?[^\d]*(\d+)\s*$/i) || line.match(/child[ren|s]?.*?:\s*(\d+)/i);
+            if (childMatch && childMatch[1]) {
+                console.log('[DEBUG] _extractPassengersFromSection - Found child match:', line, '->', childMatch[1]);
+                pax.child = childMatch[1];
+                break; // Found child count, stop looking
+            }
+        }
+        
+        // Look for infant count
+        for (const line of sectionLines) {
+            const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
+            if (infantMatch && infantMatch[1]) {
+                console.log('[DEBUG] _extractPassengersFromSection - Found infant match:', line, '->', infantMatch[1]);
+                pax.infant = infantMatch[1];
+                break; // Found infant count, stop looking
+            }
+        }
+        
+        console.log('[DEBUG] _extractPassengersFromSection - Final passenger counts:', pax);
+        return pax;
+    }
+
+    // NEW: Extract tour date from a specific section
+    _extractTourDateFromSection(sectionLines) {
+        for (const line of sectionLines) {
+            // Look for date pattern like "August 6, 2025"
+            const dateMatch = line.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
+            if (dateMatch) {
+                return dateMatch[1];
+            }
+        }
+        return 'N/A';
+    }
+
+    // NEW: Extract SKU from a specific section
+    _extractSKUFromSection(sectionLines) {
+        for (const line of sectionLines) {
+            // Look for SKU pattern like (#HKT0041)
+            const match = line.match(/\(#([A-Z0-9]+)\)/);
+            if (match) {
+                return match[1];
+            }
+        }
+        return '';
+    }
+
+    // NEW: Extract program from a specific section
+    _extractProgramFromSection(sectionLines) {
+        for (let i = 0; i < sectionLines.length; i++) {
+            const line = sectionLines[i];
+            // Look for program name (line before SKU)
+            if (line.includes('(#') && i > 0) {
+                const programLine = sectionLines[i - 1].trim();
+                if (programLine && !programLine.startsWith('Booking') && !programLine.includes('#')) {
+                    return programLine;
+                }
+            }
+        }
+        return 'N/A';
+    }
+
+    // NEW: Extract rate from a specific section
+    _extractRateFromSection(sectionLines) {
+        // For now, return empty string - can be enhanced later
+        return '';
+    }
+
+    // NEW: Extract start time from a specific section
+    _extractStartTimeFromSection(sectionLines) {
+        // For now, return empty string - can be enhanced later
+        return '';
+    }
+
+
+
     extractProgram() {
         // The program name is the line right before the line with the product code, e.g., "(#HKT0022)"
         const codeIndex = this.lines.findIndex(line => /\(#([A-Z0-9]+)\)/.test(line));
@@ -617,9 +859,6 @@ class ThailandToursParser extends BaseEmailParser {
             rate = rate ? `${rate} (${addonsText})` : addonsText;
         }
         
-        // Debug logging
-
-        
         return rate;
     }
 
@@ -662,6 +901,24 @@ class ThailandToursParser extends BaseEmailParser {
         }
         
         return this._formatBaseBookingDetails(extractedInfo);
+    }
+
+    // NEW: Format multiple booking details
+    formatMultipleBookingDetails() {
+        const bookings = this.extractMultipleBookings();
+        const results = [];
+        
+        for (const booking of bookings) {
+            if (booking.tourDate === 'N/A' || !booking.isoDate) {
+                console.error(`Could not extract a valid tour date for booking ${booking.bookingNumber}. Skipping.`);
+                continue;
+            }
+            
+            const result = this._formatBaseBookingDetails(booking);
+            results.push(result);
+        }
+        
+        return results;
     }
 }
 
@@ -1159,230 +1416,272 @@ async function handler(req, res) {
             return res.status(200).send('Email skipped: No suitable parser found or subject incorrect.');
         }
 
-        const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
-
-
-        // Always insert or update into parsed_emails for analytics
-        await sql`
-          INSERT INTO parsed_emails (sender, subject, body, source_email, booking_number, parsed_at)
-          VALUES (
-            ${parsedEmail.from?.value?.[0]?.address || ''},
-            ${parsedEmail.subject || ''},
-            ${rawBody},
-            ${sourceEmail},
-            ${extractedInfo.bookingNumber || null},
-            NOW()
-          )
-          ON CONFLICT (booking_number) DO UPDATE
-            SET sender = EXCLUDED.sender,
-                subject = EXCLUDED.subject,
-                body = EXCLUDED.body,
-                source_email = EXCLUDED.source_email,
-                parsed_at = EXCLUDED.parsed_at;
-        `;
-
-        if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
-            console.warn('[SKIP] Skipped due to invalid date:', {
-                bookingNumber: extractedInfo?.bookingNumber,
-                tourDate: extractedInfo?.tourDate,
-                isoDate: extractedInfo?.isoDate,
-            });
-            return res.status(200).send('Webhook processed: Skipped due to invalid date.');
-        }
-        if (!extractedInfo.bookingNumber) {
-            console.warn('[SKIP] Skipped due to missing booking number:', extractedInfo);
-            return res.status(200).send('Webhook processed: Skipped due to missing booking number.');
-        }
-
-        try {
-            const { rows: existingBookings } = await sql`
-                SELECT * FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
-            `;
-
-            const adult = parseInt(extractedInfo.adult, 10) || 0;
-            const child = parseInt(extractedInfo.child, 10) || 0;
-            const infant = parseInt(extractedInfo.infant, 10) || 0;
-            const paid = extractedInfo.paid !== undefined && extractedInfo.paid !== null && extractedInfo.paid !== '' ? Number(parseFloat(extractedInfo.paid).toFixed(2)) : null;
-
-            if (existingBookings.length > 0) {
-                // Compare all relevant fields
-                const existing = existingBookings[0];
-                let changed = false;
-                // Auto-assign rate if no rate is provided but SKU exists in programs list (for field comparison)
-                let comparisonRate = extractedInfo.rate;
-                if ((!comparisonRate || comparisonRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
-                    try {
-                        // Look up the first available rate for this SKU
-                        const { rows: rateRows } = await sql`
-                            SELECT r.name 
-                            FROM products p 
-                            JOIN rates r ON p.id = r.product_id 
-                            WHERE p.sku = ${extractedInfo.sku}
-                            ORDER BY r.id 
-                            LIMIT 1
-                        `;
-                        
-                        if (rateRows.length > 0) {
-                            comparisonRate = rateRows[0].name;
-                        }
-                    } catch (error) {
-                        console.error(`[AUTO-RATE] Error looking up rate for field comparison SKU ${extractedInfo.sku}:`, error);
-                    }
-                }
-
-                const fields = [
-                  ['tour_date', extractedInfo.isoDate],
-                  ['sku', extractedInfo.sku],
-                  ['program', extractedInfo.program],
-                  ['customer_name', extractedInfo.name],
-                  ['adult', adult],
-                  ['child', child],
-                  ['infant', infant],
-                  ['hotel', extractedInfo.hotel],
-                  ['phone_number', extractedInfo.phoneNumber],
-                  ['raw_tour_date', extractedInfo.tourDate],
-                  ['paid', paid],
-                  ['book_date', extractedInfo.book_date],
-                  ['rate', comparisonRate]
-                ];
-                let updatedFields = existing.updated_fields || {};
-                let anyFieldChanged = false;
-                for (const [key, value] of fields) {
-                  if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
-                    updatedFields[key] = true;
-                    anyFieldChanged = true;
-                  }
-                }
-                // Remove highlights if more than one day after tour_date
-                let clearHighlight = false;
-                if (existing.tour_date) {
-                  const today = new Date();
-                  today.setHours(0,0,0,0);
-                  let tourDateStr = '';
-                  if (typeof existing.tour_date === 'string') {
-                    tourDateStr = existing.tour_date.substring(0, 10);
-                  } else if (existing.tour_date instanceof Date) {
-                    tourDateStr = existing.tour_date.toISOString().substring(0, 10);
-                  }
-                  if (tourDateStr) {
-                    const tourDate = new Date(tourDateStr);
-                    const dayAfterTour = new Date(tourDate);
-                    dayAfterTour.setDate(tourDate.getDate() + 1);
-                    if (today > dayAfterTour) {
-                      updatedFields = {};
-                      clearHighlight = true;
-                    }
-                  }
-                }
-                if (anyFieldChanged || clearHighlight) {
-                  await sql`
-                    UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, updated_fields=${JSON.stringify(updatedFields)}
-                    WHERE booking_number = ${extractedInfo.bookingNumber}
-                  `;
-                  return res.status(200).send('Webhook processed: Booking updated.');
+        // Check if this is a Thailand Tours email with multiple bookings
+        let bookingsToProcess = [];
+        if (parser instanceof ThailandToursParser) {
+            try {
+                const multipleBookings = parser.extractMultipleBookings();
+                if (multipleBookings.length > 1) {
+                    console.log(`[MULTIPLE] Found ${multipleBookings.length} bookings in Thailand Tours email`);
+                    bookingsToProcess = multipleBookings;
                 } else {
-                  return res.status(200).send('Webhook processed: Booking unchanged (no update needed).');
+                    // Fall back to single booking
+                    const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+                    bookingsToProcess = [extractedInfo];
                 }
+            } catch (error) {
+                console.error('[MULTIPLE] Error extracting multiple bookings, falling back to single:', error);
+                const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+                bookingsToProcess = [extractedInfo];
             }
-            
-            if (adult === 0) {
-                await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
-                return res.status(200).send('Webhook processed: Booking removed (adult=0).');
-            }
-            
-            // Determine channel based on sender or booking number
-            let channel = 'Website';
-            if (parsedEmail.from && parsedEmail.from.value && parsedEmail.from.value[0]) {
-              const sender = parsedEmail.from.value[0].address || '';
-              if (sender.includes('bokun.io')) channel = 'Bokun';
-              else if (sender.includes('tours.co.th')) channel = 'tours.co.th';
-              else if (sender.includes('getyourguide.com')) channel = 'GYG';
-            }
-            if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('GYG')) {
-              channel = 'GYG';
-            } else if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('6')) {
-              channel = 'Website';
-            } else if (!['Bokun', 'tours.co.th', 'GYG', 'Website'].includes(channel)) {
-              channel = 'OTA';
-            }
-
-            // Auto-assign rate if no rate is provided but SKU exists in programs list
-            let finalRate = extractedInfo.rate;
-            if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
-                try {
-                    // Look up the first available rate for this SKU
-                    const { rows: rateRows } = await sql`
-                        SELECT r.name 
-                        FROM products p 
-                        JOIN rates r ON p.id = r.product_id 
-                        WHERE p.sku = ${extractedInfo.sku}
-                        ORDER BY r.id 
-                        LIMIT 1
-                    `;
-                    
-                    if (rateRows.length > 0) {
-                        finalRate = rateRows[0].name;
-                    }
-                } catch (error) {
-                    console.error(`[AUTO-RATE] Error looking up rate for SKU ${extractedInfo.sku}:`, error);
-                }
-            }
-
-
-            await sql`
-                INSERT INTO bookings (booking_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
-                VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
-                ON CONFLICT (booking_number) DO UPDATE SET
-                  tour_date = EXCLUDED.tour_date,
-                  sku = EXCLUDED.sku,
-                  program = EXCLUDED.program,
-                  customer_name = EXCLUDED.customer_name,
-                  adult = EXCLUDED.adult,
-                  child = EXCLUDED.child,
-                  infant = EXCLUDED.infant,
-                  hotel = EXCLUDED.hotel,
-                  phone_number = EXCLUDED.phone_number,
-                  notification_sent = EXCLUDED.notification_sent,
-                  raw_tour_date = EXCLUDED.raw_tour_date,
-                  paid = EXCLUDED.paid,
-                  book_date = EXCLUDED.book_date,
-                  channel = EXCLUDED.channel,
-                  rate = EXCLUDED.rate;
-            `;
-            // Send Telegram notification if booking is for today (Bangkok time)
-            const bangkokNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
-            const bookingTourDate = new Date(extractedInfo.isoDate);
-            if (
-              bangkokNow.getFullYear() === bookingTourDate.getFullYear() &&
-              bangkokNow.getMonth() === bookingTourDate.getMonth() &&
-              bangkokNow.getDate() === bookingTourDate.getDate()
-            ) {
-              const nm = new NotificationManager();
-              await nm.sendTelegramWithButtons({
-                booking_number: extractedInfo.bookingNumber,
-                tour_date: extractedInfo.isoDate,
-                sku: extractedInfo.sku,
-                program: extractedInfo.program,
-                customer_name: extractedInfo.name,
-                adult,
-                child,
-                infant,
-                hotel: extractedInfo.hotel,
-                phone_number: extractedInfo.phoneNumber,
-                raw_tour_date: extractedInfo.tourDate,
-                paid,
-                book_date: extractedInfo.book_date,
-                channel,
-                rate: finalRate,
-                start_time: extractedInfo.start_time
-              });
-            }
-            return res.status(200).send('Webhook processed: Booking upserted.');
-
-        } catch (error) {
-            console.error(`[ERROR][DB] Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
-            return res.status(500).send({ error: 'Database processing failed.', details: error.message });
+        } else {
+            // Use the original single booking logic for other parsers
+            const { responseTemplate, extractedInfo } = parser.formatBookingDetails();
+            bookingsToProcess = [extractedInfo];
         }
+
+        // Process each booking
+        const processedBookings = [];
+        for (const extractedInfo of bookingsToProcess) {
+            // Always insert or update into parsed_emails for analytics
+            await sql`
+              INSERT INTO parsed_emails (sender, subject, body, source_email, booking_number, parsed_at)
+              VALUES (
+                ${parsedEmail.from?.value?.[0]?.address || ''},
+                ${parsedEmail.subject || ''},
+                ${rawBody},
+                ${sourceEmail},
+                ${extractedInfo.bookingNumber || null},
+                NOW()
+              )
+              ON CONFLICT (booking_number) DO UPDATE
+                SET sender = EXCLUDED.sender,
+                    subject = EXCLUDED.subject,
+                    body = EXCLUDED.body,
+                    source_email = EXCLUDED.source_email,
+                    parsed_at = EXCLUDED.parsed_at;
+            `;
+
+            if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
+                console.warn('[SKIP] Skipped due to invalid date:', {
+                    bookingNumber: extractedInfo?.bookingNumber,
+                    tourDate: extractedInfo?.tourDate,
+                    isoDate: extractedInfo?.isoDate,
+                });
+                continue; // Skip this booking but continue with others
+            }
+            if (!extractedInfo.bookingNumber) {
+                console.warn('[SKIP] Skipped due to missing booking number:', extractedInfo);
+                continue; // Skip this booking but continue with others
+            }
+
+            processedBookings.push(extractedInfo);
+        }
+
+        if (processedBookings.length === 0) {
+            return res.status(200).send('Webhook processed: No valid bookings found.');
+        }
+
+        // Process each booking individually
+        const results = [];
+        for (const extractedInfo of processedBookings) {
+            try {
+                const { rows: existingBookings } = await sql`
+                    SELECT * FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
+                `;
+
+                const adult = parseInt(extractedInfo.adult, 10) || 0;
+                const child = parseInt(extractedInfo.child, 10) || 0;
+                const infant = parseInt(extractedInfo.infant, 10) || 0;
+                const paid = extractedInfo.paid !== undefined && extractedInfo.paid !== null && extractedInfo.paid !== '' ? Number(parseFloat(extractedInfo.paid).toFixed(2)) : null;
+
+                if (existingBookings.length > 0) {
+                    // Compare all relevant fields
+                    const existing = existingBookings[0];
+                    let changed = false;
+                    // Auto-assign rate if no rate is provided but SKU exists in programs list (for field comparison)
+                    let comparisonRate = extractedInfo.rate;
+                    if ((!comparisonRate || comparisonRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
+                        try {
+                            // Look up the first available rate for this SKU
+                            const { rows: rateRows } = await sql`
+                                SELECT r.name 
+                                FROM products p 
+                                JOIN rates r ON p.id = r.product_id 
+                                WHERE p.sku = ${extractedInfo.sku}
+                                ORDER BY r.id 
+                                LIMIT 1
+                            `;
+                            
+                            if (rateRows.length > 0) {
+                                comparisonRate = rateRows[0].name;
+                            }
+                        } catch (error) {
+                            console.error(`[AUTO-RATE] Error looking up rate for field comparison SKU ${extractedInfo.sku}:`, error);
+                        }
+                    }
+
+                    const fields = [
+                      ['tour_date', extractedInfo.isoDate],
+                      ['sku', extractedInfo.sku],
+                      ['program', extractedInfo.program],
+                      ['customer_name', extractedInfo.name],
+                      ['adult', adult],
+                      ['child', child],
+                      ['infant', infant],
+                      ['hotel', extractedInfo.hotel],
+                      ['phone_number', extractedInfo.phoneNumber],
+                      ['raw_tour_date', extractedInfo.tourDate],
+                      ['paid', paid],
+                      ['book_date', extractedInfo.book_date],
+                      ['rate', comparisonRate],
+                      ['order_number', extractedInfo.orderNumber]
+                    ];
+                    let updatedFields = existing.updated_fields || {};
+                    let anyFieldChanged = false;
+                    for (const [key, value] of fields) {
+                      if ((existing[key] ?? '').toString() !== (value ?? '').toString()) {
+                        updatedFields[key] = true;
+                        anyFieldChanged = true;
+                      }
+                    }
+                    // Remove highlights if more than one day after tour_date
+                    let clearHighlight = false;
+                    if (existing.tour_date) {
+                      const today = new Date();
+                      today.setHours(0,0,0,0);
+                      let tourDateStr = '';
+                      if (typeof existing.tour_date === 'string') {
+                        tourDateStr = existing.tour_date.substring(0, 10);
+                      } else if (existing.tour_date instanceof Date) {
+                        tourDateStr = existing.tour_date.toISOString().substring(0, 10);
+                      }
+                      if (tourDateStr) {
+                        const tourDate = new Date(tourDateStr);
+                        const dayAfterTour = new Date(tourDate);
+                        dayAfterTour.setDate(tourDate.getDate() + 1);
+                        if (today > dayAfterTour) {
+                          updatedFields = {};
+                          clearHighlight = true;
+                        }
+                      }
+                    }
+                    if (anyFieldChanged || clearHighlight) {
+                      await sql`
+                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
+                        WHERE booking_number = ${extractedInfo.bookingNumber}
+                      `;
+                      results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'updated' });
+                    } else {
+                      results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'unchanged' });
+                    }
+                } else {
+                    if (adult === 0) {
+                        await sql`DELETE FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber}`;
+                        results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'removed' });
+                        continue;
+                    }
+                    
+                    // Determine channel based on sender or booking number
+                    let channel = 'Website';
+                    if (parsedEmail.from && parsedEmail.from.value && parsedEmail.from.value[0]) {
+                      const sender = parsedEmail.from.value[0].address || '';
+                      if (sender.includes('bokun.io')) channel = 'Bokun';
+                      else if (sender.includes('tours.co.th')) channel = 'tours.co.th';
+                      else if (sender.includes('getyourguide.com')) channel = 'GYG';
+                    }
+                    if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('GYG')) {
+                      channel = 'GYG';
+                    } else if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('6')) {
+                      channel = 'Website';
+                    } else if (!['Bokun', 'tours.co.th', 'GYG', 'Website'].includes(channel)) {
+                      channel = 'OTA';
+                    }
+
+                    // Auto-assign rate if no rate is provided but SKU exists in programs list
+                    let finalRate = extractedInfo.rate;
+                    if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
+                        try {
+                            // Look up the first available rate for this SKU
+                            const { rows: rateRows } = await sql`
+                                SELECT r.name 
+                                FROM products p 
+                                JOIN rates r ON p.id = r.product_id 
+                                WHERE p.sku = ${extractedInfo.sku}
+                                ORDER BY r.id 
+                                LIMIT 1
+                            `;
+                            
+                            if (rateRows.length > 0) {
+                                finalRate = rateRows[0].name;
+                            }
+                        } catch (error) {
+                            console.error(`[AUTO-RATE] Error looking up rate for SKU ${extractedInfo.sku}:`, error);
+                        }
+                    }
+
+                    await sql`
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
+                        ON CONFLICT (booking_number) DO UPDATE SET
+                          order_number = EXCLUDED.order_number,
+                          tour_date = EXCLUDED.tour_date,
+                          sku = EXCLUDED.sku,
+                          program = EXCLUDED.program,
+                          customer_name = EXCLUDED.customer_name,
+                          adult = EXCLUDED.adult,
+                          child = EXCLUDED.child,
+                          infant = EXCLUDED.infant,
+                          hotel = EXCLUDED.hotel,
+                          phone_number = EXCLUDED.phone_number,
+                          notification_sent = EXCLUDED.notification_sent,
+                          raw_tour_date = EXCLUDED.raw_tour_date,
+                          paid = EXCLUDED.paid,
+                          book_date = EXCLUDED.book_date,
+                          channel = EXCLUDED.channel,
+                          rate = EXCLUDED.rate;
+                    `;
+
+                    // Send Telegram notification if booking is for today (Bangkok time)
+                    const bangkokNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+                    const bookingTourDate = new Date(extractedInfo.isoDate);
+                    if (
+                      bangkokNow.getFullYear() === bookingTourDate.getFullYear() &&
+                      bangkokNow.getMonth() === bookingTourDate.getMonth() &&
+                      bangkokNow.getDate() === bookingTourDate.getDate()
+                    ) {
+                      const nm = new NotificationManager();
+                      await nm.sendTelegramWithButtons({
+                        booking_number: extractedInfo.bookingNumber,
+                        tour_date: extractedInfo.isoDate,
+                        sku: extractedInfo.sku,
+                        program: extractedInfo.program,
+                        customer_name: extractedInfo.name,
+                        adult,
+                        child,
+                        infant,
+                        hotel: extractedInfo.hotel,
+                        phone_number: extractedInfo.phoneNumber,
+                        raw_tour_date: extractedInfo.tourDate,
+                        paid,
+                        book_date: extractedInfo.book_date,
+                        channel,
+                        rate: finalRate,
+                        start_time: extractedInfo.start_time
+                      });
+                    }
+
+                    results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'inserted' });
+                }
+            } catch (error) {
+                console.error(`[ERROR][DB] Database error while processing booking ${extractedInfo.bookingNumber}:`, error);
+                results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'error', error: error.message });
+            }
+        }
+
+        // Return summary of all processed bookings
+        const summary = results.map(r => `${r.bookingNumber} (${r.action})`).join(', ');
+        return res.status(200).send(`Webhook processed: ${summary}`);
 
     } catch (error) {
         console.error('Error in webhook processing:', error);

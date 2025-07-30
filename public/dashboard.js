@@ -98,6 +98,9 @@ let lastRefreshTime = Date.now();
 // Programs rate sorting variables
 let programsRateSort = 'name';
 let programsRateDir = 'asc';
+// Grouped view variables
+let showGroupedView = false;
+let expandedOrders = new Set();
 
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
@@ -304,6 +307,132 @@ function getRowClass(tourDateStr) {
   return '';
 }
 
+// NEW: Function to group bookings by order number
+function groupBookingsByOrder(bookings) {
+  const grouped = {};
+  const ungrouped = [];
+  
+  bookings.forEach(booking => {
+    if (booking.order_number && booking.order_number.trim()) {
+      if (!grouped[booking.order_number]) {
+        grouped[booking.order_number] = [];
+      }
+      grouped[booking.order_number].push(booking);
+    } else {
+      ungrouped.push(booking);
+    }
+  });
+  
+  return { grouped, ungrouped };
+}
+
+// NEW: Function to render grouped bookings
+function renderGroupedBookings(grouped, ungrouped) {
+  const tbody = document.getElementById('bookings-body');
+  let html = '';
+  
+  // Render grouped bookings
+  Object.entries(grouped).forEach(([orderNumber, bookings]) => {
+    const isExpanded = expandedOrders.has(orderNumber);
+    const totalPax = bookings.reduce((sum, b) => sum + (b.adult || 0) + (b.child || 0) + (b.infant || 0), 0);
+    const totalPaid = bookings.reduce((sum, b) => sum + (parseFloat(b.paid) || 0), 0);
+    
+    // Order header row
+    html += `
+      <tr class="order-header bg-blue-50 hover:bg-blue-100 cursor-pointer" onclick="toggleOrderExpansion('${orderNumber}')">
+        <td colspan="15" class="px-4 py-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <span class="text-lg font-bold mr-2">📦 Order #${orderNumber}</span>
+              <span class="text-sm text-gray-600">(${bookings.length} bookings)</span>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-sm">👥 ${totalPax} pax</span>
+              <span class="text-sm">💰 ฿${totalPaid.toFixed(2)}</span>
+              <span class="text-sm">👤 ${bookings[0]?.customer_name || 'Unknown'}</span>
+              <span class="text-lg">${isExpanded ? '▼' : '▶'}</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+    
+    // Individual booking rows (only if expanded)
+    if (isExpanded) {
+      bookings.forEach(b => {
+        html += renderBookingRow(b);
+      });
+    }
+  });
+  
+  // Render ungrouped bookings
+  ungrouped.forEach(b => {
+    html += renderBookingRow(b);
+  });
+  
+  tbody.innerHTML = html;
+}
+
+// NEW: Function to render a single booking row
+function renderBookingRow(b) {
+  const updated = b.updated_fields || {};
+  
+  function shouldHighlight(field) {
+    if (!updated[field]) return false;
+    if (!b.tour_date) return false;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tourDate = new Date(b.tour_date.substring(0,10));
+    const dayAfterTour = new Date(tourDate);
+    dayAfterTour.setDate(tourDate.getDate() + 1);
+    return today <= dayAfterTour;
+  }
+  
+  return `
+    <tr class="${getRowClass(b.tour_date)} ${b.order_number ? 'order-booking-row' : ''}">
+      <td class="px-4 py-3 whitespace-nowrap text-sm font-medium${shouldHighlight('booking_number') ? ' bg-yellow-100' : ''}">${b.booking_number || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('sku') ? ' bg-yellow-100' : ''}">${b.sku || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('program') ? ' bg-yellow-100' : ''}">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('rate') ? ' bg-yellow-100' : ''}">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('hotel') ? ' bg-yellow-100' : ''}">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('op') ? ' bg-yellow-100' : ''}">${iconButton('op', b.booking_number, b.op)}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('ri') ? ' bg-yellow-100' : ''}">${iconButton('ri', b.booking_number, b.ri)}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('customer') ? ' bg-yellow-100' : ''}">${iconButton('customer', b.booking_number, b.customer)}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('adult') ? ' bg-yellow-100' : ''}">${b.adult || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('child') ? ' bg-yellow-100' : ''}">${b.child || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-center">
+        <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
+        <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
+      </td>
+    </tr>
+  `;
+}
+
+// NEW: Function to toggle order expansion
+function toggleOrderExpansion(orderNumber) {
+  if (expandedOrders.has(orderNumber)) {
+    expandedOrders.delete(orderNumber);
+  } else {
+    expandedOrders.add(orderNumber);
+  }
+  renderTable();
+}
+
+// NEW: Function to toggle grouped view
+function toggleGroupedView() {
+  showGroupedView = !showGroupedView;
+  const btn = document.getElementById('toggle-grouped-view');
+  if (btn) {
+    btn.textContent = showGroupedView ? '📋 Show Individual' : '📦 Show Grouped';
+    btn.className = showGroupedView ? 'btn btn-secondary' : 'btn btn-primary';
+  }
+  renderTable();
+}
+
 function renderTable() {
   const tbody = document.getElementById('bookings-body');
   const summaryDiv = document.getElementById('table-summary');
@@ -311,45 +440,52 @@ function renderTable() {
   // Hide cards by default
   cardsContainer.style.display = 'none';
   if (!bookingsData.length) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No bookings found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;">No bookings found.</td></tr>';
     cardsContainer.innerHTML = '';
   } else {
-  tbody.innerHTML = bookingsData.map(b => {
-    const updated = b.updated_fields || {};
-    // Helper to check if highlight should be shown
-    function shouldHighlight(field) {
-      if (!updated[field]) return false;
-      if (!b.tour_date) return false;
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const tourDate = new Date(b.tour_date.substring(0,10));
-      const dayAfterTour = new Date(tourDate);
-      dayAfterTour.setDate(tourDate.getDate() + 1);
-      return today <= dayAfterTour;
+    // Check if grouped view is enabled
+    if (showGroupedView) {
+      const { grouped, ungrouped } = groupBookingsByOrder(bookingsData);
+      renderGroupedBookings(grouped, ungrouped);
+    } else {
+      // Original individual view
+      tbody.innerHTML = bookingsData.map(b => {
+        const updated = b.updated_fields || {};
+        // Helper to check if highlight should be shown
+        function shouldHighlight(field) {
+          if (!updated[field]) return false;
+          if (!b.tour_date) return false;
+          const today = new Date();
+          today.setHours(0,0,0,0);
+          const tourDate = new Date(b.tour_date.substring(0,10));
+          const dayAfterTour = new Date(tourDate);
+          dayAfterTour.setDate(tourDate.getDate() + 1);
+          return today <= dayAfterTour;
+        }
+        return `
+          <tr class="${getRowClass(b.tour_date)}">
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium${shouldHighlight('booking_number') ? ' bg-yellow-100' : ''}">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('sku') ? ' bg-yellow-100' : ''}">${b.sku || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('program') ? ' bg-yellow-100' : ''}">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('rate') ? ' bg-yellow-100' : ''}">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('hotel') ? ' bg-yellow-100' : ''}">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('op') ? ' bg-yellow-100' : ''}">${iconButton('op', b.booking_number, b.op)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('ri') ? ' bg-yellow-100' : ''}">${iconButton('ri', b.booking_number, b.ri)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('customer') ? ' bg-yellow-100' : ''}">${iconButton('customer', b.booking_number, b.customer)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('adult') ? ' bg-yellow-100' : ''}">${b.adult || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('child') ? ' bg-yellow-100' : ''}">${b.child || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-center">
+              <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
+              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
+            </td>
+        </tr>
+        `;
+      }).join('');
     }
-    return `
-      <tr class="${getRowClass(b.tour_date)}">
-        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium${shouldHighlight('booking_number') ? ' bg-yellow-100' : ''}">${b.booking_number || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('sku') ? ' bg-yellow-100' : ''}">${b.sku || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('program') ? ' bg-yellow-100' : ''}">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('rate') ? ' bg-yellow-100' : ''}">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('hotel') ? ' bg-yellow-100' : ''}">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('op') ? ' bg-yellow-100' : ''}">${iconButton('op', b.booking_number, b.op)}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('ri') ? ' bg-yellow-100' : ''}">${iconButton('ri', b.booking_number, b.ri)}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('customer') ? ' bg-yellow-100' : ''}">${iconButton('customer', b.booking_number, b.customer)}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('adult') ? ' bg-yellow-100' : ''}">${b.adult || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('child') ? ' bg-yellow-100' : ''}">${b.child || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-center">
-          <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
-          <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
-        </td>
-    </tr>
-    `;
-  }).join('');
     // Render cards for mobile
     cardsContainer.innerHTML = bookingsData.map(b => {
       const showChild = b.child && Number(b.child) > 0;

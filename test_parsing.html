@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parsing Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Thailand Tours Parser Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Simplified version of the parsing logic for testing
+        class ThailandToursParser {
+            constructor(textContent) {
+                this.lines = textContent.split('\n').map(line => line.trim());
+            }
+
+            extractMultipleBookings() {
+                const bookings = [];
+                const orderNumber = this.extractBookingNumber();
+                
+                const bookingSections = this._findBookingSections();
+                
+                for (const section of bookingSections) {
+                    const booking = this._extractSingleBooking(section, orderNumber);
+                    if (booking && booking.bookingNumber) {
+                        bookings.push(booking);
+                    }
+                }
+                
+                if (bookings.length === 0) {
+                    const singleBooking = this.extractAll();
+                    if (singleBooking.bookingNumber && singleBooking.bookingNumber !== 'N/A') {
+                        bookings.push(singleBooking);
+                    }
+                }
+                
+                return bookings;
+            }
+
+            extractBookingNumber() {
+                const line = this.lines.find(l => l.toLowerCase().startsWith('order number:'));
+                return line ? line.substring('ORDER NUMBER:'.length).trim() : 'N/A';
+            }
+
+            _findBookingSections() {
+                const sections = [];
+                let currentSection = [];
+                let inBookingSection = false;
+                
+                for (const line of this.lines) {
+                    if (line.includes('Booking #') && /\d+/.test(line)) {
+                        if (inBookingSection && currentSection.length > 0) {
+                            sections.push([...currentSection]);
+                        }
+                        currentSection = [line];
+                        inBookingSection = true;
+                    } else if (inBookingSection) {
+                        currentSection.push(line);
+                    }
+                }
+                
+                if (inBookingSection && currentSection.length > 0) {
+                    sections.push(currentSection);
+                }
+                
+                return sections;
+            }
+
+            _extractSingleBooking(sectionLines, orderNumber) {
+                const bookingNumber = this._extractBookingNumberFromSection(sectionLines);
+                if (!bookingNumber) return null;
+                
+                const passengers = this._extractPassengersFromSection(sectionLines);
+                const tourDate = this._extractTourDateFromSection(sectionLines);
+                const sku = this._extractSKUFromSection(sectionLines);
+                const program = this._extractProgramFromSection(sectionLines);
+                
+                return {
+                    bookingNumber: bookingNumber,
+                    orderNumber: orderNumber,
+                    tourDate: tourDate,
+                    sku: sku,
+                    program: program,
+                    adult: passengers.adult,
+                    child: passengers.child,
+                    infant: passengers.infant,
+                    paid: this._extractPaidForBooking(sectionLines)
+                };
+            }
+
+            _extractBookingNumberFromSection(sectionLines) {
+                for (const line of sectionLines) {
+                    const match = line.match(/Booking\s+#(\d+)/i);
+                    if (match) {
+                        return match[1];
+                    }
+                }
+                return null;
+            }
+
+            _extractPassengersFromSection(sectionLines) {
+                const pax = { adult: '0', child: '0', infant: '0' };
+                
+                // Look for the specific passenger line in this section
+                for (const line of sectionLines) {
+                    const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
+                    if (adultMatch && adultMatch[1]) {
+                        pax.adult = adultMatch[1];
+                        break;
+                    }
+                    
+                    const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
+                    if (personPlusMatch && personPlusMatch[1]) {
+                        pax.adult = personPlusMatch[1];
+                        break;
+                    }
+                }
+                
+                for (const line of sectionLines) {
+                    const childMatch = line.match(/child[ren|s]?[^\d]*(\d+)\s*$/i) || line.match(/child[ren|s]?.*?:\s*(\d+)/i);
+                    if (childMatch && childMatch[1]) {
+                        pax.child = childMatch[1];
+                        break;
+                    }
+                }
+                
+                for (const line of sectionLines) {
+                    const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
+                    if (infantMatch && infantMatch[1]) {
+                        pax.infant = infantMatch[1];
+                        break;
+                    }
+                }
+                
+                return pax;
+            }
+
+            _extractTourDateFromSection(sectionLines) {
+                for (const line of sectionLines) {
+                    const dateMatch = line.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
+                    if (dateMatch) {
+                        return dateMatch[1];
+                    }
+                }
+                return 'N/A';
+            }
+
+            _extractSKUFromSection(sectionLines) {
+                for (const line of sectionLines) {
+                    const match = line.match(/\(#([A-Z0-9]+)\)/);
+                    if (match) {
+                        return match[1];
+                    }
+                }
+                return '';
+            }
+
+            _extractProgramFromSection(sectionLines) {
+                for (let i = 0; i < sectionLines.length; i++) {
+                    const line = sectionLines[i];
+                    if (line.includes('(#') && i > 0) {
+                        const programLine = sectionLines[i - 1].trim();
+                        if (programLine && !programLine.startsWith('Booking') && !programLine.includes('#')) {
+                            return programLine;
+                        }
+                    }
+                }
+                return 'N/A';
+            }
+
+            _extractPaidForBooking(sectionLines) {
+                for (const line of sectionLines) {
+                    const match = line.match(/[฿=E0=B8=BF]?\s*([\d,\.]+)/i);
+                    if (match && match[1]) {
+                        return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
+                    }
+                }
+                return null;
+            }
+
+            extractAll() {
+                return {
+                    bookingNumber: 'N/A',
+                    orderNumber: 'N/A',
+                    tourDate: 'N/A',
+                    program: 'N/A',
+                    adult: '0',
+                    child: '0',
+                    infant: '0'
+                };
+            }
+        }
+
+        // Test email content
+        const testEmail = `
+New Order: #6872911446
+
+Booking #34527
+Phuket Island Tour
+(#HKT0041)
+August 6, 2025
+Adult: 4
+Child: 0
+Infant: 0
+฿2,400.00
+
+Booking #34528
+Phi Phi Island Tour
+(#HKT0042)
+August 7, 2025
+Adult: 4
+Child: 0
+Infant: 0
+฿3,200.00
+
+Booking #34529
+James Bond Island Tour
+(#HKT0043)
+August 8, 2025
+Adult: 4
+Child: 0
+Infant: 0
+฿2,800.00
+
+Customer: John Doe
+Hotel: Phuket Resort
+Phone: +66-123-456-789
+`;
+
+        // Run the test
+        function runTest() {
+            const resultsDiv = document.getElementById('results');
+            let html = '<h2>Test Results</h2>';
+            
+            try {
+                const parser = new ThailandToursParser(testEmail);
+                const bookings = parser.extractMultipleBookings();
+                
+                html += `<div class="test-result success">
+                    <h3>✅ Found ${bookings.length} bookings</h3>
+                    <pre>${JSON.stringify(bookings, null, 2)}</pre>
+                </div>`;
+                
+                // Verify passenger counts
+                const expectedPassengers = [4, 4, 4];
+                let allCorrect = true;
+                
+                bookings.forEach((booking, index) => {
+                    const actualAdults = parseInt(booking.adult) || 0;
+                    const expectedAdults = expectedPassengers[index];
+                    
+                    if (actualAdults !== expectedAdults) {
+                        html += `<div class="test-result error">
+                            ❌ ERROR: Booking ${booking.bookingNumber} has ${actualAdults} adults, expected ${expectedAdults}
+                        </div>`;
+                        allCorrect = false;
+                    } else {
+                        html += `<div class="test-result success">
+                            ✅ Booking ${booking.bookingNumber} has correct passenger count: ${actualAdults} adults
+                        </div>`;
+                    }
+                });
+                
+                if (allCorrect) {
+                    html += '<div class="test-result success"><h3>🎉 All bookings have correct passenger counts!</h3></div>';
+                } else {
+                    html += '<div class="test-result error"><h3>❌ Some bookings have incorrect passenger counts.</h3></div>';
+                }
+                
+            } catch (error) {
+                html += `<div class="test-result error">
+                    <h3>❌ Error testing parser:</h3>
+                    <pre>${error.message}</pre>
+                </div>`;
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Run test when page loads
+        window.onload = runTest;
+    </script>
+</body>
+</html> 

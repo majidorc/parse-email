@@ -75,6 +75,28 @@ function isBoolLike(val) {
   return false;
 }
 
+// Helper functions for summary cards
+function statSpan(label, value, isGreen, extraClass = '') {
+  return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
+}
+
+function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
+  let statusHtml = '';
+  if (opNotSent == 0 && customerNotSent == 0) {
+    statusHtml = `<span class="text-green-700 font-bold flex items-center gap-2 justify-center mt-2"><span>✅ OP: 0</span> | <span>✅ Customer: 0</span> <span class='ml-2'>🟢</span></span>`;
+  } else {
+    statusHtml = `<span class="text-red-700 font-bold flex items-center gap-2 justify-center mt-2"><span>OP: ${opNotSent}</span> | <span>Customer: ${customerNotSent}</span> <span class='ml-2'>🔴</span></span>`;
+  }
+  return `
+  <div class="summary-card p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
+    <p class="${color} font-semibold mb-2 text-lg">${day}</p>
+    <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
+      <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
+    </div>
+    ${statusHtml}
+  </div>`;
+}
+
 // Pagination variables
 let currentPage = 1;
 const rowsPerPage = 20;
@@ -405,25 +427,6 @@ function renderTable() {
   }
   renderPagination();
   // Always render summary and pagination
-  function statSpan(label, value, isGreen, extraClass = '') {
-    return `<span class="${isGreen ? 'text-green-600' : 'text-red-600'} font-medium ${extraClass}">${label} <span class="font-bold ${isGreen ? 'text-green-700' : 'text-red-700'}">${value}</span></span>`;
-  }
-  function statCard(day, total, opNotSent, customerNotSent, color, bg, border, totalClass, id = "") {
-    let statusHtml = '';
-    if (opNotSent == 0 && customerNotSent == 0) {
-      statusHtml = `<span class="text-green-700 font-bold flex items-center gap-2 justify-center mt-2"><span>✅ OP: 0</span> | <span>✅ Customer: 0</span> <span class='ml-2'>🟢</span></span>`;
-    } else {
-      statusHtml = `<span class="text-red-700 font-bold flex items-center gap-2 justify-center mt-2"><span>OP: ${opNotSent}</span> | <span>Customer: ${customerNotSent}</span> <span class='ml-2'>🔴</span></span>`;
-    }
-    return `
-    <div class="summary-card p-4 rounded-lg ${bg} shadow-sm border ${border} flex flex-col items-center justify-center cursor-pointer" id="${id}">
-      <p class="${color} font-semibold mb-2 text-lg">${day}</p>
-      <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-gray-800">
-        <span class="font-medium">Total: <span class="font-bold ${totalClass}">${total}</span></span>
-      </div>
-      ${statusHtml}
-    </div>`;
-  }
   // Use summary data from unfiltered fetch
   let summary = bookingsSummaryDataUnfiltered;
   if (bookingsSummaryLoading) {

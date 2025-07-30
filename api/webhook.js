@@ -1702,17 +1702,6 @@ async function notifyBookingUpdate(bookingNumber, action = 'updated') {
     }
 }
 
-// Notifications endpoint - merged from notifications.js
-if (req.method === 'GET' && req.url === '/api/notifications') {
-  // Simple endpoint that just confirms the connection
-  // Real-time updates are handled by automatic refresh
-  return res.status(200).json({ 
-    status: 'connected',
-    message: 'Notifications endpoint active - real-time updates via auto-refresh',
-    timestamp: new Date().toISOString()
-  });
-}
-
 module.exports = handler;
 module.exports.config = { api: { bodyParser: false } };
 module.exports.BokunParser = BokunParser;

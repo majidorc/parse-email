@@ -3377,19 +3377,21 @@ function initializeApp() {
     };
   }
 
-  // Initialize dashboard on page load
-  dashboardSection.style.display = '';
-  bookingsTableSection.style.display = 'none';
-  summarySection.style.display = 'none';
+  // Initialize bookings tab on page load (instead of dashboard)
+  dashboardSection.style.display = 'none';
+  bookingsTableSection.style.display = window.innerWidth <= 700 ? 'none' : '';
+  summarySection.style.display = '';
   accountingTableContainer.style.display = 'none';
-  searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
-  document.getElementById('pagination-controls').style.display = 'none';
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
+  searchBarSection.style.display = '';
+  document.getElementById('pagination-controls').style.display = '';
+  document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
+  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
+  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200';
   accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
   programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
   analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
-  fetchDashboardAnalytics();
+  bookingsBtn.setAttribute('data-active', 'true');
+  fetchBookings();
   
   // Add dashboard refresh button handler
   const dashboardRefreshBtn = document.getElementById('dashboard-refresh');

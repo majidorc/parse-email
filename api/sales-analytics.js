@@ -60,21 +60,16 @@ export default async function handler(req, res) {
       endDateParam = endDate;
     }
     
-    // Sales by channel with proper channel detection logic
+    // Sales by channel based on "Sold by" field only
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
-            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
-            WHEN channel IS NOT NULL AND channel != '' THEN 
-              CASE
-                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
-                ELSE 'OTA'
-              END
-            ELSE 'OTA'
+            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
+            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            ELSE 'Other'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -85,15 +80,10 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
-            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
-            WHEN channel IS NOT NULL AND channel != '' THEN 
-              CASE
-                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
-                ELSE 'OTA'
-              END
-            ELSE 'OTA'
+            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
+            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            ELSE 'Other'
           END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
@@ -101,15 +91,10 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
-            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
-            WHEN channel IS NOT NULL AND channel != '' THEN 
-              CASE
-                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
-                ELSE 'OTA'
-              END
-            ELSE 'OTA'
+            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
+            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            ELSE 'Other'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -119,15 +104,10 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
-            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
-            WHEN channel IS NOT NULL AND channel != '' THEN 
-              CASE
-                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
-                ELSE 'OTA'
-              END
-            ELSE 'OTA'
+            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
+            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            ELSE 'Other'
           END
         ORDER BY total_sales DESC
       `);
@@ -212,13 +192,13 @@ export default async function handler(req, res) {
       `);
     }
     
-    // OTA vs Website breakdown (for the missing metrics) - using updated logic
+    // OTA vs Website breakdown based on "Sold by" field
     let otaWebsiteResult;
     if (dateFilter) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -227,7 +207,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'OTA'
           END
       `, [startDateParam, endDateParam]);
@@ -235,7 +215,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -243,7 +223,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'OTA'
           END
       `);

@@ -1641,9 +1641,18 @@ function updateSalesChannelChart(data) {
   
   // Destroy existing chart if it exists
   if (salesChannelChart) {
-    salesChannelChart.destroy();
+    try {
+      salesChannelChart.destroy();
+    } catch (error) {
+      console.error('Error destroying existing chart:', error);
+    }
     salesChannelChart = null;
   }
+  
+  // Clear the canvas
+  const canvas = ctx;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
   
   // Don't create chart if no data
   if (!data || data.length === 0) {
@@ -1674,8 +1683,7 @@ function updateSalesChannelChart(data) {
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: false,
         plugins: {
           legend: {
             position: 'bottom',
@@ -1728,8 +1736,18 @@ function initializeSalesAnalytics() {
 // Cleanup function for sales analytics charts
 function cleanupSalesAnalytics() {
   if (salesChannelChart) {
-    salesChannelChart.destroy();
+    try {
+      salesChannelChart.destroy();
+    } catch (error) {
+      console.error('Error destroying sales channel chart:', error);
+    }
     salesChannelChart = null;
+  }
+  
+  // Clear any pending timeouts
+  if (salesAnalyticsTimeout) {
+    clearTimeout(salesAnalyticsTimeout);
+    salesAnalyticsTimeout = null;
   }
 }
 

@@ -266,6 +266,17 @@ export default async function handler(req, res) {
     const otaCount = otaData ? parseInt(otaData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
     
+    // Debug logging for passenger counts
+    console.log('Debug - Total Summary:', {
+      total_bookings: totalSummaryResult.rows[0].total_bookings,
+      total_adults: totalSummaryResult.rows[0].total_adults,
+      total_children: totalSummaryResult.rows[0].total_children,
+      total_infants: totalSummaryResult.rows[0].total_infants,
+      period: period,
+      startDate: startDateParam,
+      endDate: endDateParam
+    });
+
     res.status(200).json({
       salesByChannel: salesByChannelResult.rows,
       totalSummary: totalSummaryResult.rows[0],

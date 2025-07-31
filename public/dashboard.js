@@ -1388,7 +1388,25 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     
     if (totalAmount) totalAmount.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (totalBookings) totalBookings.textContent = data.totalSummary.total_bookings;
-    if (totalPassengers) totalPassengers.textContent = data.totalSummary.total_adults + data.totalSummary.total_children + data.totalSummary.total_infants;
+    if (totalPassengers) {
+      const adults = parseInt(data.totalSummary.total_adults) || 0;
+      const children = parseInt(data.totalSummary.total_children) || 0;
+      const infants = parseInt(data.totalSummary.total_infants) || 0;
+      const total = adults + children + infants;
+      
+      // Debug logging
+      console.log('Debug - Passenger calculation:', {
+        adults: adults,
+        children: children,
+        infants: infants,
+        total: total,
+        raw_adults: data.totalSummary.total_adults,
+        raw_children: data.totalSummary.total_children,
+        raw_infants: data.totalSummary.total_infants
+      });
+      
+      totalPassengers.textContent = total;
+    }
     if (avgSale) {
       const avg = data.totalSummary.total_bookings > 0 ? data.totalSummary.total_sales / data.totalSummary.total_bookings : 0;
       avgSale.textContent = Number(avg).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});

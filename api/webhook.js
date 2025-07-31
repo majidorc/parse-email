@@ -1329,20 +1329,24 @@ async function handler(req, res) {
 
         // Handle cancellation emails - BULLETPROOF VERSION
         if (parsedEmail.subject && parsedEmail.subject.toLowerCase().includes('cancelled booking')) {
+            console.log('[CANCEL] Cancellation email detected:', {
+                subject: parsedEmail.subject,
+                from: parsedEmail.from?.value?.[0]?.address
+            });
     
             
             // Extract booking number from multiple sources
             let bookingNumber = null;
             
-            // Try to extract from subject first
-            const subjectMatch = parsedEmail.subject.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
-                            if (subjectMatch && subjectMatch[1]) {
-                    bookingNumber = subjectMatch[1];
-                }
+            // Try to extract from subject first - support both Bokun and tours.co.th formats
+            const subjectMatch = parsedEmail.subject.match(/(?:Ext\. booking ref:?\s*|Booking #|Booking ID)\s*([A-Z0-9]+)/i);
+            if (subjectMatch && subjectMatch[1]) {
+                bookingNumber = subjectMatch[1];
+            }
             
             // If not found in subject, try to extract from body
             if (!bookingNumber && parsedEmail.text) {
-                const bodyMatch = parsedEmail.text.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
+                const bodyMatch = parsedEmail.text.match(/(?:Ext\. booking ref:?\s*|Booking #|Booking ID)\s*([A-Z0-9]+)/i);
                 if (bodyMatch && bodyMatch[1]) {
                     bookingNumber = bodyMatch[1];
                 }
@@ -1351,13 +1355,28 @@ async function handler(req, res) {
             // If still not found, try HTML body
             if (!bookingNumber && parsedEmail.html) {
                 const htmlText = convert(parsedEmail.html, { wordwrap: false });
-                const htmlMatch = htmlText.match(/Ext\. booking ref:?\s*([A-Z0-9]+)/i);
+                const htmlMatch = htmlText.match(/(?:Ext\. booking ref:?\s*|Booking #|Booking ID)\s*([A-Z0-9]+)/i);
                 if (htmlMatch && htmlMatch[1]) {
                     bookingNumber = htmlMatch[1];
                 }
             }
             
+            // Additional fallback: look for any number that could be a booking number in the email
+            if (!bookingNumber) {
+                const allText = `${parsedEmail.subject} ${parsedEmail.text || ''} ${parsedEmail.html ? convert(parsedEmail.html, { wordwrap: false }) : ''}`;
+                // Look for patterns like "34680" (just numbers) or "BK12345" (letters + numbers)
+                const numberMatch = allText.match(/(?:Booking|Booking ID|Booking #|Ext\. booking ref)\s*([A-Z0-9]{4,10})/gi);
+                if (numberMatch && numberMatch.length > 0) {
+                    // Extract the number from the first match
+                    const extracted = numberMatch[0].match(/([A-Z0-9]{4,10})/i);
+                    if (extracted && extracted[1]) {
+                        bookingNumber = extracted[1];
+                    }
+                }
+            }
+            
             if (bookingNumber) {
+                console.log('[CANCEL] Extracted booking number:', bookingNumber);
                 
                 try {
                     // Check if booking exists before sending notification

@@ -749,27 +749,6 @@ function generateNotificationText(b) {
     programLine = `Program : ${program} - [${rate}]`;
   }
   
-  // Integrate addons into program line if available
-  let addons = b.addons;
-  // Parse addons if it's a string (from database)
-  if (typeof addons === 'string') {
-    try {
-      addons = JSON.parse(addons);
-    } catch (e) {
-      console.warn('Failed to parse addons JSON:', e);
-      addons = null;
-    }
-  }
-  
-  if (addons && Array.isArray(addons) && addons.length > 0) {
-    const addonsText = addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
-    if (rate) {
-      programLine = `Program : ${program} - [${rate}, ${addonsText}]`;
-    } else {
-      programLine = `Program : ${program} - [${addonsText}]`;
-    }
-  }
-  
   // Dynamic cash on tour text based on national_park_fee value
   const cashOnTourText = b.national_park_fee !== undefined && b.national_park_fee ? 'National Park Fee' : 'None';
   

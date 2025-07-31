@@ -530,8 +530,7 @@ class ThailandToursParser extends BaseEmailParser {
             paid: paid,
             book_date: this.extractBookDate(),
             rate: this._extractRateFromSection(sectionLines),
-            start_time: this._extractStartTimeFromSection(sectionLines),
-            addons: this._extractAddonsFromSection(sectionLines)
+            start_time: this._extractStartTimeFromSection(sectionLines)
         };
     }
 
@@ -648,14 +647,9 @@ class ThailandToursParser extends BaseEmailParser {
         return 'N/A';
     }
 
-    // NEW: Extract rate from a specific section
+    // NEW: Extract rate from a specific section (including addons)
     _extractRateFromSection(sectionLines) {
-        // For now, return empty string - can be enhanced later
-        return '';
-    }
-
-    // NEW: Extract addons/extras from a specific section
-    _extractAddonsFromSection(sectionLines) {
+        let rate = '';
         const addons = [];
         
         // Find the range between "Quantity" and "Booking #"
@@ -682,20 +676,24 @@ class ThailandToursParser extends BaseEmailParser {
                     const colonIndex = line.indexOf(':');
                     if (colonIndex !== -1) {
                         const addonName = line.substring(0, colonIndex).trim();
-                        const rate = line.substring(colonIndex + 1).trim();
-                        if (addonName && rate) {
-                            addons.push({
-                                name: addonName,
-                                rate: rate
-                            });
+                        const addonRate = line.substring(colonIndex + 1).trim();
+                        if (addonName && addonRate) {
+                            addons.push(`${addonName}: ${addonRate}`);
                         }
                     }
                 }
             }
         }
         
-        return addons;
+        // Combine rate with addons
+        if (addons.length > 0) {
+            rate = addons.join(', ');
+        }
+        
+        return rate;
     }
+
+
 
     // NEW: Extract start time from a specific section
     _extractStartTimeFromSection(sectionLines) {
@@ -1663,8 +1661,8 @@ async function handler(req, res) {
                     }
 
                     await sql`
-                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, addons)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${JSON.stringify(extractedInfo.addons || [])})
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
@@ -1681,8 +1679,7 @@ async function handler(req, res) {
                           paid = EXCLUDED.paid,
                           book_date = EXCLUDED.book_date,
                           channel = EXCLUDED.channel,
-                          rate = EXCLUDED.rate,
-                          addons = EXCLUDED.addons;
+                          rate = EXCLUDED.rate;
                     `;
 
                     // Send Telegram notification for ALL new bookings regardless of date
@@ -1703,7 +1700,6 @@ async function handler(req, res) {
                       book_date: extractedInfo.book_date,
                       channel,
                       rate: finalRate,
-                      addons: extractedInfo.addons,
                       start_time: extractedInfo.start_time
                     });
 
@@ -1741,4 +1737,5 @@ async function notifyBookingUpdate(bookingNumber, action = 'updated') {
 module.exports = handler;
 module.exports.config = { api: { bodyParser: false } };
 module.exports.BokunParser = BokunParser;
+module.exports.ThailandToursParser = ThailandToursParser; 
 module.exports.ThailandToursParser = ThailandToursParser; 

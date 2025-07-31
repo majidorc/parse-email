@@ -348,7 +348,7 @@ module.exports = async (req, res) => {
 
     // Use string interpolation for ORDER BY direction
     let dataQuery = `
-      SELECT booking_number, COALESCE(order_number, '') as order_number, book_date, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number, rate, updated_fields
+      SELECT booking_number, COALESCE(order_number, '') as order_number, book_date, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number, rate, addons, updated_fields
       FROM bookings
       ${whereClause}
       ORDER BY ${sort} ${dirStr}
@@ -388,7 +388,7 @@ module.exports = async (req, res) => {
     try {
       // Get all bookings for this order number
       const { rows: bookings } = await sql`
-        SELECT booking_number, COALESCE(order_number, '') as order_number, book_date, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number, rate, updated_fields
+        SELECT booking_number, COALESCE(order_number, '') as order_number, book_date, tour_date, customer_name, sku, program, op, ri, customer, hotel, adult, child, infant, phone_number, rate, addons, updated_fields
         FROM bookings 
         WHERE order_number = ${order_number}
         ORDER BY tour_date ASC, booking_number ASC

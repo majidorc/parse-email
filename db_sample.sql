@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   sku TEXT,
   program TEXT,
   rate TEXT,
+  addons JSONB, -- NEW: Store addons as JSON array
   hotel TEXT,
   phone_number TEXT,
   customer_name TEXT,

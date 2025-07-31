@@ -750,8 +750,19 @@ function generateNotificationText(b) {
   }
   
   // Integrate addons into program line if available
-  if (b.addons && Array.isArray(b.addons) && b.addons.length > 0) {
-    const addonsText = b.addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
+  let addons = b.addons;
+  // Parse addons if it's a string (from database)
+  if (typeof addons === 'string') {
+    try {
+      addons = JSON.parse(addons);
+    } catch (e) {
+      console.warn('Failed to parse addons JSON:', e);
+      addons = null;
+    }
+  }
+  
+  if (addons && Array.isArray(addons) && addons.length > 0) {
+    const addonsText = addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
     if (rate) {
       programLine = `Program : ${program} - [${rate}, ${addonsText}]`;
     } else {

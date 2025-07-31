@@ -124,8 +124,19 @@ class NotificationManager {
         }
         
         // Integrate addons into program line if available
-        if (booking.addons && Array.isArray(booking.addons) && booking.addons.length > 0) {
-            const addonsText = booking.addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
+        let addons = booking.addons;
+        // Parse addons if it's a string (from database)
+        if (typeof addons === 'string') {
+            try {
+                addons = JSON.parse(addons);
+            } catch (e) {
+                console.warn('Failed to parse addons JSON:', e);
+                addons = null;
+            }
+        }
+        
+        if (addons && Array.isArray(addons) && addons.length > 0) {
+            const addonsText = addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
             if (rate) {
                 programLine = `${programIcon} Program : ${program} - [${rate}, ${addonsText}]`;
             } else {

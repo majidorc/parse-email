@@ -218,12 +218,13 @@ class NotificationManager {
                 results.push('telegram');
             } catch (e) { console.error('Telegram notification failed:', e); }
         }
-        if (config.notifications.line.enabled) {
-            try {
-                await this.sendLine(message);
-                results.push('line');
-            } catch (e) { console.error('LINE notification failed:', e); }
-        }
+        // LINE notifications disabled temporarily
+        // if (config.notifications.line.enabled) {
+        //     try {
+        //         await this.sendLine(message);
+        //         results.push('line');
+        //     } catch (e) { console.error('LINE notification failed:', e); }
+        // }
         return results;
     }
 

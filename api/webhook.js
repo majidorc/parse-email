@@ -1539,8 +1539,9 @@ async function handler(req, res) {
                     // Compare all relevant fields
                     const existing = existingBookings[0];
                     let changed = false;
-                    // Auto-assign rate if no rate is provided but SKU exists in programs list (for field comparison)
+                    // Use the rate from email parsing (which includes addon information) for field comparison
                     let comparisonRate = extractedInfo.rate;
+                    // Only fall back to database lookup if no rate was extracted from email
                     if ((!comparisonRate || comparisonRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                         try {
                             // Look up the first available rate for this SKU
@@ -1638,8 +1639,9 @@ async function handler(req, res) {
                       channel = 'OTA';
                     }
 
-                    // Auto-assign rate if no rate is provided but SKU exists in programs list
+                    // Use the rate from email parsing (which includes addon information)
                     let finalRate = extractedInfo.rate;
+                    // Only fall back to database lookup if no rate was extracted from email
                     if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                         try {
                             // Look up the first available rate for this SKU

@@ -755,6 +755,18 @@ function generateNotificationText(b) {
   // Build message lines based on transfer status
   let lines;
   
+  // Create passenger display string
+  let paxDisplay = '';
+  if (child > 0 && infant > 0) {
+    paxDisplay = `${adult} Adults, ${child} Children, ${infant} Infants (Total: ${totalPax})`;
+  } else if (child > 0) {
+    paxDisplay = `${adult} Adults, ${child} Children (Total: ${totalPax})`;
+  } else if (infant > 0) {
+    paxDisplay = `${adult} Adults, ${infant} Infants (Total: ${totalPax})`;
+  } else {
+    paxDisplay = `${adult} Adults (Total: ${totalPax})`;
+  }
+  
   if (b.no_transfer) {
     // No Transfer version - shorter format
     lines = [
@@ -764,7 +776,7 @@ function generateNotificationText(b) {
       `📅 Tour date : ${tourDate}`,
       programLine,
       `👤 Name : ${customerName}`,
-      `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
+      `👥 Pax : ${paxDisplay}`,
       `💵 Cash on tour : ${cashOnTourText}`
     ];
   } else {
@@ -776,7 +788,7 @@ function generateNotificationText(b) {
       `📅 Tour date : ${tourDate}`,
       programLine,
       `👤 Name : ${customerName}`,
-      `👥 Pax : ${adult} Adults (Total: ${totalPax})`,
+      `👥 Pax : ${paxDisplay}`,
       `🏨 Hotel : ${cleanHotel}`,
       `📞 Phone Number : ${phoneNumber}`,
       `💵 Cash on tour : ${cashOnTourText}`,

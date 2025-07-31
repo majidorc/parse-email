@@ -92,10 +92,9 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'bokun' THEN 'VIATOR'
-            WHEN channel = 'getyourguide' THEN 'GYG'
-            WHEN channel = 'tours.co.th' THEN 'WebSite'
-            ELSE 'Other'
+            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -106,10 +105,9 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel = 'bokun' THEN 'VIATOR'
-            WHEN channel = 'getyourguide' THEN 'GYG'
-            WHEN channel = 'tours.co.th' THEN 'WebSite'
-            ELSE 'Other'
+            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
@@ -117,10 +115,9 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'bokun' THEN 'VIATOR'
-            WHEN channel = 'getyourguide' THEN 'GYG'
-            WHEN channel = 'tours.co.th' THEN 'WebSite'
-            ELSE 'Other'
+            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -130,10 +127,9 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel = 'bokun' THEN 'VIATOR'
-            WHEN channel = 'getyourguide' THEN 'GYG'
-            WHEN channel = 'tours.co.th' THEN 'WebSite'
-            ELSE 'Other'
+            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `);
@@ -224,8 +220,8 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'tours.co.th' THEN 'Website'
-            ELSE 'OTA'
+            WHEN channel = 'Viator' THEN 'OTA'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
@@ -233,24 +229,24 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel = 'tours.co.th' THEN 'Website'
-            ELSE 'OTA'
+            WHEN channel = 'Viator' THEN 'OTA'
+            ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
     } else {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'tours.co.th' THEN 'Website'
-            ELSE 'OTA'
+            WHEN channel = 'Viator' THEN 'OTA'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel = 'tours.co.th' THEN 'Website'
-            ELSE 'OTA'
+            WHEN channel = 'Viator' THEN 'OTA'
+            ELSE 'Website'
           END
       `);
     }

@@ -16,10 +16,11 @@ export default async function handler(req, res) {
     const bySellerResult = await client.query(
       `SELECT
         CASE
-          WHEN body ILIKE '%GetYourGuide%' THEN 'GetYourGuide'
-          WHEN body ILIKE '%Viator.com%' THEN 'Viator.com'
-          WHEN sender = 'info@tours.co.th' THEN 'WebSite'
-          ELSE 'OTA'
+          WHEN sender = 'info@tours.co.th' THEN 'Website'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+          WHEN sender ILIKE '%bokun.io%' THEN 'Viator'
+          ELSE 'Website'
         END AS seller,
         COUNT(*) AS count
       FROM parsed_emails
@@ -34,10 +35,11 @@ export default async function handler(req, res) {
     const byChannelResult = await client.query(
       `SELECT
         CASE
-          WHEN body ILIKE '%GetYourGuide%' THEN 'GetYourGuide'
-          WHEN body ILIKE '%Viator.com%' THEN 'Viator.com'
-          WHEN sender = 'info@tours.co.th' THEN 'WebSite'
-          ELSE 'OTA'
+          WHEN sender = 'info@tours.co.th' THEN 'Website'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+          WHEN sender ILIKE '%bokun.io%' THEN 'Viator'
+          ELSE 'Website'
         END AS channel,
         COUNT(*) AS count
       FROM parsed_emails
@@ -65,10 +67,11 @@ export default async function handler(req, res) {
       `SELECT 
         COALESCE(source_email, 'Unknown') AS source_email,
         CASE
-          WHEN body ILIKE '%GetYourGuide%' THEN 'GetYourGuide'
-          WHEN body ILIKE '%Viator.com%' THEN 'Viator.com'
-          WHEN sender = 'info@tours.co.th' THEN 'WebSite'
-          ELSE 'OTA'
+          WHEN sender = 'info@tours.co.th' THEN 'Website'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+          WHEN sender ILIKE '%bokun.io%' THEN 'Viator'
+          ELSE 'Website'
         END AS channel,
         COUNT(*) AS count
       FROM parsed_emails

@@ -916,14 +916,22 @@ class EmailParserFactory {
     const { subject, html, text, from } = parsedEmail;
     const fromAddress = from?.value?.[0]?.address?.toLowerCase();
     let channel = null;
-    if (fromAddress && fromAddress.includes('bokun.io')) {
-      channel = 'bokun';
-    } else if (fromAddress && fromAddress.includes('tours.co.th')) {
-      channel = 'tours.co.th';
-    } else if (fromAddress && fromAddress.includes('getyourguide')) {
-      channel = 'getyourguide';
+    
+    if (fromAddress && fromAddress.includes('tours.co.th')) {
+      channel = 'Website';
+    } else if (fromAddress && fromAddress.includes('bokun.io')) {
+      // For bokun.io emails, check the content for "Sold by"
+      const emailContent = html || text || '';
+      if (emailContent.includes('Sold by') && emailContent.includes('GetYourGuide')) {
+        channel = 'GYG';
+      } else if (emailContent.includes('Sold by') && emailContent.includes('Viator.com')) {
+        channel = 'Viator';
+      } else {
+        // Default for bokun.io emails
+        channel = 'Viator';
+      }
     } else {
-      channel = 'other';
+      channel = 'Website';
     }
 
     if (!subject || (!subject.toLowerCase().startsWith('new booking') && !subject.toLowerCase().startsWith('updated booking'))) {
@@ -1591,20 +1599,28 @@ async function handler(req, res) {
                         continue;
                     }
                     
-                    // Determine channel based on sender or booking number
+                    // Determine channel based on sender and email content
                     let channel = 'Website';
                     if (parsedEmail.from && parsedEmail.from.value && parsedEmail.from.value[0]) {
                       const sender = parsedEmail.from.value[0].address || '';
-                      if (sender.includes('bokun.io')) channel = 'Bokun';
-                      else if (sender.includes('tours.co.th')) channel = 'tours.co.th';
-                      else if (sender.includes('getyourguide.com')) channel = 'GYG';
-                    }
-                    if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('GYG')) {
-                      channel = 'GYG';
-                    } else if (extractedInfo.bookingNumber && extractedInfo.bookingNumber.startsWith('6')) {
-                      channel = 'Website';
-                    } else if (!['Bokun', 'tours.co.th', 'GYG', 'Website'].includes(channel)) {
-                      channel = 'OTA';
+                      
+                      if (sender.includes('tours.co.th')) {
+                        // All emails from tours.co.th are Website
+                        channel = 'Website';
+                      } else if (sender.includes('bokun.io')) {
+                        // For bokun.io emails, check the content for "Sold by"
+                        const emailContent = parsedEmail.html || parsedEmail.text || '';
+                        if (emailContent.includes('Sold by') && emailContent.includes('GetYourGuide')) {
+                          channel = 'GYG';
+                        } else if (emailContent.includes('Sold by') && emailContent.includes('Viator.com')) {
+                          channel = 'Viator';
+                        } else {
+                          // Default for bokun.io emails
+                          channel = 'Viator';
+                        }
+                      } else {
+                        channel = 'Website';
+                      }
                     }
 
                     // Use the rate from email parsing (which includes addon information)

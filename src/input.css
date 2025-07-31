@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+@media (max-width: 700px) {
+  .bookings-table-container { 
+    display: none !important; 
+  }
+  #settings-gear-btn {
+    position: fixed !important;
+    top: 2px !important;
+    right: 8px !important;
+    z-index: 100;
+    font-size: 1.7rem !important;
+    background: none !important;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+.summary-card { 
+  flex: 1 1 0; 
+  min-width: 220px; 
+  max-width: 340px; 
+}
+
+@media (max-width: 700px) {
+  .summary-cards-scroll {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+    overflow-x: unset !important;
+    flex-wrap: nowrap !important;
+  }
+  .summary-card {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+  }
+} 

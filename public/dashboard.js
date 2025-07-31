@@ -1240,6 +1240,10 @@ dashboardBtn.onclick = () => {
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
+  
+  // Cleanup analytics charts
+  cleanupSalesAnalytics();
+  
   fetchDashboardAnalytics();
 };
 bookingsBtn.onclick = () => {
@@ -1264,6 +1268,10 @@ bookingsBtn.onclick = () => {
   analyticsSection.style.display = 'none';
   // Show mobile cards only if on mobile
   document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
+  
+  // Cleanup analytics charts
+  cleanupSalesAnalytics();
+  
   fetchBookings();
 };
 accountingBtn.onclick = () => {
@@ -1286,6 +1294,10 @@ accountingBtn.onclick = () => {
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
+  
+  // Cleanup analytics charts
+  cleanupSalesAnalytics();
+  
   fetchAccounting();
 };
 programsBtn.onclick = () => {
@@ -1309,6 +1321,10 @@ programsBtn.onclick = () => {
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
+  
+  // Cleanup analytics charts
+  cleanupSalesAnalytics();
+  
   fetchRatesAndPrograms();
 };
 analyticsBtn.onclick = () => {
@@ -1333,8 +1349,11 @@ analyticsBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
 
-  // Initialize sales analytics
-  initializeSalesAnalytics();
+  // Initialize sales analytics only once
+  if (!window.salesAnalyticsInitialized) {
+    initializeSalesAnalytics();
+    window.salesAnalyticsInitialized = true;
+  }
   
   // Fetch sales analytics data
   fetchSalesAnalytics('thisMonth');
@@ -1500,13 +1519,23 @@ analyticsBtn.onclick = () => {
 // Sales Analytics functionality
 let salesChannelChart = null;
 
+// Debounce mechanism for sales analytics
+let salesAnalyticsTimeout = null;
+
 async function fetchSalesAnalytics(period = 'thisMonth') {
-  try {
-    const response = await fetch(`/api/sales-analytics?period=${period}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
+  // Clear any pending timeout
+  if (salesAnalyticsTimeout) {
+    clearTimeout(salesAnalyticsTimeout);
+  }
+  
+  // Set a new timeout to prevent rapid calls
+  salesAnalyticsTimeout = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/sales-analytics?period=${period}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
     
     // Update summary cards
     const totalAmount = document.getElementById('sales-total-amount');
@@ -1581,9 +1610,9 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         programsHtml = '<div class="text-center text-gray-400">No programs data available</div>';
       }
       
-      topProgramsDiv.innerHTML = programsHtml;
-    }
-    
+          topProgramsDiv.innerHTML = programsHtml;
+  }
+  
   } catch (error) {
     console.error('Error fetching sales analytics:', error);
     // Show error state
@@ -1603,6 +1632,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       topProgramsDiv.innerHTML = '<div class="text-center text-red-500">Error loading data</div>';
     }
   }
+  }, 300); // 300ms debounce delay
 }
 
 function updateSalesChannelChart(data) {
@@ -1612,6 +1642,12 @@ function updateSalesChannelChart(data) {
   // Destroy existing chart if it exists
   if (salesChannelChart) {
     salesChannelChart.destroy();
+    salesChannelChart = null;
+  }
+  
+  // Don't create chart if no data
+  if (!data || data.length === 0) {
+    return;
   }
   
   const labels = data.map(item => item.channel);
@@ -1625,42 +1661,49 @@ function updateSalesChannelChart(data) {
     '#06B6D4'  // cyan
   ];
   
-  salesChannelChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: salesData,
-        backgroundColor: colors.slice(0, labels.length),
-        borderWidth: 2,
-        borderColor: '#fff'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            padding: 20,
-            usePointStyle: true
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.parsed;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((value / total) * 100).toFixed(1);
-              return `${label}: ${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentage}%)`;
+  try {
+    salesChannelChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: salesData,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: ${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentage}%)`;
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('Error creating sales channel chart:', error);
+  }
 }
 
 // Initialize sales analytics event listeners
@@ -1679,6 +1722,14 @@ function initializeSalesAnalytics() {
       const period = periodFilter ? periodFilter.value : 'thisMonth';
       fetchSalesAnalytics(period);
     });
+  }
+}
+
+// Cleanup function for sales analytics charts
+function cleanupSalesAnalytics() {
+  if (salesChannelChart) {
+    salesChannelChart.destroy();
+    salesChannelChart = null;
   }
 }
 

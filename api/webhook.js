@@ -650,62 +650,35 @@ class ThailandToursParser extends BaseEmailParser {
     // NEW: Extract rate from a specific section (including addons)
     _extractRateFromSection(sectionLines) {
         let rate = '';
-        const addons = [];
         
-        // Find the range between "Quantity" and "Booking #"
-        let quantityIndex = -1;
-        let bookingIndex = -1;
-        
-        for (let i = 0; i < sectionLines.length; i++) {
-            const line = sectionLines[i];
-            if (line.toLowerCase().includes('quantity')) {
-                quantityIndex = i;
-            }
-            if (line.includes('Booking #') && /\d+/.test(line)) {
-                bookingIndex = i;
+        // Look for rate information in the section
+        for (const line of sectionLines) {
+            const trimmedLine = line.trim();
+            
+            // Look for patterns like "With Kayaking", "Without Kayaking", etc.
+            if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
+                rate = trimmedLine;
                 break;
             }
-        }
-        
-        // If we found both Quantity and Booking #, extract addons between them
-        if (quantityIndex !== -1 && bookingIndex !== -1 && bookingIndex > quantityIndex) {
-            for (let i = quantityIndex + 1; i < bookingIndex; i++) {
-                const line = sectionLines[i].trim();
-                if (line && !line.toLowerCase().includes('quantity') && !line.includes('Booking #')) {
-                    // Check if line follows the pattern "AddonName: Rate"
-                    const colonIndex = line.indexOf(':');
-                    if (colonIndex !== -1) {
-                        const addonName = line.substring(0, colonIndex).trim();
-                        const addonRate = line.substring(colonIndex + 1).trim();
-                        if (addonName && addonRate) {
-                            addons.push(`${addonName}: ${addonRate}`);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Combine rate with addons
-        if (addons.length > 0) {
-            rate = addons.join(', ');
-        }
-        
-        // If no addons found, try to find any rate information in the section
-        if (!rate) {
-            for (const line of sectionLines) {
-                const trimmedLine = line.trim();
-                // Look for patterns like "With Kayaking", "Without Kayaking", etc.
-                if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
-                    rate = trimmedLine;
+            
+            // Look for patterns like "Rate:", "Price:", etc.
+            if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
+                const colonIndex = trimmedLine.indexOf(':');
+                if (colonIndex !== -1) {
+                    rate = trimmedLine.substring(colonIndex + 1).trim();
                     break;
                 }
-                // Look for patterns like "Rate:", "Price:", etc.
-                if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
-                    const colonIndex = trimmedLine.indexOf(':');
-                    if (colonIndex !== -1) {
-                        rate = trimmedLine.substring(colonIndex + 1).trim();
-                        break;
-                    }
+            }
+            
+            // Look for any line with a colon that might be a rate (like "Kayaking: With Kayaking")
+            const colonIndex = trimmedLine.indexOf(':');
+            if (colonIndex !== -1 && colonIndex > 0) {
+                const beforeColon = trimmedLine.substring(0, colonIndex).trim();
+                const afterColon = trimmedLine.substring(colonIndex + 1).trim();
+                // If after colon contains rate-like text, use the whole line
+                if (afterColon && (afterColon.includes('With') || afterColon.includes('Without') || afterColon.toLowerCase().includes('rate'))) {
+                    rate = trimmedLine;
+                    break;
                 }
             }
         }

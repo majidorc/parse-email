@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node api/webhook.js",
     "test": "node test-email.js",
-    "build": "npx tailwindcss -i ./src/input.css -o ./public/styles.css --watch",
+    "build": "npx tailwindcss -i ./src/input.css -o ./public/styles.css --minify",
     "build:css": "npx tailwindcss -i ./src/input.css -o ./public/styles.css --minify"
   },
   "dependencies": {

@@ -60,19 +60,21 @@ export default async function handler(req, res) {
       endDateParam = endDate;
     }
     
-    // Sales by channel with improved channel detection logic
+    // Sales by channel with simplified channel detection logic
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel IS NOT NULL AND channel != '' THEN channel
-            WHEN booking_number LIKE 'VTR%' THEN 'Viator.com'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
-            WHEN booking_number LIKE 'BKN%' THEN 'Bokun'
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'TUR%' THEN 'Tours.co.th'
-            ELSE 'Unknown'
+            WHEN channel IS NOT NULL AND channel != '' THEN 
+              CASE
+                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                ELSE 'WebSite'
+              END
+            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
+            WHEN booking_number LIKE 'GYG%' OR booking_number LIKE '6%' OR booking_number LIKE 'TUR%' THEN 'WebSite'
+            ELSE 'WebSite'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -83,13 +85,15 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel IS NOT NULL AND channel != '' THEN channel
-            WHEN booking_number LIKE 'VTR%' THEN 'Viator.com'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
-            WHEN booking_number LIKE 'BKN%' THEN 'Bokun'
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'TUR%' THEN 'Tours.co.th'
-            ELSE 'Unknown'
+            WHEN channel IS NOT NULL AND channel != '' THEN 
+              CASE
+                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                ELSE 'WebSite'
+              END
+            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
+            WHEN booking_number LIKE 'GYG%' OR booking_number LIKE '6%' OR booking_number LIKE 'TUR%' THEN 'WebSite'
+            ELSE 'WebSite'
           END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
@@ -97,13 +101,15 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel IS NOT NULL AND channel != '' THEN channel
-            WHEN booking_number LIKE 'VTR%' THEN 'Viator.com'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
-            WHEN booking_number LIKE 'BKN%' THEN 'Bokun'
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'TUR%' THEN 'Tours.co.th'
-            ELSE 'Unknown'
+            WHEN channel IS NOT NULL AND channel != '' THEN 
+              CASE
+                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                ELSE 'WebSite'
+              END
+            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
+            WHEN booking_number LIKE 'GYG%' OR booking_number LIKE '6%' OR booking_number LIKE 'TUR%' THEN 'WebSite'
+            ELSE 'WebSite'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -113,13 +119,15 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel IS NOT NULL AND channel != '' THEN channel
-            WHEN booking_number LIKE 'VTR%' THEN 'Viator.com'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
-            WHEN booking_number LIKE 'BKN%' THEN 'Bokun'
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'TUR%' THEN 'Tours.co.th'
-            ELSE 'Unknown'
+            WHEN channel IS NOT NULL AND channel != '' THEN 
+              CASE
+                WHEN channel ILIKE '%viator%' THEN 'VIATOR'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                ELSE 'WebSite'
+              END
+            WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
+            WHEN booking_number LIKE 'GYG%' OR booking_number LIKE '6%' OR booking_number LIKE 'TUR%' THEN 'WebSite'
+            ELSE 'WebSite'
           END
         ORDER BY total_sales DESC
       `);
@@ -210,8 +218,8 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'VTR%' THEN 'OTA'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
@@ -219,24 +227,24 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'VTR%' THEN 'OTA'
+            ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
     } else {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'VTR%' THEN 'OTA'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'VTR%' THEN 'OTA'
+            ELSE 'Website'
           END
       `);
     }

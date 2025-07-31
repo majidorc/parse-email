@@ -60,15 +60,15 @@ export default async function handler(req, res) {
       endDateParam = endDate;
     }
     
-    // Sales by channel based on "Sold by" field only
+    // Sales by channel based on channel field
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
-            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            WHEN channel = 'bokun' THEN 'VIATOR'
+            WHEN channel = 'getyourguide' THEN 'GYG'
+            WHEN channel = 'tours.co.th' THEN 'WebSite'
             ELSE 'Other'
           END AS channel,
           COUNT(*) AS bookings,
@@ -80,9 +80,9 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
-            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            WHEN channel = 'bokun' THEN 'VIATOR'
+            WHEN channel = 'getyourguide' THEN 'GYG'
+            WHEN channel = 'tours.co.th' THEN 'WebSite'
             ELSE 'Other'
           END
         ORDER BY total_sales DESC
@@ -91,9 +91,9 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
-            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            WHEN channel = 'bokun' THEN 'VIATOR'
+            WHEN channel = 'getyourguide' THEN 'GYG'
+            WHEN channel = 'tours.co.th' THEN 'WebSite'
             ELSE 'Other'
           END AS channel,
           COUNT(*) AS bookings,
@@ -104,9 +104,9 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN sold_by ILIKE '%viator.com%' THEN 'VIATOR'
-            WHEN sold_by ILIKE '%getyourguide%' OR sold_by ILIKE '%no-reply@bokun.io%' THEN 'GYG'
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'WebSite'
+            WHEN channel = 'bokun' THEN 'VIATOR'
+            WHEN channel = 'getyourguide' THEN 'GYG'
+            WHEN channel = 'tours.co.th' THEN 'WebSite'
             ELSE 'Other'
           END
         ORDER BY total_sales DESC
@@ -192,13 +192,13 @@ export default async function handler(req, res) {
       `);
     }
     
-    // OTA vs Website breakdown based on "Sold by" field
+    // OTA vs Website breakdown based on channel field
     let otaWebsiteResult;
     if (dateFilter) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
+            WHEN channel = 'tours.co.th' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -207,7 +207,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
+            WHEN channel = 'tours.co.th' THEN 'Website'
             ELSE 'OTA'
           END
       `, [startDateParam, endDateParam]);
@@ -215,7 +215,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
+            WHEN channel = 'tours.co.th' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -223,7 +223,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN sold_by ILIKE '%info@tours.co.th%' THEN 'Website'
+            WHEN channel = 'tours.co.th' THEN 'Website'
             ELSE 'OTA'
           END
       `);

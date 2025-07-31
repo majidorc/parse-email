@@ -690,6 +690,26 @@ class ThailandToursParser extends BaseEmailParser {
             rate = addons.join(', ');
         }
         
+        // If no addons found, try to find any rate information in the section
+        if (!rate) {
+            for (const line of sectionLines) {
+                const trimmedLine = line.trim();
+                // Look for patterns like "With Kayaking", "Without Kayaking", etc.
+                if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
+                    rate = trimmedLine;
+                    break;
+                }
+                // Look for patterns like "Rate:", "Price:", etc.
+                if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
+                    const colonIndex = trimmedLine.indexOf(':');
+                    if (colonIndex !== -1) {
+                        rate = trimmedLine.substring(colonIndex + 1).trim();
+                        break;
+                    }
+                }
+            }
+        }
+        
         return rate;
     }
 
@@ -1641,6 +1661,9 @@ async function handler(req, res) {
 
                     // Use the rate from email parsing (which includes addon information)
                     let finalRate = extractedInfo.rate;
+                    console.log(`[RATE-DEBUG] Extracted rate from email: "${extractedInfo.rate}"`);
+                    console.log(`[RATE-DEBUG] SKU: "${extractedInfo.sku}"`);
+                    
                     // Only fall back to database lookup if no rate was extracted from email
                     if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                         try {
@@ -1654,12 +1677,18 @@ async function handler(req, res) {
                                 LIMIT 1
                             `;
                             
+                            console.log(`[RATE-DEBUG] Database lookup found ${rateRows.length} rates for SKU ${extractedInfo.sku}`);
                             if (rateRows.length > 0) {
                                 finalRate = rateRows[0].name;
+                                console.log(`[RATE-DEBUG] Using database rate: "${finalRate}"`);
+                            } else {
+                                console.log(`[RATE-DEBUG] No rates found in database for SKU ${extractedInfo.sku}`);
                             }
                         } catch (error) {
                             console.error(`[AUTO-RATE] Error looking up rate for SKU ${extractedInfo.sku}:`, error);
                         }
+                    } else {
+                        console.log(`[RATE-DEBUG] Using email-extracted rate: "${finalRate}"`);
                     }
 
                     await sql`

@@ -1305,6 +1305,7 @@ programsBtn.onclick = () => {
   summarySection.style.display = 'none';
   accountingTableContainer.style.display = 'none';
   programsSection.style.display = '';
+  analyticsSection.style.display = 'none';
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards

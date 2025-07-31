@@ -1,6 +1,12 @@
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 export default async function handler(req, res) {
+  const client = await pool.connect();
   try {
     const { startDate, endDate, period } = req.query;
     
@@ -57,7 +63,7 @@ export default async function handler(req, res) {
     // Sales by channel with improved channel detection logic
     let salesByChannelResult;
     if (dateFilter) {
-      salesByChannelResult = await sql`
+      salesByChannelResult = await client.query(`
         SELECT 
           CASE
             WHEN channel IS NOT NULL AND channel != '' THEN channel
@@ -74,7 +80,7 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE tour_date >= ${startDateParam} AND tour_date < ${endDateParam}
+        WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
             WHEN channel IS NOT NULL AND channel != '' THEN channel
@@ -86,9 +92,9 @@ export default async function handler(req, res) {
             ELSE 'Unknown'
           END
         ORDER BY total_sales DESC
-      `;
+      `, [startDateParam, endDateParam]);
     } else {
-      salesByChannelResult = await sql`
+      salesByChannelResult = await client.query(`
         SELECT 
           CASE
             WHEN channel IS NOT NULL AND channel != '' THEN channel
@@ -116,13 +122,13 @@ export default async function handler(req, res) {
             ELSE 'Unknown'
           END
         ORDER BY total_sales DESC
-      `;
+      `);
     }
     
     // Total summary for the period
     let totalSummaryResult;
     if (dateFilter) {
-      totalSummaryResult = await sql`
+      totalSummaryResult = await client.query(`
         SELECT 
           COUNT(*) AS total_bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -130,10 +136,10 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE tour_date >= ${startDateParam} AND tour_date < ${endDateParam}
-      `;
+        WHERE tour_date >= $1 AND tour_date < $2
+      `, [startDateParam, endDateParam]);
     } else {
-      totalSummaryResult = await sql`
+      totalSummaryResult = await client.query(`
         SELECT 
           COUNT(*) AS total_bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -141,24 +147,24 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-      `;
+      `);
     }
     
     // Sales by month (for chart)
     let salesByMonthResult;
     if (dateFilter) {
-      salesByMonthResult = await sql`
+      salesByMonthResult = await client.query(`
         SELECT 
           DATE_TRUNC('month', tour_date) AS month,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= ${startDateParam} AND tour_date < ${endDateParam}
+        WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
-      `;
+      `, [startDateParam, endDateParam]);
     } else {
-      salesByMonthResult = await sql`
+      salesByMonthResult = await client.query(`
         SELECT 
           DATE_TRUNC('month', tour_date) AS month,
           COUNT(*) AS bookings,
@@ -166,26 +172,26 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
-      `;
+      `);
     }
     
     // Top programs by sales
     let topProgramsResult;
     if (dateFilter) {
-      topProgramsResult = await sql`
+      topProgramsResult = await client.query(`
         SELECT 
           program,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= ${startDateParam} AND tour_date < ${endDateParam}
+        WHERE tour_date >= $1 AND tour_date < $2
           AND program IS NOT NULL AND program != ''
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
-      `;
+      `, [startDateParam, endDateParam]);
     } else {
-      topProgramsResult = await sql`
+      topProgramsResult = await client.query(`
         SELECT 
           program,
           COUNT(*) AS bookings,
@@ -195,7 +201,7 @@ export default async function handler(req, res) {
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
-      `;
+      `);
     }
     
     res.status(200).json({
@@ -208,5 +214,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('Sales analytics error:', err);
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 } 

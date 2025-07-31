@@ -119,8 +119,13 @@ class NotificationManager {
         // Compose program line with rate title for all bookings
         let programLine = `${programIcon} Program : ${program}`;
         const rate = booking.rate || '';
+        console.log(`[NOTIFICATION-DEBUG] Booking rate: "${rate}"`);
+        console.log(`[NOTIFICATION-DEBUG] Booking program: "${program}"`);
         if (rate) {
             programLine = `${programIcon} Program : ${program} - [${rate}]`;
+            console.log(`[NOTIFICATION-DEBUG] Using rate in program line: "${programLine}"`);
+        } else {
+            console.log(`[NOTIFICATION-DEBUG] No rate found, using basic program line: "${programLine}"`);
         }
         
         // Dynamic cash on tour text based on national_park_fee value

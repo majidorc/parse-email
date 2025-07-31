@@ -66,14 +66,12 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'WebSite'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
             WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
             WHEN channel IS NOT NULL AND channel != '' THEN 
               CASE
                 WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' THEN 'GetYourGuide'
-                WHEN channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
                 ELSE 'OTA'
               END
             ELSE 'OTA'
@@ -87,14 +85,12 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'WebSite'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
             WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
             WHEN channel IS NOT NULL AND channel != '' THEN 
               CASE
                 WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' THEN 'GetYourGuide'
-                WHEN channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
                 ELSE 'OTA'
               END
             ELSE 'OTA'
@@ -105,14 +101,12 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'WebSite'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
             WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
             WHEN channel IS NOT NULL AND channel != '' THEN 
               CASE
                 WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' THEN 'GetYourGuide'
-                WHEN channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
                 ELSE 'OTA'
               END
             ELSE 'OTA'
@@ -125,14 +119,12 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'WebSite'
-            WHEN booking_number LIKE 'GYG%' THEN 'GetYourGuide'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'WebSite'
             WHEN booking_number LIKE 'VTR%' THEN 'VIATOR'
             WHEN channel IS NOT NULL AND channel != '' THEN 
               CASE
                 WHEN channel ILIKE '%viator%' THEN 'VIATOR'
-                WHEN channel ILIKE '%getyourguide%' THEN 'GetYourGuide'
-                WHEN channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
+                WHEN channel ILIKE '%getyourguide%' OR channel ILIKE '%website%' OR channel ILIKE '%tours.co.th%' THEN 'WebSite'
                 ELSE 'OTA'
               END
             ELSE 'OTA'
@@ -220,13 +212,13 @@ export default async function handler(req, res) {
       `);
     }
     
-    // OTA vs Website breakdown (for the missing metrics) - using original logic
+    // OTA vs Website breakdown (for the missing metrics) - using updated logic
     let otaWebsiteResult;
     if (dateFilter) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -235,7 +227,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'OTA'
           END
       `, [startDateParam, endDateParam]);
@@ -243,7 +235,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'OTA'
           END AS type,
           COUNT(*) AS bookings,
@@ -251,7 +243,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE '6%' OR booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'OTA'
           END
       `);

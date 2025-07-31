@@ -1439,7 +1439,6 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         const percentage = totalSales > 0 ? (channel.total_sales / totalSales * 100) : 0;
                             const channelColor = channel.channel === 'WebSite' ? 'text-green-600' :
                                          channel.channel === 'VIATOR' ? 'text-purple-600' :
-                                         channel.channel === 'GetYourGuide' ? 'text-blue-600' :
                                          'text-gray-600';
         
         tableHtml += `

@@ -10,6 +10,16 @@ export default async function handler(req, res) {
   try {
     const { startDate, endDate, period } = req.query;
     
+    // Debug: Check what channel values exist in the database
+    const debugChannels = await client.query(`
+      SELECT DISTINCT channel, COUNT(*) as count 
+      FROM bookings 
+      WHERE channel IS NOT NULL 
+      GROUP BY channel 
+      ORDER BY count DESC
+    `);
+    console.log('Debug - Available channels:', debugChannels.rows);
+    
     let dateFilter = '';
     let startDateParam = null;
     let endDateParam = null;

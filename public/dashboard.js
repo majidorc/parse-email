@@ -1462,6 +1462,13 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     // Update chart
     updateSalesChannelChart(data.salesByChannel);
     
+    // Show debug data if available
+    if (data.debug) {
+      console.log('Debug - Available channels:', data.debug.availableChannels);
+      console.log('Debug - NULL channels count:', data.debug.nullChannelsCount);
+      console.log('Debug - Sample bookings:', data.debug.sampleBookings);
+    }
+    
     // Update top programs
     const topProgramsDiv = document.getElementById('sales-top-programs');
     if (topProgramsDiv) {
@@ -1492,6 +1499,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
   
   } catch (error) {
     console.error('Error fetching sales analytics:', error);
+    
     // Show error state
     const elements = ['sales-total-amount', 'sales-total-bookings', 'sales-total-passengers', 'sales-avg-sale'];
     elements.forEach(id => {

@@ -283,7 +283,13 @@ export default async function handler(req, res) {
       otaSale,
       websiteSale,
       otaCount,
-      websiteCount
+      websiteCount,
+      // Include debug data in response
+      debug: {
+        availableChannels: debugChannels.rows,
+        nullChannelsCount: nullChannels.rows[0].null_count,
+        sampleBookings: sampleBookings.rows
+      }
     });
     
   } catch (err) {

@@ -749,6 +749,13 @@ function generateNotificationText(b) {
     programLine = `Program : ${program} - [${rate}]`;
   }
   
+  // Add addons information if available
+  let addonsLine = '';
+  if (b.addons && Array.isArray(b.addons) && b.addons.length > 0) {
+    const addonsText = b.addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
+    addonsLine = `🎁 Addons : ${addonsText}`;
+  }
+  
   // Dynamic cash on tour text based on national_park_fee value
   const cashOnTourText = b.national_park_fee !== undefined && b.national_park_fee ? 'National Park Fee' : 'None';
   
@@ -775,10 +782,11 @@ function generateNotificationText(b) {
       `📋 Booking no : ${bookingNumber}`,
       `📅 Tour date : ${tourDate}`,
       programLine,
+      addonsLine,
       `👤 Name : ${customerName}`,
       `👥 Pax : ${paxDisplay}`,
       `💵 Cash on tour : ${cashOnTourText}`
-    ];
+    ].filter(line => line !== ''); // Remove empty lines
   } else {
     // Transfer version - full format with pickup time
     lines = [
@@ -787,6 +795,7 @@ function generateNotificationText(b) {
       `📋 Booking no : ${bookingNumber}`,
       `📅 Tour date : ${tourDate}`,
       programLine,
+      addonsLine,
       `👤 Name : ${customerName}`,
       `👥 Pax : ${paxDisplay}`,
       `🏨 Hotel : ${cleanHotel}`,
@@ -794,7 +803,7 @@ function generateNotificationText(b) {
       `💵 Cash on tour : ${cashOnTourText}`,
       '',
       '💡 Please mentioned if there is any additional charge for transfer collect from customer'
-    ];
+    ].filter(line => line !== ''); // Remove empty lines
   }
   return lines.join('\n');
 }

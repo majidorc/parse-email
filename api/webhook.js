@@ -530,7 +530,8 @@ class ThailandToursParser extends BaseEmailParser {
             paid: paid,
             book_date: this.extractBookDate(),
             rate: this._extractRateFromSection(sectionLines),
-            start_time: this._extractStartTimeFromSection(sectionLines)
+            start_time: this._extractStartTimeFromSection(sectionLines),
+            addons: this._extractAddonsFromSection(sectionLines)
         };
     }
 
@@ -653,13 +654,54 @@ class ThailandToursParser extends BaseEmailParser {
         return '';
     }
 
+    // NEW: Extract addons/extras from a specific section
+    _extractAddonsFromSection(sectionLines) {
+        const addons = [];
+        
+        // Find the range between "Quantity" and "Booking #"
+        let quantityIndex = -1;
+        let bookingIndex = -1;
+        
+        for (let i = 0; i < sectionLines.length; i++) {
+            const line = sectionLines[i];
+            if (line.toLowerCase().includes('quantity')) {
+                quantityIndex = i;
+            }
+            if (line.includes('Booking #') && /\d+/.test(line)) {
+                bookingIndex = i;
+                break;
+            }
+        }
+        
+        // If we found both Quantity and Booking #, extract addons between them
+        if (quantityIndex !== -1 && bookingIndex !== -1 && bookingIndex > quantityIndex) {
+            for (let i = quantityIndex + 1; i < bookingIndex; i++) {
+                const line = sectionLines[i].trim();
+                if (line && !line.toLowerCase().includes('quantity') && !line.includes('Booking #')) {
+                    // Check if line follows the pattern "AddonName: Rate"
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex !== -1) {
+                        const addonName = line.substring(0, colonIndex).trim();
+                        const rate = line.substring(colonIndex + 1).trim();
+                        if (addonName && rate) {
+                            addons.push({
+                                name: addonName,
+                                rate: rate
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        return addons;
+    }
+
     // NEW: Extract start time from a specific section
     _extractStartTimeFromSection(sectionLines) {
         // For now, return empty string - can be enhanced later
         return '';
     }
-
-
 
     extractProgram() {
         // The program name is the line right before the line with the product code, e.g., "(#HKT0022)"

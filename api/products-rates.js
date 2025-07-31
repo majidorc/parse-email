@@ -115,19 +115,14 @@ module.exports = async (req, res) => {
           const products = productsResult.rows;
           console.log(`[PRODUCTS-RATES] Found ${products.length} products`);
           
-          // Get rates
+          // Get rates - ALWAYS use fallback query to avoid rate_order issues
           let ratesResult;
           try {
-            ratesResult = await client.query('SELECT * FROM rates ORDER BY product_id, rate_order, name');
-            console.log('[PRODUCTS-RATES] Using rate_order column for rates query');
+            console.log('[PRODUCTS-RATES] Using fallback query for rates (no rate_order)');
+            ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
           } catch (err) {
-            // If rate_order column doesn't exist, use the old query
-            if (err.message.includes('rate_order')) {
-              console.log('[PRODUCTS-RATES] rate_order column not found, using fallback query');
-              ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
-            } else {
-              throw err;
-            }
+            console.error('[PRODUCTS-RATES] Error fetching rates:', err);
+            throw err;
           }
           const rates = ratesResult.rows;
           console.log(`[PRODUCTS-RATES] Found ${rates.length} rates`);
@@ -200,27 +195,13 @@ module.exports = async (req, res) => {
             ) {
               throw new Error('Invalid rate item: ' + JSON.stringify(rate));
             }
-            const rateOrder = order !== undefined ? order : i;
             
-            // Check if rate_order column exists, if not use the old query
-            try {
-              console.log('[PRODUCTS-RATES] Trying to insert rate with rate_order column');
-              await client.query(
-                `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child, rate_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child, rateOrder]
-              );
-            } catch (err) {
-              // If rate_order column doesn't exist, use the old query
-              if (err.message.includes('rate_order')) {
-                console.log('[PRODUCTS-RATES] rate_order column not found, using fallback insert');
-                await client.query(
-                  `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                  [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
-                );
-              } else {
-                throw err;
-              }
-            }
+            // ALWAYS use the fallback query to avoid rate_order issues
+            console.log('[PRODUCTS-RATES] Using fallback insert (no rate_order)');
+            await client.query(
+              `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+              [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
+            );
           }
           
           console.log('[PRODUCTS-RATES] Committing transaction');

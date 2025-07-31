@@ -123,11 +123,14 @@ class NotificationManager {
             programLine = `${programIcon} Program : ${program} - [${rate}]`;
         }
         
-        // Add addons information if available
-        let addonsLine = '';
+        // Integrate addons into program line if available
         if (booking.addons && Array.isArray(booking.addons) && booking.addons.length > 0) {
             const addonsText = booking.addons.map(addon => `${addon.name}: ${addon.rate}`).join(', ');
-            addonsLine = `🎁 Addons : ${addonsText}`;
+            if (rate) {
+                programLine = `${programIcon} Program : ${program} - [${rate}, ${addonsText}]`;
+            } else {
+                programLine = `${programIcon} Program : ${program} - [${addonsText}]`;
+            }
         }
         
         // Dynamic cash on tour text based on national_park_fee value
@@ -157,11 +160,10 @@ class NotificationManager {
                 `📋 Booking no : ${bookingNumber}`,
                 `📅 Tour date : ${tourDate}`,
                 programLine,
-                addonsLine,
                 `👤 Name : ${customerName}`,
                 `👥 Pax : ${paxDisplay}`,
                 `💵 Cash on tour : ${cashOnTourText}`
-            ].filter(line => line !== ''); // Remove empty lines
+            ];
         } else {
             // Transfer version - full format with pickup time
             lines = [
@@ -170,7 +172,6 @@ class NotificationManager {
                 `📋 Booking no : ${bookingNumber}`,
                 `📅 Tour date : ${tourDate}`,
                 programLine,
-                addonsLine,
                 `👤 Name : ${customerName}`,
                 `👥 Pax : ${paxDisplay}`,
                 `🏨 Hotel : ${cleanHotel}`,
@@ -178,7 +179,7 @@ class NotificationManager {
                 `💵 Cash on tour : ${cashOnTourText}`,
                 '',
                 '💡 Please mentioned if there is any additional charge for transfer collect from customer'
-            ].filter(line => line !== ''); // Remove empty lines
+            ];
         }
         return lines.join('\n');
     }

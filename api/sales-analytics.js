@@ -204,11 +204,61 @@ export default async function handler(req, res) {
       `);
     }
     
+    // OTA vs Website breakdown (for the missing metrics)
+    let otaWebsiteResult;
+    if (dateFilter) {
+      otaWebsiteResult = await client.query(`
+        SELECT 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            ELSE 'OTA'
+          END AS type,
+          COUNT(*) AS bookings,
+          COALESCE(SUM(paid), 0) AS sales
+        FROM bookings
+        WHERE tour_date >= $1 AND tour_date < $2
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            ELSE 'OTA'
+          END
+      `, [startDateParam, endDateParam]);
+    } else {
+      otaWebsiteResult = await client.query(`
+        SELECT 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            ELSE 'OTA'
+          END AS type,
+          COUNT(*) AS bookings,
+          COALESCE(SUM(paid), 0) AS sales
+        FROM bookings
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            ELSE 'OTA'
+          END
+      `);
+    }
+    
+    // Extract OTA and Website metrics
+    const otaData = otaWebsiteResult.rows.find(row => row.type === 'OTA');
+    const websiteData = otaWebsiteResult.rows.find(row => row.type === 'Website');
+    
+    const otaSale = otaData ? parseFloat(otaData.sales) : 0;
+    const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
+    const otaCount = otaData ? parseInt(otaData.bookings, 10) : 0;
+    const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
+    
     res.status(200).json({
       salesByChannel: salesByChannelResult.rows,
       totalSummary: totalSummaryResult.rows[0],
       salesByMonth: salesByMonthResult.rows,
-      topPrograms: topProgramsResult.rows
+      topPrograms: topProgramsResult.rows,
+      otaSale,
+      websiteSale,
+      otaCount,
+      websiteCount
     });
     
   } catch (err) {

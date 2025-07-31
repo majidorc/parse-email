@@ -1394,6 +1394,23 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       avgSale.textContent = Number(avg).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
     
+    // Update the missing analytics metrics (Total Sale, OTA Sale, Website Sale, OTA vs Website)
+    const analyticsTotalBookings = document.getElementById('analytics-total-bookings');
+    const analyticsNewBookings = document.getElementById('analytics-new-bookings');
+    const analyticsTotalEarnings = document.getElementById('analytics-total-earnings');
+    const analyticsDone = document.getElementById('analytics-done');
+    const analyticsBooked = document.getElementById('analytics-booked');
+    const analyticsOtaCount = document.getElementById('analytics-ota-count');
+    const analyticsWebsiteCount = document.getElementById('analytics-website-count');
+    
+    if (analyticsTotalBookings) analyticsTotalBookings.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsNewBookings) analyticsNewBookings.textContent = Number(data.otaSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsTotalEarnings) analyticsTotalEarnings.textContent = Number(data.websiteSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsDone) analyticsDone.textContent = data.otaCount || 0;
+    if (analyticsBooked) analyticsBooked.textContent = data.websiteCount || 0;
+    if (analyticsOtaCount) analyticsOtaCount.textContent = data.otaCount || 0;
+    if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = data.websiteCount || 0;
+    
     // Update channel table
     const tableBody = document.getElementById('sales-channel-table-body');
     if (tableBody) {
@@ -1461,6 +1478,13 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     // Show error state
     const elements = ['sales-total-amount', 'sales-total-bookings', 'sales-total-passengers', 'sales-avg-sale'];
     elements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = '-';
+    });
+    
+    // Reset the missing analytics metrics
+    const analyticsElements = ['analytics-total-bookings', 'analytics-new-bookings', 'analytics-total-earnings', 'analytics-done', 'analytics-booked', 'analytics-ota-count', 'analytics-website-count'];
+    analyticsElements.forEach(id => {
       const element = document.getElementById(id);
       if (element) element.textContent = '-';
     });

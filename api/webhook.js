@@ -529,7 +529,7 @@ class ThailandToursParser extends BaseEmailParser {
             isoDate: this._getISODate(tourDate),
             paid: paid,
             book_date: this.extractBookDate(),
-            rate: this._extractRateFromSection(sectionLines),
+            rate: this.extractRate(),
             start_time: this._extractStartTimeFromSection(sectionLines)
         };
     }
@@ -648,51 +648,7 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     // NEW: Extract rate from a specific section (including addons)
-    _extractRateFromSection(sectionLines) {
-        let rate = '';
-        
-        console.log('[RATE-EXTRACTION] Looking for rate in section lines:', sectionLines);
-        
-        // Look for rate information in the section
-        for (const line of sectionLines) {
-            const trimmedLine = line.trim();
-            console.log('[RATE-EXTRACTION] Checking line:', trimmedLine);
-            
-            // Look for patterns like "With Kayaking", "Without Kayaking", etc.
-            if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
-                rate = trimmedLine;
-                console.log('[RATE-EXTRACTION] Found rate (With/Without):', rate);
-                break;
-            }
-            
-            // Look for patterns like "Rate:", "Price:", etc.
-            if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
-                const colonIndex = trimmedLine.indexOf(':');
-                if (colonIndex !== -1) {
-                    rate = trimmedLine.substring(colonIndex + 1).trim();
-                    console.log('[RATE-EXTRACTION] Found rate (Rate/Price):', rate);
-                    break;
-                }
-            }
-            
-            // Look for any line with a colon that might be a rate (like "Kayaking: With Kayaking")
-            const colonIndex = trimmedLine.indexOf(':');
-            if (colonIndex !== -1 && colonIndex > 0) {
-                const beforeColon = trimmedLine.substring(0, colonIndex).trim();
-                const afterColon = trimmedLine.substring(colonIndex + 1).trim();
-                console.log('[RATE-EXTRACTION] Found colon line - before:', beforeColon, 'after:', afterColon);
-                // If after colon contains rate-like text, use the part after colon
-                if (afterColon && (afterColon.includes('With') || afterColon.includes('Without') || afterColon.toLowerCase().includes('rate'))) {
-                    rate = afterColon;
-                    console.log('[RATE-EXTRACTION] Found rate (colon pattern):', rate);
-                    break;
-                }
-            }
-        }
-        
-        console.log('[RATE-EXTRACTION] Final extracted rate:', rate);
-        return rate;
-    }
+
 
 
 
@@ -855,51 +811,43 @@ class ThailandToursParser extends BaseEmailParser {
     extractRate() {
         let rate = '';
         
-        // Look for a line starting with 'Program:' and extract the next non-empty line as the rate title
-        const programIdx = this.lines.findIndex(line => line.toLowerCase().startsWith('program:'));
-        if (programIdx !== -1) {
-            // The rate title is usually on the same line or the next line
-            const after = this.lines[programIdx].replace(/^program:/i, '').trim();
-            if (after) rate = after;
-            // Or next line
-            else if (this.lines[programIdx + 1]) rate = this.lines[programIdx + 1].trim();
-        }
+        console.log('[RATE-EXTRACTION] Looking for rate in full email lines:', this.lines.length, 'lines');
         
-        // Fallback: look for a line like 'Program Rock 1'
-        if (!rate) {
-            const rateLine = this.lines.find(line => /program\s+rock/i.test(line));
-            if (rateLine) rate = rateLine.trim();
-        }
-        
-        // Look for optional add-ons like "Optional: Boat trip + Longneck"
-        const optionalAddons = [];
+        // Look for patterns like "Kayaking: With Kayaking", "Kayaking: Without Kayaking", etc.
         for (const line of this.lines) {
-            // Check for exact "Optional:" prefix
-            if (line.toLowerCase().startsWith('optional:')) {
-                const addon = line.replace(/^optional:\s*/i, '').trim();
-                if (addon) optionalAddons.push(addon);
+            const trimmedLine = line.trim();
+            console.log('[RATE-EXTRACTION] Checking line:', trimmedLine);
+            
+            // Look for patterns like "With Kayaking", "Without Kayaking", etc.
+            if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
+                // If it's a colon-separated line like "Kayaking: With Kayaking", extract only the part after colon
+                const colonIndex = trimmedLine.indexOf(':');
+                if (colonIndex !== -1 && colonIndex > 0) {
+                    const afterColon = trimmedLine.substring(colonIndex + 1).trim();
+                    if (afterColon) {
+                        rate = afterColon;
+                        console.log('[RATE-EXTRACTION] Found rate (colon pattern):', rate);
+                        break;
+                    }
+                } else {
+                    rate = trimmedLine;
+                    console.log('[RATE-EXTRACTION] Found rate (With/Without):', rate);
+                    break;
+                }
             }
-            // Also check for lines containing "Optional" anywhere (case insensitive)
-            else if (line.toLowerCase().includes('optional') && line.toLowerCase().includes('boat')) {
-                const addon = line.trim();
-                if (addon && !optionalAddons.includes(addon)) optionalAddons.push(addon);
+            
+            // Look for patterns like "Rate:", "Price:", etc.
+            if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
+                const colonIndex = trimmedLine.indexOf(':');
+                if (colonIndex !== -1) {
+                    rate = trimmedLine.substring(colonIndex + 1).trim();
+                    console.log('[RATE-EXTRACTION] Found rate (Rate/Price):', rate);
+                    break;
+                }
             }
         }
         
-        // Additional search for boat-related add-ons
-        for (const line of this.lines) {
-            if (line.toLowerCase().includes('boat') && line.toLowerCase().includes('longneck')) {
-                const addon = line.trim();
-                if (addon && !optionalAddons.includes(addon)) optionalAddons.push(addon);
-            }
-        }
-        
-        // Combine rate with optional add-ons
-        if (optionalAddons.length > 0) {
-            const addonsText = optionalAddons.join(', ');
-            rate = rate ? `${rate} (${addonsText})` : addonsText;
-        }
-        
+        console.log('[RATE-EXTRACTION] Final extracted rate:', rate);
         return rate;
     }
 

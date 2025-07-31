@@ -651,13 +651,17 @@ class ThailandToursParser extends BaseEmailParser {
     _extractRateFromSection(sectionLines) {
         let rate = '';
         
+        console.log('[RATE-EXTRACTION] Looking for rate in section lines:', sectionLines);
+        
         // Look for rate information in the section
         for (const line of sectionLines) {
             const trimmedLine = line.trim();
+            console.log('[RATE-EXTRACTION] Checking line:', trimmedLine);
             
             // Look for patterns like "With Kayaking", "Without Kayaking", etc.
             if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
                 rate = trimmedLine;
+                console.log('[RATE-EXTRACTION] Found rate (With/Without):', rate);
                 break;
             }
             
@@ -666,6 +670,7 @@ class ThailandToursParser extends BaseEmailParser {
                 const colonIndex = trimmedLine.indexOf(':');
                 if (colonIndex !== -1) {
                     rate = trimmedLine.substring(colonIndex + 1).trim();
+                    console.log('[RATE-EXTRACTION] Found rate (Rate/Price):', rate);
                     break;
                 }
             }
@@ -675,14 +680,17 @@ class ThailandToursParser extends BaseEmailParser {
             if (colonIndex !== -1 && colonIndex > 0) {
                 const beforeColon = trimmedLine.substring(0, colonIndex).trim();
                 const afterColon = trimmedLine.substring(colonIndex + 1).trim();
-                // If after colon contains rate-like text, use the whole line
+                console.log('[RATE-EXTRACTION] Found colon line - before:', beforeColon, 'after:', afterColon);
+                // If after colon contains rate-like text, use the part after colon
                 if (afterColon && (afterColon.includes('With') || afterColon.includes('Without') || afterColon.toLowerCase().includes('rate'))) {
-                    rate = trimmedLine;
+                    rate = afterColon;
+                    console.log('[RATE-EXTRACTION] Found rate (colon pattern):', rate);
                     break;
                 }
             }
         }
         
+        console.log('[RATE-EXTRACTION] Final extracted rate:', rate);
         return rate;
     }
 

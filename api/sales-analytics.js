@@ -14,11 +14,27 @@ export default async function handler(req, res) {
     const debugChannels = await client.query(`
       SELECT DISTINCT channel, COUNT(*) as count 
       FROM bookings 
-      WHERE channel IS NOT NULL 
       GROUP BY channel 
       ORDER BY count DESC
     `);
     console.log('Debug - Available channels:', debugChannels.rows);
+    
+    // Also check for NULL channels
+    const nullChannels = await client.query(`
+      SELECT COUNT(*) as null_count 
+      FROM bookings 
+      WHERE channel IS NULL
+    `);
+    console.log('Debug - NULL channels count:', nullChannels.rows[0]);
+    
+    // Check a few sample bookings with their channel values
+    const sampleBookings = await client.query(`
+      SELECT booking_number, channel, tour_date 
+      FROM bookings 
+      ORDER BY tour_date DESC 
+      LIMIT 5
+    `);
+    console.log('Debug - Sample bookings with channels:', sampleBookings.rows);
     
     let dateFilter = '';
     let startDateParam = null;

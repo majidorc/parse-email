@@ -55,6 +55,7 @@ app.get('/booking/:booking_number', async (req, res) => {
 });
 
 app.get('/api/parsed-emails-analytics', require('./api/parsed-emails-analytics.js'));
+app.get('/api/sales-analytics', require('./api/sales-analytics.js'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

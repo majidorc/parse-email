@@ -1332,6 +1332,12 @@ analyticsBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
 
+  // Initialize sales analytics
+  initializeSalesAnalytics();
+  
+  // Fetch sales analytics data
+  fetchSalesAnalytics('thisMonth');
+  
   // Fetch analytics data and render summary cards and tables
   fetch('/api/parsed-emails-analytics')
     .then(res => {
@@ -1489,6 +1495,192 @@ analyticsBtn.onclick = () => {
       document.getElementById('analytics-by-source-channel').innerHTML = `<span class="text-red-500">Error loading data</span>`;
     });
 };
+
+// Sales Analytics functionality
+let salesChannelChart = null;
+
+async function fetchSalesAnalytics(period = 'thisMonth') {
+  try {
+    const response = await fetch(`/api/sales-analytics?period=${period}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    
+    // Update summary cards
+    const totalAmount = document.getElementById('sales-total-amount');
+    const totalBookings = document.getElementById('sales-total-bookings');
+    const totalPassengers = document.getElementById('sales-total-passengers');
+    const avgSale = document.getElementById('sales-avg-sale');
+    
+    if (totalAmount) totalAmount.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (totalBookings) totalBookings.textContent = data.totalSummary.total_bookings;
+    if (totalPassengers) totalPassengers.textContent = data.totalSummary.total_adults + data.totalSummary.total_children + data.totalSummary.total_infants;
+    if (avgSale) {
+      const avg = data.totalSummary.total_bookings > 0 ? data.totalSummary.total_sales / data.totalSummary.total_bookings : 0;
+      avgSale.textContent = Number(avg).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    
+    // Update channel table
+    const tableBody = document.getElementById('sales-channel-table-body');
+    if (tableBody) {
+      let tableHtml = '';
+      const totalSales = data.totalSummary.total_sales;
+      
+      data.salesByChannel.forEach(channel => {
+        const percentage = totalSales > 0 ? (channel.total_sales / totalSales * 100) : 0;
+        const channelColor = channel.channel === 'Website' ? 'text-green-600' : 
+                           channel.channel === 'GetYourGuide' ? 'text-blue-600' : 
+                           channel.channel === 'Viator.com' ? 'text-purple-600' : 
+                           channel.channel === 'Bokun' ? 'text-orange-600' : 
+                           channel.channel === 'Tours.co.th' ? 'text-indigo-600' : 'text-gray-600';
+        
+        tableHtml += `
+          <tr class="border-b">
+            <td class="py-2 ${channelColor} font-medium">${channel.channel}</td>
+            <td class="py-2 text-right">${channel.bookings}</td>
+            <td class="py-2 text-right font-medium">${Number(channel.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td class="py-2 text-right text-gray-600">${percentage.toFixed(1)}%</td>
+          </tr>
+        `;
+      });
+      
+      if (data.salesByChannel.length === 0) {
+        tableHtml = '<tr><td colspan="4" class="text-center text-gray-400">No data available</td></tr>';
+      }
+      
+      tableBody.innerHTML = tableHtml;
+    }
+    
+    // Update chart
+    updateSalesChannelChart(data.salesByChannel);
+    
+    // Update top programs
+    const topProgramsDiv = document.getElementById('sales-top-programs');
+    if (topProgramsDiv) {
+      let programsHtml = '';
+      
+      if (data.topPrograms.length > 0) {
+        programsHtml = '<div class="space-y-2">';
+        data.topPrograms.forEach((program, index) => {
+          programsHtml += `
+            <div class="flex justify-between items-center p-2 bg-white rounded">
+              <div class="flex-1">
+                <div class="font-medium text-gray-800">${index + 1}. ${program.program}</div>
+                <div class="text-sm text-gray-500">${program.bookings} bookings</div>
+              </div>
+              <div class="text-right">
+                <div class="font-semibold text-green-600">${Number(program.sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+              </div>
+            </div>
+          `;
+        });
+        programsHtml += '</div>';
+      } else {
+        programsHtml = '<div class="text-center text-gray-400">No programs data available</div>';
+      }
+      
+      topProgramsDiv.innerHTML = programsHtml;
+    }
+    
+  } catch (error) {
+    console.error('Error fetching sales analytics:', error);
+    // Show error state
+    const elements = ['sales-total-amount', 'sales-total-bookings', 'sales-total-passengers', 'sales-avg-sale'];
+    elements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = '-';
+    });
+    
+    const tableBody = document.getElementById('sales-channel-table-body');
+    if (tableBody) {
+      tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Error loading data</td></tr>';
+    }
+    
+    const topProgramsDiv = document.getElementById('sales-top-programs');
+    if (topProgramsDiv) {
+      topProgramsDiv.innerHTML = '<div class="text-center text-red-500">Error loading data</div>';
+    }
+  }
+}
+
+function updateSalesChannelChart(data) {
+  const ctx = document.getElementById('sales-channel-chart');
+  if (!ctx) return;
+  
+  // Destroy existing chart if it exists
+  if (salesChannelChart) {
+    salesChannelChart.destroy();
+  }
+  
+  const labels = data.map(item => item.channel);
+  const salesData = data.map(item => item.total_sales);
+  const colors = [
+    '#3B82F6', // blue
+    '#10B981', // green
+    '#8B5CF6', // purple
+    '#F59E0B', // orange
+    '#EF4444', // red
+    '#06B6D4'  // cyan
+  ];
+  
+  salesChannelChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: salesData,
+        backgroundColor: colors.slice(0, labels.length),
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Initialize sales analytics event listeners
+function initializeSalesAnalytics() {
+  const periodFilter = document.getElementById('sales-period-filter');
+  const refreshBtn = document.getElementById('refresh-sales-analytics');
+  
+  if (periodFilter) {
+    periodFilter.addEventListener('change', function() {
+      fetchSalesAnalytics(this.value);
+    });
+  }
+  
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function() {
+      const period = periodFilter ? periodFilter.value : 'thisMonth';
+      fetchSalesAnalytics(period);
+    });
+  }
+}
+
 // Search bar integration
 document.getElementById('search-bar').addEventListener('input', function(e) {
   if (accountingTableContainer.style.display !== 'none') {

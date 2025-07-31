@@ -570,6 +570,82 @@
             <div id="analytics-by-source-channel"></div>
           </div>
         </div>
+        
+        <!-- Sales Analytics Section -->
+        <div class="bg-white rounded-lg p-6 shadow-lg mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">Sales Analytics by Channel</h3>
+            <div class="flex gap-2">
+              <select id="sales-period-filter" class="border rounded px-3 py-1 text-sm">
+                <option value="thisWeek">This Week</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="thisYear">This Year</option>
+                <option value="lastYear">Last Year</option>
+                <option value="all">All Time</option>
+              </select>
+              <button id="refresh-sales-analytics" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">Refresh</button>
+            </div>
+          </div>
+          
+          <!-- Sales Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-blue-50 rounded-lg p-4 text-center">
+              <div class="text-sm text-blue-700 font-semibold mb-1">Total Sales</div>
+              <div id="sales-total-amount" class="text-2xl font-bold text-blue-900">-</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4 text-center">
+              <div class="text-sm text-green-700 font-semibold mb-1">Total Bookings</div>
+              <div id="sales-total-bookings" class="text-2xl font-bold text-green-900">-</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 text-center">
+              <div class="text-sm text-purple-700 font-semibold mb-1">Total Passengers</div>
+              <div id="sales-total-passengers" class="text-2xl font-bold text-purple-900">-</div>
+            </div>
+            <div class="bg-orange-50 rounded-lg p-4 text-center">
+              <div class="text-sm text-orange-700 font-semibold mb-1">Avg. Sale</div>
+              <div id="sales-avg-sale" class="text-2xl font-bold text-orange-900">-</div>
+            </div>
+          </div>
+          
+          <!-- Sales Charts and Tables -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Sales by Channel Chart -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-base font-semibold text-gray-800 mb-3">Sales by Channel</h4>
+              <canvas id="sales-channel-chart" height="300"></canvas>
+            </div>
+            
+            <!-- Sales by Channel Table -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h4 class="text-base font-semibold text-gray-800 mb-3">Channel Breakdown</h4>
+              <div id="sales-channel-table" class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b">
+                      <th class="text-left py-2">Channel</th>
+                      <th class="text-right py-2">Bookings</th>
+                      <th class="text-right py-2">Sales</th>
+                      <th class="text-right py-2">%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sales-channel-table-body">
+                    <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top Programs -->
+          <div class="mt-6">
+            <h4 class="text-base font-semibold text-gray-800 mb-3">Top Programs by Sales</h4>
+            <div id="sales-top-programs" class="bg-gray-50 rounded-lg p-4">
+              <div class="text-center text-gray-400">Loading...</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Move Logout Button into Settings Modal -->

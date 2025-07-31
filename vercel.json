@@ -6,6 +6,9 @@
     },
     "api/daily-scheduler.js": {
       "maxDuration": 30
+    },
+    "api/sales-analytics.js": {
+      "maxDuration": 30
     }
   },
   "routes": [

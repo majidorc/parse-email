@@ -1380,32 +1380,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (totalAmount) totalAmount.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (totalBookings) totalBookings.textContent = data.totalSummary.total_bookings;
     if (totalPassengers) {
-      const adults = parseInt(data.totalSummary.total_adults) || 0;
-      const children = parseInt(data.totalSummary.total_children) || 0;
-      const infants = parseInt(data.totalSummary.total_infants) || 0;
-      const total = adults + children + infants;
-      
-      // Debug logging
-      console.log('Debug - Passenger calculation:', {
-        adults: adults,
-        children: children,
-        infants: infants,
-        total: total,
-        raw_adults: data.totalSummary.total_adults,
-        raw_children: data.totalSummary.total_children,
-        raw_infants: data.totalSummary.total_infants
-      });
-      
-      // Update passenger breakdown (Viator/Website) - show in main display
-      const viatorPassengers = data.viatorPassengers || 0;
-      const websitePassengers = data.websitePassengers || 0;
-      totalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
-      
-      // Update passenger breakdown subtitle
-      const passengersBreakdown = document.getElementById('sales-passengers-breakdown');
-      if (passengersBreakdown) {
-        passengersBreakdown.textContent = `Total: ${total}`;
-      }
+      // This is now handled in the analytics section
+      totalPassengers.textContent = '-';
     }
     if (avgSale) {
       const avg = data.totalSummary.total_bookings > 0 ? data.totalSummary.total_sales / data.totalSummary.total_bookings : 0;

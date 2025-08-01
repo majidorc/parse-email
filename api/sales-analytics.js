@@ -272,7 +272,7 @@ export default async function handler(req, res) {
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
             ELSE 'Website'
-        END
+          END
       `);
     }
     

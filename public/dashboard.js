@@ -1397,6 +1397,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       });
       
       totalPassengers.textContent = total;
+      
+      // Update passenger breakdown (Viator/Website)
+      const passengersBreakdown = document.getElementById('sales-passengers-breakdown');
+      if (passengersBreakdown) {
+        const viatorPassengers = data.viatorCount || 0;
+        const websitePassengers = data.websiteCount || 0;
+        passengersBreakdown.textContent = `${viatorPassengers}/${websitePassengers}`;
+      }
     }
     if (avgSale) {
       const avg = data.totalSummary.total_bookings > 0 ? data.totalSummary.total_sales / data.totalSummary.total_bookings : 0;

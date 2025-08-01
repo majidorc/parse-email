@@ -62,6 +62,36 @@ export default async function handler(req, res) {
     const websiteCountResult = await client.query("SELECT COUNT(*) AS website_count FROM bookings WHERE booking_number LIKE '6%'");
     const websiteCount = parseInt(websiteCountResult.rows[0].website_count, 10);
     
+    // NEW: Specific Viator sales calculation
+    const viatorResult = await client.query(`
+      SELECT COALESCE(SUM(b.paid),0) AS viator_sale, COUNT(*) AS viator_count 
+      FROM bookings b
+      LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+      WHERE (
+        b.channel = 'Viator' 
+        OR (p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%')
+        OR (p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%')
+        OR b.booking_number LIKE 'V%'
+        OR b.booking_number LIKE '%VIATOR%'
+      )
+    `);
+    const viatorSale = parseFloat(viatorResult.rows[0].viator_sale);
+    const viatorCount = parseInt(viatorResult.rows[0].viator_count, 10);
+    
+    // NEW: GetYourGuide sales calculation
+    const gygResult = await client.query(`
+      SELECT COALESCE(SUM(b.paid),0) AS gyg_sale, COUNT(*) AS gyg_count 
+      FROM bookings b
+      LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+      WHERE (
+        b.channel = 'GYG' 
+        OR (p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%')
+        OR b.booking_number LIKE 'GYG%'
+      )
+    `);
+    const gygSale = parseFloat(gygResult.rows[0].gyg_sale);
+    const gygCount = parseInt(gygResult.rows[0].gyg_count, 10);
+    
     // NEW: Detailed breakdown by source_email (inbox) showing OTA vs Website
     const bySourceChannelResult = await client.query(
       `SELECT 
@@ -90,7 +120,11 @@ export default async function handler(req, res) {
       otaSale,
       websiteSale,
       otaCount,
-      websiteCount
+      websiteCount,
+      viatorSale, // NEW: specific Viator sales
+      viatorCount, // NEW: specific Viator count
+      gygSale, // NEW: specific GYG sales
+      gygCount // NEW: specific GYG count
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

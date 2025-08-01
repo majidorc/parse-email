@@ -88,30 +88,46 @@ export default async function handler(req, res) {
     
     // No cancelled/deleted filters needed - cancelled bookings are completely removed from DB
     
-    // Sales by channel based on channel field - FIXED LOGIC
+    // UPDATED: Sales by channel with comprehensive Viator identification
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
-            WHEN channel IS NULL THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS total_sales,
-          COALESCE(SUM(adult), 0) AS total_adults,
-          COALESCE(SUM(child), 0) AS total_children,
-          COALESCE(SUM(infant), 0) AS total_infants
-        FROM bookings
+          COALESCE(SUM(b.paid), 0) AS total_sales,
+          COALESCE(SUM(b.adult), 0) AS total_adults,
+          COALESCE(SUM(b.child), 0) AS total_children,
+          COALESCE(SUM(b.infant), 0) AS total_infants
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         WHERE tour_date >= $1 AND tour_date < $2
-          AND channel != 'GYG'
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
-            WHEN channel IS NULL THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
@@ -120,23 +136,39 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
-            WHEN channel IS NULL THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS total_sales,
-          COALESCE(SUM(adult), 0) AS total_adults,
-          COALESCE(SUM(child), 0) AS total_children,
-          COALESCE(SUM(infant), 0) AS total_infants
-        FROM bookings
-        WHERE channel != 'GYG'
+          COALESCE(SUM(b.paid), 0) AS total_sales,
+          COALESCE(SUM(b.adult), 0) AS total_adults,
+          COALESCE(SUM(b.child), 0) AS total_children,
+          COALESCE(SUM(b.infant), 0) AS total_infants
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
-            WHEN channel IS NULL THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
@@ -222,25 +254,43 @@ export default async function handler(req, res) {
       `);
     }
     
-    // Viator vs Website breakdown based on channel field - FIXED LOGIC
+    // UPDATED: Viator vs Website breakdown with comprehensive identification
     let viatorWebsiteResult;
     if (dateFilter) {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS sales
-        FROM bookings
+          COALESCE(SUM(b.paid), 0) AS sales
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         WHERE tour_date >= $1 AND tour_date < $2
-          AND channel != 'GYG'
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
@@ -248,18 +298,36 @@ export default async function handler(req, res) {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS sales
-        FROM bookings
-        WHERE channel != 'GYG'
+          COALESCE(SUM(b.paid), 0) AS sales
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN channel = 'Website' THEN 'Website'
+            WHEN b.channel = 'Viator' THEN 'Viator'
+            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
+            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
+            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
+            WHEN b.channel = 'GYG' THEN 'GYG'
+            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
+            WHEN b.booking_number LIKE '6%' THEN 'Website'
             ELSE 'Website'
           END
       `);
@@ -268,11 +336,14 @@ export default async function handler(req, res) {
     // Extract Viator and Website metrics
     const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
     const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
+    const gygData = viatorWebsiteResult.rows.find(row => row.type === 'GYG');
     
     const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
     const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
+    const gygSale = gygData ? parseFloat(gygData.sales) : 0;
     const viatorCount = viatorData ? parseInt(viatorData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
+    const gygCount = gygData ? parseInt(gygData.bookings, 10) : 0;
     
     // Debug logging for passenger counts
     console.log('Debug - Total Summary:', {
@@ -282,7 +353,13 @@ export default async function handler(req, res) {
       total_infants: totalSummaryResult.rows[0].total_infants,
       period: period,
       startDate: startDateParam,
-      endDate: endDateParam
+      endDate: endDateParam,
+      viatorSale: viatorSale,
+      websiteSale: websiteSale,
+      gygSale: gygSale,
+      viatorCount: viatorCount,
+      websiteCount: websiteCount,
+      gygCount: gygCount
     });
 
     res.status(200).json({
@@ -292,8 +369,10 @@ export default async function handler(req, res) {
       topPrograms: topProgramsResult.rows,
       viatorSale,
       websiteSale,
+      gygSale,
       viatorCount,
       websiteCount,
+      gygCount,
       // Include debug data in response
       debug: {
         availableChannels: debugChannels.rows,

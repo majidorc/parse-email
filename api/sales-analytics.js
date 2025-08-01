@@ -86,8 +86,7 @@ export default async function handler(req, res) {
       endDateParam = endDate;
     }
     
-    // Add cancelled/deleted filter to all queries
-    // Note: Filters are now applied directly in each query
+    // No cancelled/deleted filters needed - cancelled bookings are completely removed from DB
     
     // Sales by channel based on channel field - FIXED LOGIC
     let salesByChannelResult;
@@ -107,8 +106,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
@@ -133,8 +130,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
@@ -158,8 +153,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
       `, [startDateParam, endDateParam]);
     } else {
       totalSummaryResult = await client.query(`
@@ -170,8 +163,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
       `);
     }
     
@@ -185,8 +176,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `, [startDateParam, endDateParam]);
@@ -197,8 +186,6 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `);
@@ -215,8 +202,6 @@ export default async function handler(req, res) {
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
           AND program IS NOT NULL AND program != ''
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
@@ -229,8 +214,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE program IS NOT NULL AND program != ''
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
@@ -250,8 +233,6 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-          AND (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
@@ -268,8 +249,6 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE (cancelled IS NULL OR cancelled = false)
-          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'

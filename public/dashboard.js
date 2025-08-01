@@ -1429,6 +1429,23 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
           if (analyticsOtaCount) analyticsOtaCount.textContent = data.viatorCount || 0;
     if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = data.websiteCount || 0;
     
+    // Update the new benefit fields
+    const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');
+    const analyticsViatorBenefit = document.getElementById('analytics-viator-benefit');
+    const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
+    const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
+    
+    // Calculate benefits (for now, using sales as benefit - you can adjust this calculation)
+    const totalBenefit = data.totalSummary.total_sales || 0;
+    const viatorBenefit = data.viatorSale || 0;
+    const websiteBenefit = data.websiteSale || 0;
+    const totalPassengers = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
+    
+    if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (analyticsTotalPassengers) analyticsTotalPassengers.textContent = totalPassengers;
+    
     // Update channel table
     const tableBody = document.getElementById('sales-channel-table-body');
     if (tableBody) {

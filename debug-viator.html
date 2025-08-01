@@ -99,7 +99,22 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Viator Sales Debug Report</h1>
-            <p>Investigating the discrepancy between expected (99,100.02) and actual (77,600.01) Viator sales for last month</p>
+            <p>Investigating the discrepancy between expected (99,100.02) and actual (77,600.01) Viator sales</p>
+            <div style="margin-top: 10px;">
+                <label for="debug-period" style="color: white; margin-right: 10px;">Select Period:</label>
+                <select id="debug-period" style="padding: 5px; border-radius: 3px; border: none;">
+                    <option value="thisWeek">This Week</option>
+                    <option value="lastWeek">Last Week</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth" selected>Last Month</option>
+                    <option value="twoMonthsAgo">2 Months Ago</option>
+                    <option value="threeMonthsAgo">3 Months Ago</option>
+                    <option value="sixMonthsAgo">6 Months Ago</option>
+                    <option value="thisYear">This Year</option>
+                    <option value="lastYear">Last Year</option>
+                </select>
+                <button onclick="loadDebugData()" style="margin-left: 10px; padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 3px; cursor: pointer;">Refresh</button>
+            </div>
         </div>
         
         <div id="loading" class="loading">
@@ -229,7 +244,8 @@
     <script>
         async function loadDebugData() {
             try {
-                const response = await fetch('/api/debug-viator-sales');
+                const selectedPeriod = document.getElementById('debug-period').value;
+                const response = await fetch(`/api/debug-viator-sales?period=${selectedPeriod}`);
                 const data = await response.json();
                 
                 if (response.ok) {

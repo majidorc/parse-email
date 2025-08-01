@@ -2,15 +2,73 @@ const { sql } = require('@vercel/postgres');
 
 export default async function handler(req, res) {
   try {
-    // Calculate last month date range
-    const now = new Date();
-    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
-    const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
+    const { period } = req.query;
+    
+    // Calculate date range based on period
+    let lastMonthStartStr, thisMonthStartStr;
+    
+    if (period) {
+      const now = new Date();
+      let start, end;
+      
+      switch (period) {
+        case 'thisWeek':
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+          end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'lastWeek':
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+          end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'thisMonth':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          break;
+        case 'lastMonth':
+          start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'twoMonthsAgo':
+          start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+          end = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          break;
+        case 'threeMonthsAgo':
+          start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          end = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+          break;
+        case 'sixMonthsAgo':
+          start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+          end = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+          break;
+        case 'thisYear':
+          start = new Date(now.getFullYear(), 0, 1);
+          end = new Date(now.getFullYear() + 1, 0, 1);
+          break;
+        case 'lastYear':
+          start = new Date(now.getFullYear() - 1, 0, 1);
+          end = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          // Default to last month
+          start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+      }
+      
+      lastMonthStartStr = start.toISOString().slice(0, 10);
+      thisMonthStartStr = end.toISOString().slice(0, 10);
+    } else {
+      // Default to last month if no period specified
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
+      thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
+    }
     
     const debugInfo = {
       period: `${lastMonthStartStr} to ${thisMonthStartStr}`,
+      selectedPeriod: period || 'lastMonth',
       expected: 99100.02,
       actual: 77600.01,
       difference: 99100.02 - 77600.01,

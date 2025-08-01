@@ -1410,6 +1410,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const analyticsViatorBenefit = document.getElementById('analytics-viator-benefit');
     const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
     const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
+    const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
     
     // Calculate benefits (for now, using sales as benefit - you can adjust this calculation)
     const totalBenefit = data.totalSummary.total_sales || 0;
@@ -1420,7 +1421,16 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsTotalPassengers) analyticsTotalPassengers.textContent = totalPassengersCount;
+    
+    // Update Total Passengers with Viator/Website breakdown
+    if (analyticsTotalPassengers) {
+      const viatorPassengers = data.viatorPassengers || 0;
+      const websitePassengers = data.websitePassengers || 0;
+      analyticsTotalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
+    }
+    if (analyticsPassengersBreakdown) {
+      analyticsPassengersBreakdown.textContent = `Total: ${totalPassengersCount}`;
+    }
     
     // Update channel table
     const tableBody = document.getElementById('sales-channel-table-body');

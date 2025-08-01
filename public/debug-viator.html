@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viator Sales Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .comparison {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: #ecf0f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        .highlight {
+            background: #f39c12;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+        }
+        .debug-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Viator Sales Debug Report</h1>
+            <p>Investigating why Viator sales might be showing 0 for certain periods</p>
+            <div style="margin-top: 10px;">
+                <label for="debug-period" style="color: white; margin-right: 10px;">Select Period:</label>
+                <select id="debug-period" style="padding: 5px; border-radius: 3px; border: none;">
+                    <option value="thisWeek">This Week</option>
+                    <option value="lastWeek">Last Week</option>
+                    <option value="thisMonth">This Month</option>
+                    <option value="lastMonth">Last Month</option>
+                    <option value="twoMonthsAgo" selected>2 Months Ago</option>
+                    <option value="threeMonthsAgo">3 Months Ago</option>
+                    <option value="sixMonthsAgo">6 Months Ago</option>
+                    <option value="thisYear">This Year</option>
+                    <option value="lastYear">Last Year</option>
+                </select>
+                <button onclick="loadDebugData()" style="margin-left: 10px; padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 3px; cursor: pointer;">Refresh</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            Loading debug data...
+        </div>
+        
+        <div id="content" style="display: none;">
+            <div class="comparison">
+                <h2>📊 Expected vs Actual Comparison</h2>
+                <div class="data-row">
+                    <strong>Expected Viator Sales:</strong>
+                    <span class="highlight">$<span id="expected"></span></span>
+                </div>
+                <div class="data-row">
+                    <strong>Analytics Showing:</strong>
+                    <span class="highlight">$<span id="actual"></span></span>
+                </div>
+                <div class="data-row">
+                    <strong>Difference:</strong>
+                    <span class="highlight">$<span id="difference"></span></span>
+                </div>
+                <div class="data-row">
+                    <strong>Percentage Difference:</strong>
+                    <span class="highlight"><span id="percentage"></span>%</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📅 Analysis Period</h3>
+                <div class="data-row">
+                    <strong>Period:</strong>
+                    <span id="period"></span>
+                </div>
+            </div>
+
+            <div class="debug-section">
+                <h3>🔍 Current Analytics Breakdown</h3>
+                <div id="currentAnalyticsBreakdown"></div>
+            </div>
+
+            <div class="debug-section">
+                <h3>📧 Bokun Emails Analysis</h3>
+                <div class="data-row">
+                    <strong>Bokun Emails Count:</strong>
+                    <span id="bokunEmailsCount"></span>
+                </div>
+                <div id="bokunEmailsTable"></div>
+            </div>
+
+            <div class="debug-section">
+                <h3>📧 Info@tours.co.th Emails Analysis</h3>
+                <div class="data-row">
+                    <strong>Info Emails Count:</strong>
+                    <span id="infoEmailsCount"></span>
+                </div>
+                <div id="infoEmailsTable"></div>
+            </div>
+
+            <div class="section">
+                <h3>📈 Overall Statistics</h3>
+                <div class="data-row">
+                    <strong>Total Bookings:</strong>
+                    <span id="totalBookings"></span>
+                </div>
+                <div class="data-row">
+                    <strong>Total Sales:</strong>
+                    <span>$<span id="totalSales"></span></span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🎯 Potential Viator Bookings</h3>
+                <div class="data-row">
+                    <strong>Potential Viator Bookings:</strong>
+                    <span id="potentialViatorBookings"></span>
+                </div>
+                <div class="data-row">
+                    <strong>Potential Viator Sales:</strong>
+                    <span>$<span id="potentialViatorSales"></span></span>
+                </div>
+                <div id="potentialViatorTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDebugData() {
+            try {
+                const selectedPeriod = document.getElementById('debug-period').value;
+                const response = await fetch(`/api/debug-viator-sales?period=${selectedPeriod}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayData(data);
+                } else {
+                    document.getElementById('loading').innerHTML = 
+                        '<div class="error">Error loading data: ' + data.error + '</div>';
+                }
+            } catch (error) {
+                document.getElementById('loading').innerHTML = 
+                    '<div class="error">Error: ' + error.message + '</div>';
+            }
+        }
+
+        function displayData(data) {
+            // Hide loading, show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            // Fill in the data
+            document.getElementById('expected').textContent = data.expected.toFixed(2);
+            document.getElementById('actual').textContent = data.actual.toFixed(2);
+            document.getElementById('difference').textContent = data.difference.toFixed(2);
+            document.getElementById('percentage').textContent = data.percentageDifference;
+            document.getElementById('period').textContent = data.period;
+            document.getElementById('totalBookings').textContent = data.totalBookings;
+            document.getElementById('totalSales').textContent = data.totalSales;
+            document.getElementById('potentialViatorBookings').textContent = data.potentialViatorBookings ? data.potentialViatorBookings.length : 0;
+            document.getElementById('potentialViatorSales').textContent = data.potentialViatorSales || '0.00';
+            document.getElementById('bokunEmailsCount').textContent = data.bokunEmailsCount || 0;
+            document.getElementById('infoEmailsCount').textContent = data.infoEmailsCount || 0;
+
+            // Display current analytics breakdown
+            if (data.currentAnalyticsBreakdown && data.currentAnalyticsBreakdown.length > 0) {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Channel</th>
+                            <th>Count</th>
+                            <th>Sales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.currentAnalyticsBreakdown.map(item => `
+                            <tr>
+                                <td>${item.calculated_channel}</td>
+                                <td>${item.count}</td>
+                                <td>$${parseFloat(item.total_sales).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                document.getElementById('currentAnalyticsBreakdown').appendChild(table);
+            } else {
+                document.getElementById('currentAnalyticsBreakdown').innerHTML = '<p>No analytics breakdown available.</p>';
+            }
+
+            // Display bokun emails
+            if (data.bokunEmails && data.bokunEmails.length > 0) {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Booking Number</th>
+                            <th>Sender</th>
+                            <th>Tour Date</th>
+                            <th>Body Preview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.bokunEmails.map(email => `
+                            <tr>
+                                <td>${email.booking_number}</td>
+                                <td>${email.sender}</td>
+                                <td>${email.tour_date}</td>
+                                <td>${email.body_preview}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                document.getElementById('bokunEmailsTable').appendChild(table);
+            } else {
+                document.getElementById('bokunEmailsTable').innerHTML = '<p>No bokun emails found for this period.</p>';
+            }
+
+            // Display info emails
+            if (data.infoEmails && data.infoEmails.length > 0) {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Booking Number</th>
+                            <th>Sender</th>
+                            <th>Tour Date</th>
+                            <th>Body Preview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.infoEmails.map(email => `
+                            <tr>
+                                <td>${email.booking_number}</td>
+                                <td>${email.sender}</td>
+                                <td>${email.tour_date}</td>
+                                <td>${email.body_preview}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                document.getElementById('infoEmailsTable').appendChild(table);
+            } else {
+                document.getElementById('infoEmailsTable').innerHTML = '<p>No info@tours.co.th emails found for this period.</p>';
+            }
+
+            // Display potential viator bookings
+            if (data.potentialViatorBookings && data.potentialViatorBookings.length > 0) {
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Booking Number</th>
+                            <th>Paid</th>
+                            <th>Tour Date</th>
+                            <th>Channel</th>
+                            <th>Sender</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.potentialViatorBookings.map(booking => `
+                            <tr>
+                                <td>${booking.booking_number}</td>
+                                <td>$${parseFloat(booking.paid).toFixed(2)}</td>
+                                <td>${booking.tour_date}</td>
+                                <td>${booking.channel}</td>
+                                <td>${booking.sender}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                document.getElementById('potentialViatorTable').appendChild(table);
+            } else {
+                document.getElementById('potentialViatorTable').innerHTML = '<p>No potential Viator bookings found for this period.</p>';
+            }
+        }
+
+        // Load data when page loads
+        loadDebugData();
+    </script>
+</body>
+</html> 

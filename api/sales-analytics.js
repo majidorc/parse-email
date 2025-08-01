@@ -100,30 +100,31 @@ export default async function handler(req, res) {
     
     // No cancelled/deleted filters needed - cancelled bookings are completely removed from DB
     
-    // SIMPLIFIED: Sales by channel - just use booking number patterns
+    // FIXED: Only 2 channels - Viator (bokun emails except GYG) and Website (info@tours.co.th + GYG)
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
           COALESCE(SUM(adult), 0) AS total_adults,
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
-        FROM bookings
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
@@ -131,23 +132,24 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
           COALESCE(SUM(adult), 0) AS total_adults,
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
-        FROM bookings
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `);
@@ -232,43 +234,49 @@ export default async function handler(req, res) {
       `);
     }
     
-    // SIMPLIFIED: Viator vs Website breakdown - just use booking number patterns
+    // FIXED: Only 2 channels - Viator vs Website breakdown
     let viatorWebsiteResult;
     if (dateFilter) {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
-        FROM bookings
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
     } else {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
-        FROM bookings
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN booking_number LIKE '6%' THEN 'Website'
-            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
-            ELSE 'OTA'
+            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
           END
       `);
     }

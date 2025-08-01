@@ -95,6 +95,7 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'OTA' THEN 'OTA'
             WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
@@ -109,6 +110,7 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'OTA' THEN 'OTA'
             WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
@@ -120,6 +122,7 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'OTA' THEN 'OTA'
             WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
@@ -133,6 +136,7 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'OTA' THEN 'OTA'
             WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
@@ -226,7 +230,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('Viator', 'OTA') THEN 'OTA'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
@@ -235,7 +239,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('Viator', 'OTA') THEN 'OTA'
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
@@ -243,7 +247,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('Viator', 'OTA') THEN 'OTA'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
@@ -251,7 +255,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('Viator', 'OTA') THEN 'OTA'
             ELSE 'Website'
           END
       `);

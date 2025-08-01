@@ -222,13 +222,13 @@ export default async function handler(req, res) {
       `);
     }
     
-    // OTA vs Website breakdown based on channel field - FIXED LOGIC
-    let otaWebsiteResult;
+    // Viator vs Website breakdown based on channel field - FIXED LOGIC
+    let viatorWebsiteResult;
     if (dateFilter) {
-      otaWebsiteResult = await client.query(`
+      viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             ELSE 'Website'
           END AS type,
@@ -239,16 +239,16 @@ export default async function handler(req, res) {
           AND channel != 'GYG'
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
     } else {
-      otaWebsiteResult = await client.query(`
+      viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             ELSE 'Website'
           END AS type,
@@ -258,20 +258,20 @@ export default async function handler(req, res) {
         WHERE channel != 'GYG'
         GROUP BY 
           CASE
-            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             ELSE 'Website'
           END
       `);
     }
     
-    // Extract OTA and Website metrics
-    const otaData = otaWebsiteResult.rows.find(row => row.type === 'OTA');
-    const websiteData = otaWebsiteResult.rows.find(row => row.type === 'Website');
+    // Extract Viator and Website metrics
+    const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
+    const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
     
-    const otaSale = otaData ? parseFloat(otaData.sales) : 0;
+    const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
     const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
-    const otaCount = otaData ? parseInt(otaData.bookings, 10) : 0;
+    const viatorCount = viatorData ? parseInt(viatorData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
     
     // Debug logging for passenger counts
@@ -290,9 +290,9 @@ export default async function handler(req, res) {
       totalSummary: totalSummaryResult.rows[0],
       salesByMonth: salesByMonthResult.rows,
       topPrograms: topProgramsResult.rows,
-      otaSale,
+      viatorSale,
       websiteSale,
-      otaCount,
+      viatorCount,
       websiteCount,
       // Include debug data in response
       debug: {

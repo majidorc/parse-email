@@ -137,13 +137,10 @@ module.exports = async (req, res) => {
     return { sql: '', params: [] };
   }
   try {
-    // Add cancelled/deleted filter
-    const cancelledFilter = `AND (cancelled IS NULL OR cancelled = false) AND (deleted IS NULL OR deleted = false)`;
-    
     // Total Bookings: bookings with tour_date in period (exclude deleted/cancelled)
     const channelFilter = getChannelFilterSql();
     const { rows: totalRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} ${cancelledFilter}`,
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const totalBookings = parseInt(totalRows[0].count, 10);
@@ -151,7 +148,7 @@ module.exports = async (req, res) => {
     // New Bookings: bookings with book_date in period (exclude deleted/cancelled)
     const newRowsFilter = getChannelFilterSql();
     const { rows: newRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2 ${newRowsFilter.sql} ${cancelledFilter}`,
+      `SELECT COUNT(*) AS count FROM bookings WHERE book_date >= $1 AND book_date < $2 ${newRowsFilter.sql}`,
       [start, end, ...newRowsFilter.params]
     );
     const newBookings = parseInt(newRows[0].count, 10);
@@ -159,14 +156,14 @@ module.exports = async (req, res) => {
     
     // Done bookings: customer = TRUE (exclude deleted/cancelled)
     const { rows: doneRows } = await sql.query(
-      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE ${channelFilter.sql} ${cancelledFilter}`,
+      `SELECT COUNT(*) AS count FROM bookings WHERE tour_date >= $1 AND tour_date < $2 AND customer = TRUE ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const done = parseInt(doneRows[0].count, 10);
     
     // Total Earnings: sum of paid (exclude deleted/cancelled)
     const { rows: paidRows } = await sql.query(
-      `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} ${cancelledFilter}`,
+      `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     const totalEarnings = parseFloat(paidRows[0].sum);
@@ -191,7 +188,7 @@ module.exports = async (req, res) => {
        FROM bookings b
        LEFT JOIN products p ON b.sku = p.sku
        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-       WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql} ${cancelledFilter}`,
+       WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
     
@@ -207,12 +204,12 @@ module.exports = async (req, res) => {
     }, 0);
     const { rows: revenueRows } = await sql.query(
       `SELECT tour_date::date AS day, COALESCE(SUM(paid),0) AS revenue, COUNT(*) AS count
-       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} ${cancelledFilter}
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}
        GROUP BY day ORDER BY day`, [start, end, ...channelFilter.params]
     );
     const { rows: destRows } = await sql.query(
       `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax
-       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} ${cancelledFilter} GROUP BY program ORDER BY count DESC`, [start, end, ...channelFilter.params]
+       FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} GROUP BY program ORDER BY count DESC`, [start, end, ...channelFilter.params]
     );
     let percentNew = null, percentEarnings = null, percentTotal = null;
     let prevPeriod = null;

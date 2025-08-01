@@ -119,11 +119,8 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Add cancelled/deleted filter
-    const cancelledFilter = `AND (cancelled IS NULL OR cancelled = false) AND (deleted IS NULL OR deleted = false)`;
-    
     // Get total count
-    const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased} ${cancelledFilter}`;
+    const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased}`;
     const { rows: countRows } = await sql.query(countQuery, params);
     const total = parseInt(countRows[0].count, 10);
 
@@ -177,7 +174,7 @@ module.exports = async (req, res) => {
       FROM bookings b
       LEFT JOIN products p ON b.sku = p.sku
       LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-      ${whereClause} ${cancelledFilter}
+      ${whereClause}
       ORDER BY b.${sort} ${dirStr}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
@@ -222,10 +219,8 @@ module.exports = async (req, res) => {
       `;
       let allParams = [];
       if (startDate && endDate) {
-        allDataQuery += ` WHERE b.tour_date >= $1 AND b.tour_date < $2 ${cancelledFilter}`;
+        allDataQuery += ` WHERE b.tour_date >= $1 AND b.tour_date < $2`;
         allParams = [startDate, endDate];
-      } else {
-        allDataQuery += ` WHERE 1=1 ${cancelledFilter}`;
       }
       const { rows: allRows } = await sql.query(allDataQuery, allParams);
       totalBenefit = allRows.reduce((sum, b) => {

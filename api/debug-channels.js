@@ -16,40 +16,46 @@ export default async function handler(req, res) {
       ORDER BY ordinal_position
     `);
     
-    // Check sample data with all fields
+    // Check sample data with available fields
     const sampleData = await client.query(`
-      SELECT booking_number, channel, email, tour_date
+      SELECT booking_number, channel, tour_date
       FROM bookings 
       WHERE channel IN ('Bokun', 'GYG', 'Website', 'Viator')
       ORDER BY tour_date DESC 
       LIMIT 10
     `);
     
-    // Check GYG vs Bokun distinction
-    const gygBokunCheck = await client.query(`
-      SELECT channel, email, COUNT(*) as count
+    // Check channel distribution
+    const channelDistribution = await client.query(`
+      SELECT channel, COUNT(*) as count
       FROM bookings 
-      WHERE channel IN ('Bokun', 'GYG')
-      GROUP BY channel, email
+      GROUP BY channel
       ORDER BY count DESC
-      LIMIT 10
     `);
     
-    // Check Website emails
-    const websiteEmails = await client.query(`
-      SELECT channel, email, COUNT(*) as count
+    // Check GYG vs Bokun distinction
+    const gygBokunCheck = await client.query(`
+      SELECT channel, COUNT(*) as count
+      FROM bookings 
+      WHERE channel IN ('Bokun', 'GYG')
+      GROUP BY channel
+      ORDER BY count DESC
+    `);
+    
+    // Check Website data
+    const websiteData = await client.query(`
+      SELECT channel, COUNT(*) as count
       FROM bookings 
       WHERE channel = 'Website'
-      GROUP BY channel, email
-      ORDER BY count DESC
-      LIMIT 10
+      GROUP BY channel
     `);
     
     res.status(200).json({
       tableStructure: tableStructure.rows,
       sampleData: sampleData.rows,
+      channelDistribution: channelDistribution.rows,
       gygBokunCheck: gygBokunCheck.rows,
-      websiteEmails: websiteEmails.rows
+      websiteData: websiteData.rows
     });
     
   } catch (err) {

@@ -100,91 +100,35 @@ export default async function handler(req, res) {
     
     // No cancelled/deleted filters needed - cancelled bookings are completely removed from DB
     
-    // UPDATED: Sales by channel with comprehensive Viator identification
+    // UPDATED: Sales by channel with simplified logic using channel field
     let salesByChannelResult;
     if (dateFilter) {
-      salesByChannelResult = await client.query(`
+      salesByChannelResult = await sql`
         SELECT 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END AS channel,
+          COALESCE(channel, 'Website') AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(b.paid), 0) AS total_sales,
-          COALESCE(SUM(b.adult), 0) AS total_adults,
-          COALESCE(SUM(b.child), 0) AS total_children,
-          COALESCE(SUM(b.infant), 0) AS total_infants
-        FROM bookings b
-        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+          COALESCE(SUM(paid), 0) AS total_sales,
+          COALESCE(SUM(adult), 0) AS total_adults,
+          COALESCE(SUM(child), 0) AS total_children,
+          COALESCE(SUM(infant), 0) AS total_infants
+        FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-        GROUP BY 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END
+        GROUP BY COALESCE(channel, 'Website')
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
     } else {
-      salesByChannelResult = await client.query(`
+      salesByChannelResult = await sql`
         SELECT 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END AS channel,
+          COALESCE(channel, 'Website') AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(b.paid), 0) AS total_sales,
-          COALESCE(SUM(b.adult), 0) AS total_adults,
-          COALESCE(SUM(b.child), 0) AS total_children,
-          COALESCE(SUM(b.infant), 0) AS total_infants
-        FROM bookings b
-        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-        GROUP BY 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END
+          COALESCE(SUM(paid), 0) AS total_sales,
+          COALESCE(SUM(adult), 0) AS total_adults,
+          COALESCE(SUM(child), 0) AS total_children,
+          COALESCE(SUM(infant), 0) AS total_infants
+        FROM bookings
+        GROUP BY COALESCE(channel, 'Website')
         ORDER BY total_sales DESC
-      `);
+      `;
     }
     
     // Total summary for the period - ADDED CANCELLED FILTER
@@ -266,82 +210,26 @@ export default async function handler(req, res) {
       `);
     }
     
-    // UPDATED: Viator vs Website breakdown with comprehensive identification
+    // UPDATED: Viator vs Website breakdown with simplified logic
     let viatorWebsiteResult;
     if (dateFilter) {
       viatorWebsiteResult = await client.query(`
         SELECT 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END AS type,
+          COALESCE(channel, 'Website') AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(b.paid), 0) AS sales
-        FROM bookings b
-        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+          COALESCE(SUM(paid), 0) AS sales
+        FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-        GROUP BY 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END
+        GROUP BY COALESCE(channel, 'Website')
       `, [startDateParam, endDateParam]);
     } else {
       viatorWebsiteResult = await client.query(`
         SELECT 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END AS type,
+          COALESCE(channel, 'Website') AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(b.paid), 0) AS sales
-        FROM bookings b
-        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-        GROUP BY 
-          CASE
-            WHEN b.channel = 'Viator' THEN 'Viator'
-            WHEN b.channel = 'Bokun' AND b.booking_number NOT LIKE 'GYG%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body NOT ILIKE '%GetYourGuide%' AND p.body NOT ILIKE '%Sold by%GetYourGuide%' THEN 'Viator'
-            WHEN b.booking_number LIKE 'V%' THEN 'Viator'
-            WHEN b.booking_number LIKE '%VIATOR%' THEN 'Viator'
-            WHEN b.channel = 'GYG' THEN 'GYG'
-            WHEN p.sender ILIKE '%bokun.io%' AND p.body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-            WHEN b.booking_number LIKE 'GYG%' THEN 'GYG'
-            WHEN b.channel = 'Website' OR b.channel IS NULL THEN 'Website'
-            WHEN b.booking_number LIKE '6%' THEN 'Website'
-            ELSE 'Website'
-          END
+          COALESCE(SUM(paid), 0) AS sales
+        FROM bookings
+        GROUP BY COALESCE(channel, 'Website')
       `);
     }
     

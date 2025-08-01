@@ -95,7 +95,7 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th', 'OTA') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END AS channel,
@@ -109,7 +109,7 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th', 'OTA') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END
@@ -229,6 +229,7 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
@@ -238,6 +239,7 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
@@ -246,6 +248,7 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
@@ -254,6 +257,7 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel IN ('GYG', 'Website') THEN 'Website'
             ELSE 'Website'
           END
       `);

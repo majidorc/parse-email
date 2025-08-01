@@ -1,0 +1,5 @@
+[33m5ae9c0c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix analytics issues: add cancelled/deleted filters and improve channel classification
+[33mfec7479[m your commit message
+[33m5e2ed06[m your commit message
+[33m214350d[m Enhanced debug queries to check for NULL channels and sample booking data
+[33m9c81f6c[m Add debug query to check what channel values exist in database

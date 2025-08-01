@@ -106,22 +106,22 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS total_sales,
-          COALESCE(SUM(adult), 0) AS total_adults,
-          COALESCE(SUM(child), 0) AS total_children,
-          COALESCE(SUM(infant), 0) AS total_infants
+          COALESCE(SUM(b.paid), 0) AS total_sales,
+          COALESCE(SUM(b.adult), 0) AS total_adults,
+          COALESCE(SUM(b.child), 0) AS total_children,
+          COALESCE(SUM(b.infant), 0) AS total_infants
         FROM bookings b
         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-        WHERE tour_date >= $1 AND tour_date < $2
+        WHERE b.tour_date >= $1 AND b.tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
@@ -132,21 +132,21 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS total_sales,
-          COALESCE(SUM(adult), 0) AS total_adults,
-          COALESCE(SUM(child), 0) AS total_children,
-          COALESCE(SUM(infant), 0) AS total_infants
+          COALESCE(SUM(b.paid), 0) AS total_sales,
+          COALESCE(SUM(b.adult), 0) AS total_adults,
+          COALESCE(SUM(b.child), 0) AS total_children,
+          COALESCE(SUM(b.infant), 0) AS total_infants
         FROM bookings b
         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
@@ -240,19 +240,19 @@ export default async function handler(req, res) {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS sales
+          COALESCE(SUM(b.paid), 0) AS sales
         FROM bookings b
         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-        WHERE tour_date >= $1 AND tour_date < $2
+        WHERE b.tour_date >= $1 AND b.tour_date < $2
         GROUP BY 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
@@ -262,18 +262,18 @@ export default async function handler(req, res) {
       viatorWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
-          COALESCE(SUM(paid), 0) AS sales
+          COALESCE(SUM(b.paid), 0) AS sales
         FROM bookings b
         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
         GROUP BY 
           CASE
-            WHEN booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'

@@ -103,7 +103,7 @@ export default async function handler(req, res) {
     // UPDATED: Sales by channel with simplified logic using channel field
     let salesByChannelResult;
     if (dateFilter) {
-      salesByChannelResult = await sql`
+      salesByChannelResult = await client.query(`
         SELECT 
           COALESCE(channel, 'Website') AS channel,
           COUNT(*) AS bookings,
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
     } else {
-      salesByChannelResult = await sql`
+      salesByChannelResult = await client.query(`
         SELECT 
           COALESCE(channel, 'Website') AS channel,
           COUNT(*) AS bookings,
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY COALESCE(channel, 'Website')
         ORDER BY total_sales DESC
-      `;
+      `);
     }
     
     // Total summary for the period - ADDED CANCELLED FILTER

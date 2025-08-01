@@ -1413,11 +1413,11 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const analyticsWebsiteCount = document.getElementById('analytics-website-count');
     
     if (analyticsTotalBookings) analyticsTotalBookings.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsNewBookings) analyticsNewBookings.textContent = Number(data.otaSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            if (analyticsNewBookings) analyticsNewBookings.textContent = Number(data.viatorSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsTotalEarnings) analyticsTotalEarnings.textContent = Number(data.websiteSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsDone) analyticsDone.textContent = data.otaCount || 0;
+          if (analyticsDone) analyticsDone.textContent = data.viatorCount || 0;
     if (analyticsBooked) analyticsBooked.textContent = data.websiteCount || 0;
-    if (analyticsOtaCount) analyticsOtaCount.textContent = data.otaCount || 0;
+          if (analyticsOtaCount) analyticsOtaCount.textContent = data.viatorCount || 0;
     if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = data.websiteCount || 0;
     
     // Update channel table

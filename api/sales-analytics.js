@@ -100,12 +100,17 @@ export default async function handler(req, res) {
     
     // No cancelled/deleted filters needed - cancelled bookings are completely removed from DB
     
-    // UPDATED: Sales by channel with simplified logic using channel field
+    // SIMPLIFIED: Sales by channel - just use booking number patterns
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
-          COALESCE(channel, 'Website') AS channel,
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
           COALESCE(SUM(adult), 0) AS total_adults,
@@ -113,20 +118,37 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-        GROUP BY COALESCE(channel, 'Website')
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
     } else {
       salesByChannelResult = await client.query(`
         SELECT 
-          COALESCE(channel, 'Website') AS channel,
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END AS channel,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
           COALESCE(SUM(adult), 0) AS total_adults,
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        GROUP BY COALESCE(channel, 'Website')
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'GYG%' THEN 'GYG'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END
         ORDER BY total_sales DESC
       `);
     }
@@ -210,26 +232,44 @@ export default async function handler(req, res) {
       `);
     }
     
-    // UPDATED: Viator vs Website breakdown with simplified logic
+    // SIMPLIFIED: Viator vs Website breakdown - just use booking number patterns
     let viatorWebsiteResult;
     if (dateFilter) {
       viatorWebsiteResult = await client.query(`
         SELECT 
-          COALESCE(channel, 'Website') AS type,
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
-        GROUP BY COALESCE(channel, 'Website')
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END
       `, [startDateParam, endDateParam]);
     } else {
       viatorWebsiteResult = await client.query(`
         SELECT 
-          COALESCE(channel, 'Website') AS type,
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        GROUP BY COALESCE(channel, 'Website')
+        GROUP BY 
+          CASE
+            WHEN booking_number LIKE '6%' THEN 'Website'
+            WHEN booking_number LIKE 'V%' OR booking_number LIKE '%VIATOR%' THEN 'Viator'
+            ELSE 'OTA'
+          END
       `);
     }
     

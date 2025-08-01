@@ -79,10 +79,10 @@ export default async function handler(req, res) {
     const debugInfo = {
       period: `${lastMonthStartStr} to ${thisMonthStartStr}`,
       selectedPeriod: period || 'lastMonth',
-      expected: 99100.02,
-      actual: 77600.01,
-      difference: 99100.02 - 77600.01,
-      percentageDifference: ((99100.02 - 77600.01) / 99100.02 * 100).toFixed(2)
+      expected: period === 'lastMonth' ? 99100.02 : 0, // Only July 2024 had 99,100.02
+      actual: 0, // Will be calculated from current analytics
+      difference: 0,
+      percentageDifference: '0.00'
     };
     
     // Simple test query first
@@ -123,6 +123,12 @@ export default async function handler(req, res) {
     
     debugInfo.currentAnalyticsBreakdown = currentAnalyticsViator;
     console.log('Analytics breakdown:', currentAnalyticsViator);
+    
+    // Calculate actual Viator sales from analytics
+    const viatorData = currentAnalyticsViator.find(item => item.calculated_channel === 'Viator');
+    debugInfo.actual = viatorData ? parseFloat(viatorData.total_sales) : 0;
+    debugInfo.difference = debugInfo.expected - debugInfo.actual;
+    debugInfo.percentageDifference = debugInfo.expected > 0 ? ((debugInfo.difference / debugInfo.expected) * 100).toFixed(2) : '0.00';
     
     // Check bokun emails
     console.log('Checking bokun emails...');

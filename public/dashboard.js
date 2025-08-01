@@ -1221,16 +1221,14 @@ const analyticsSection = document.getElementById('analytics-section');
 
 dashboardBtn.onclick = () => {
   closeAddBookingForm(); // Close add booking form when switching tabs
-  dashboardBtn.setAttribute('data-active', 'true');
-  bookingsBtn.removeAttribute('data-active');
-  programsBtn.removeAttribute('data-active');
-  accountingBtn.removeAttribute('data-active');
-  analyticsBtn.removeAttribute('data-active');
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  // Add active class to dashboard button
+  dashboardBtn.classList.add('active');
   dashboardSection.style.display = '';
   bookingsTableSection.style.display = 'none';
   summarySection.style.display = 'none';
@@ -1248,16 +1246,14 @@ dashboardBtn.onclick = () => {
 };
 bookingsBtn.onclick = () => {
   closeAddBookingForm(); // Close add booking form when switching tabs
-  dashboardBtn.removeAttribute('data-active');
-  bookingsBtn.setAttribute('data-active', 'true');
-  programsBtn.removeAttribute('data-active');
-  accountingBtn.removeAttribute('data-active');
-  analyticsBtn.removeAttribute('data-active');
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-600 text-white w-full sm:w-auto transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  // Add active class to bookings button
+  bookingsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
   bookingsTableSection.style.display = window.innerWidth <= 700 ? 'none' : '';
   summarySection.style.display = '';
@@ -1276,15 +1272,14 @@ bookingsBtn.onclick = () => {
 };
 accountingBtn.onclick = () => {
   closeAddBookingForm(); // Close add booking form when switching tabs
-  dashboardBtn.removeAttribute('data-active');
-  bookingsBtn.removeAttribute('data-active');
-  programsBtn.removeAttribute('data-active');
-  accountingBtn.setAttribute('data-active', 'true');
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-600 text-white w-full sm:w-auto transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  // Add active class to accounting button
+  accountingBtn.classList.add('active');
   dashboardSection.style.display = 'none';
   bookingsTableSection.style.display = 'none';
   summarySection.style.display = 'none';
@@ -1302,16 +1297,14 @@ accountingBtn.onclick = () => {
 };
 programsBtn.onclick = () => {
   closeAddBookingForm(); // Close add booking form when switching tabs
-  dashboardBtn.removeAttribute('data-active');
-  bookingsBtn.removeAttribute('data-active');
-  programsBtn.setAttribute('data-active', 'true');
-  accountingBtn.removeAttribute('data-active');
-  analyticsBtn.removeAttribute('data-active');
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-600 text-white w-full sm:w-auto transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  // Add active class to programs button
+  programsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
   bookingsTableSection.style.display = 'none';
   summarySection.style.display = 'none';
@@ -1329,16 +1322,14 @@ programsBtn.onclick = () => {
 };
 analyticsBtn.onclick = () => {
   closeAddBookingForm(); // Close add booking form when switching tabs
-  dashboardBtn.removeAttribute('data-active');
-  bookingsBtn.removeAttribute('data-active');
-  programsBtn.removeAttribute('data-active');
-  accountingBtn.removeAttribute('data-active');
-  analyticsBtn.setAttribute('data-active', 'true');
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-100 text-indigo-800 w-full sm:w-auto hover:bg-indigo-200 focus:bg-indigo-200 transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  // Add active class to analytics button
+  analyticsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
   bookingsTableSection.style.display = 'none';
   summarySection.style.display = 'none';
@@ -3589,11 +3580,13 @@ function initializeApp() {
   accountingTableContainer.style.display = 'none';
   searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
   document.getElementById('pagination-controls').style.display = 'none';
-  dashboardBtn.className = 'px-4 py-2 rounded font-semibold bg-indigo-600 text-white w-full sm:w-auto transition-colors duration-200';
-  bookingsBtn.className = 'px-4 py-2 rounded font-semibold bg-blue-100 text-blue-800 w-full sm:w-auto hover:bg-blue-200 focus:bg-blue-200 transition-colors duration-200';
-  accountingBtn.className = 'px-4 py-2 rounded font-semibold bg-pink-100 text-pink-800 w-full sm:w-auto hover:bg-pink-200 focus:bg-pink-200 transition-colors duration-200';
-  programsBtn.className = 'px-4 py-2 rounded font-semibold bg-green-100 text-green-800 w-full sm:w-auto hover:bg-green-200 focus:bg-green-200 transition-colors duration-200';
-  analyticsBtn.className = 'px-4 py-2 rounded font-semibold bg-yellow-600 text-white w-full sm:w-auto transition-colors duration-200';
+  
+  // Set initial active state for dashboard
+  dashboardBtn.classList.add('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
   fetchDashboardAnalytics();
   
   // Add dashboard refresh button handler

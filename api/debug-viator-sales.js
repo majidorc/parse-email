@@ -208,6 +208,98 @@ export default async function handler(req, res) {
     const cancelledSales = cancelledBookings.reduce((sum, b) => sum + parseFloat(b.paid || 0), 0);
     debugInfo.cancelledSales = cancelledSales.toFixed(2);
     
+    // 15. NEW: Check if there are any bookings with specific patterns that might be Viator
+    const { rows: potentialViatorBookings } = await sql`
+      SELECT booking_number, paid, tour_date, channel, sender, body
+      FROM bookings b
+      LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+      WHERE tour_date >= ${lastMonthStartStr} AND tour_date < ${thisMonthStartStr}
+      AND (
+        b.booking_number LIKE '%VIATOR%'
+        OR b.booking_number LIKE 'V%'
+        OR b.booking_number LIKE '%BOKUN%'
+        OR p.sender ILIKE '%bokun.io%'
+        OR b.channel ILIKE '%viator%'
+        OR b.channel ILIKE '%bokun%'
+      )
+      ORDER BY tour_date
+    `;
+    
+    debugInfo.potentialViatorBookings = potentialViatorBookings.map(booking => ({
+      booking_number: booking.booking_number,
+      paid: booking.paid,
+      tour_date: booking.tour_date,
+      channel: booking.channel || 'N/A',
+      sender: booking.sender || 'N/A'
+    }));
+    
+    const potentialViatorSales = potentialViatorBookings.reduce((sum, b) => sum + parseFloat(b.paid || 0), 0);
+    debugInfo.potentialViatorSales = potentialViatorSales.toFixed(2);
+    
+    // 16. NEW: Check what the current analytics logic would calculate for Viator
+    const { rows: currentAnalyticsViator } = await sql`
+      SELECT 
+        CASE
+          WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+          WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+          WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+          ELSE 'Website'
+        END AS calculated_channel,
+        COUNT(*) AS count,
+        COALESCE(SUM(b.paid), 0) AS total_sales
+      FROM bookings b
+      LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+      WHERE tour_date >= ${lastMonthStartStr} AND tour_date < ${thisMonthStartStr}
+      GROUP BY 
+        CASE
+          WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+          WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+          WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+          ELSE 'Website'
+        END
+      ORDER BY calculated_channel
+    `;
+    
+    debugInfo.currentAnalyticsBreakdown = currentAnalyticsViator;
+    
+    // 17. NEW: Check all bokun emails for this period
+    const { rows: bokunEmails } = await sql`
+      SELECT booking_number, sender, body, tour_date
+      FROM parsed_emails p
+      LEFT JOIN bookings b ON p.booking_number = b.booking_number
+      WHERE tour_date >= ${lastMonthStartStr} AND tour_date < ${thisMonthStartStr}
+      AND p.sender ILIKE '%bokun.io%'
+      ORDER BY tour_date
+    `;
+    
+    debugInfo.bokunEmails = bokunEmails.map(email => ({
+      booking_number: email.booking_number,
+      sender: email.sender,
+      tour_date: email.tour_date,
+      body_preview: email.body ? email.body.substring(0, 100) + '...' : 'N/A'
+    }));
+    
+    debugInfo.bokunEmailsCount = bokunEmails.length;
+    
+    // 18. NEW: Check all info@tours.co.th emails for this period
+    const { rows: infoEmails } = await sql`
+      SELECT booking_number, sender, body, tour_date
+      FROM parsed_emails p
+      LEFT JOIN bookings b ON p.booking_number = b.booking_number
+      WHERE tour_date >= ${lastMonthStartStr} AND tour_date < ${thisMonthStartStr}
+      AND p.sender ILIKE '%info@tours.co.th%'
+      ORDER BY tour_date
+    `;
+    
+    debugInfo.infoEmails = infoEmails.map(email => ({
+      booking_number: email.booking_number,
+      sender: email.sender,
+      tour_date: email.tour_date,
+      body_preview: email.body ? email.body.substring(0, 100) + '...' : 'N/A'
+    }));
+    
+    debugInfo.infoEmailsCount = infoEmails.length;
+    
     res.status(200).json(debugInfo);
     
   } catch (err) {

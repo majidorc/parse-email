@@ -86,14 +86,21 @@ export default async function handler(req, res) {
       endDateParam = endDate;
     }
     
-    // Sales by channel based on channel field
+    // Add cancelled/deleted filter to all queries
+    const cancelledFilter = `
+      AND (cancelled IS NULL OR cancelled = false)
+      AND (deleted IS NULL OR deleted = false)
+    `;
+    
+    // Sales by channel based on channel field - FIXED LOGIC
     let salesByChannelResult;
     if (dateFilter) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
+            WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
@@ -103,10 +110,12 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+        ${cancelledFilter}
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
+            WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
@@ -116,7 +125,8 @@ export default async function handler(req, res) {
         SELECT 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
+            WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END AS channel,
           COUNT(*) AS bookings,
@@ -125,17 +135,20 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
+        WHERE 1=1
+        ${cancelledFilter}
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
-            WHEN channel IN ('GYG', 'Website') THEN 'Website'
+            WHEN channel IN ('GYG', 'Website', 'Bokun', 'tours.co.th') THEN 'Website'
+            WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `);
     }
     
-    // Total summary for the period
+    // Total summary for the period - ADDED CANCELLED FILTER
     let totalSummaryResult;
     if (dateFilter) {
       totalSummaryResult = await client.query(`
@@ -147,6 +160,7 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+        ${cancelledFilter}
       `, [startDateParam, endDateParam]);
     } else {
       totalSummaryResult = await client.query(`
@@ -157,10 +171,12 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
+        WHERE 1=1
+        ${cancelledFilter}
       `);
     }
     
-    // Sales by month (for chart)
+    // Sales by month (for chart) - ADDED CANCELLED FILTER
     let salesByMonthResult;
     if (dateFilter) {
       salesByMonthResult = await client.query(`
@@ -170,6 +186,7 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+        ${cancelledFilter}
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `, [startDateParam, endDateParam]);
@@ -180,12 +197,14 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
+        WHERE 1=1
+        ${cancelledFilter}
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `);
     }
     
-    // Top programs by sales
+    // Top programs by sales - ADDED CANCELLED FILTER
     let topProgramsResult;
     if (dateFilter) {
       topProgramsResult = await client.query(`
@@ -196,6 +215,7 @@ export default async function handler(req, res) {
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
           AND program IS NOT NULL AND program != ''
+        ${cancelledFilter}
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
@@ -208,13 +228,14 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE program IS NOT NULL AND program != ''
+        ${cancelledFilter}
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
       `);
     }
     
-    // OTA vs Website breakdown based on channel field
+    // OTA vs Website breakdown based on channel field - FIXED LOGIC
     let otaWebsiteResult;
     if (dateFilter) {
       otaWebsiteResult = await client.query(`
@@ -227,6 +248,7 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+        ${cancelledFilter}
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
@@ -243,6 +265,8 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
+        WHERE 1=1
+        ${cancelledFilter}
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'

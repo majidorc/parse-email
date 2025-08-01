@@ -94,7 +94,7 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
@@ -109,7 +109,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       salesByChannelResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'Viator'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
@@ -230,7 +230,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
@@ -241,7 +241,7 @@ export default async function handler(req, res) {
         WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
       otaWebsiteResult = await client.query(`
         SELECT 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
@@ -261,7 +261,7 @@ export default async function handler(req, res) {
         FROM bookings
         GROUP BY 
           CASE
-            WHEN channel = 'Viator' THEN 'OTA'
+            WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
             WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'

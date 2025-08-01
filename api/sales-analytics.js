@@ -135,8 +135,8 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE 1=1
-        ${cancelledFilter}
+        WHERE (cancelled IS NULL OR cancelled = false)
+          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'Viator'
@@ -171,8 +171,8 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE 1=1
-        ${cancelledFilter}
+        WHERE (cancelled IS NULL OR cancelled = false)
+          AND (deleted IS NULL OR deleted = false)
       `);
     }
     
@@ -197,8 +197,8 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE 1=1
-        ${cancelledFilter}
+        WHERE (cancelled IS NULL OR cancelled = false)
+          AND (deleted IS NULL OR deleted = false)
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `);
@@ -228,7 +228,8 @@ export default async function handler(req, res) {
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE program IS NOT NULL AND program != ''
-        ${cancelledFilter}
+          AND (cancelled IS NULL OR cancelled = false)
+          AND (deleted IS NULL OR deleted = false)
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
@@ -265,13 +266,13 @@ export default async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE 1=1
-        ${cancelledFilter}
+        WHERE (cancelled IS NULL OR cancelled = false)
+          AND (deleted IS NULL OR deleted = false)
         GROUP BY 
           CASE
             WHEN channel = 'Viator' THEN 'OTA'
             ELSE 'Website'
-          END
+        END
       `);
     }
     

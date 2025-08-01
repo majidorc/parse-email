@@ -284,14 +284,11 @@ export default async function handler(req, res) {
     // Extract Viator and Website metrics
     const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
     const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
-    const gygData = viatorWebsiteResult.rows.find(row => row.type === 'GYG');
     
     const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
     const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
-    const gygSale = gygData ? parseFloat(gygData.sales) : 0;
     const viatorCount = viatorData ? parseInt(viatorData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
-    const gygCount = gygData ? parseInt(gygData.bookings, 10) : 0;
     
     // Debug logging for passenger counts
     console.log('Debug - Total Summary:', {
@@ -304,10 +301,8 @@ export default async function handler(req, res) {
       endDate: endDateParam,
       viatorSale: viatorSale,
       websiteSale: websiteSale,
-      gygSale: gygSale,
       viatorCount: viatorCount,
-      websiteCount: websiteCount,
-      gygCount: gygCount
+      websiteCount: websiteCount
     });
 
     res.status(200).json({
@@ -317,10 +312,8 @@ export default async function handler(req, res) {
       topPrograms: topProgramsResult.rows,
       viatorSale,
       websiteSale,
-      gygSale,
       viatorCount,
       websiteCount,
-      gygCount,
       // Include debug data in response
       debug: {
         availableChannels: debugChannels.rows,

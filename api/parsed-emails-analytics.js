@@ -16,9 +16,7 @@ export default async function handler(req, res) {
     const bySellerResult = await client.query(
       `SELECT
         CASE
-          WHEN sender = 'info@tours.co.th' THEN 'Website'
-          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%GetYourGuide%' THEN 'GYG'
-          WHEN sender ILIKE '%bokun.io%' AND body ILIKE '%Sold by%Viator.com%' THEN 'Viator'
+          WHEN sender ILIKE '%info@tours.co.th%' THEN 'Website'
           WHEN sender ILIKE '%bokun.io%' THEN 'Viator'
           ELSE 'Website'
         END AS seller,

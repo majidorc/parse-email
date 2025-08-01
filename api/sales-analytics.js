@@ -290,6 +290,20 @@ export default async function handler(req, res) {
     const viatorCount = viatorData ? parseInt(viatorData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
     
+    // Calculate passenger counts from salesByChannel data
+    const viatorChannelData = salesByChannelResult.rows.find(row => row.channel === 'Viator');
+    const websiteChannelData = salesByChannelResult.rows.find(row => row.channel === 'Website');
+    
+    const viatorPassengers = viatorChannelData ? 
+      (parseInt(viatorChannelData.total_adults) || 0) + 
+      (parseInt(viatorChannelData.total_children) || 0) + 
+      (parseInt(viatorChannelData.total_infants) || 0) : 0;
+    
+    const websitePassengers = websiteChannelData ? 
+      (parseInt(websiteChannelData.total_adults) || 0) + 
+      (parseInt(websiteChannelData.total_children) || 0) + 
+      (parseInt(websiteChannelData.total_infants) || 0) : 0;
+    
     // Debug logging for passenger counts
     console.log('Debug - Total Summary:', {
       total_bookings: totalSummaryResult.rows[0].total_bookings,
@@ -314,6 +328,8 @@ export default async function handler(req, res) {
       websiteSale,
       viatorCount,
       websiteCount,
+      viatorPassengers,
+      websitePassengers,
       // Include debug data in response
       debug: {
         availableChannels: debugChannels.rows,

@@ -1397,8 +1397,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       });
       
       // Update passenger breakdown (Viator/Website) - show in main display
-      const viatorPassengers = data.viatorCount || 0;
-      const websitePassengers = data.websiteCount || 0;
+      const viatorPassengers = data.viatorPassengers || 0;
+      const websitePassengers = data.websitePassengers || 0;
       totalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
       
       // Update passenger breakdown subtitle

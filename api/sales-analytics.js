@@ -96,7 +96,6 @@ export default async function handler(req, res) {
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END AS channel,
@@ -107,11 +106,11 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+          AND channel != 'GYG'
         GROUP BY 
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END
@@ -123,7 +122,6 @@ export default async function handler(req, res) {
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END AS channel,
@@ -133,11 +131,11 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
+        WHERE channel != 'GYG'
         GROUP BY 
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'Viator'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             WHEN channel IS NULL THEN 'Website'
             ELSE 'Website'
           END
@@ -232,18 +230,17 @@ export default async function handler(req, res) {
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
         WHERE tour_date >= $1 AND tour_date < $2
+          AND channel != 'GYG'
         GROUP BY 
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
@@ -253,17 +250,16 @@ export default async function handler(req, res) {
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
           END AS type,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
+        WHERE channel != 'GYG'
         GROUP BY 
           CASE
             WHEN channel = 'Bokun' AND booking_number NOT LIKE 'GYG%' THEN 'OTA'
             WHEN channel = 'Website' THEN 'Website'
-            WHEN channel = 'GYG' AND booking_number LIKE 'GYG%' THEN 'Website'
             ELSE 'Website'
           END
       `);

@@ -1396,14 +1396,15 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         raw_infants: data.totalSummary.total_infants
       });
       
-      totalPassengers.textContent = total;
+      // Update passenger breakdown (Viator/Website) - show in main display
+      const viatorPassengers = data.viatorCount || 0;
+      const websitePassengers = data.websiteCount || 0;
+      totalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
       
-      // Update passenger breakdown (Viator/Website)
+      // Update passenger breakdown subtitle
       const passengersBreakdown = document.getElementById('sales-passengers-breakdown');
       if (passengersBreakdown) {
-        const viatorPassengers = data.viatorCount || 0;
-        const websitePassengers = data.websiteCount || 0;
-        passengersBreakdown.textContent = `${viatorPassengers}/${websitePassengers}`;
+        passengersBreakdown.textContent = `Total: ${total}`;
       }
     }
     if (avgSale) {

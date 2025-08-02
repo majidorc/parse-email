@@ -1256,6 +1256,7 @@ dashboardBtn.onclick = () => {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   // Add active class to dashboard button
   dashboardBtn.classList.add('active');
   dashboardSection.style.display = '';
@@ -1266,6 +1267,7 @@ dashboardBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
+  suppliersSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
   
   // Hide Add Booking button on Dashboard
@@ -1285,6 +1287,7 @@ bookingsBtn.onclick = () => {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   // Add active class to bookings button
   bookingsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
@@ -1295,6 +1298,7 @@ bookingsBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = '';
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
+  suppliersSection.style.display = 'none';
   // Show mobile cards only if on mobile
   document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
   
@@ -1315,6 +1319,7 @@ accountingBtn.onclick = () => {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   // Add active class to accounting button
   accountingBtn.classList.add('active');
   dashboardSection.style.display = 'none';
@@ -1325,6 +1330,7 @@ accountingBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
+  suppliersSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
   
   // Hide Add Booking button on Accounting tab
@@ -1344,6 +1350,7 @@ programsBtn.onclick = () => {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   // Add active class to programs button
   programsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
@@ -1352,6 +1359,7 @@ programsBtn.onclick = () => {
   accountingTableContainer.style.display = 'none';
   programsSection.style.display = '';
   analyticsSection.style.display = 'none';
+  suppliersSection.style.display = 'none';
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
@@ -1373,6 +1381,7 @@ analyticsBtn.onclick = () => {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   // Add active class to analytics button
   analyticsBtn.classList.add('active');
   dashboardSection.style.display = 'none';
@@ -1381,6 +1390,7 @@ analyticsBtn.onclick = () => {
   accountingTableContainer.style.display = 'none';
   programsSection.style.display = 'none';
   analyticsSection.style.display = '';
+  suppliersSection.style.display = 'none';
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
@@ -4079,6 +4089,9 @@ function initializeApp() {
   accountingTableContainer.style.display = 'none';
   searchBarSection.style.display = 'none'; // Hide search bar on Dashboard
   document.getElementById('pagination-controls').style.display = 'none';
+  programsSection.style.display = 'none';
+  analyticsSection.style.display = 'none';
+  suppliersSection.style.display = 'none';
   
   // Set initial active state for dashboard
   dashboardBtn.classList.add('active');
@@ -4086,6 +4099,7 @@ function initializeApp() {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
   
   // Hide Add Booking button by default (Dashboard is active)
   const addBookingBtn = document.getElementById('add-booking-btn');

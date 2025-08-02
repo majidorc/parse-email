@@ -2646,13 +2646,22 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Collect rate data
       const rateItems = document.querySelectorAll('.rate-item');
-      rateItems.forEach(item => {
+      console.log('[PROGRAMS] Found rate items:', rateItems.length);
+      
+      rateItems.forEach((item, index) => {
         const rateName = item.querySelector('[name="rateName"]').value;
         const netAdult = parseFloat(item.querySelector('[name="netAdult"]').value);
         const netChild = parseFloat(item.querySelector('[name="netChild"]').value);
         const feeType = item.querySelector('.fee-type-select').value;
         const feeAdult = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeAdult"]').value) : 0;
         const feeChild = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeChild"]').value) : 0;
+        
+        console.log(`[PROGRAMS] Rate ${index + 1}:`, { rateName, netAdult, netChild, feeType, feeAdult, feeChild });
+        
+        // Validate rate data
+        if (!rateName || isNaN(netAdult) || isNaN(netChild)) {
+          throw new Error(`Invalid rate data for rate ${index + 1}`);
+        }
         
         data.rates.push({
           name: rateName,
@@ -2671,17 +2680,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       try {
+        console.log('[PROGRAMS] Submitting data:', data);
         const response = await fetch('/api/products-rates?type=tour', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
         
+        console.log('[PROGRAMS] Response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to save program');
+          const errorData = await response.json();
+          console.error('[PROGRAMS] Server error:', errorData);
+          throw new Error(errorData.error || 'Failed to save program');
         }
         
         const result = await response.json();
+        console.log('[PROGRAMS] Success result:', result);
         alert('Program saved successfully!');
         
         // Reset form and show programs table
@@ -2694,6 +2709,7 @@ document.addEventListener('DOMContentLoaded', function() {
           fetchRatesAndPrograms();
         }
       } catch (error) {
+        console.error('[PROGRAMS] Error saving program:', error);
         alert('Error saving program: ' + error.message);
       }
     });

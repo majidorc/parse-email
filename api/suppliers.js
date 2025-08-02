@@ -81,7 +81,14 @@ async function handleGet(req, res, client) {
       s.name,
       s.created_at,
       COUNT(DISTINCT b.booking_number) as bookings_count,
-      COALESCE(SUM(b.paid), 0) as total_amount
+      COALESCE(SUM(b.paid), 0) as total_amount,
+      COALESCE(SUM(
+        CASE 
+          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
+          THEN b.paid - COALESCE(b.net_total, 0)
+          ELSE 0 
+        END
+      ), 0) as due_this_month
     FROM suppliers s
     LEFT JOIN products p ON s.id = p.supplier_id
     LEFT JOIN bookings b ON p.sku = b.sku

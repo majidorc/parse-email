@@ -3938,13 +3938,14 @@ async function fetchSuppliers() {
 function renderSuppliersTable() {
   const tbody = document.getElementById('suppliers-table-body');
   if (!suppliersData.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No suppliers found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">No suppliers found.</td></tr>';
   } else {
     tbody.innerHTML = suppliersData.map(supplier => `
       <tr>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${supplier.name}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.bookings_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.total_amount ? Number(supplier.total_amount).toFixed(2) : '0.00'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.due_this_month ? Number(supplier.due_this_month).toFixed(2) : '0.00'}</td>
         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <button class="text-indigo-600 hover:text-indigo-900 edit-supplier-btn" data-id="${supplier.id}" data-name="${supplier.name}">Edit</button>
           <button class="text-red-600 hover:text-red-900 ml-4 delete-supplier-btn" data-id="${supplier.id}">Delete</button>

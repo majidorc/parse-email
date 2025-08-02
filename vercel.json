@@ -15,6 +15,9 @@
     },
     "api/suppliers.js": {
       "maxDuration": 30
+    },
+    "api/migrate-suppliers.js": {
+      "maxDuration": 30
     }
   },
   "routes": [

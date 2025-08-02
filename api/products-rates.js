@@ -337,8 +337,9 @@ module.exports = async (req, res) => {
             const net_adult = netAdult;
             const net_child = netChild;
             const fee_type = feeType;
-            const fee_adult = feeAdult;
-            const fee_child = feeChild;
+            // Set fee values to NULL when fee_type is 'none' to satisfy database constraints
+            const fee_adult = (feeType === 'none') ? null : feeAdult;
+            const fee_child = (feeType === 'none') ? null : feeChild;
             
             console.log(`[PRODUCTS-RATES] Processing rate ${i + 1}:`, { 
               name, 

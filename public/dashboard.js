@@ -871,16 +871,6 @@ function renderAccountingSummary(data) {
     }
     
     // Note: Period filtering is now handled by the global period selector in the header
-        const endDate = document.getElementById('end-date').value;
-        if (startDate && endDate) {
-          accountingSearch = `date:${startDate},${endDate}`;
-          document.getElementById('search-bar').value = '';
-          fetchAccounting(1, accountingSort, accountingDir, accountingSearch, true);
-        }
-      });
-    }
-    
-    // Note: Period filtering is now handled by the global period selector in the header
   }, 0);
 }
 

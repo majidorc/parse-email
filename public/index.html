@@ -197,11 +197,11 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">SKU</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Program</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('sku')">SKU <span id="sku-sort-icon"></span></th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('program')">Program <span id="program-sort-icon"></span></th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Supplier</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('supplier')">Supplier <span id="supplier-sort-icon"></span></th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
         </tr>
       </thead>

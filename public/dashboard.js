@@ -2138,6 +2138,11 @@ function fetchDashboardAnalytics() {
 
 // --- Programs Tab Logic (merged) ---
 let allRates = [];
+
+// Programs sorting variables
+let programsSort = 'sku';
+let programsDir = 'asc';
+
 function fetchRatesAndPrograms() {
   fetch('/api/products-rates?type=tour')
     .then(res => {
@@ -2180,11 +2185,54 @@ function getRateSortIcon(column) {
   return programsRateDir === 'asc' ? '↑' : '↓';
 }
 
+// Programs sorting functions
+function sortPrograms(column) {
+  if (programsSort === column) {
+    programsDir = programsDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    programsSort = column;
+    programsDir = 'asc';
+  }
+  renderProgramsTable(allPrograms);
+}
+
+function getProgramSortIcon(column) {
+  if (programsSort !== column) return '';
+  return programsDir === 'asc' ? '↑' : '↓';
+}
+
+function updateProgramSortIcons() {
+  const skuIcon = document.getElementById('sku-sort-icon');
+  const programIcon = document.getElementById('program-sort-icon');
+  const supplierIcon = document.getElementById('supplier-sort-icon');
+  
+  if (skuIcon) skuIcon.textContent = getProgramSortIcon('sku');
+  if (programIcon) programIcon.textContent = getProgramSortIcon('program');
+  if (supplierIcon) supplierIcon.textContent = getProgramSortIcon('supplier');
+}
+
 
 
 function renderProgramsTable(programs) {
-  // Sort by SKU
-  programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
+  // Sort programs based on current sort settings
+  programs = programs.slice().sort((a, b) => {
+    let aVal, bVal;
+    
+    if (programsSort === 'sku') {
+      aVal = a.sku || '';
+      bVal = b.sku || '';
+      return programsDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    } else if (programsSort === 'program') {
+      aVal = a.program || '';
+      bVal = b.program || '';
+      return programsDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    } else if (programsSort === 'supplier') {
+      aVal = a.supplier_name || '';
+      bVal = b.supplier_name || '';
+      return programsDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    return 0;
+  });
   const tbody = document.getElementById('programs-table-body');
   if (!programs.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">No programs found.</td></tr>';
@@ -2271,6 +2319,9 @@ function renderProgramsTable(programs) {
   
   // Re-attach edit button event listeners after rendering
   initializeProgramsEditButtons();
+  
+  // Update sort icons
+  updateProgramSortIcons();
 }
 
 function renderProgramsPagination() {

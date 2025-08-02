@@ -2318,6 +2318,41 @@ function handleProgramEditClick(e) {
     });
 }
 
+// Initialize move buttons for rate items
+function initializeMoveButtons(rateItem) {
+  const moveUpBtn = rateItem.querySelector('.move-up-btn');
+  const moveDownBtn = rateItem.querySelector('.move-down-btn');
+
+  // Remove existing event listeners to prevent duplicates
+  if (moveUpBtn) {
+    moveUpBtn.removeEventListener('click', moveUpHandler);
+    moveUpBtn.addEventListener('click', moveUpHandler);
+  }
+
+  if (moveDownBtn) {
+    moveDownBtn.removeEventListener('click', moveDownHandler);
+    moveDownBtn.addEventListener('click', moveDownHandler);
+  }
+}
+
+// Separate handler functions to prevent duplicate listeners
+function moveUpHandler() {
+  const currentItem = this.closest('.rate-item');
+  const prevItem = currentItem.previousElementSibling;
+
+  if (prevItem && prevItem.classList.contains('rate-item')) {
+    currentItem.parentNode.insertBefore(currentItem, prevItem);
+  }
+}
+
+function moveDownHandler() {
+  const currentItem = this.closest('.rate-item');
+  const nextItem = currentItem.nextElementSibling;
+  if (nextItem && nextItem.classList.contains('rate-item')) {
+    currentItem.parentNode.insertBefore(nextItem, currentItem);
+  }
+}
+
 // Settings Gear Icon and Modal Logic
 const settingsGearBtn = document.getElementById('settings-gear-btn');
 const settingsModal = document.getElementById('settings-modal');

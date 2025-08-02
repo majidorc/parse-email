@@ -281,6 +281,123 @@ export default async function handler(req, res) {
       `);
     }
     
+    // Calculate benefit using the same logic as accounting.js (with fallback to net_total)
+    // Check if net_total column exists
+    let hasNetTotalColumn = false;
+    try {
+      const { rows: columnCheck } = await client.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'bookings' AND column_name = 'net_total'
+      `);
+      hasNetTotalColumn = columnCheck.length > 0;
+    } catch (err) {
+      hasNetTotalColumn = false;
+    }
+
+    // Calculate total benefit for the period
+    let totalBenefitResult;
+    if (dateFilter) {
+      totalBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         WHERE b.tour_date >= $1 AND b.tour_date < $2`,
+        [startDateParam, endDateParam]
+      );
+    } else {
+      totalBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))`
+      );
+    }
+    
+    const totalBenefit = totalBenefitResult.rows.reduce((sum, b) => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      // Use stored net_total if available and column exists, otherwise calculate from rates
+      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+      return sum + (paid - netTotal);
+    }, 0);
+
+    // Calculate benefit by channel (Viator vs Website)
+    let viatorBenefitResult;
+    let websiteBenefitResult;
+    
+    if (dateFilter) {
+      viatorBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+         WHERE b.tour_date >= $1 AND b.tour_date < $2
+         AND (p.sender ILIKE '%bokun.io%' AND b.booking_number NOT LIKE 'GYG%')`,
+        [startDateParam, endDateParam]
+      );
+      
+      websiteBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+         WHERE b.tour_date >= $1 AND b.tour_date < $2
+         AND (p.sender ILIKE '%info@tours.co.th%' OR b.booking_number LIKE 'GYG%')`,
+        [startDateParam, endDateParam]
+      );
+    } else {
+      viatorBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+         WHERE (p.sender ILIKE '%bokun.io%' AND b.booking_number NOT LIKE 'GYG%')`
+      );
+      
+      websiteBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+         WHERE (p.sender ILIKE '%info@tours.co.th%' OR b.booking_number LIKE 'GYG%')`
+      );
+    }
+    
+    const viatorBenefit = viatorBenefitResult.rows.reduce((sum, b) => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+      return sum + (paid - netTotal);
+    }, 0);
+    
+    const websiteBenefit = websiteBenefitResult.rows.reduce((sum, b) => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+      return sum + (paid - netTotal);
+    }, 0);
+
     // Extract Viator and Website metrics
     const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
     const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
@@ -330,6 +447,9 @@ export default async function handler(req, res) {
       websiteCount,
       viatorPassengers,
       websitePassengers,
+      totalBenefit,
+      viatorBenefit,
+      websiteBenefit,
       // Include debug data in response
       debug: {
         availableChannels: debugChannels.rows,

@@ -1421,10 +1421,10 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
     const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
     
-    // Calculate benefits (for now, using sales as benefit - you can adjust this calculation)
-    const totalBenefit = data.totalSummary.total_sales || 0;
-    const viatorBenefit = data.viatorSale || 0;
-    const websiteBenefit = data.websiteSale || 0;
+    // Use actual benefit data from API
+    const totalBenefit = data.totalBenefit || 0;
+    const viatorBenefit = data.viatorBenefit || 0;
+    const websiteBenefit = data.websiteBenefit || 0;
     const totalPassengersCount = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
     
     if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});

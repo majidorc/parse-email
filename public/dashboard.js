@@ -1955,7 +1955,6 @@ function fetchRatesAndPrograms() {
       fetchPrograms(1, '');
     });
 }
-let allPrograms = [];
 // Rate sorting functions
 function sortRates(column) {
   if (programsRateSort === column) {

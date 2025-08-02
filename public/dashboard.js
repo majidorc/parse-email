@@ -3735,9 +3735,9 @@ async function addProgramsFromBookings() {
       const booking = bookingsData.find(b => b.sku === sku);
       let rates = [];
       if (booking && booking.rate) {
-        rates = [{ name: booking.rate, net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }];
+        rates = [{ name: booking.rate, netAdult: 0, netChild: 0, feeType: 'none', feeAdult: null, feeChild: null }];
       } else {
-        rates = [{ name: 'Auto', net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }];
+        rates = [{ name: 'Auto', netAdult: 0, netChild: 0, feeType: 'none', feeAdult: null, feeChild: null }];
       }
       
       try {

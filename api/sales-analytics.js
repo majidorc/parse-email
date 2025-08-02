@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       GROUP BY channel 
       ORDER BY count DESC
     `);
-    console.log('Debug - Available channels:', debugChannels.rows);
+    
     
     // Also check for NULL channels
     const nullChannels = await client.query(`
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       FROM bookings 
       WHERE channel IS NULL
     `);
-    console.log('Debug - NULL channels count:', nullChannels.rows[0]);
+    
     
     // Check a few sample bookings with their channel values
     const sampleBookings = await client.query(`
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       ORDER BY tour_date DESC 
       LIMIT 5
     `);
-    console.log('Debug - Sample bookings with channels:', sampleBookings.rows);
+    
     
     let dateFilter = '';
     let startDateParam = null;
@@ -418,7 +418,7 @@ export default async function handler(req, res) {
       (parseInt(websiteChannelData.total_infants) || 0) : 0;
     
     // Debug logging for passenger counts
-    console.log('Debug - Total Summary:', {
+    
       total_bookings: totalSummaryResult.rows[0].total_bookings,
       total_adults: totalSummaryResult.rows[0].total_adults,
       total_children: totalSummaryResult.rows[0].total_children,

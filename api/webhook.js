@@ -9,8 +9,7 @@ const NotificationManager = require('../notificationManager');
 
 async function handleTelegramCallback(callbackQuery, res) {
     const { data, message } = callbackQuery;
-    console.log('TELEGRAM CALLBACK DATA:', data);
-    console.log('TELEGRAM CALLBACK MESSAGE:', message);
+
     if (!data || !message) {
         console.error('Invalid callback query format');
         return res.status(400).send('Invalid callback query format');
@@ -21,7 +20,7 @@ async function handleTelegramCallback(callbackQuery, res) {
     const buttonType = parts[1];
     const bookingId = parts.slice(2).join(':');
 
-    console.log('Parsed callback data:', { action, buttonType, bookingId });
+
 
     // Accept op, ri, customer, parkfee, transfer
     if (action !== 'toggle' || !['op', 'ri', 'customer', 'parkfee', 'transfer'].includes(buttonType)) {
@@ -37,16 +36,16 @@ async function handleTelegramCallback(callbackQuery, res) {
             return res.status(404).send('Booking not found');
         }
         const booking = rows[0];
-        console.log('Booking before update:', booking);
+    
         let update = {};
         if (buttonType === 'op') {
             update.op = !booking.op;
             // If OP is turned off, also turn off Customer
             if (!update.op) update.customer = false;
-            console.log(`Toggling OP to ${update.op}, Customer to ${update.customer}`);
+
         } else if (buttonType === 'ri') {
             update.ri = !booking.ri;
-            console.log(`Toggling RI to ${update.ri}`);
+
         } else if (buttonType === 'customer') {
                 // Only allow setting customer to true if op is true
             if (!booking.op) {
@@ -66,7 +65,7 @@ async function handleTelegramCallback(callbackQuery, res) {
                     return res.status(200).send('OP not send yet');
                 }
             update.customer = !booking.customer;
-            console.log(`Toggling Customer to ${update.customer}`);
+
         } else if (buttonType === 'parkfee') {
             // Check if national_park_fee column exists before trying to update it
             try {
@@ -78,9 +77,7 @@ async function handleTelegramCallback(callbackQuery, res) {
                 
                 if (columnCheck.rows.length > 0) {
                     update.national_park_fee = !booking.national_park_fee;
-                    console.log(`Toggling National Park Fee to ${update.national_park_fee}`);
-                } else {
-                    console.log('national_park_fee column does not exist, skipping update');
+
                     // Send a message to the user that this feature is not available
                     try {
                         const token = await getTelegramBotToken();
@@ -109,9 +106,7 @@ async function handleTelegramCallback(callbackQuery, res) {
             
             if (columnCheck.rows.length > 0) {
                 update.no_transfer = !booking.no_transfer;
-                console.log(`Toggling No Transfer to ${update.no_transfer}`);
-            } else {
-                console.log('no_transfer column does not exist, skipping update');
+
                 // Send a message to the user that this feature is not available
                 try {
                     const token = await getTelegramBotToken();
@@ -134,13 +129,13 @@ async function handleTelegramCallback(callbackQuery, res) {
         const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
         const values = [bookingId, ...Object.values(update)];
         if (setClauses.length > 0) {
-            console.log('Updating booking with:', update);
+    
             await sql.query(`UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`, values);
         }
         // Fetch the updated booking
         const { rows: updatedRows } = await sql.query('SELECT * FROM bookings WHERE booking_number = $1', [bookingId]);
         const updatedBooking = updatedRows[0];
-        console.log('Booking after update:', updatedBooking);
+
         // Rebuild the message and keyboard
         const nm = new NotificationManager();
         const newMessage = nm.constructNotificationMessage(updatedBooking);

@@ -1519,9 +1519,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     
     // Show debug data if available
     if (data.debug) {
-      console.log('Debug - Available channels:', data.debug.availableChannels);
-      console.log('Debug - NULL channels count:', data.debug.nullChannelsCount);
-      console.log('Debug - Sample bookings:', data.debug.sampleBookings);
+      
     }
     
     // Update top programs
@@ -2671,7 +2669,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Collect rate data
       const rateItems = document.querySelectorAll('.rate-item');
-      console.log('[PROGRAMS] Found rate items:', rateItems.length);
+
       
       rateItems.forEach((item, index) => {
         const rateName = item.querySelector('[name="rateName"]').value;
@@ -2681,7 +2679,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const feeAdult = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeAdult"]').value) : 0;
         const feeChild = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeChild"]').value) : 0;
         
-        console.log(`[PROGRAMS] Rate ${index + 1}:`, { rateName, netAdult, netChild, feeType, feeAdult, feeChild });
+        
         
         // Validate rate data
         if (!rateName || isNaN(netAdult) || isNaN(netChild)) {
@@ -2705,14 +2703,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       try {
-        console.log('[PROGRAMS] Submitting data:', data);
+
         const response = await fetch('/api/products-rates?type=tour', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
         
-        console.log('[PROGRAMS] Response status:', response.status);
+
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -2721,7 +2719,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const result = await response.json();
-        console.log('[PROGRAMS] Success result:', result);
+        
         alert('Program saved successfully!');
         
         // Reset form and show programs table
@@ -3531,11 +3529,11 @@ async function addProgramsFromBookings() {
     const sessionRes = await fetch('/api/auth?type=session');
     const sessionData = await sessionRes.json();
     if (!sessionData.isAuthenticated) {
-      console.log('User not authenticated, skipping program sync');
+
       return;
     }
   } catch (e) {
-    console.log('Session check failed, skipping program sync');
+    
     return;
   }
   
@@ -3592,7 +3590,7 @@ async function addProgramsFromBookings() {
         if (postRes.ok) {
           added++;
         } else if (postRes.status === 409) {
-          console.log('Program already exists:', sku);
+  
           // Don't count as an error, just skip
         } else {
           console.error('Failed to add program:', sku, postRes.status, postRes.statusText);
@@ -3636,38 +3634,7 @@ function addCheckMissingProgramsButton() {
   btn.textContent = 'Check Missing Programs from Bookings';
   btn.style = 'margin-bottom:16px; background:#f59e42; color:white; font-weight:bold; padding:8px 18px; border:none; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer;';
   btn.onclick = async function() {
-    // Test API health first
-    try {
-      console.log('Testing API health...');
-      const healthRes = await fetch('/api/products-rates?type=health');
-      const healthData = await healthRes.json();
-      console.log('API Health Check:', healthData);
-      
-      if (!healthRes.ok) {
-        alert('API health check failed: ' + JSON.stringify(healthData));
-        return;
-      }
-      
-      // Test echo endpoint to see what data is being sent
-      console.log('Testing echo endpoint...');
-      const testData = {
-        sku: 'TEST-SKU',
-        program: 'Test Program',
-        rates: [{ name: 'Auto', net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }]
-      };
-      const echoRes = await fetch('/api/products-rates?type=echo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(testData)
-      });
-      const echoData = await echoRes.json();
-      console.log('Echo Test Result:', echoData);
-      
-    } catch (healthErr) {
-      console.error('Health check failed:', healthErr);
-      alert('API health check failed: ' + healthErr.message);
-      return;
-    }
+
     
     // Allow re-sync by clearing the flag
     localStorage.removeItem('programsSyncedFromBookings');

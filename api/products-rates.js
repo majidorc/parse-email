@@ -42,22 +42,18 @@ module.exports = async (req, res) => {
     }
     
     const session = getSession(req);
-    console.log('[PRODUCTS-RATES] Session check:', { 
-      hasSession: !!session, 
-      sessionKeys: session ? Object.keys(session) : null,
-      userRole: session?.role 
-    });
+
     
     if (!session) return res.status(401).json({ error: 'Not authenticated' });
     const userRole = session.role;
 
-    console.log(`[PRODUCTS-RATES] ${req.method} request for type: ${type}, userRole: ${userRole}`);
+
 
     // Test database connection and table existence
     try {
       const testClient = await pool.connect();
       const testResult = await testClient.query('SELECT 1 as test');
-      console.log('[PRODUCTS-RATES] Database connection test successful:', testResult.rows[0]);
+
       
       // Check if tables exist
       const tablesResult = await testClient.query(`
@@ -66,7 +62,7 @@ module.exports = async (req, res) => {
         WHERE table_schema = 'public' 
         AND table_name IN ('products', 'rates')
       `);
-      console.log('[PRODUCTS-RATES] Available tables:', tablesResult.rows.map(r => r.table_name));
+
       
       testClient.release();
     } catch (dbErr) {
@@ -192,7 +188,7 @@ module.exports = async (req, res) => {
       if (req.method === 'GET') {
         try {
           const client = await pool.connect();
-          console.log('[PRODUCTS-RATES] Connected to database for GET tours');
+    
           
           // Pagination parameters
           const page = parseInt(req.query.page) || 1;
@@ -217,19 +213,19 @@ module.exports = async (req, res) => {
           const productsQuery = `SELECT * FROM products ${whereClause} ORDER BY program, sku LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
           const productsResult = await client.query(productsQuery, [...params, limit, offset]);
           const products = productsResult.rows;
-          console.log(`[PRODUCTS-RATES] Found ${products.length} products (page ${page}, total: ${totalCount})`);
+    
           
           // Get rates - ALWAYS use fallback query to avoid rate_order issues
           let ratesResult;
           try {
-            console.log('[PRODUCTS-RATES] Using fallback query for rates (no rate_order)');
+      
             ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
           } catch (err) {
             console.error('[PRODUCTS-RATES] Error fetching rates:', err);
             throw err;
           }
           const rates = ratesResult.rows;
-          console.log(`[PRODUCTS-RATES] Found ${rates.length} rates`);
+    
           
           const ratesByProduct = {};
           for (const rate of rates) {
@@ -257,17 +253,14 @@ module.exports = async (req, res) => {
         return;
       }
       if (req.method === 'POST') {
-        console.log('[PRODUCTS-RATES] POST request received for tour type');
-        console.log('[PRODUCTS-RATES] User role:', userRole);
+        
         
         if (userRole !== 'admin' && userRole !== 'programs_manager') {
-          console.log('[PRODUCTS-RATES] Access denied - user role:', userRole);
+  
           return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
         }
         
-        console.log('[PRODUCTS-RATES] Processing POST request for tour');
-        console.log('[PRODUCTS-RATES] Request body:', req.body);
-        console.log('[PRODUCTS-RATES] Request headers:', req.headers);
+
         
         // Ensure req.body is an object
         if (!req.body || typeof req.body !== 'object') {
@@ -280,7 +273,7 @@ module.exports = async (req, res) => {
         const { sku, program, remark, id } = req.body;
         const rates = req.body.rates || [];
         
-        console.log('[PRODUCTS-RATES] Parsed data:', { sku, program, remark, id, ratesLength: rates.length });
+
         
         if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
           console.error('[PRODUCTS-RATES] Missing required fields:', { sku, program, ratesLength: rates.length });
@@ -290,19 +283,19 @@ module.exports = async (req, res) => {
         
         const client = await pool.connect();
         try {
-          console.log('[PRODUCTS-RATES] Starting database transaction');
+  
           await client.query('BEGIN');
           
           let productId = id;
           if (id) {
-            console.log('[PRODUCTS-RATES] Updating existing product with ID:', id);
+
             await client.query(
               `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4 WHERE id=$5`,
               [sku, product_id_optional, program, remark || null, id]
             );
             await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
           } else {
-            console.log('[PRODUCTS-RATES] Creating new product');
+
             
             // Check if SKU already exists
             const existingProduct = await client.query(
@@ -311,7 +304,7 @@ module.exports = async (req, res) => {
             );
             
             if (existingProduct.rows.length > 0) {
-              console.log('[PRODUCTS-RATES] SKU already exists, skipping:', sku);
+  
               await client.query('ROLLBACK');
               res.status(409).json({ 
                 error: 'Program with this SKU already exists',
@@ -325,10 +318,10 @@ module.exports = async (req, res) => {
               [sku, product_id_optional, program, remark || null]
             );
             productId = prodResult.rows[0].id;
-            console.log('[PRODUCTS-RATES] Created product with ID:', productId);
+
           }
           
-          console.log(`[PRODUCTS-RATES] Processing ${rates.length} rates`);
+
           for (let i = 0; i < rates.length; i++) {
             const rate = rates[i];
             const { name, netAdult, netChild, feeType, feeAdult, feeChild, order } = rate;
@@ -341,17 +334,7 @@ module.exports = async (req, res) => {
             const fee_adult = (feeType === 'none') ? null : feeAdult;
             const fee_child = (feeType === 'none') ? null : feeChild;
             
-            console.log(`[PRODUCTS-RATES] Processing rate ${i + 1}:`, { 
-              name, 
-              net_adult, 
-              net_child, 
-              fee_type, 
-              fee_adult, 
-              fee_child, 
-              order,
-              net_adult_type: typeof net_adult,
-              net_child_type: typeof net_child
-            });
+
             
             if (
               !name || net_adult === null || net_child === null || !fee_type ||
@@ -361,14 +344,14 @@ module.exports = async (req, res) => {
             }
             
             // ALWAYS use the fallback query to avoid rate_order issues
-            console.log('[PRODUCTS-RATES] Using fallback insert (no rate_order)');
+
             await client.query(
               `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
               [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
             );
           }
           
-          console.log('[PRODUCTS-RATES] Committing transaction');
+
           await client.query('COMMIT');
           res.status(201).json({ success: true, productId });
         } catch (err) {

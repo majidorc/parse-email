@@ -1280,22 +1280,24 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       }
       const data = await response.json();
     
-    // Update summary cards
-    const totalAmount = document.getElementById('sales-total-amount');
-    const totalBookings = document.getElementById('sales-total-bookings');
-    const totalPassengers = document.getElementById('sales-total-passengers');
-    const avgSale = document.getElementById('sales-avg-sale');
+    // Update new average summary cards
+    const avgSaleViator = document.getElementById('sales-avg-sale-viator');
+    const avgSaleWebsite = document.getElementById('sales-avg-sale-website');
+    const avgBenefitViator = document.getElementById('sales-avg-benefit-viator');
+    const avgBenefitWebsite = document.getElementById('sales-avg-benefit-website');
     
-    if (totalAmount) totalAmount.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (totalBookings) totalBookings.textContent = data.totalSummary.total_bookings;
-    if (totalPassengers) {
-      // This is now handled in the analytics section
-      totalPassengers.textContent = '-';
-    }
-    if (avgSale) {
-      const avg = data.totalSummary.total_bookings > 0 ? data.totalSummary.total_sales / data.totalSummary.total_bookings : 0;
-      avgSale.textContent = Number(avg).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
+    // Get data for calculations
+    const viatorCount = data.viatorCount || 0;
+    const websiteCount = data.websiteCount || 0;
+    const viatorSale = data.viatorSale || 0;
+    const websiteSale = data.websiteSale || 0;
+    
+    // Calculate average sale per booking for each channel
+    const avgViatorSale = viatorCount > 0 ? viatorSale / viatorCount : 0;
+    const avgWebsiteSale = websiteCount > 0 ? websiteSale / websiteCount : 0;
+    
+    if (avgSaleViator) avgSaleViator.textContent = Number(avgViatorSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (avgSaleWebsite) avgSaleWebsite.textContent = Number(avgWebsiteSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     // Update the missing analytics metrics (Total Sale, OTA Sale, Website Sale, OTA vs Website)
     const analyticsTotalBookings = document.getElementById('analytics-total-bookings');
@@ -1335,6 +1337,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const viatorBenefit = data.viatorBenefit || 0;
     const websiteBenefit = data.websiteBenefit || 0;
     const totalPassengersCount = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
+    
+    // Calculate average benefit per booking for each channel
+    const avgViatorBenefit = viatorCount > 0 ? viatorBenefit / viatorCount : 0;
+    const avgWebsiteBenefit = websiteCount > 0 ? websiteBenefit / websiteCount : 0;
+    
+    // Update average benefit cards
+    if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1422,7 +1432,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     console.error('Error fetching sales analytics:', error);
     
     // Show error state
-    const elements = ['sales-total-amount', 'sales-total-bookings', 'sales-total-passengers', 'sales-avg-sale'];
+    const elements = ['sales-avg-sale-viator', 'sales-avg-sale-website', 'sales-avg-benefit-viator', 'sales-avg-benefit-website'];
     elements.forEach(id => {
       const element = document.getElementById(id);
       if (element) element.textContent = '-';

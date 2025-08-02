@@ -345,6 +345,91 @@ function getRowClass(tourDateStr) {
 
 
 
+// Function to populate rate dropdowns
+async function populateRateDropdowns() {
+  const dropdowns = document.querySelectorAll('.rate-dropdown');
+  
+  for (const dropdown of dropdowns) {
+    const sku = dropdown.getAttribute('data-sku');
+    const currentRate = dropdown.getAttribute('data-current-rate');
+    
+    if (!sku) continue;
+    
+    try {
+      const response = await fetch(`/api/products-rates?type=rates-by-sku&sku=${encodeURIComponent(sku)}`);
+      const data = await response.json();
+      
+      if (data.rates && data.rates.length > 0) {
+        // Clear existing options except the first one
+        const firstOption = dropdown.querySelector('option');
+        dropdown.innerHTML = '';
+        
+        // Add current rate as first option if it exists
+        if (currentRate) {
+          const currentOption = document.createElement('option');
+          currentOption.value = currentRate;
+          currentOption.textContent = currentRate.length > 12 ? currentRate.slice(0, 12) + '...' : currentRate;
+          currentOption.selected = true;
+          dropdown.appendChild(currentOption);
+        }
+        
+        // Add available rates
+        data.rates.forEach(rate => {
+          if (rate.name !== currentRate) {
+            const option = document.createElement('option');
+            option.value = rate.name;
+            option.textContent = rate.name.length > 12 ? rate.name.slice(0, 12) + '...' : rate.name;
+            dropdown.appendChild(option);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching rates for SKU:', sku, error);
+    }
+  }
+}
+
+// Function to handle rate changes
+async function handleRateChange(dropdown) {
+  const bookingNumber = dropdown.getAttribute('data-booking-number');
+  const newRate = dropdown.value;
+  const oldRate = dropdown.getAttribute('data-current-rate');
+  
+  if (newRate === oldRate) return;
+  
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        booking_number: bookingNumber,
+        rate: newRate
+      })
+    });
+    
+    if (response.ok) {
+      // Update the data-current-rate attribute
+      dropdown.setAttribute('data-current-rate', newRate);
+      showToast('Rate updated successfully', 'success');
+      
+      // Refresh the table to update calculations
+      await fetchBookings(currentPage, currentSort, currentDir, searchTerm, true);
+    } else {
+      const errorData = await response.json();
+      showToast(`Failed to update rate: ${errorData.error || 'Unknown error'}`, 'error');
+      // Revert the dropdown to the old value
+      dropdown.value = oldRate;
+    }
+  } catch (error) {
+    console.error('Error updating rate:', error);
+    showToast('Failed to update rate', 'error');
+    // Revert the dropdown to the old value
+    dropdown.value = oldRate;
+  }
+}
+
 function renderTable() {
   const tbody = document.getElementById('bookings-body');
   const summaryDiv = document.getElementById('table-summary');
@@ -377,7 +462,15 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('sku') ? ' bg-yellow-100' : ''}">${b.sku || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('program') ? ' bg-yellow-100' : ''}">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('rate') ? ' bg-yellow-100' : ''}">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('rate') ? ' bg-yellow-100' : ''}">
+              <select class="rate-dropdown bg-white border border-gray-300 rounded px-2 py-1 text-sm w-full" 
+                      data-booking-number="${b.booking_number}" 
+                      data-sku="${b.sku || ''}" 
+                      data-current-rate="${b.rate || ''}"
+                      onchange="handleRateChange(this)">
+                <option value="${b.rate || ''}" selected>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</option>
+              </select>
+            </td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('hotel') ? ' bg-yellow-100' : ''}">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('op') ? ' bg-yellow-100' : ''}">${iconButton('op', b.booking_number, b.op)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('ri') ? ' bg-yellow-100' : ''}">${iconButton('ri', b.booking_number, b.ri)}</td>
@@ -437,6 +530,12 @@ function renderTable() {
     cardsContainer.style.display = 'none';
   }
   renderPagination();
+  
+  // Populate rate dropdowns after table is rendered
+  setTimeout(() => {
+    populateRateDropdowns();
+  }, 100);
+  
   // Always render summary and pagination
   // Use summary data from unfiltered fetch
   let summary = bookingsSummaryDataUnfiltered;

@@ -42,6 +42,33 @@ module.exports = async (req, res) => {
     }
   }
 
+  // Update booking rate logic
+  if (req.method === 'PATCH') {
+    try {
+      const { booking_number, rate } = req.body;
+      if (!booking_number || !rate) {
+        return res.status(400).json({ error: 'Missing required fields: booking_number, rate' });
+      }
+      
+      // Update the booking rate
+      const { rows } = await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number} RETURNING booking_number, rate`;
+      
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Rate updated successfully',
+        booking_number: rows[0].booking_number,
+        rate: rows[0].rate
+      });
+    } catch (err) {
+      console.error('Error updating booking rate:', err);
+      return res.status(500).json({ error: 'Failed to update rate', details: err.message });
+    }
+  }
+
   // Add new booking logic
   if (req.method === 'POST' && req.body && !req.body.type) {
     try {

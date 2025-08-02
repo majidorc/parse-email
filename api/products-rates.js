@@ -108,6 +108,31 @@ module.exports = async (req, res) => {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // --- RATES BY SKU LOGIC ---
+    if (type === 'rates-by-sku') {
+      if (req.method === 'GET') {
+        const { sku } = req.query;
+        if (!sku) {
+          return res.status(400).json({ error: 'SKU parameter is required' });
+        }
+        try {
+          const { rows } = await sql`
+            SELECT r.id, r.name, r.net_adult, r.net_child, r.fee_type, r.fee_adult, r.fee_child
+            FROM rates r
+            JOIN products p ON r.product_id = p.id
+            WHERE p.sku = ${sku}
+            ORDER BY r.name
+          `;
+          res.status(200).json({ rates: rows });
+        } catch (err) {
+          console.error('[PRODUCTS-RATES] Error fetching rates by SKU:', err);
+          res.status(500).json({ error: 'Failed to fetch rates', details: err.message });
+        }
+        return;
+      }
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
     // --- PRODUCTS LOGIC ---
     if (type === 'product') {
       if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });

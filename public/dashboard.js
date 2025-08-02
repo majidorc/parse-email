@@ -2440,6 +2440,35 @@ document.addEventListener('DOMContentLoaded', function() {
     addRateBtn.addEventListener('click', addRateItem);
   }
   
+  // Delete Program Button event listener
+  const deleteProgramBtn = document.getElementById('delete-program-btn');
+  if (deleteProgramBtn) {
+    deleteProgramBtn.addEventListener('click', function() {
+      const id = document.getElementById('dbRowId').value;
+      if (!id) return;
+      if (!confirm('Are you sure you want to delete this program and all its rates? This cannot be undone.')) return;
+      
+      fetch('/api/products-rates?type=tour', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to delete program');
+        return res.json();
+      })
+      .then(result => {
+        alert('Program deleted successfully!');
+        document.getElementById('add-program-section').style.display = 'none';
+        document.getElementById('programs-section').style.display = '';
+        if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
+      })
+      .catch(err => {
+        alert('Error deleting program: ' + err.message);
+      });
+    });
+  }
+  
   // Rates container event listeners
   const ratesContainer = document.getElementById('ratesContainer');
   if (ratesContainer) {

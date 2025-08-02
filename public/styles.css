@@ -369,3 +369,57 @@ body {
     margin: 0 auto;
   }
 } 
+
+/* Row background colors for booking table */
+.row-past {
+  background-color: #fef2f2 !important; /* Light red background for past bookings */
+}
+
+.row-today {
+  background-color: #f0fdf4 !important; /* Light green background for today's bookings */
+}
+
+.row-tomorrow {
+  background-color: #f0f9ff !important; /* Light blue background for tomorrow's bookings */
+}
+
+/* Card background colors for mobile view */
+.card-row-past {
+  background-color: #fef2f2 !important; /* Light red background for past bookings */
+  border-color: #fecaca !important;
+}
+
+.card-row-today {
+  background-color: #f0fdf4 !important; /* Light green background for today's bookings */
+  border-color: #bbf7d0 !important;
+}
+
+.card-row-tomorrow {
+  background-color: #f0f9ff !important; /* Light blue background for tomorrow's bookings */
+  border-color: #bfdbfe !important;
+}
+
+/* Hover effects for better UX */
+.row-past:hover {
+  background-color: #fee2e2 !important;
+}
+
+.row-today:hover {
+  background-color: #dcfce7 !important;
+}
+
+.row-tomorrow:hover {
+  background-color: #dbeafe !important;
+}
+
+.card-row-past:hover {
+  background-color: #fee2e2 !important;
+}
+
+.card-row-today:hover {
+  background-color: #dcfce7 !important;
+}
+
+.card-row-tomorrow:hover {
+  background-color: #dbeafe !important;
+} 

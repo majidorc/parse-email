@@ -122,7 +122,7 @@ class NotificationManager {
 
         if (rate) {
             programLine = `${programIcon} Program : ${program} - [${rate}]`;
-            
+        }
         
         // Dynamic cash on tour text based on national_park_fee value
         // Handle case where national_park_fee column doesn't exist

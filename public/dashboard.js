@@ -360,13 +360,23 @@ async function populateRateDropdownForCell(dropdown, sku, currentRate) {
     if (response.ok) {
       const data = await response.json();
       if (data.rates && data.rates.length > 0) {
-        // Clear existing options except the first one (current rate)
-        const currentOption = dropdown.querySelector('option');
+        // Clear existing options
         dropdown.innerHTML = '';
-        dropdown.appendChild(currentOption);
         
-        // Add new options
+        // Add current rate as first option if it exists
+        if (currentRate) {
+          const currentOption = document.createElement('option');
+          currentOption.value = currentRate;
+          currentOption.textContent = currentRate && currentRate.length > 12 ? currentRate.slice(0, 12) + '...' : currentRate;
+          currentOption.selected = true;
+          dropdown.appendChild(currentOption);
+        }
+        
+        // Add all available rates
         data.rates.forEach(rate => {
+          // Skip if this rate is already added as current rate
+          if (rate.name === currentRate) return;
+          
           const option = document.createElement('option');
           option.value = rate.name;
           option.textContent = rate.name && rate.name.length > 12 ? rate.name.slice(0, 12) + '...' : rate.name;

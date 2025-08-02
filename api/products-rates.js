@@ -202,6 +202,23 @@ module.exports = async (req, res) => {
       if (req.method === 'GET') {
         try {
           const client = await pool.connect();
+          
+          // Check if this is a SKU-specific request for rates
+          const sku = req.query.sku;
+          if (sku) {
+            // Fetch rates for a specific SKU
+            const ratesQuery = `
+              SELECT r.* 
+              FROM rates r 
+              JOIN products p ON r.product_id = p.id 
+              WHERE p.sku = $1 
+              ORDER BY r.name
+            `;
+            const ratesResult = await client.query(ratesQuery, [sku]);
+            client.release();
+            res.status(200).json({ rates: ratesResult.rows });
+            return;
+          }
     
           
           // Pagination parameters

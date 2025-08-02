@@ -2188,12 +2188,14 @@ function getRateSortIcon(column) {
 // Programs sorting functions
 function sortPrograms(column) {
   if (programsSort === column) {
-    programsDir = programsDir === 'asc' ? 'desc' : 'asc';
+    programsDir = programsDir === 'desc' ? 'asc' : 'desc';
   } else {
     programsSort = column;
     programsDir = 'asc';
   }
-  renderProgramsTable(allPrograms);
+  // Reset to page 1 when sorting and fetch from server
+  programsCurrentPage = 1;
+  fetchPrograms(1, document.getElementById('programs-search-bar')?.value || '');
 }
 
 function getProgramSortIcon(column) {
@@ -2401,12 +2403,14 @@ function gotoProgramsPage(page) {
 function fetchPrograms(page = 1, search = '') {
   const tbody = document.getElementById('programs-table-body');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">Loading...</td></tr>';
   
   const params = new URLSearchParams({
     type: 'tour',
     page: page,
-    limit: programsRowsPerPage
+    limit: programsRowsPerPage,
+    sort: programsSort,
+    dir: programsDir
   });
   if (search) params.append('search', search);
   

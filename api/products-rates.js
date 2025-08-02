@@ -223,13 +223,25 @@ module.exports = async (req, res) => {
           const countResult = await client.query(countQuery, params);
           const totalCount = parseInt(countResult.rows[0].count);
           
+          // Handle sorting
+          const { sort = 'sku', dir = 'asc' } = req.query;
+          let orderBy = 'p.sku ASC';
+          
+          if (sort === 'sku') {
+            orderBy = dir === 'desc' ? 'p.sku DESC' : 'p.sku ASC';
+          } else if (sort === 'program') {
+            orderBy = dir === 'desc' ? 'p.program DESC' : 'p.program ASC';
+          } else if (sort === 'supplier') {
+            orderBy = dir === 'desc' ? 's.name DESC, p.sku ASC' : 's.name ASC, p.sku ASC';
+          }
+          
           // Get paginated products with supplier info
           const productsQuery = `
             SELECT p.*, s.name as supplier_name 
             FROM products p 
             LEFT JOIN suppliers s ON p.supplier_id = s.id 
             ${whereClause} 
-            ORDER BY p.program, p.sku 
+            ORDER BY ${orderBy}
             LIMIT $${params.length + 1} OFFSET $${params.length + 2}
           `;
           const productsResult = await client.query(productsQuery, [...params, limit, offset]);

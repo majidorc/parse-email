@@ -2236,7 +2236,7 @@ document.addEventListener('DOMContentLoaded', function () {
   
   // Initialize edit button event listeners
   initializeProgramsEditButtons();
-}
+});
 
 function initializeProgramsEditButtons() {
   const tbody = document.getElementById('programs-table-body');

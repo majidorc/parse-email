@@ -3361,6 +3361,20 @@ if (priceTiersModal) {
 // Utility: Add missing programs from bookings
 async function addProgramsFromBookings() {
   if (localStorage.getItem('programsSyncedFromBookings')) return;
+  
+  // Check if user is authenticated first
+  try {
+    const sessionRes = await fetch('/api/auth?type=session');
+    const sessionData = await sessionRes.json();
+    if (!sessionData.isAuthenticated) {
+      console.log('User not authenticated, skipping program sync');
+      return;
+    }
+  } catch (e) {
+    console.log('Session check failed, skipping program sync');
+    return;
+  }
+  
   // 1. Get all unique {sku, program} from bookingsData
   const uniquePrograms = {};
   bookingsData.forEach(b => {
@@ -3368,6 +3382,7 @@ async function addProgramsFromBookings() {
       uniquePrograms[b.sku] = b.program;
     }
   });
+  
   // 2. Fetch all current programs
   let currentPrograms = [];
   try {
@@ -3375,9 +3390,17 @@ async function addProgramsFromBookings() {
     if (res.ok) {
       const data = await res.json();
       currentPrograms = data.tours || [];
+    } else {
+      console.error('Failed to fetch current programs:', res.status, res.statusText);
+      return;
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.error('Error fetching current programs:', e);
+    return;
+  }
+  
   const existingSKUs = new Set(currentPrograms.map(p => p.sku));
+  
   // 3. For each unique booking SKU, if not in programs, add it
   let added = 0;
   for (const sku in uniquePrograms) {
@@ -3390,22 +3413,34 @@ async function addProgramsFromBookings() {
       } else {
         rates = [{ name: 'Auto', net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }];
       }
-      await fetch('/api/products-rates?type=tour', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sku,
-          program: uniquePrograms[sku],
-          rates
-        })
-      });
-      added++;
+      
+      try {
+        const postRes = await fetch('/api/products-rates?type=tour', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sku,
+            program: uniquePrograms[sku],
+            rates
+          })
+        });
+        
+        if (postRes.ok) {
+          added++;
+        } else {
+          console.error('Failed to add program:', sku, postRes.status, postRes.statusText);
+        }
+      } catch (e) {
+        console.error('Error adding program:', sku, e);
+      }
     }
   }
+  
   if (added > 0) {
     showToast(`Added ${added} new program(s) from bookings!`, 'success');
     if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
   }
+  
   localStorage.setItem('programsSyncedFromBookings', '1');
 }
 

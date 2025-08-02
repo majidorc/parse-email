@@ -111,9 +111,30 @@ module.exports = async (req, res) => {
           const client = await pool.connect();
           console.log('[PRODUCTS-RATES] Connected to database for GET tours');
           
-          const productsResult = await client.query('SELECT * FROM products ORDER BY program, sku');
+          // Pagination parameters
+          const page = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.limit) || 10;
+          const offset = (page - 1) * limit;
+          const search = req.query.search || '';
+          
+          // Build WHERE clause for search
+          let whereClause = '';
+          let params = [];
+          if (search) {
+            whereClause = 'WHERE sku ILIKE $1 OR program ILIKE $1 OR remark ILIKE $1';
+            params = [`%${search}%`];
+          }
+          
+          // Get total count for pagination
+          const countQuery = `SELECT COUNT(*) FROM products ${whereClause}`;
+          const countResult = await client.query(countQuery, params);
+          const totalCount = parseInt(countResult.rows[0].count);
+          
+          // Get paginated products
+          const productsQuery = `SELECT * FROM products ${whereClause} ORDER BY program, sku LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+          const productsResult = await client.query(productsQuery, [...params, limit, offset]);
           const products = productsResult.rows;
-          console.log(`[PRODUCTS-RATES] Found ${products.length} products`);
+          console.log(`[PRODUCTS-RATES] Found ${products.length} products (page ${page}, total: ${totalCount})`);
           
           // Get rates - ALWAYS use fallback query to avoid rate_order issues
           let ratesResult;
@@ -137,7 +158,15 @@ module.exports = async (req, res) => {
             rates: ratesByProduct[product.id] || []
           }));
           client.release();
-          res.status(200).json({ tours: productsWithRates });
+          res.status(200).json({ 
+            tours: productsWithRates,
+            pagination: {
+              page,
+              limit,
+              total: totalCount,
+              totalPages: Math.ceil(totalCount / limit)
+            }
+          });
         } catch (err) {
           console.error('[PRODUCTS-RATES] Error fetching tours:', err);
           res.status(500).json({ error: 'Failed to fetch programs', details: err.stack });

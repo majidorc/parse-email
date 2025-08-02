@@ -121,6 +121,12 @@ let lastRefreshTime = Date.now();
 let programsRateSort = 'name';
 let programsRateDir = 'asc';
 
+// Programs pagination variables
+let programsCurrentPage = 1;
+let programsRowsPerPage = 10;
+let allPrograms = [];
+let programsPagination = null;
+
 
 
 async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, search = searchTerm, keepSummary = false, cacheBuster = null) {
@@ -1933,7 +1939,7 @@ function fetchRatesAndPrograms() {
     })
     .then(data => {
       allRates = data.rates || [];
-      fetchPrograms();
+      fetchPrograms(1, '');
     })
     .catch(error => {
       console.error('Error fetching rates and programs:', error);
@@ -1942,11 +1948,11 @@ function fetchRatesAndPrograms() {
       if (programsSection) {
         const tbody = document.getElementById('programs-table-body');
         if (tbody) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Error loading programs. Please try again later.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500">Error loading programs. Please try again later.</td></tr>';
         }
       }
       // Still try to fetch programs even if rates fail
-      fetchPrograms();
+      fetchPrograms(1, '');
     });
 }
 let allPrograms = [];
@@ -1973,7 +1979,7 @@ function renderProgramsTable(programs) {
   programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
   const tbody = document.getElementById('programs-table-body');
   if (!programs.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No programs found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">No programs found.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
@@ -2052,11 +2058,94 @@ function renderProgramsTable(programs) {
     tbody.appendChild(tr);
   });
 }
-function fetchPrograms() {
+
+function renderProgramsPagination() {
+  if (!programsPagination) return;
+  
+  const { page, totalPages, total } = programsPagination;
+  const container = document.getElementById('programs-pagination');
+  if (!container) return;
+  
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  let paginationHtml = '<div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">';
+  paginationHtml += '<div class="flex flex-1 justify-between sm:hidden">';
+  
+  // Previous button for mobile
+  if (page > 1) {
+    paginationHtml += `<button onclick="gotoProgramsPage(${page - 1})" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Previous</button>`;
+  } else {
+    paginationHtml += '<button disabled class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white border border-gray-300 rounded-md cursor-not-allowed">Previous</button>';
+  }
+  
+  // Next button for mobile
+  if (page < totalPages) {
+    paginationHtml += `<button onclick="gotoProgramsPage(${page + 1})" class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Next</button>`;
+  } else {
+    paginationHtml += '<button disabled class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-300 bg-white border border-gray-300 rounded-md cursor-not-allowed">Next</button>';
+  }
+  
+  paginationHtml += '</div>';
+  paginationHtml += '<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">';
+  paginationHtml += `<div class="text-sm text-gray-700">Showing <span class="font-medium">${((page - 1) * programsRowsPerPage) + 1}</span> to <span class="font-medium">${Math.min(page * programsRowsPerPage, total)}</span> of <span class="font-medium">${total}</span> results</div>`;
+  paginationHtml += '<div>';
+  paginationHtml += '<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">';
+  
+  // Previous button for desktop
+  if (page > 1) {
+    paginationHtml += `<button onclick="gotoProgramsPage(${page - 1})" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</button>`;
+  } else {
+    paginationHtml += '<button disabled class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-300 cursor-not-allowed">Previous</button>';
+  }
+  
+  // Page numbers
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    if (i === page) {
+      paginationHtml += `<button class="relative inline-flex items-center px-4 py-2 border text-sm font-medium bg-blue-50 border-blue-500 text-blue-600">${i}</button>`;
+    } else {
+      paginationHtml += `<button onclick="gotoProgramsPage(${i})" class="relative inline-flex items-center px-4 py-2 border text-sm font-medium bg-white border-gray-300 text-gray-700 hover:bg-gray-50">${i}</button>`;
+    }
+  }
+  
+  // Next button for desktop
+  if (page < totalPages) {
+    paginationHtml += `<button onclick="gotoProgramsPage(${page + 1})" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</button>`;
+  } else {
+    paginationHtml += '<button disabled class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-300 cursor-not-allowed">Next</button>';
+  }
+  
+  paginationHtml += '</nav>';
+  paginationHtml += '</div>';
+  paginationHtml += '</div>';
+  paginationHtml += '</div>';
+  
+  container.innerHTML = paginationHtml;
+}
+
+function gotoProgramsPage(page) {
+  if (page < 1) return;
+  programsCurrentPage = page;
+  fetchPrograms(page, document.getElementById('programs-search-bar')?.value || '');
+}
+function fetchPrograms(page = 1, search = '') {
   const tbody = document.getElementById('programs-table-body');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>';
-  fetch('/api/products-rates?type=tour')
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">Loading...</td></tr>';
+  
+  const params = new URLSearchParams({
+    type: 'tour',
+    page: page,
+    limit: programsRowsPerPage
+  });
+  if (search) params.append('search', search);
+  
+  fetch(`/api/products-rates?${params.toString()}`)
     .then(res => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -2065,21 +2154,21 @@ function fetchPrograms() {
     })
     .then(data => {
       allPrograms = data.tours || [];
+      programsPagination = data.pagination || null;
+      programsCurrentPage = page;
       renderProgramsTable(allPrograms);
+      renderProgramsPagination();
     })
     .catch(error => {
       console.error('Error fetching programs:', error);
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Failed to load programs. Please try again later.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-center text-red-500">Failed to load programs. Please try again later.</td></tr>';
     });
 }
 document.getElementById('programs-search-bar').addEventListener('input', function(e) {
-  const search = e.target.value.toLowerCase();
-  const filtered = allPrograms.filter(p =>
-    (p.sku && p.sku.toLowerCase().includes(search)) ||
-    (p.program && p.program.toLowerCase().includes(search)) ||
-    (p.remark && p.remark.toLowerCase().includes(search))
-  );
-  renderProgramsTable(filtered);
+  const search = e.target.value;
+  // Reset to page 1 when searching
+  programsCurrentPage = 1;
+  fetchPrograms(1, search);
 });
 // ... (rest of Programs tab logic: add/edit/delete, form, event listeners, etc. as in previous code) ...
 

@@ -2271,7 +2271,7 @@ function handleProgramEditClick(e) {
       // Fill form fields
       document.getElementById('sku').value = program.sku || '';
       document.getElementById('dbRowId').value = program.id || '';
-      document.getElementById('productIdOptional').value = program.product_id_optional || '';
+      document.getElementById('product_id_optional').value = program.product_id_optional || '';
       document.getElementById('program').value = program.program || '';
       document.getElementById('remark').value = program.remark || '';
       
@@ -2342,7 +2342,7 @@ function addRateItem() {
         </div>
         <button type="button" class="remove-rate-btn text-gray-400 hover:text-red-600 transition duration-150" data-remove-id="${rateItemId}">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0 18 0z" />
           </svg>
         </button>
       </div>
@@ -2514,6 +2514,76 @@ document.addEventListener('DOMContentLoaded', function() {
           feeAdultInput.required = true;
           feeChildInput.required = true;
         }
+      }
+    });
+  }
+  
+  // Product Form submission handler
+  const productForm = document.getElementById('productForm');
+  if (productForm) {
+    productForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(productForm);
+      const data = {
+        sku: formData.get('sku'),
+        program: formData.get('program'),
+        remark: formData.get('remark'),
+        product_id_optional: formData.get('product_id_optional'),
+        rates: []
+      };
+      
+      // Collect rate data
+      const rateItems = document.querySelectorAll('.rate-item');
+      rateItems.forEach(item => {
+        const rateName = item.querySelector('[name="rateName"]').value;
+        const netAdult = parseFloat(item.querySelector('[name="netAdult"]').value);
+        const netChild = parseFloat(item.querySelector('[name="netChild"]').value);
+        const feeType = item.querySelector('.fee-type-select').value;
+        const feeAdult = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeAdult"]').value) : 0;
+        const feeChild = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeChild"]').value) : 0;
+        
+        data.rates.push({
+          name: rateName,
+          netAdult,
+          netChild,
+          feeType,
+          feeAdult,
+          feeChild
+        });
+      });
+      
+      // Add ID if editing
+      const dbRowId = document.getElementById('dbRowId').value;
+      if (dbRowId) {
+        data.id = parseInt(dbRowId);
+      }
+      
+      try {
+        const response = await fetch('/api/products-rates?type=tour', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to save program');
+        }
+        
+        const result = await response.json();
+        alert('Program saved successfully!');
+        
+        // Reset form and show programs table
+        productForm.reset();
+        document.getElementById('add-program-section').style.display = 'none';
+        document.getElementById('programs-section').style.display = '';
+        
+        // Refresh programs list
+        if (typeof fetchRatesAndPrograms === 'function') {
+          fetchRatesAndPrograms();
+        }
+      } catch (error) {
+        alert('Error saving program: ' + error.message);
       }
     });
   }

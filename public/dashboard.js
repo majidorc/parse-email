@@ -2317,7 +2317,8 @@ function handleProgramEditClick(e) {
       document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
     });
 }
-  // Add Rate Item logic
+
+// Add Rate Item logic
   const addRateBtn = document.getElementById('addRateBtn');
   const ratesContainer = document.getElementById('ratesContainer');
   let rateItemCounter = 0;

@@ -891,6 +891,12 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     });
     if (search) params.append('search', search);
     if (cacheBuster) params.append('_ts', cacheBuster);
+    
+    // Add period parameter from global period selector
+    const globalPeriod = document.getElementById('global-period-selector');
+    const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+    params.append('period', period);
+    
     const res = await fetch(`/api/accounting?${params.toString()}`);
     const data = await res.json();
     if (!data.bookings || !data.bookings.length) {

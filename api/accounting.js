@@ -92,31 +92,132 @@ module.exports = async (req, res) => {
   const dirStr = dir === 'asc' ? 'ASC' : 'DESC';
 
   const search = req.query.search ? req.query.search.trim() : '';
-  const startDate = req.query.startDate;
-  const endDate = req.query.endDate;
+  const period = req.query.period || 'all';
+
+  // Period filtering function (same as dashboard-settings.js)
+  function getBangkokDateRange(period) {
+    const now = new Date();
+    function getStartOfWeek(date) {
+      const d = new Date(date);
+      const day = d.getUTCDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      d.setUTCDate(d.getUTCDate() + diff);
+      d.setUTCHours(0, 0, 0, 0);
+      return d;
+    }
+    function getStartOfYear(date) {
+      return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    }
+    function getStartOfNextYear(date) {
+      return new Date(Date.UTC(date.getUTCFullYear() + 1, 0, 1));
+    }
+    let start, end;
+    switch (period) {
+      case 'thisWeek': {
+        start = getStartOfWeek(now);
+        end = new Date(start);
+        end.setUTCDate(start.getUTCDate() + 7);
+        break;
+      }
+      case 'lastWeek': {
+        end = getStartOfWeek(now);
+        start = new Date(end);
+        start.setUTCDate(end.getUTCDate() - 7);
+        break;
+      }
+      case 'thisMonth': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        break;
+      }
+      case 'lastMonth': {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+        break;
+      }
+      case 'twoMonthsAgo': {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+        break;
+      }
+      case 'threeMonthsAgo': {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1));
+        break;
+      }
+      case 'sixMonthsAgo': {
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1));
+        break;
+      }
+      case 'thisYear': {
+        start = getStartOfYear(now);
+        end = getStartOfNextYear(now);
+        break;
+      }
+      case 'lastYear': {
+        end = getStartOfYear(now);
+        start = getStartOfYear(new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)));
+        break;
+      }
+      case 'all':
+      default:
+        start = new Date(Date.UTC(2000, 0, 1));
+        end = new Date(Date.UTC(2100, 0, 1));
+        break;
+    }
+    return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+  }
+
+  // Get date range for period filtering
+  const [periodStart, periodEnd] = getBangkokDateRange(period);
 
   try {
     // Build WHERE clause for both aliased and unaliased queries
     let whereClause = '';
     let whereClauseUnaliased = '';
     let params = [];
-    // Date-only search support
+    let paramIndex = 1;
+    
+    // Build WHERE clause combining search and period filtering
+    const conditions = [];
+    const conditionsUnaliased = [];
+    
+    // Period filtering
+    if (period !== 'all') {
+      conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
+      conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
+      params.push(periodStart, periodEnd);
+      paramIndex += 2;
+    }
+    
+    // Search filtering
     const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
     if (dateRangeMatch) {
-      whereClause = `WHERE b.tour_date >= $1 AND b.tour_date < $2`;
-      whereClauseUnaliased = `WHERE tour_date >= $1 AND tour_date < $2`;
+      // Date range search overrides period filtering
+      conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
+      conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
       params = [dateRangeMatch[1], dateRangeMatch[2]];
+      paramIndex = 3;
     } else {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
-        whereClause = `WHERE b.tour_date::date = $1`;
-        whereClauseUnaliased = `WHERE tour_date::date = $1`;
+        // Date-only search overrides period filtering
+        conditions.push(`b.tour_date::date = $${paramIndex}`);
+        conditionsUnaliased.push(`tour_date::date = $${paramIndex}`);
         params = [search];
+        paramIndex = 2;
       } else if (search) {
-        whereClause = `WHERE b.booking_number ILIKE $1 OR b.customer_name ILIKE $1 OR b.sku ILIKE $1 OR b.program ILIKE $1 OR b.hotel ILIKE $1`;
-        whereClauseUnaliased = `WHERE booking_number ILIKE $1 OR customer_name ILIKE $1 OR sku ILIKE $1 OR program ILIKE $1 OR hotel ILIKE $1`;
-        params = [`%${search}%`];
+        conditions.push(`(b.booking_number ILIKE $${paramIndex} OR b.customer_name ILIKE $${paramIndex} OR b.sku ILIKE $${paramIndex} OR b.program ILIKE $${paramIndex} OR b.hotel ILIKE $${paramIndex})`);
+        conditionsUnaliased.push(`(booking_number ILIKE $${paramIndex} OR customer_name ILIKE $${paramIndex} OR sku ILIKE $${paramIndex} OR program ILIKE $${paramIndex} OR hotel ILIKE $${paramIndex})`);
+        params.push(`%${search}%`);
+        paramIndex++;
       }
+    }
+    
+    if (conditions.length > 0) {
+      whereClause = `WHERE ${conditions.join(' AND ')}`;
+      whereClauseUnaliased = `WHERE ${conditionsUnaliased.join(' AND ')}`;
     }
 
     // Get total count

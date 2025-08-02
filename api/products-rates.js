@@ -310,10 +310,20 @@ module.exports = async (req, res) => {
           let productId = id;
           if (id) {
 
+            // Update all products with the same SKU to have the same supplier_id
             await client.query(
               `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4, supplier_id=$5 WHERE id=$6`,
               [sku, product_id_optional, program, remark || null, supplier_id || null, id]
             );
+            
+            // Also update all other products with the same SKU to have the same supplier_id
+            if (supplier_id) {
+              await client.query(
+                `UPDATE products SET supplier_id=$1 WHERE sku=$2 AND id!=$3`,
+                [supplier_id, sku, id]
+              );
+            }
+            
             await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
           } else {
 
@@ -339,6 +349,14 @@ module.exports = async (req, res) => {
               [sku, product_id_optional, program, remark || null, supplier_id || null]
             );
             productId = prodResult.rows[0].id;
+            
+            // Also update all other products with the same SKU to have the same supplier_id
+            if (supplier_id) {
+              await client.query(
+                `UPDATE products SET supplier_id=$1 WHERE sku=$2 AND id!=$3`,
+                [supplier_id, sku, productId]
+              );
+            }
 
           }
           

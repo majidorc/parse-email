@@ -2056,6 +2056,9 @@ function renderProgramsTable(programs) {
     `;
     tbody.appendChild(tr);
   });
+  
+  // Re-attach edit button event listeners after rendering
+  initializeProgramsEditButtons();
 }
 
 function renderProgramsPagination() {
@@ -2231,66 +2234,89 @@ document.addEventListener('DOMContentLoaded', function () {
     programsSection.insertBefore(updateOldBookingsBtn, programsSection.firstChild);
   }
   
-  // Add event listener for Edit buttons in Programs table
-  document.getElementById('programs-table-body').addEventListener('click', function(e) {
-    const btn = e.target.closest('.edit-program-btn');
-    if (!btn) return;
-    const sku = btn.getAttribute('data-sku');
-    // Find the program data from the loaded tours (reuse last fetched data)
-    fetch('/api/products-rates?type=tour')
-      .then(res => res.json())
-      .then(data => {
-        const program = data.tours.find(p => p.sku === sku);
-        if (!program) return;
-        // Show form, hide table
-        programsSection.style.display = 'none';
-        addProgramSection.style.display = '';
-        // Fill form fields
-        document.getElementById('sku').value = program.sku || '';
-        document.getElementById('dbRowId').value = program.id || '';
-        document.getElementById('productIdOptional').value = program.product_id_optional || '';
-        document.getElementById('program').value = program.program || '';
-        document.getElementById('remark').value = program.remark || '';
-        // Clear and fill rates
-        const ratesContainer = document.getElementById('ratesContainer');
-        ratesContainer.innerHTML = '';
-        // Reset counter for editing
-        rateItemCounter = 0;
-        if (program.rates && program.rates.length) {
-          // Use Promise to ensure rate items are created before filling
-          const fillRates = async () => {
-            for (const rate of program.rates) {
-              // Add a rate item (reuse addRateBtn logic)
-              document.getElementById('addRateBtn').click();
-              // Wait a bit for DOM to update
-              await new Promise(resolve => setTimeout(resolve, 10));
-              // Fill the last added rate item
-              const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
-              const lastRateItem = rateItems[rateItems.length - 1];
-              if (lastRateItem) {
-                lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
-                lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
-                lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
+  // Initialize edit button event listeners
+  initializeProgramsEditButtons();
+}
 
-                lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
-                // Trigger change to show/hide fee fields
-                lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
-                if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
-                  lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
-                  lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
-                }
-                
-                // Initialize move buttons for existing rate items
-                initializeMoveButtons(lastRateItem);
+function initializeProgramsEditButtons() {
+  const tbody = document.getElementById('programs-table-body');
+  if (!tbody) return;
+  
+  // Remove existing event listeners to avoid duplicates
+  tbody.removeEventListener('click', handleProgramEditClick);
+  
+  // Add event listener for Edit buttons in Programs table
+  tbody.addEventListener('click', handleProgramEditClick);
+}
+
+function handleProgramEditClick(e) {
+  const btn = e.target.closest('.edit-program-btn');
+  if (!btn) return;
+  
+  const sku = btn.getAttribute('data-sku');
+  const programsSection = document.getElementById('programs-section');
+  const addProgramSection = document.getElementById('add-program-section');
+  
+  // Find the program data from the loaded tours (reuse last fetched data)
+  fetch('/api/products-rates?type=tour')
+    .then(res => res.json())
+    .then(data => {
+      const program = data.tours.find(p => p.sku === sku);
+      if (!program) return;
+      
+      // Show form, hide table
+      programsSection.style.display = 'none';
+      addProgramSection.style.display = '';
+      
+      // Fill form fields
+      document.getElementById('sku').value = program.sku || '';
+      document.getElementById('dbRowId').value = program.id || '';
+      document.getElementById('productIdOptional').value = program.product_id_optional || '';
+      document.getElementById('program').value = program.program || '';
+      document.getElementById('remark').value = program.remark || '';
+      
+      // Clear and fill rates
+      const ratesContainer = document.getElementById('ratesContainer');
+      ratesContainer.innerHTML = '';
+      // Reset counter for editing
+      rateItemCounter = 0;
+      
+      if (program.rates && program.rates.length) {
+        // Use Promise to ensure rate items are created before filling
+        const fillRates = async () => {
+          for (const rate of program.rates) {
+            // Add a rate item (reuse addRateBtn logic)
+            document.getElementById('addRateBtn').click();
+            // Wait a bit for DOM to update
+            await new Promise(resolve => setTimeout(resolve, 10));
+            // Fill the last added rate item
+            const rateItems = ratesContainer.querySelectorAll('[id^="rate-item-"]');
+            const lastRateItem = rateItems[rateItems.length - 1];
+            if (lastRateItem) {
+              lastRateItem.querySelector('[name="rateName"]').value = rate.name || '';
+              lastRateItem.querySelector('[name="netAdult"]').value = rate.net_adult || rate.netAdult || '';
+              lastRateItem.querySelector('[name="netChild"]').value = rate.net_child || rate.netChild || '';
+
+              lastRateItem.querySelector('.fee-type-select').value = rate.fee_type || rate.feeType || 'none';
+              // Trigger change to show/hide fee fields
+              lastRateItem.querySelector('.fee-type-select').dispatchEvent(new Event('change'));
+              if (rate.fee_type !== 'none' && rate.fee_type !== undefined) {
+                lastRateItem.querySelector('[name="feeAdult"]').value = rate.fee_adult || rate.feeAdult || '';
+                lastRateItem.querySelector('[name="feeChild"]').value = rate.fee_child || rate.feeChild || '';
               }
+              
+              // Initialize move buttons for existing rate items
+              initializeMoveButtons(lastRateItem);
             }
-          };
-          fillRates();
-        }
-        // Show Delete button if editing
-        document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
-      });
-  });
+          }
+        };
+        fillRates();
+      }
+      
+      // Show Delete button if editing
+      document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
+    });
+}
   // Add Rate Item logic
   const addRateBtn = document.getElementById('addRateBtn');
   const ratesContainer = document.getElementById('ratesContainer');

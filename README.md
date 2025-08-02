@@ -10,17 +10,27 @@ A modern Node.js + PostgreSQL (Neon) system for automated bookings management, e
   Extracts bookings from Bokun.io and Thailand Tours emails with robust parser rules.
 - **Multi-Channel Notifications:**
   Sends booking notifications via Email, Telegram, and LINE. Telegram notifications are sent for bookings made for today (Bangkok time).
+- **Interactive Bookings Management:**
+  - Rate dropdowns in bookings table allow quick rate changes without editing entire booking
+  - Real-time rate updates with automatic table refresh and calculations
+  - Smart dropdown population based on available rates for each SKU
 - **Modern Dashboard:**
   - Card-style settings modal with colorful buttons, toggles, and responsive design
   - Summary cards for Total Bookings, New Bookings, and Benefit
   - Booking channels breakdown with PieChart and filter-on-click
   - Top Destinations with expandable list
+  - Interactive rate dropdowns in bookings table for easy rate changes
+  - Advanced analytics with average sales and benefits per channel
   - Responsive, modern UI with theme colors
   - Secure login-protected access
 - **Role-Based Access Control:**
   Four user roles with granular permissions (see below).
 - **Database-Driven Settings:**
   All notification and sensitive settings (Telegram Bot Token, Chat ID, notification email, etc.) are managed via the dashboard UI and stored in the database. No .env for notification targets.
+- **Advanced Analytics:**
+  - Real-time calculation of average sales and benefits per channel
+  - Enhanced analytics grid with 4 new average metrics
+  - Channel performance insights with per-booking averages
 - **Schema Compatibility:**
   Graceful handling of different database schemas across deployments with automatic column existence checks.
 

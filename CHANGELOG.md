@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+ 
+
+## [1.15.0] - 2025-08-02
+### Added
+- **Interactive Rate Dropdowns**: Rate column in bookings table now shows dropdown with available rates for each SKU
+- **Rate Change API**: New PATCH endpoint to update booking rates directly from the table
+- **Rates by SKU API**: New endpoint to fetch available rates for specific SKU codes
+- **Real-time Rate Updates**: Rate changes automatically refresh table calculations and show success/error messages
+- **Smart Dropdown Population**: Automatically loads available rates for each booking's SKU
+- **Rate Change Validation**: Prevents invalid rate changes and provides user feedback
+
+### Changed
+- **Bookings Table Enhancement**: Rate column now uses interactive dropdowns instead of static text
+- **Improved User Experience**: Users can change rates directly from the bookings table without editing entire booking
+- **Enhanced Error Handling**: Graceful handling of rate change failures with automatic reversion
+
+## [1.14.1] - 2025-08-02
+### Added
+- **New Analytics Metrics**: Added 4 new average metrics to Analytics tab:
+  - Avg. Sale Viator (average sale per Viator booking)
+  - Avg. Sale Website (average sale per Website booking)  
+  - Avg. Ben. Viator (average benefit per Viator booking)
+  - Avg. Ben. Website (average benefit per Website booking)
+- **Unified Analytics Layout**: Moved new metrics to main analytics grid with consistent styling
+- **Enhanced Analytics Calculations**: Real-time calculation of average sales and benefits per channel
+
+### Changed
+- **Analytics Tab Redesign**: Replaced old summary cards (Total Sales, Total Bookings, Avg. Sale) with new average metrics
+- **Improved Analytics Grid**: Now shows 3 rows of metrics with consistent color coding and styling
+- **Better Data Insights**: Provides deeper analysis of channel performance with per-booking averages
+
 ## [1.14.0] - 2025-07-26
 ### Added
 - **Google Analytics integration**: Added Google Analytics Measurement ID field to settings for tracking dashboard usage

@@ -2148,6 +2148,8 @@ function fetchPrograms(page = 1, search = '') {
       programsCurrentPage = page;
       renderProgramsTable(allPrograms);
       renderProgramsPagination();
+      // Re-initialize edit button event listeners after table re-render
+      initializeProgramsEditButtons();
     })
     .catch(error => {
       console.error('Error fetching programs:', error);

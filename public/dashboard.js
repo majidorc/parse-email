@@ -1396,6 +1396,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const analyticsBooked = document.getElementById('analytics-booked');
     const analyticsOtaCount = document.getElementById('analytics-ota-count');
     const analyticsWebsiteCount = document.getElementById('analytics-website-count');
+    const analyticsViatorWebsiteTotal = document.getElementById('analytics-viator-website-total');
     
     if (analyticsTotalBookings) analyticsTotalBookings.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             if (analyticsNewBookings) analyticsNewBookings.textContent = Number(data.viatorSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1404,6 +1405,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsBooked) analyticsBooked.textContent = data.websiteCount || 0;
           if (analyticsOtaCount) analyticsOtaCount.textContent = data.viatorCount || 0;
     if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = data.websiteCount || 0;
+    
+    // Update Viator vs Website total
+    if (analyticsViatorWebsiteTotal) {
+      const viatorCount = data.viatorCount || 0;
+      const websiteCount = data.websiteCount || 0;
+      const totalCount = viatorCount + websiteCount;
+      analyticsViatorWebsiteTotal.textContent = `Total: ${totalCount}`;
+    }
     
     // Update the new benefit fields
     const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');

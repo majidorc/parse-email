@@ -2762,6 +2762,7 @@ document.addEventListener('DOMContentLoaded', function() {
         program: formData.get('program'),
         remark: formData.get('remark'),
         product_id_optional: formData.get('product_id_optional'),
+        supplier_id: formData.get('supplier_id'),
         rates: []
       };
       

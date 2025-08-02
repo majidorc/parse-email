@@ -10,6 +10,27 @@ const pool = new Pool({
 module.exports = async (req, res) => {
   try {
     const type = req.query.type;
+    
+    // Add basic health check for debugging
+    if (type === 'health') {
+      try {
+        const testClient = await pool.connect();
+        const testResult = await testClient.query('SELECT 1 as test');
+        testClient.release();
+        return res.status(200).json({ 
+          status: 'ok', 
+          database: 'connected',
+          test: testResult.rows[0]
+        });
+      } catch (dbErr) {
+        return res.status(500).json({ 
+          status: 'error', 
+          database: 'failed',
+          error: dbErr.message 
+        });
+      }
+    }
+    
     const session = getSession(req);
     if (!session) return res.status(401).json({ error: 'Not authenticated' });
     const userRole = session.role;

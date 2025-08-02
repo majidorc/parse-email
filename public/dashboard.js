@@ -3456,6 +3456,23 @@ function addCheckMissingProgramsButton() {
   btn.textContent = 'Check Missing Programs from Bookings';
   btn.style = 'margin-bottom:16px; background:#f59e42; color:white; font-weight:bold; padding:8px 18px; border:none; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer;';
   btn.onclick = async function() {
+    // Test API health first
+    try {
+      console.log('Testing API health...');
+      const healthRes = await fetch('/api/products-rates?type=health');
+      const healthData = await healthRes.json();
+      console.log('API Health Check:', healthData);
+      
+      if (!healthRes.ok) {
+        alert('API health check failed: ' + JSON.stringify(healthData));
+        return;
+      }
+    } catch (healthErr) {
+      console.error('Health check failed:', healthErr);
+      alert('API health check failed: ' + healthErr.message);
+      return;
+    }
+    
     // Allow re-sync by clearing the flag
     localStorage.removeItem('programsSyncedFromBookings');
     await addProgramsFromBookings();

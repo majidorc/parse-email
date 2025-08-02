@@ -521,7 +521,7 @@ function renderTable() {
   }
   // Show cards on mobile only if Bookings tab is active and section is visible
   const mobileBookingsBtn = document.getElementById('toggle-bookings');
-  if (window.innerWidth <= 700 && mobileBookingsBtn.getAttribute('data-active') === 'true') {
+  if (window.innerWidth <= 700 && mobileBookingsBtn.classList.contains('active')) {
     cardsContainer.style.display = 'block';
   } else {
     cardsContainer.style.display = 'none';

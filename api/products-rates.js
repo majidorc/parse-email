@@ -70,6 +70,20 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Database connection failed', details: dbErr.message });
     }
 
+    // --- SUPPLIERS LOGIC ---
+    if (type === 'suppliers') {
+      if (req.method === 'GET') {
+        try {
+          const { rows } = await sql`SELECT id, name FROM suppliers ORDER BY name`;
+          res.status(200).json({ suppliers: rows });
+        } catch (err) {
+          console.error('[PRODUCTS-RATES] Error fetching suppliers:', err);
+          res.status(500).json({ error: 'Failed to fetch suppliers', details: err.message });
+        }
+        return;
+      }
+    }
+
     // --- RATES LOGIC ---
     if (type === 'rate') {
       if (req.method === 'GET') {
@@ -205,12 +219,19 @@ module.exports = async (req, res) => {
           }
           
           // Get total count for pagination
-          const countQuery = `SELECT COUNT(*) FROM products ${whereClause}`;
+          const countQuery = `SELECT COUNT(*) FROM products p ${whereClause}`;
           const countResult = await client.query(countQuery, params);
           const totalCount = parseInt(countResult.rows[0].count);
           
-          // Get paginated products
-          const productsQuery = `SELECT * FROM products ${whereClause} ORDER BY program, sku LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+          // Get paginated products with supplier info
+          const productsQuery = `
+            SELECT p.*, s.name as supplier_name 
+            FROM products p 
+            LEFT JOIN suppliers s ON p.supplier_id = s.id 
+            ${whereClause} 
+            ORDER BY p.program, p.sku 
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+          `;
           const productsResult = await client.query(productsQuery, [...params, limit, offset]);
           const products = productsResult.rows;
     
@@ -270,7 +291,7 @@ module.exports = async (req, res) => {
         }
         
         const product_id_optional = req.body.productId || req.body.product_id_optional || null;
-        const { sku, program, remark, id } = req.body;
+        const { sku, program, remark, id, supplier_id } = req.body;
         const rates = req.body.rates || [];
         
 
@@ -290,8 +311,8 @@ module.exports = async (req, res) => {
           if (id) {
 
             await client.query(
-              `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4 WHERE id=$5`,
-              [sku, product_id_optional, program, remark || null, id]
+              `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4, supplier_id=$5 WHERE id=$6`,
+              [sku, product_id_optional, program, remark || null, supplier_id || null, id]
             );
             await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
           } else {
@@ -314,8 +335,8 @@ module.exports = async (req, res) => {
             }
             
             const prodResult = await client.query(
-              `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
-              [sku, product_id_optional, program, remark || null]
+              `INSERT INTO products (sku, product_id_optional, program, remark, supplier_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+              [sku, product_id_optional, program, remark || null, supplier_id || null]
             );
             productId = prodResult.rows[0].id;
 

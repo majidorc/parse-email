@@ -1401,6 +1401,43 @@ analyticsBtn.onclick = () => {
   fetchSalesAnalytics(period);
 };
 
+// Suppliers button handler
+const suppliersBtn = document.getElementById('toggle-suppliers');
+const suppliersSection = document.getElementById('suppliers-section');
+
+suppliersBtn.onclick = () => {
+  closeAddBookingForm(); // Close add booking form when switching tabs
+  // Remove active class from all buttons
+  dashboardBtn.classList.remove('active');
+  bookingsBtn.classList.remove('active');
+  programsBtn.classList.remove('active');
+  accountingBtn.classList.remove('active');
+  analyticsBtn.classList.remove('active');
+  suppliersBtn.classList.remove('active');
+  // Add active class to suppliers button
+  suppliersBtn.classList.add('active');
+  dashboardSection.style.display = 'none';
+  bookingsTableSection.style.display = 'none';
+  summarySection.style.display = 'none';
+  accountingTableContainer.style.display = 'none';
+  programsSection.style.display = 'none';
+  analyticsSection.style.display = 'none';
+  suppliersSection.style.display = '';
+  searchBarSection.style.display = 'none';
+  document.getElementById('pagination-controls').style.display = 'none';
+  document.getElementById('booking-cards-container').style.display = 'none';
+  
+  // Hide Add Booking button on Suppliers tab
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
+  
+  // Cleanup analytics charts
+  cleanupSalesAnalytics();
+  
+  // Fetch suppliers data
+  fetchSuppliers();
+};
+
 // Sales Analytics functionality
 let salesChannelChart = null;
 
@@ -2116,7 +2153,7 @@ function renderProgramsTable(programs) {
   programs = programs.slice().sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
   const tbody = document.getElementById('programs-table-body');
   if (!programs.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">No programs found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">No programs found.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
@@ -2187,6 +2224,9 @@ function renderProgramsTable(programs) {
       </td>
       <td class="px-6 py-4 whitespace-normal text-sm text-gray-600 max-w-xs">
         ${product.remark || ''}
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        ${product.supplier_name || ''}
       </td>
       <td class="px-6 py-4 text-right">
         <button class="edit-program-btn px-2 py-1 bg-blue-600 text-white rounded" data-sku="${product.sku}">Edit</button>
@@ -2420,6 +2460,12 @@ function handleProgramEditClick(e) {
   if (productIdOptionalElement) productIdOptionalElement.value = program.product_id_optional || '';
   if (programElement) programElement.value = program.program || '';
   if (remarkElement) remarkElement.value = program.remark || '';
+  
+  // Populate supplier dropdown
+  const supplierElement = document.getElementById('supplier');
+  if (supplierElement) {
+    populateSupplierDropdown(supplierElement, program.supplier_id);
+  }
   
   // Clear and fill rates
   const ratesContainer = document.getElementById('ratesContainer');
@@ -3777,6 +3823,215 @@ function initializeAddBooking() {
     }
   };
 }
+// Suppliers functionality
+let suppliersData = [];
+let suppliersCurrentPage = 1;
+let suppliersTotalRows = 0;
+let suppliersRowsPerPage = 20;
+
+async function fetchSuppliers() {
+  try {
+    const response = await fetch('/api/suppliers');
+    if (response.ok) {
+      const data = await response.json();
+      suppliersData = data;
+      renderSuppliersTable();
+      updateSuppliersSummary();
+    } else {
+      console.error('Failed to fetch suppliers');
+    }
+  } catch (error) {
+    console.error('Error fetching suppliers:', error);
+  }
+}
+
+function renderSuppliersTable() {
+  const tbody = document.getElementById('suppliers-table-body');
+  if (!suppliersData.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No suppliers found.</td></tr>';
+  } else {
+    tbody.innerHTML = suppliersData.map(supplier => `
+      <tr>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${supplier.name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.bookings_count || 0}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.total_amount ? Number(supplier.total_amount).toFixed(2) : '0.00'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button class="text-indigo-600 hover:text-indigo-900 edit-supplier-btn" data-id="${supplier.id}" data-name="${supplier.name}">Edit</button>
+          <button class="text-red-600 hover:text-red-900 ml-4 delete-supplier-btn" data-id="${supplier.id}">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+    
+    // Add event listeners for edit and delete buttons
+    document.querySelectorAll('.edit-supplier-btn').forEach(btn => {
+      btn.onclick = function() {
+        const id = this.getAttribute('data-id');
+        const name = this.getAttribute('data-name');
+        editSupplier(id, name);
+      };
+    });
+    
+    document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
+      btn.onclick = function() {
+        const id = this.getAttribute('data-id');
+        deleteSupplier(id);
+      };
+    });
+  }
+}
+
+async function updateSuppliersSummary() {
+  try {
+    const response = await fetch('/api/suppliers?analytics=true');
+    if (response.ok) {
+      const data = await response.json();
+      document.getElementById('suppliers-count').textContent = data.suppliers_count || 0;
+      document.getElementById('suppliers-programs-count').textContent = data.programs_count || 0;
+      document.getElementById('suppliers-total-paid').textContent = data.total_paid ? Number(data.total_paid).toFixed(2) : '0.00';
+      document.getElementById('suppliers-total-due').textContent = data.total_due ? Number(data.total_due).toFixed(2) : '0.00';
+    }
+  } catch (error) {
+    console.error('Error fetching suppliers analytics:', error);
+  }
+}
+
+function editSupplier(id, name) {
+  // For now, just show a simple prompt - can be enhanced later
+  const newName = prompt('Edit supplier name:', name);
+  if (newName && newName.trim() !== '') {
+    updateSupplier(id, newName.trim());
+  }
+}
+
+async function updateSupplier(id, name) {
+  try {
+    const response = await fetch(`/api/suppliers?id=${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name })
+    });
+    
+    if (response.ok) {
+      showToast('Supplier updated successfully', 'success');
+      fetchSuppliers();
+    } else {
+      const error = await response.json();
+      showToast(`Failed to update supplier: ${error.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error updating supplier:', error);
+    showToast('Failed to update supplier', 'error');
+  }
+}
+
+async function deleteSupplier(id) {
+  if (!confirm('Are you sure you want to delete this supplier?')) return;
+  
+  try {
+    const response = await fetch(`/api/suppliers?id=${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      showToast('Supplier deleted successfully', 'success');
+      fetchSuppliers();
+    } else {
+      const error = await response.json();
+      showToast(`Failed to delete supplier: ${error.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting supplier:', error);
+    showToast('Failed to delete supplier', 'error');
+  }
+}
+
+async function populateSupplierDropdown(dropdown, selectedSupplierId = null) {
+  try {
+    const response = await fetch('/api/products-rates?type=suppliers');
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Clear existing options except the first one
+      const firstOption = dropdown.querySelector('option');
+      dropdown.innerHTML = '';
+      dropdown.appendChild(firstOption);
+      
+      // Add supplier options
+      data.suppliers.forEach(supplier => {
+        const option = document.createElement('option');
+        option.value = supplier.id;
+        option.textContent = supplier.name;
+        if (selectedSupplierId && supplier.id == selectedSupplierId) {
+          option.selected = true;
+        }
+        dropdown.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('Error populating supplier dropdown:', error);
+  }
+}
+
+function initializeSuppliers() {
+  // Add supplier button
+  const addSupplierBtn = document.getElementById('add-supplier-btn');
+  if (addSupplierBtn) {
+    addSupplierBtn.onclick = function() {
+      document.getElementById('suppliers-section').style.display = 'none';
+      document.getElementById('add-supplier-section').style.display = 'block';
+    };
+  }
+  
+  // Cancel add supplier button
+  const cancelAddSupplierBtn = document.getElementById('cancel-add-supplier');
+  if (cancelAddSupplierBtn) {
+    cancelAddSupplierBtn.onclick = function() {
+      document.getElementById('add-supplier-section').style.display = 'none';
+      document.getElementById('suppliers-section').style.display = 'block';
+      document.getElementById('supplierForm').reset();
+    };
+  }
+  
+  // Supplier form submission
+  const supplierForm = document.getElementById('supplierForm');
+  if (supplierForm) {
+    supplierForm.onsubmit = async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(supplierForm);
+      const supplierData = {
+        name: formData.get('name')
+      };
+      
+      try {
+        const response = await fetch('/api/suppliers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(supplierData)
+        });
+        
+        if (response.ok) {
+          showToast('Supplier added successfully', 'success');
+          document.getElementById('add-supplier-section').style.display = 'none';
+          document.getElementById('suppliers-section').style.display = 'block';
+          supplierForm.reset();
+          fetchSuppliers();
+        } else {
+          const error = await response.json();
+          showToast(`Failed to add supplier: ${error.error}`, 'error');
+        }
+      } catch (error) {
+        console.error('Error adding supplier:', error);
+        showToast('Failed to add supplier', 'error');
+      }
+    };
+  }
+}
+
 // Main initialization function
 function initializeApp() {
   // Initialize clear cache button
@@ -3843,6 +4098,7 @@ function initializeApp() {
   // Initialize other components
   addCheckMissingProgramsButton();
   initializeAddBooking();
+  initializeSuppliers();
   initializeGlobalPeriodSelector();
   checkSession();
   updateDashboardBenefitCard();

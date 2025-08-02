@@ -12,6 +12,9 @@
     },
     "api/update-old-bookings-rates.js": {
       "maxDuration": 30
+    },
+    "api/suppliers.js": {
+      "maxDuration": 30
     }
   },
   "routes": [

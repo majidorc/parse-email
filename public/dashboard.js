@@ -2258,25 +2258,35 @@ function handleProgramEditClick(e) {
   programsSection.style.display = 'none';
   addProgramSection.style.display = '';
   
-  // Fill form fields
-  document.getElementById('sku').value = program.sku || '';
-  document.getElementById('dbRowId').value = program.id || '';
-  document.getElementById('product_id_optional').value = program.product_id_optional || '';
-  document.getElementById('program').value = program.program || '';
-  document.getElementById('remark').value = program.remark || '';
+  // Fill form fields with null checks
+  const skuElement = document.getElementById('sku');
+  const dbRowIdElement = document.getElementById('dbRowId');
+  const productIdOptionalElement = document.getElementById('product_id_optional');
+  const programElement = document.getElementById('program');
+  const remarkElement = document.getElementById('remark');
+  
+  if (skuElement) skuElement.value = program.sku || '';
+  if (dbRowIdElement) dbRowIdElement.value = program.id || '';
+  if (productIdOptionalElement) productIdOptionalElement.value = program.product_id_optional || '';
+  if (programElement) programElement.value = program.program || '';
+  if (remarkElement) remarkElement.value = program.remark || '';
   
   // Clear and fill rates
   const ratesContainer = document.getElementById('ratesContainer');
-  ratesContainer.innerHTML = '';
+  const addRateBtn = document.getElementById('addRateBtn');
+  
+  if (ratesContainer) {
+    ratesContainer.innerHTML = '';
+  }
   // Reset counter for editing
   rateItemCounter = 0;
   
-  if (program.rates && program.rates.length) {
+  if (program.rates && program.rates.length && addRateBtn) {
     // Use Promise to ensure rate items are created before filling
     const fillRates = async () => {
       for (const rate of program.rates) {
         // Add a rate item (reuse addRateBtn logic)
-        document.getElementById('addRateBtn').click();
+        addRateBtn.click();
         // Wait a bit for DOM to update
         await new Promise(resolve => setTimeout(resolve, 10));
         // Fill the last added rate item
@@ -2304,7 +2314,10 @@ function handleProgramEditClick(e) {
   }
   
   // Show Delete button if editing
-  document.getElementById('delete-program-btn').style.display = program.id ? '' : 'none';
+  const deleteBtn = document.getElementById('delete-program-btn');
+  if (deleteBtn) {
+    deleteBtn.style.display = program.id ? '' : 'none';
+  }
 }
 
 // Add Rate Item functionality

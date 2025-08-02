@@ -3467,6 +3467,22 @@ function addCheckMissingProgramsButton() {
         alert('API health check failed: ' + JSON.stringify(healthData));
         return;
       }
+      
+      // Test echo endpoint to see what data is being sent
+      console.log('Testing echo endpoint...');
+      const testData = {
+        sku: 'TEST-SKU',
+        program: 'Test Program',
+        rates: [{ name: 'Auto', net_adult: 0, net_child: 0, fee_type: 'none', fee_adult: null, fee_child: null }]
+      };
+      const echoRes = await fetch('/api/products-rates?type=echo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testData)
+      });
+      const echoData = await echoRes.json();
+      console.log('Echo Test Result:', echoData);
+      
     } catch (healthErr) {
       console.error('Health check failed:', healthErr);
       alert('API health check failed: ' + healthErr.message);

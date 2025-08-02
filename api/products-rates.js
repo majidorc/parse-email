@@ -31,6 +31,16 @@ module.exports = async (req, res) => {
       }
     }
     
+    // Add echo test for debugging POST requests
+    if (type === 'echo') {
+      return res.status(200).json({
+        method: req.method,
+        body: req.body,
+        headers: req.headers,
+        query: req.query
+      });
+    }
+    
     const session = getSession(req);
     console.log('[PRODUCTS-RATES] Session check:', { 
       hasSession: !!session, 

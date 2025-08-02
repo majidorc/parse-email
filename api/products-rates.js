@@ -16,6 +16,27 @@ module.exports = async (req, res) => {
 
     console.log(`[PRODUCTS-RATES] ${req.method} request for type: ${type}, userRole: ${userRole}`);
 
+    // Test database connection and table existence
+    try {
+      const testClient = await pool.connect();
+      const testResult = await testClient.query('SELECT 1 as test');
+      console.log('[PRODUCTS-RATES] Database connection test successful:', testResult.rows[0]);
+      
+      // Check if tables exist
+      const tablesResult = await testClient.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('products', 'rates')
+      `);
+      console.log('[PRODUCTS-RATES] Available tables:', tablesResult.rows.map(r => r.table_name));
+      
+      testClient.release();
+    } catch (dbErr) {
+      console.error('[PRODUCTS-RATES] Database connection test failed:', dbErr);
+      return res.status(500).json({ error: 'Database connection failed', details: dbErr.message });
+    }
+
     // --- RATES LOGIC ---
     if (type === 'rate') {
       if (req.method === 'GET') {

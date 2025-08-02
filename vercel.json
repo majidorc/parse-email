@@ -9,6 +9,9 @@
     },
     "api/sales-analytics.js": {
       "maxDuration": 30
+    },
+    "api/update-old-bookings-rates.js": {
+      "maxDuration": 30
     }
   },
   "routes": [

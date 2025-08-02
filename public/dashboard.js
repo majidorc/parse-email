@@ -827,38 +827,6 @@ function renderAccountingSummary(data) {
   }
   
   document.getElementById('accounting-summary').innerHTML = `
-    <div class="mb-6 flex flex-col items-center space-y-4">
-      <div class="flex items-center space-x-4 bg-white rounded-lg shadow-md p-4 border border-gray-200">
-        <label for="accounting-period-selector" class="text-sm font-semibold text-gray-700 whitespace-nowrap">
-          📅 Select Period:
-        </label>
-        <select id="accounting-period-selector" class="border-2 border-blue-200 rounded-lg px-4 py-2 text-sm bg-white shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 min-w-[150px]">
-          <option value="all">🕐 All Time</option>
-          <option value="thisWeek">📅 This Week</option>
-          <option value="lastWeek">📅 Last Week</option>
-          <option value="thisMonth">📅 This Month</option>
-          <option value="lastMonth">📅 Last Month</option>
-          <option value="thisYear">📅 This Year</option>
-          <option value="lastYear">📅 Last Year</option>
-          <option value="custom">📅 Custom Range</option>
-        </select>
-      </div>
-      <div id="custom-date-range" class="hidden bg-white rounded-lg shadow-md p-4 border border-gray-200">
-        <div class="flex items-center space-x-3">
-          <div class="flex items-center space-x-2">
-            <label for="start-date" class="text-sm font-medium text-gray-700">From:</label>
-            <input type="date" id="start-date" class="border-2 border-blue-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200">
-          </div>
-          <div class="flex items-center space-x-2">
-            <label for="end-date" class="text-sm font-medium text-gray-700">To:</label>
-            <input type="date" id="end-date" class="border-2 border-blue-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200">
-          </div>
-          <button id="apply-date-range" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            ✅ Apply
-          </button>
-        </div>
-      </div>
-    </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm md:text-base">
       ${statCard('Total Booking', totalBookings, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'total-booking-card')}
       ${statCard('Sale', totalPaid, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'sale-card')}
@@ -902,26 +870,7 @@ function renderAccountingSummary(data) {
       };
     }
     
-    // Add period selector logic
-    const periodSelector = document.getElementById('accounting-period-selector');
-    const customDateRange = document.getElementById('custom-date-range');
-    const applyDateRange = document.getElementById('apply-date-range');
-    
-    if (periodSelector) {
-      periodSelector.addEventListener('change', function() {
-        const selectedPeriod = this.value;
-        if (selectedPeriod === 'custom') {
-          customDateRange.classList.remove('hidden');
-        } else {
-          customDateRange.classList.add('hidden');
-          applyPeriodFilter(selectedPeriod);
-        }
-      });
-    }
-    
-    if (applyDateRange) {
-      applyDateRange.addEventListener('click', function() {
-        const startDate = document.getElementById('start-date').value;
+    // Note: Period filtering is now handled by the global period selector in the header
         const endDate = document.getElementById('end-date').value;
         if (startDate && endDate) {
           accountingSearch = `date:${startDate},${endDate}`;
@@ -931,57 +880,7 @@ function renderAccountingSummary(data) {
       });
     }
     
-    function applyPeriodFilter(period) {
-      const now = new Date();
-      let startDate, endDate;
-      
-      switch (period) {
-        case 'thisWeek':
-          const day = now.getDay();
-          const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-          startDate = new Date(now.setDate(diff));
-          endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + 7);
-          break;
-        case 'lastWeek':
-          const lastDay = now.getDay();
-          const lastDiff = now.getDate() - lastDay + (lastDay === 0 ? -6 : 1) - 7;
-          startDate = new Date(now.setDate(lastDiff));
-          endDate = new Date(startDate);
-          endDate.setDate(startDate.getDate() + 7);
-          break;
-        case 'thisMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-          break;
-        case 'lastMonth':
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          endDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case 'thisYear':
-          startDate = new Date(now.getFullYear(), 0, 1);
-          endDate = new Date(now.getFullYear() + 1, 0, 1);
-          break;
-        case 'lastYear':
-          startDate = new Date(now.getFullYear() - 1, 0, 1);
-          endDate = new Date(now.getFullYear(), 0, 1);
-          break;
-        case 'all':
-        default:
-          accountingSearch = '';
-          document.getElementById('search-bar').value = '';
-          fetchAccounting(1, accountingSort, accountingDir, '', true);
-          return;
-      }
-      
-      if (startDate && endDate) {
-        const startStr = startDate.toISOString().slice(0, 10);
-        const endStr = endDate.toISOString().slice(0, 10);
-        accountingSearch = `date:${startStr},${endStr}`;
-        document.getElementById('search-bar').value = '';
-        fetchAccounting(1, accountingSort, accountingDir, accountingSearch, true);
-      }
-    }
+    // Note: Period filtering is now handled by the global period selector in the header
   }, 0);
 }
 
@@ -2003,10 +1902,7 @@ function fetchDashboardAnalytics() {
       document.getElementById('dashboard-benefit').textContent = '-';
     });
 }
-document.getElementById('dashboard-period').addEventListener('change', function() {
-  fetchDashboardAnalytics();
-  updateDashboardBenefitCard();
-});
+// Note: Dashboard period is now controlled by the global period selector in the header
 document.getElementById('dashboard-refresh').addEventListener('click', function() {
   fetchDashboardAnalytics();
   updateDashboardBenefitCard();
@@ -3285,7 +3181,8 @@ if (accountingSearchBar && accountingClearBtn) {
 
 // Helper to get period start/end dates
 function getDashboardPeriodRange() {
-  const period = document.getElementById('dashboard-period').value;
+  const globalPeriod = document.getElementById('global-period-selector');
+  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
   const now = new Date();
   let startDate, endDate;
   if (period === 'thisWeek') {
@@ -3323,7 +3220,8 @@ function getDashboardPeriodRange() {
 }
 // Fetch and display real benefit in dashboard card for selected period
 async function updateDashboardBenefitCard() {
-  const period = document.getElementById('dashboard-period').value;
+  const globalPeriod = document.getElementById('global-period-selector');
+  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
   let url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
   if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
   try {
@@ -3355,7 +3253,7 @@ async function updateDashboardBenefitCard() {
 // Call on dashboard load and refresh and period change
 // updateDashboardBenefitCard will be called in initializeApp
 document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
-document.getElementById('dashboard-period').addEventListener('change', updateDashboardBenefitCard);
+// Note: Dashboard period is now controlled by the global period selector in the header
 
 // Price Tiers Modal Logic for Programs tab
 const priceTiersModal = document.getElementById('price-tiers-modal');

@@ -351,46 +351,31 @@ function getRowClass(tourDateStr) {
 
 
 // Function to populate rate dropdowns
-async function populateRateDropdowns() {
-  const dropdowns = document.querySelectorAll('.rate-dropdown');
-  
-  for (const dropdown of dropdowns) {
-    const sku = dropdown.getAttribute('data-sku');
-    const currentRate = dropdown.getAttribute('data-current-rate');
-    
-    if (!sku) continue;
-    
-    try {
-      const response = await fetch(`/api/products-rates?type=rates-by-sku&sku=${encodeURIComponent(sku)}`);
+
+
+// Function to populate rate dropdown for a specific cell
+async function populateRateDropdownForCell(dropdown, sku, currentRate) {
+  try {
+    const response = await fetch(`/api/products-rates?type=tour&sku=${sku}`);
+    if (response.ok) {
       const data = await response.json();
-      
       if (data.rates && data.rates.length > 0) {
-        // Clear existing options except the first one
-        const firstOption = dropdown.querySelector('option');
+        // Clear existing options except the first one (current rate)
+        const currentOption = dropdown.querySelector('option');
         dropdown.innerHTML = '';
+        dropdown.appendChild(currentOption);
         
-        // Add current rate as first option if it exists
-        if (currentRate) {
-          const currentOption = document.createElement('option');
-          currentOption.value = currentRate;
-          currentOption.textContent = currentRate.length > 12 ? currentRate.slice(0, 12) + '...' : currentRate;
-          currentOption.selected = true;
-          dropdown.appendChild(currentOption);
-        }
-        
-        // Add available rates
+        // Add new options
         data.rates.forEach(rate => {
-          if (rate.name !== currentRate) {
-            const option = document.createElement('option');
-            option.value = rate.name;
-            option.textContent = rate.name.length > 12 ? rate.name.slice(0, 12) + '...' : rate.name;
-            dropdown.appendChild(option);
-          }
+          const option = document.createElement('option');
+          option.value = rate.name;
+          option.textContent = rate.name && rate.name.length > 12 ? rate.name.slice(0, 12) + '...' : rate.name;
+          dropdown.appendChild(option);
         });
       }
-    } catch (error) {
-      console.error('Error fetching rates for SKU:', sku, error);
     }
+  } catch (error) {
+    console.error('Error populating rate dropdown:', error);
   }
 }
 
@@ -1028,10 +1013,7 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     renderAccountingTable();
     renderAccountingPagination();
     
-    // Populate rate dropdowns after accounting table is rendered
-    setTimeout(() => {
-      populateRateDropdowns();
-    }, 100);
+
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:red;">Failed to load data.</td></tr>';
     if (accountingSummaryData) {
@@ -1055,14 +1037,13 @@ function renderAccountingTable() {
         <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
         <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
         <td class="px-4 py-3 text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
-        <td class="px-4 py-3 text-sm">
-          <select class="rate-dropdown bg-white border border-gray-300 rounded px-2 py-1 text-sm w-full" 
-                  data-booking-number="${b.booking_number}" 
-                  data-sku="${b.sku || ''}" 
-                  data-current-rate="${b.rate || ''}"
-                  onchange="handleRateChange(this)">
-            <option value="${b.rate || ''}" selected>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</option>
-          </select>
+        <td class="px-4 py-3 text-sm rate-cell" 
+            data-booking-number="${b.booking_number}" 
+            data-sku="${b.sku || ''}" 
+            data-current-rate="${b.rate || ''}"
+            style="cursor: pointer;"
+            title="Click to edit rate">
+          ${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}
         </td>
         <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
         <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
@@ -1158,6 +1139,43 @@ function renderAccountingTable() {
           cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
         });
       }
+      
+      // Add rate cell click handlers
+      document.querySelectorAll('.rate-cell').forEach(cell => {
+        cell.onclick = function(e) {
+          if (cell.querySelector('select')) return;
+          
+          const bookingNumber = cell.getAttribute('data-booking-number');
+          const sku = cell.getAttribute('data-sku');
+          const currentRate = cell.getAttribute('data-current-rate');
+          
+          // Create dropdown with current rate as selected option
+          cell.innerHTML = `
+            <select class="rate-dropdown bg-white border border-gray-300 rounded px-2 py-1 text-sm w-full" 
+                    data-booking-number="${bookingNumber}" 
+                    data-sku="${sku}" 
+                    data-current-rate="${currentRate}"
+                    onchange="handleRateChange(this)">
+              <option value="${currentRate || ''}" selected>${currentRate && currentRate.length > 12 ? currentRate.slice(0, 12) + '...' : (currentRate || '')}</option>
+            </select>
+          `;
+          
+          const dropdown = cell.querySelector('select');
+          dropdown.focus();
+          
+          // Populate dropdown with available rates for this SKU
+          populateRateDropdownForCell(dropdown, sku, currentRate);
+          
+          // Handle blur to convert back to text
+          dropdown.onblur = function() {
+            setTimeout(() => {
+              const newRate = dropdown.value;
+              cell.setAttribute('data-current-rate', newRate);
+              cell.innerHTML = `${newRate && newRate.length > 12 ? newRate.slice(0, 12) + '...' : (newRate || '')}`;
+            }, 150); // Small delay to allow for dropdown interaction
+          };
+        };
+      });
       
       // Add cancel button handlers
       document.querySelectorAll('.cancel-btn').forEach(btn => {

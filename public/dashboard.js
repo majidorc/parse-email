@@ -338,10 +338,14 @@ function getRowClass(tourDateStr) {
   today.setHours(0,0,0,0);
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-  if (date < today) return 'row-past';
-  if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) return 'row-today';
-  if (date.getFullYear() === tomorrow.getFullYear() && date.getMonth() === tomorrow.getMonth() && date.getDate() === tomorrow.getDate()) return 'row-tomorrow';
-  return '';
+  
+  let result = '';
+  if (date < today) result = 'row-past';
+  else if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) result = 'row-today';
+  else if (date.getFullYear() === tomorrow.getFullYear() && date.getMonth() === tomorrow.getMonth() && date.getDate() === tomorrow.getDate()) result = 'row-tomorrow';
+  
+  console.log(`Tour date: ${tourDateStr}, Class: ${result}, Date: ${date.toDateString()}, Today: ${today.toDateString()}`);
+  return result;
 }
 
 

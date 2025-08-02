@@ -371,55 +371,83 @@ body {
 } 
 
 /* Row background colors for booking table */
-.row-past {
-  background-color: #fef2f2 !important; /* Light red background for past bookings */
+tr.row-past {
+  background-color: #fecaca !important; /* More prominent red background for past bookings */
 }
 
-.row-today {
-  background-color: #f0fdf4 !important; /* Light green background for today's bookings */
+tr.row-today {
+  background-color: #bbf7d0 !important; /* More prominent green background for today's bookings */
 }
 
-.row-tomorrow {
-  background-color: #f0f9ff !important; /* Light blue background for tomorrow's bookings */
+tr.row-tomorrow {
+  background-color: #bfdbfe !important; /* More prominent blue background for tomorrow's bookings */
 }
 
 /* Card background colors for mobile view */
-.card-row-past {
-  background-color: #fef2f2 !important; /* Light red background for past bookings */
-  border-color: #fecaca !important;
+div.card-row-past {
+  background-color: #fecaca !important; /* More prominent red background for past bookings */
+  border-color: #f87171 !important;
 }
 
-.card-row-today {
-  background-color: #f0fdf4 !important; /* Light green background for today's bookings */
-  border-color: #bbf7d0 !important;
+div.card-row-today {
+  background-color: #bbf7d0 !important; /* More prominent green background for today's bookings */
+  border-color: #4ade80 !important;
 }
 
-.card-row-tomorrow {
-  background-color: #f0f9ff !important; /* Light blue background for tomorrow's bookings */
-  border-color: #bfdbfe !important;
+div.card-row-tomorrow {
+  background-color: #bfdbfe !important; /* More prominent blue background for tomorrow's bookings */
+  border-color: #60a5fa !important;
 }
 
 /* Hover effects for better UX */
-.row-past:hover {
-  background-color: #fee2e2 !important;
+tr.row-past:hover {
+  background-color: #fca5a5 !important;
 }
 
-.row-today:hover {
-  background-color: #dcfce7 !important;
+tr.row-today:hover {
+  background-color: #a7f3a7 !important;
 }
 
-.row-tomorrow:hover {
-  background-color: #dbeafe !important;
+tr.row-tomorrow:hover {
+  background-color: #a5b4fc !important;
 }
 
-.card-row-past:hover {
-  background-color: #fee2e2 !important;
+div.card-row-past:hover {
+  background-color: #fca5a5 !important;
 }
 
-.card-row-today:hover {
-  background-color: #dcfce7 !important;
+div.card-row-today:hover {
+  background-color: #a7f3a7 !important;
 }
 
-.card-row-tomorrow:hover {
-  background-color: #dbeafe !important;
+div.card-row-tomorrow:hover {
+  background-color: #a5b4fc !important;
+} 
+
+/* Alternative approach with more specific selectors */
+#bookings-body tr.row-past {
+  background-color: #fecaca !important;
+}
+
+#bookings-body tr.row-today {
+  background-color: #bbf7d0 !important;
+}
+
+#bookings-body tr.row-tomorrow {
+  background-color: #bfdbfe !important;
+}
+
+#booking-cards-container div.card-row-past {
+  background-color: #fecaca !important;
+  border-color: #f87171 !important;
+}
+
+#booking-cards-container div.card-row-today {
+  background-color: #bbf7d0 !important;
+  border-color: #4ade80 !important;
+}
+
+#booking-cards-container div.card-row-tomorrow {
+  background-color: #bfdbfe !important;
+  border-color: #60a5fa !important;
 } 

@@ -1,15 +1,11 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+async function runMigration() {
   const client = await pool.connect();
   try {
     console.log('Starting suppliers migration...');
@@ -41,17 +37,13 @@ export default async function handler(req, res) {
     `);
     console.log('✓ suppliers name index created');
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Suppliers migration completed successfully' 
-    });
+    console.log('✅ Migration completed successfully!');
   } catch (err) {
-    console.error('Migration error:', err);
-    res.status(500).json({ 
-      error: 'Migration failed', 
-      details: err.message 
-    });
+    console.error('❌ Migration failed:', err);
   } finally {
     client.release();
+    process.exit(0);
   }
-} 
+}
+
+runMigration(); 

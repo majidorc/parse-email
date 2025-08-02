@@ -281,7 +281,7 @@ export default async function handler(req, res) {
       `);
     }
     
-    // Calculate benefit using the same logic as accounting.js (with fallback to net_total)
+    // Calculate benefit using the same logic as accounting.js
     // Check if net_total column exists
     let hasNetTotalColumn = false;
     try {
@@ -328,7 +328,7 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
-    // Calculate benefit by channel (Viator vs Website)
+    // Calculate benefit by channel using the channel field from bookings table
     let viatorBenefitResult;
     let websiteBenefitResult;
     
@@ -339,9 +339,8 @@ export default async function handler(req, res) {
          FROM bookings b
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
          WHERE b.tour_date >= $1 AND b.tour_date < $2
-         AND (p.sender ILIKE '%bokun.io%' AND b.booking_number NOT LIKE 'GYG%')`,
+         AND b.channel IN ('Viator', 'Bokun')`,
         [startDateParam, endDateParam]
       );
       
@@ -351,9 +350,8 @@ export default async function handler(req, res) {
          FROM bookings b
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
          WHERE b.tour_date >= $1 AND b.tour_date < $2
-         AND (p.sender ILIKE '%info@tours.co.th%' OR b.booking_number LIKE 'GYG%')`,
+         AND b.channel IN ('Website', 'GYG')`,
         [startDateParam, endDateParam]
       );
     } else {
@@ -363,8 +361,7 @@ export default async function handler(req, res) {
          FROM bookings b
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-         WHERE (p.sender ILIKE '%bokun.io%' AND b.booking_number NOT LIKE 'GYG%')`
+         WHERE b.channel IN ('Viator', 'Bokun')`
       );
       
       websiteBenefitResult = await client.query(
@@ -373,8 +370,7 @@ export default async function handler(req, res) {
          FROM bookings b
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-         WHERE (p.sender ILIKE '%info@tours.co.th%' OR b.booking_number LIKE 'GYG%')`
+         WHERE b.channel IN ('Website', 'GYG')`
       );
     }
     

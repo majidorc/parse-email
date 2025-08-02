@@ -1922,10 +1922,6 @@ function fetchDashboardAnalytics() {
     });
 }
 // Note: Dashboard period is now controlled by the global period selector in the header
-document.getElementById('dashboard-refresh').addEventListener('click', function() {
-  fetchDashboardAnalytics();
-  updateDashboardBenefitCard();
-});
 
 // --- Programs Tab Logic (merged) ---
 let allRates = [];
@@ -3344,7 +3340,6 @@ async function updateDashboardBenefitCard() {
 }
 // Call on dashboard load and refresh and period change
 // updateDashboardBenefitCard will be called in initializeApp
-document.getElementById('dashboard-refresh').addEventListener('click', updateDashboardBenefitCard);
 // Note: Dashboard period is now controlled by the global period selector in the header
 
 // Price Tiers Modal Logic for Programs tab
@@ -3659,24 +3654,7 @@ function initializeApp() {
   analyticsBtn.classList.remove('active');
   fetchDashboardAnalytics();
   
-  // Add dashboard refresh button handler
-  const dashboardRefreshBtn = document.getElementById('dashboard-refresh');
-  if (dashboardRefreshBtn) {
-    dashboardRefreshBtn.onclick = function() {
-      this.disabled = true;
-      this.textContent = 'Refreshing...';
-      
-      // Force refresh all dashboard data
-      forceRefresh();
-      forceRefreshDashboard();
-      
-      // Re-enable button after a short delay
-      setTimeout(() => {
-        this.disabled = false;
-        this.textContent = 'Refresh';
-      }, 2000);
-    };
-  }
+
 
   // Initialize other components
   addCheckMissingProgramsButton();

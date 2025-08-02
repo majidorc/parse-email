@@ -2318,22 +2318,6 @@ function handleProgramEditClick(e) {
     });
 }
 
-
-
-
-    forceRefresh();
-    forceRefreshDashboard();
-    
-    // Show success message
-    showToast(`Booking ${bookingNumber} deleted successfully`, 'success');
-  } catch (err) {
-    console.error('[DEBUG] Delete error:', err);
-    alert('Failed to delete: ' + (err.message || 'Unknown error'));
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 // Settings Gear Icon and Modal Logic
 const settingsGearBtn = document.getElementById('settings-gear-btn');
 const settingsModal = document.getElementById('settings-modal');

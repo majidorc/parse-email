@@ -176,11 +176,22 @@ module.exports = async (req, res) => {
       if (req.method === 'POST') {
         if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
         
-        console.log('[PRODUCTS-RATES] Processing POST request for tour with data:', JSON.stringify(req.body, null, 2));
+        console.log('[PRODUCTS-RATES] Processing POST request for tour');
+        console.log('[PRODUCTS-RATES] Request body:', req.body);
+        console.log('[PRODUCTS-RATES] Request headers:', req.headers);
+        
+        // Ensure req.body is an object
+        if (!req.body || typeof req.body !== 'object') {
+          console.error('[PRODUCTS-RATES] Invalid request body:', req.body);
+          res.status(400).json({ error: 'Invalid request body' });
+          return;
+        }
         
         const product_id_optional = req.body.productId || req.body.product_id_optional || null;
         const { sku, program, remark, id } = req.body;
         const rates = req.body.rates || [];
+        
+        console.log('[PRODUCTS-RATES] Parsed data:', { sku, program, remark, id, ratesLength: rates.length });
         
         if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
           console.error('[PRODUCTS-RATES] Missing required fields:', { sku, program, ratesLength: rates.length });
@@ -238,10 +249,23 @@ module.exports = async (req, res) => {
           res.status(201).json({ success: true, productId });
         } catch (err) {
           console.error('[PRODUCTS-RATES] Error in tour POST logic:', err);
-          await client.query('ROLLBACK');
-          res.status(500).json({ error: err.message, stack: err.stack });
+          console.error('[PRODUCTS-RATES] Error stack:', err.stack);
+          if (client) {
+            try {
+              await client.query('ROLLBACK');
+            } catch (rollbackErr) {
+              console.error('[PRODUCTS-RATES] Rollback error:', rollbackErr);
+            }
+          }
+          res.status(500).json({ 
+            error: 'Failed to create/update program', 
+            details: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+          });
         } finally {
-          client.release();
+          if (client) {
+            client.release();
+          }
         }
         return;
       }

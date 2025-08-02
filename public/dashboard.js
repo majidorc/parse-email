@@ -1545,7 +1545,7 @@ function initializeGlobalPeriodSelector() {
       }
       
       // Update bookings if bookings tab is active
-      if (document.getElementById('bookings-table-section').style.display !== 'none') {
+      if (document.getElementById('bookings-section').style.display !== 'none') {
         fetchBookings(1, currentSort, currentDir, searchTerm);
       }
     });

@@ -278,6 +278,23 @@ module.exports = async (req, res) => {
             await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
           } else {
             console.log('[PRODUCTS-RATES] Creating new product');
+            
+            // Check if SKU already exists
+            const existingProduct = await client.query(
+              `SELECT id FROM products WHERE sku = $1`,
+              [sku]
+            );
+            
+            if (existingProduct.rows.length > 0) {
+              console.log('[PRODUCTS-RATES] SKU already exists, skipping:', sku);
+              await client.query('ROLLBACK');
+              res.status(409).json({ 
+                error: 'Program with this SKU already exists',
+                existingId: existingProduct.rows[0].id
+              });
+              return;
+            }
+            
             const prodResult = await client.query(
               `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
               [sku, product_id_optional, program, remark || null]
@@ -314,6 +331,10 @@ module.exports = async (req, res) => {
         } catch (err) {
           console.error('[PRODUCTS-RATES] Error in tour POST logic:', err);
           console.error('[PRODUCTS-RATES] Error stack:', err.stack);
+          console.error('[PRODUCTS-RATES] Error code:', err.code);
+          console.error('[PRODUCTS-RATES] Error detail:', err.detail);
+          console.error('[PRODUCTS-RATES] Error hint:', err.hint);
+          
           if (client) {
             try {
               await client.query('ROLLBACK');
@@ -321,9 +342,22 @@ module.exports = async (req, res) => {
               console.error('[PRODUCTS-RATES] Rollback error:', rollbackErr);
             }
           }
+          
+          // Check for specific database errors
+          let errorMessage = 'Failed to create/update program';
+          if (err.code === '23505') {
+            errorMessage = 'Program with this SKU already exists';
+          } else if (err.code === '23502') {
+            errorMessage = 'Missing required field';
+          } else if (err.code === '23503') {
+            errorMessage = 'Foreign key constraint violation';
+          }
+          
           res.status(500).json({ 
-            error: 'Failed to create/update program', 
+            error: errorMessage, 
             details: err.message,
+            code: err.code,
+            hint: err.hint,
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
           });
         } finally {

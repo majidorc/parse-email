@@ -3427,6 +3427,9 @@ async function addProgramsFromBookings() {
         
         if (postRes.ok) {
           added++;
+        } else if (postRes.status === 409) {
+          console.log('Program already exists:', sku);
+          // Don't count as an error, just skip
         } else {
           console.error('Failed to add program:', sku, postRes.status, postRes.statusText);
         }

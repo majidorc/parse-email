@@ -32,6 +32,12 @@ module.exports = async (req, res) => {
     }
     
     const session = getSession(req);
+    console.log('[PRODUCTS-RATES] Session check:', { 
+      hasSession: !!session, 
+      sessionKeys: session ? Object.keys(session) : null,
+      userRole: session?.role 
+    });
+    
     if (!session) return res.status(401).json({ error: 'Not authenticated' });
     const userRole = session.role;
 
@@ -216,7 +222,13 @@ module.exports = async (req, res) => {
         return;
       }
       if (req.method === 'POST') {
-        if (userRole !== 'admin' && userRole !== 'programs_manager') return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
+        console.log('[PRODUCTS-RATES] POST request received for tour type');
+        console.log('[PRODUCTS-RATES] User role:', userRole);
+        
+        if (userRole !== 'admin' && userRole !== 'programs_manager') {
+          console.log('[PRODUCTS-RATES] Access denied - user role:', userRole);
+          return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
+        }
         
         console.log('[PRODUCTS-RATES] Processing POST request for tour');
         console.log('[PRODUCTS-RATES] Request body:', req.body);

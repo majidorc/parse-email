@@ -1274,6 +1274,10 @@ dashboardBtn.onclick = () => {
   const addBookingBtn = document.getElementById('add-booking-btn');
   if (addBookingBtn) addBookingBtn.style.display = 'none';
   
+  // Show global period selector on Dashboard
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1306,6 +1310,10 @@ bookingsBtn.onclick = () => {
   const addBookingBtn = document.getElementById('add-booking-btn');
   if (addBookingBtn) addBookingBtn.style.display = '';
   
+  // Show global period selector on Bookings
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1337,6 +1345,10 @@ accountingBtn.onclick = () => {
   const addBookingBtn = document.getElementById('add-booking-btn');
   if (addBookingBtn) addBookingBtn.style.display = 'none';
   
+  // Show global period selector on Accounting
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1367,6 +1379,10 @@ programsBtn.onclick = () => {
   // Hide Add Booking button on Programs tab
   const addBookingBtn = document.getElementById('add-booking-btn');
   if (addBookingBtn) addBookingBtn.style.display = 'none';
+  
+  // Show global period selector on Programs
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
   
   // Cleanup analytics charts
   cleanupSalesAnalytics();
@@ -1405,6 +1421,10 @@ analyticsBtn.onclick = () => {
     window.salesAnalyticsInitialized = true;
   }
   
+  // Show global period selector on Analytics
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
+  
   // Fetch sales analytics data with global period
   const globalPeriod = document.getElementById('global-period-selector');
   const period = globalPeriod ? globalPeriod.value : 'thisMonth';
@@ -1436,6 +1456,10 @@ suppliersBtn.onclick = () => {
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
+  
+  // Hide global period selector on Suppliers tab
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = 'none';
   
   // Hide Add Booking button on Suppliers tab
   const addBookingBtn = document.getElementById('add-booking-btn');
@@ -4100,6 +4124,10 @@ function initializeApp() {
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
   suppliersBtn.classList.remove('active');
+  
+  // Show global period selector by default (Dashboard is active)
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
   
   // Hide Add Booking button by default (Dashboard is active)
   const addBookingBtn = document.getElementById('add-booking-btn');

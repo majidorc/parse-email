@@ -418,19 +418,9 @@ export default async function handler(req, res) {
       (parseInt(websiteChannelData.total_infants) || 0) : 0;
     
     // Debug logging for passenger counts
-    
-      total_bookings: totalSummaryResult.rows[0].total_bookings,
-      total_adults: totalSummaryResult.rows[0].total_adults,
-      total_children: totalSummaryResult.rows[0].total_children,
-      total_infants: totalSummaryResult.rows[0].total_infants,
-      period: period,
-      startDate: startDateParam,
-      endDate: endDateParam,
-      viatorSale: viatorSale,
-      websiteSale: websiteSale,
-      viatorCount: viatorCount,
-      websiteCount: websiteCount
-    });
+    console.log('Debug - Available channels:', debugChannels.rows);
+    console.log('Debug - NULL channels count:', nullChannels.rows[0].null_count);
+    console.log('Debug - Sample bookings:', sampleBookings.rows);
 
     res.status(200).json({
       salesByChannel: salesByChannelResult.rows,

@@ -1346,8 +1346,10 @@ analyticsBtn.onclick = () => {
     window.salesAnalyticsInitialized = true;
   }
   
-  // Fetch sales analytics data
-  fetchSalesAnalytics('thisMonth');
+  // Fetch sales analytics data with global period
+  const globalPeriod = document.getElementById('global-period-selector');
+  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+  fetchSalesAnalytics(period);
 };
 
 // Sales Analytics functionality
@@ -1618,20 +1620,40 @@ function updateSalesChannelChart(data) {
   }
 }
 
-// Initialize sales analytics event listeners
-function initializeSalesAnalytics() {
-  const periodFilter = document.getElementById('sales-period-filter');
-  const refreshBtn = document.getElementById('refresh-sales-analytics');
+// Initialize global period selector
+function initializeGlobalPeriodSelector() {
+  const globalPeriodSelector = document.getElementById('global-period-selector');
   
-  if (periodFilter) {
-    periodFilter.addEventListener('change', function() {
-      fetchSalesAnalytics(this.value);
+  if (globalPeriodSelector) {
+    globalPeriodSelector.addEventListener('change', function() {
+      const period = this.value;
+      
+      // Update dashboard analytics
+      if (document.getElementById('dashboard-section').style.display !== 'none') {
+        fetchDashboardAnalytics();
+      }
+      
+      // Update sales analytics if analytics tab is active
+      if (document.getElementById('analytics-section').style.display !== 'none') {
+        fetchSalesAnalytics(period);
+      }
+      
+      // Update accounting if accounting tab is active
+      if (document.getElementById('accounting-table-container').style.display !== 'none') {
+        fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+      }
     });
   }
+}
+
+// Initialize sales analytics event listeners
+function initializeSalesAnalytics() {
+  const refreshBtn = document.getElementById('refresh-sales-analytics');
   
   if (refreshBtn) {
     refreshBtn.addEventListener('click', function() {
-      const period = periodFilter ? periodFilter.value : 'thisMonth';
+      const globalPeriod = document.getElementById('global-period-selector');
+      const period = globalPeriod ? globalPeriod.value : 'thisMonth';
       fetchSalesAnalytics(period);
     });
   }
@@ -1692,7 +1714,8 @@ setInterval(updateBangkokDateTime, 1000);
 updateBangkokDateTime();
 
 function fetchDashboardAnalytics() {
-  const period = document.getElementById('dashboard-period').value;
+  const globalPeriod = document.getElementById('global-period-selector');
+  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
   // Show loading states
   const dashboardTotalBookings = document.getElementById('dashboard-total-bookings');
   if (dashboardTotalBookings) dashboardTotalBookings.textContent = '...';
@@ -3632,6 +3655,7 @@ function initializeApp() {
   // Initialize other components
   addCheckMissingProgramsButton();
   initializeAddBooking();
+  initializeGlobalPeriodSelector();
   checkSession();
   updateDashboardBenefitCard();
 }

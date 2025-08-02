@@ -2318,6 +2318,85 @@ function handleProgramEditClick(e) {
     });
 }
 
+// Add Rate Item functionality
+let rateItemCounter = 0;
+
+function addRateItem() {
+  rateItemCounter++;
+  const rateItemId = `rate-item-${rateItemCounter}`;
+  
+  const rateItemHTML = `
+    <div id="${rateItemId}" class="rate-item p-4 border border-gray-200 rounded-lg bg-white shadow-sm fade-in" data-rate-id="${rateItemId}">
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-2">
+          <button type="button" class="move-up-btn text-gray-400 hover:text-blue-600 transition duration-150" title="Move up" data-rate-id="${rateItemId}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+          <button type="button" class="move-down-btn text-gray-400 hover:text-blue-600 transition duration-150" title="Move down" data-rate-id="${rateItemId}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        <button type="button" class="remove-rate-btn text-gray-400 hover:text-red-600 transition duration-150" data-remove-id="${rateItemId}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label for="rateName_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Rate Name <span class="text-red-500">*</span></label>
+          <input type="text" id="rateName_${rateItemCounter}" name="rateName" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., Standard" value="Standard">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="netAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Adult <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="netAdult_${rateItemCounter}" name="netAdult" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 100.50">
+          </div>
+          <div>
+            <label for="netChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Net Child <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="netChild_${rateItemCounter}" name="netChild" required class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 50.25">
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <div>
+          <label for="feeType_${rateItemCounter}" class="block text-sm font-medium text-gray-700">Additional Fee Type</label>
+          <select id="feeType_${rateItemCounter}" class="fee-type-select form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" data-controls-id="${rateItemCounter}">
+            <option value="none" selected>No Additional Fee</option>
+            <option value="np">National Park Fee</option>
+            <option value="entrance">Entrance Fee</option>
+          </select>
+        </div>
+        <div id="feeFields_${rateItemCounter}" class="hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-dashed border-gray-300 pt-4">
+          <div>
+            <label id="feeAdultLabel_${rateItemCounter}" for="feeAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Adult <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="feeAdult_${rateItemCounter}" name="feeAdult" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 90.00">
+          </div>
+          <div>
+            <label id="feeChildLabel_${rateItemCounter}" for="feeChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Child <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="feeChild_${rateItemCounter}" name="feeChild" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 45.00">
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const ratesContainer = document.getElementById('ratesContainer');
+  if (ratesContainer) {
+    ratesContainer.insertAdjacentHTML('beforeend', rateItemHTML);
+    
+    // Initialize move buttons for the new rate item
+    const newRateItem = document.getElementById(rateItemId);
+    if (newRateItem) {
+      initializeMoveButtons(newRateItem);
+    }
+  }
+}
+
 // Initialize move buttons for rate items
 function initializeMoveButtons(rateItem) {
   const moveUpBtn = rateItem.querySelector('.move-up-btn');
@@ -2352,6 +2431,64 @@ function moveDownHandler() {
     currentItem.parentNode.insertBefore(nextItem, currentItem);
   }
 }
+
+// Initialize rate-related event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Add Rate Button event listener
+  const addRateBtn = document.getElementById('addRateBtn');
+  if (addRateBtn) {
+    addRateBtn.addEventListener('click', addRateItem);
+  }
+  
+  // Rates container event listeners
+  const ratesContainer = document.getElementById('ratesContainer');
+  if (ratesContainer) {
+    // Remove rate button handler
+    ratesContainer.addEventListener('click', function(e) {
+      if (e.target.closest('.remove-rate-btn')) {
+        const button = e.target.closest('.remove-rate-btn');
+        const elementToRemove = document.getElementById(button.dataset.removeId);
+        if (elementToRemove) {
+          elementToRemove.remove();
+        }
+      }
+    });
+    
+    // Fee type change handler
+    ratesContainer.addEventListener('change', function(e) {
+      if (e.target.classList.contains('fee-type-select')) {
+        const select = e.target;
+        const controlsId = select.dataset.controlsId;
+        const feeFieldsContainer = document.getElementById(`feeFields_${controlsId}`);
+        const feeAdultInput = document.getElementById(`feeAdult_${controlsId}`);
+        const feeChildInput = document.getElementById(`feeChild_${controlsId}`);
+        const feeAdultLabel = document.getElementById(`feeAdultLabel_${controlsId}`);
+        const feeChildLabel = document.getElementById(`feeChildLabel_${controlsId}`);
+        const selectedValue = select.value;
+        
+        if (selectedValue === 'none') {
+          feeFieldsContainer.classList.add('hidden');
+          feeAdultInput.required = false;
+          feeChildInput.required = false;
+          feeAdultInput.value = '';
+          feeChildInput.value = '';
+        } else {
+          let labelPrefix = '';
+          if (selectedValue === 'np') {
+            labelPrefix = 'NP Fee';
+          } else if (selectedValue === 'entrance') {
+            labelPrefix = 'Entrance Fee';
+          }
+          feeAdultLabel.innerHTML = `${labelPrefix} Adult <span class="text-red-500">*</span>`;
+          feeChildLabel.innerHTML = `${labelPrefix} Child <span class="text-red-500">*</span>`;
+          feeFieldsContainer.classList.remove('hidden');
+          feeAdultInput.required = true;
+          feeChildInput.required = true;
+        }
+      }
+    });
+  }
+});
 
 // Settings Gear Icon and Modal Logic
 const settingsGearBtn = document.getElementById('settings-gear-btn');

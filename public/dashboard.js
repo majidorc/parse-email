@@ -1642,6 +1642,9 @@ function initializeGlobalPeriodSelector() {
       if (document.getElementById('accounting-table-container').style.display !== 'none') {
         fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
       }
+      
+      // Note: Bookings tab doesn't support period filtering yet
+      // It uses search-based filtering instead
     });
   }
 }

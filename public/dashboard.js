@@ -1569,15 +1569,7 @@ function initializeGlobalPeriodSelector() {
 
 // Initialize sales analytics event listeners
 function initializeSalesAnalytics() {
-  const refreshBtn = document.getElementById('refresh-sales-analytics');
-  
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', function() {
-      const globalPeriod = document.getElementById('global-period-selector');
-      const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-      fetchSalesAnalytics(period);
-    });
-  }
+  // Analytics data is now controlled by the global period selector in the header
 }
 
 // Cleanup function for sales analytics charts

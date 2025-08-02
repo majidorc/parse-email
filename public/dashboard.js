@@ -1544,8 +1544,17 @@ function initializeGlobalPeriodSelector() {
         fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
       }
       
-      // Update bookings if bookings tab is active
-      if (document.getElementById('bookings-section').style.display !== 'none') {
+      // Update bookings if bookings tab is active (bookings is the default content)
+      const dashboardSection = document.getElementById('dashboard-section');
+      const analyticsSection = document.getElementById('analytics-section');
+      const accountingContainer = document.getElementById('accounting-table-container');
+      const programsSection = document.getElementById('programs-section');
+      
+      // If all other sections are hidden, then bookings is active
+      if ((!dashboardSection || dashboardSection.style.display === 'none') &&
+          (!analyticsSection || analyticsSection.style.display === 'none') &&
+          (!accountingContainer || accountingContainer.style.display === 'none') &&
+          (!programsSection || programsSection.style.display === 'none')) {
         fetchBookings(1, currentSort, currentDir, searchTerm);
       }
     });

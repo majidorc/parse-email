@@ -188,6 +188,12 @@ async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, sea
     });
     if (search) params.append('search', search);
     if (cacheBuster) params.append('_ts', cacheBuster);
+    
+    // Add period parameter from global period selector
+    const globalPeriod = document.getElementById('global-period-selector');
+    const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+    params.append('period', period);
+    
     const res = await fetch(`/api/bookings?${params.toString()}`);
     const data = await res.json();
     if (!data.bookings || !data.bookings.length) {
@@ -1532,8 +1538,10 @@ function initializeGlobalPeriodSelector() {
         fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
       }
       
-      // Note: Bookings tab doesn't support period filtering yet
-      // It uses search-based filtering instead
+      // Update bookings if bookings tab is active
+      if (document.getElementById('bookings-table-section').style.display !== 'none') {
+        fetchBookings(1, currentSort, currentDir, searchTerm);
+      }
     });
   }
 }

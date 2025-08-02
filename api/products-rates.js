@@ -331,13 +331,30 @@ module.exports = async (req, res) => {
           console.log(`[PRODUCTS-RATES] Processing ${rates.length} rates`);
           for (let i = 0; i < rates.length; i++) {
             const rate = rates[i];
-            const { name, net_adult, net_child, fee_type, fee_adult, fee_child, order } = rate;
+            const { name, netAdult, netChild, feeType, feeAdult, feeChild, order } = rate;
             
-            console.log(`[PRODUCTS-RATES] Processing rate ${i + 1}:`, { name, net_adult, net_child, fee_type, fee_adult, fee_child, order });
+            // Map frontend field names to database field names
+            const net_adult = netAdult;
+            const net_child = netChild;
+            const fee_type = feeType;
+            const fee_adult = feeAdult;
+            const fee_child = feeChild;
+            
+            console.log(`[PRODUCTS-RATES] Processing rate ${i + 1}:`, { 
+              name, 
+              net_adult, 
+              net_child, 
+              fee_type, 
+              fee_adult, 
+              fee_child, 
+              order,
+              net_adult_type: typeof net_adult,
+              net_child_type: typeof net_child
+            });
             
             if (
-              !name || net_adult == null || net_child == null || !fee_type ||
-              ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult == null || fee_child == null))
+              !name || net_adult === null || net_child === null || !fee_type ||
+              ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult === null || fee_child === null))
             ) {
               throw new Error('Invalid rate item: ' + JSON.stringify(rate));
             }

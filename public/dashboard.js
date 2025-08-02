@@ -195,10 +195,15 @@ async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, sea
     if (search) params.append('search', search);
     if (cacheBuster) params.append('_ts', cacheBuster);
     
-    // Add period parameter from global period selector
+    // Add period parameter from global period selector, but not for date searches
     const globalPeriod = document.getElementById('global-period-selector');
     const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-    params.append('period', period);
+    
+    // Don't add period filter if we're doing a date search (YYYY-MM-DD format)
+    const isDateSearch = search && /^\d{4}-\d{2}-\d{2}$/.test(search);
+    if (!isDateSearch) {
+      params.append('period', period);
+    }
     
     const res = await fetch(`/api/bookings?${params.toString()}`);
     const data = await res.json();

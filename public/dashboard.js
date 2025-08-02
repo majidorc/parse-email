@@ -1281,10 +1281,10 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       const data = await response.json();
     
     // Update new average summary cards
-    const avgSaleViator = document.getElementById('sales-avg-sale-viator');
-    const avgSaleWebsite = document.getElementById('sales-avg-sale-website');
-    const avgBenefitViator = document.getElementById('sales-avg-benefit-viator');
-    const avgBenefitWebsite = document.getElementById('sales-avg-benefit-website');
+    const avgSaleViator = document.getElementById('analytics-avg-sale-viator');
+    const avgSaleWebsite = document.getElementById('analytics-avg-sale-website');
+    const avgBenefitViator = document.getElementById('analytics-avg-benefit-viator');
+    const avgBenefitWebsite = document.getElementById('analytics-avg-benefit-website');
     
     // Get data for calculations
     const viatorCount = data.viatorCount || 0;
@@ -1432,7 +1432,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     console.error('Error fetching sales analytics:', error);
     
     // Show error state
-    const elements = ['sales-avg-sale-viator', 'sales-avg-sale-website', 'sales-avg-benefit-viator', 'sales-avg-benefit-website'];
+    const elements = ['analytics-avg-sale-viator', 'analytics-avg-sale-website', 'analytics-avg-benefit-viator', 'analytics-avg-benefit-website'];
     elements.forEach(id => {
       const element = document.getElementById(id);
       if (element) element.textContent = '-';

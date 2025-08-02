@@ -1250,6 +1250,10 @@ dashboardBtn.onclick = () => {
   analyticsSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
   
+  // Hide Add Booking button on Dashboard
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1276,6 +1280,10 @@ bookingsBtn.onclick = () => {
   // Show mobile cards only if on mobile
   document.getElementById('booking-cards-container').style.display = window.innerWidth <= 700 ? 'block' : 'none';
   
+  // Show Add Booking button only on Bookings tab
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = '';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1300,6 +1308,10 @@ accountingBtn.onclick = () => {
   programsSection.style.display = 'none';
   analyticsSection.style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
+  
+  // Hide Add Booking button on Accounting tab
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
   
   // Cleanup analytics charts
   cleanupSalesAnalytics();
@@ -1326,6 +1338,10 @@ programsBtn.onclick = () => {
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none'; // Hide mobile cards
   
+  // Hide Add Booking button on Programs tab
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
+  
   // Cleanup analytics charts
   cleanupSalesAnalytics();
   
@@ -1350,6 +1366,10 @@ analyticsBtn.onclick = () => {
   searchBarSection.style.display = 'none';
   document.getElementById('pagination-controls').style.display = 'none';
   document.getElementById('booking-cards-container').style.display = 'none';
+
+  // Hide Add Booking button on Analytics tab
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
 
   // Initialize sales analytics only once
   if (!window.salesAnalyticsInitialized) {
@@ -3826,6 +3846,11 @@ function initializeApp() {
   programsBtn.classList.remove('active');
   accountingBtn.classList.remove('active');
   analyticsBtn.classList.remove('active');
+  
+  // Hide Add Booking button by default (Dashboard is active)
+  const addBookingBtn = document.getElementById('add-booking-btn');
+  if (addBookingBtn) addBookingBtn.style.display = 'none';
+  
   fetchDashboardAnalytics();
   
 

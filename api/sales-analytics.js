@@ -404,6 +404,50 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
+    // Find bookings that aren't captured by either Viator or Website categories
+    let uncategorizedBenefitResult;
+    if (dateFilter) {
+      uncategorizedBenefitResult = await client.query(
+        `SELECT 
+          b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, pe.sender
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
+         WHERE b.tour_date >= $1 AND b.tour_date < $2
+         AND NOT (
+           pe.sender ILIKE '%bokun.io%' OR
+           b.booking_number LIKE 'GYG%' OR
+           pe.sender ILIKE '%info@tours.co.th%'
+         )`,
+        [startDateParam, endDateParam]
+      );
+    } else {
+      uncategorizedBenefitResult = await client.query(
+        `SELECT 
+          b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, pe.sender
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
+         WHERE NOT (
+           pe.sender ILIKE '%bokun.io%' OR
+           b.booking_number LIKE 'GYG%' OR
+           pe.sender ILIKE '%info@tours.co.th%'
+         )`
+      );
+    }
+    
+    const uncategorizedBenefit = uncategorizedBenefitResult.rows.reduce((sum, b) => {
+      const netAdult = Number(b.net_adult) || 0;
+      const netChild = Number(b.net_child) || 0;
+      const adult = Number(b.adult) || 0;
+      const child = Number(b.child) || 0;
+      const paid = Number(b.paid) || 0;
+      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+      return sum + (paid - netTotal);
+    }, 0);
+
     // Extract Viator and Website metrics
     const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
     const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
@@ -446,6 +490,8 @@ export default async function handler(req, res) {
       totalBenefit,
       viatorBenefit,
       websiteBenefit,
+      uncategorizedBenefit,
+      uncategorizedBookings: uncategorizedBenefitResult.rows,
       // Include debug data in response
       debug: {
         availableChannels: debugChannels.rows,

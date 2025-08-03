@@ -3837,25 +3837,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ... rest of DOMContentLoaded ...
 });
 
-// Add a button to check for missing programs from bookings
-function addCheckMissingProgramsButton() {
-  const programsSection = document.getElementById('programs-section');
-  if (!programsSection) return;
-  let btn = document.getElementById('check-missing-programs-btn');
-  if (btn) return; // Already added
-  btn = document.createElement('button');
-  btn.id = 'check-missing-programs-btn';
-  btn.textContent = 'Check Missing Programs from Bookings';
-  btn.style = 'margin-bottom:16px; background:#f59e42; color:white; font-weight:bold; padding:8px 18px; border:none; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08); cursor:pointer;';
-  btn.onclick = async function() {
 
-    
-    // Allow re-sync by clearing the flag
-    localStorage.removeItem('programsSyncedFromBookings');
-    await addProgramsFromBookings();
-  };
-  programsSection.insertBefore(btn, programsSection.firstChild);
-}
 
 // Add Booking functionality
 // Function to close add booking form
@@ -4285,7 +4267,6 @@ function initializeApp() {
 
 
   // Initialize other components
-  addCheckMissingProgramsButton();
   initializeAddBooking();
   initializeSuppliers();
   initializeGlobalPeriodSelector();

@@ -1605,6 +1605,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
     const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
     const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
+    const analyticsBenefitBreakdown = document.getElementById('analytics-benefit-breakdown');
+    const analyticsBenefitPercentages = document.getElementById('analytics-benefit-percentages');
     
     // Use actual benefit data from API
     const totalBenefit = data.totalBenefit || 0;
@@ -1616,6 +1618,10 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const avgViatorBenefit = viatorCount > 0 ? viatorBenefit / viatorCount : 0;
     const avgWebsiteBenefit = websiteCount > 0 ? websiteBenefit / websiteCount : 0;
     
+    // Calculate benefit percentages of sales
+    const viatorBenefitPercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
+    const websiteBenefitPercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
+    
     // Update average benefit cards
     if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1623,6 +1629,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    // Update Total Benefit with Viator/Website breakdown
+    if (analyticsBenefitBreakdown) {
+      analyticsBenefitBreakdown.textContent = `${Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+    if (analyticsBenefitPercentages) {
+      analyticsBenefitPercentages.textContent = `~${viatorBenefitPercent.toFixed(2)}%/~${websiteBenefitPercent.toFixed(2)}%`;
+    }
     
     // Update Total Passengers with Viator/Website breakdown
     if (analyticsTotalPassengers) {

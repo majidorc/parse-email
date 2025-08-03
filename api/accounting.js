@@ -527,7 +527,8 @@ module.exports = async (req, res) => {
     let totalBenefit = 0;
     let prevPeriodBenefit = null;
     try {
-      // Use the same WHERE clause as the main query to get total benefit for the filtered period
+      // Create a separate query for total benefit without pagination parameters
+      // We need to use the same WHERE clause but without LIMIT/OFFSET
       let allDataQuery = `
         SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
         FROM bookings b
@@ -535,7 +536,12 @@ module.exports = async (req, res) => {
         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
         ${whereClause}
       `;
+      
+      // Use the same params but without the LIMIT and OFFSET parameters
+      console.log('Total benefit query:', allDataQuery);
+      console.log('Total benefit params:', params);
       const { rows: allRows } = await sql.query(allDataQuery, params);
+      console.log('Total benefit rows count:', allRows.length);
       totalBenefit = allRows.reduce((sum, b) => {
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;
@@ -546,6 +552,7 @@ module.exports = async (req, res) => {
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
         return sum + (paid - netTotal);
       }, 0);
+      console.log('Calculated total benefit:', totalBenefit);
       
       // Previous period benefit for percent change (only if we have date range filters)
       const hasDateRangeFilter = whereClause.includes('tour_date >=') && whereClause.includes('tour_date <');

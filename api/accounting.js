@@ -527,6 +527,7 @@ module.exports = async (req, res) => {
     let totalBenefit = 0;
     let totalPaid = 0;
     let prevPeriodBenefit = null;
+    let allRows = [];
     try {
       // Use the exact same query as the main query but without LIMIT/OFFSET
       let allDataQuery = `
@@ -539,7 +540,8 @@ module.exports = async (req, res) => {
       `;
       
       // Use the same params as the main query but without LIMIT and OFFSET
-      const { rows: allRows } = await sql.query(allDataQuery, params);
+      const { rows: allRowsResult } = await sql.query(allDataQuery, params);
+      allRows = allRowsResult;
       
       // Calculate total paid and total benefit for the entire period
       allRows.forEach(b => {
@@ -603,6 +605,7 @@ module.exports = async (req, res) => {
     } catch (e) {
       console.error('Error calculating total benefit:', e);
       totalBenefit = 0;
+      totalPaid = 0;
       prevPeriodBenefit = null;
     }
 

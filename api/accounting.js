@@ -538,10 +538,7 @@ module.exports = async (req, res) => {
       `;
       
       // Use the same params as the main query but without LIMIT and OFFSET
-      console.log('Total benefit query:', allDataQuery);
-      console.log('Total benefit params:', params);
       const { rows: allRows } = await sql.query(allDataQuery, params);
-      console.log('Total benefit rows count:', allRows.length);
       totalBenefit = allRows.reduce((sum, b) => {
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;
@@ -550,11 +547,8 @@ module.exports = async (req, res) => {
         const paid = Number(b.paid) || 0;
         // Use stored net_total if available and column exists, otherwise calculate from rates
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
-        const benefit = paid - netTotal;
-        console.log(`Booking: ${b.tour_date}, Paid: ${paid}, NetTotal: ${netTotal}, Benefit: ${benefit}`);
-        return sum + benefit;
+        return sum + (paid - netTotal);
       }, 0);
-      console.log('Calculated total benefit:', totalBenefit);
       
       // Previous period benefit for percent change (only if we have date range filters)
       const hasDateRangeFilter = whereClause.includes('tour_date >=') && whereClause.includes('tour_date <');

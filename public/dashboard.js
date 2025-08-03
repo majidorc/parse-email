@@ -923,7 +923,11 @@ function renderAccountingSummary(data) {
   const totalBookings = accountingTotalRows || 0;
   const totalPaid = accountingData.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
   // Use the totalBenefit from API response instead of calculating from current page data
+  console.log('API response data:', data);
+  console.log('data.totalBenefit:', data.totalBenefit);
+  console.log('accountingData length:', accountingData.length);
   const totalBenefit = data.totalBenefit || accountingData.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
+  console.log('Final totalBenefit:', totalBenefit);
   
   function statCard(label, value, color, bg, border, valueClass, id = "") {
     return `

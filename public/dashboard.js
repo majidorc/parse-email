@@ -926,6 +926,14 @@ function renderAccountingSummary(data) {
   // Use the totalBenefit from API response instead of calculating from current page data
   const totalBenefit = data.totalBenefit || accountingData.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
   
+  // Debug logging
+  console.log('API response data:', data);
+  console.log('data.totalPaid:', data.totalPaid);
+  console.log('data.totalBenefit:', data.totalBenefit);
+  console.log('accountingData length:', accountingData.length);
+  console.log('Final totalPaid:', totalPaid);
+  console.log('Final totalBenefit:', totalBenefit);
+  
   function statCard(label, value, color, bg, border, valueClass, id = "") {
     return `
     <div class="p-6 rounded-xl ${bg} shadow-lg border-2 ${border} flex flex-col items-center justify-center cursor-pointer transform hover:scale-105 transition-all duration-200" id="${id}">

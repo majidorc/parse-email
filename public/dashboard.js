@@ -3985,6 +3985,7 @@ function renderSuppliersTable() {
     tbody.innerHTML = suppliersData.map(supplier => `
       <tr>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${supplier.name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.programs_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.bookings_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.total_amount ? Number(supplier.total_amount).toFixed(2) : '0.00'}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.paid_last_month ? Number(supplier.paid_last_month).toFixed(2) : '0.00'}</td>

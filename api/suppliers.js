@@ -80,6 +80,7 @@ async function handleGet(req, res, client) {
       s.id,
       s.name,
       s.created_at,
+      COUNT(DISTINCT p.id) as programs_count,
       COUNT(DISTINCT b.booking_number) as bookings_count,
       COALESCE(SUM(b.paid), 0) as total_amount,
       COALESCE(SUM(

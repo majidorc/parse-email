@@ -3087,7 +3087,17 @@ document.getElementById('export-programs-settings-btn').onclick = async function
       if (program.rates && program.rates.length > 0) {
         // Export each rate as a separate row
         program.rates.forEach(rate => {
-          csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${rate.fee_type || 'none'}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
+          // Convert fee type to readable format
+          let feeTypeDisplay = 'none';
+          if (rate.fee_type === 'np') {
+            feeTypeDisplay = 'National Park Fee';
+          } else if (rate.fee_type === 'entrance') {
+            feeTypeDisplay = 'Entrance Fee';
+          } else if (rate.fee_type && rate.fee_type !== 'none') {
+            feeTypeDisplay = rate.fee_type;
+          }
+          
+          csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${feeTypeDisplay}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
         });
       } else {
         // If no rates, still export the program with empty rate fields
@@ -3165,7 +3175,15 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
         const rateName = values[3];
         const netAdult = parseFloat(values[4]) || 0;
         const netChild = parseFloat(values[5]) || 0;
-        const feeType = values[6];
+        let feeType = values[6];
+        // Convert readable fee type back to database format
+        if (feeType === 'National Park Fee') {
+          feeType = 'np';
+        } else if (feeType === 'Entrance Fee') {
+          feeType = 'entrance';
+        } else if (feeType === 'none' || feeType === '') {
+          feeType = 'none';
+        }
         const feeAdult = parseFloat(values[7]) || 0;
         const feeChild = parseFloat(values[8]) || 0;
         
@@ -3238,7 +3256,8 @@ document.getElementById('download-sample-excel-settings-btn').onclick = function
   const sample =
     'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
     'HKT0041,Sample Program,Optional remark,With transfer,900,900,none,,\n' +
-    'HKT0041,Sample Program,Optional remark,Without transfer,800,800,entrance,100,50\n';
+    'HKT0041,Sample Program,Optional remark,Without transfer,800,800,Entrance Fee,100,50\n' +
+    'HKT0042,Another Program,Another remark,With National Park,1000,500,National Park Fee,200,100\n';
   const blob = new Blob([sample], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

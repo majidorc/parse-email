@@ -341,9 +341,7 @@ export default async function handler(req, res) {
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
          LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
          WHERE b.tour_date >= $1 AND b.tour_date < $2
-         AND (
-           (pe.sender ILIKE '%bokun.io%')
-         )`,
+         AND pe.sender ILIKE '%bokun.io%'`,
         [startDateParam, endDateParam]
       );
       
@@ -356,8 +354,8 @@ export default async function handler(req, res) {
          LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
          WHERE b.tour_date >= $1 AND b.tour_date < $2
          AND (
-           (b.booking_number LIKE 'GYG%') OR
-           (pe.sender ILIKE '%info@tours.co.th%') OR
+           b.booking_number LIKE 'GYG%' OR
+           pe.sender ILIKE '%info@tours.co.th%' OR
            (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
          )`,
         [startDateParam, endDateParam]
@@ -370,9 +368,7 @@ export default async function handler(req, res) {
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
          LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
-         WHERE (
-           (pe.sender ILIKE '%bokun.io%')
-         )`
+         WHERE pe.sender ILIKE '%bokun.io%'`
       );
       
       websiteBenefitResult = await client.query(
@@ -383,8 +379,8 @@ export default async function handler(req, res) {
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
          LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
          WHERE (
-           (b.booking_number LIKE 'GYG%') OR
-           (pe.sender ILIKE '%info@tours.co.th%') OR
+           b.booking_number LIKE 'GYG%' OR
+           pe.sender ILIKE '%info@tours.co.th%' OR
            (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
          )`
       );

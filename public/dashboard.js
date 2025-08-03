@@ -3075,11 +3075,16 @@ document.getElementById('export-programs-settings-btn').onclick = async function
       return;
     }
     
+    console.log('Exporting programs:', data.tours); // Debug log
+    
     // Convert programs to CSV format
     let csv = 'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
     
     data.tours.forEach(program => {
+      console.log('Processing program:', program.sku, 'with rates:', program.rates); // Debug log
+      
       if (program.rates && program.rates.length > 0) {
+        // Export each rate as a separate row
         program.rates.forEach(rate => {
           csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${rate.fee_type || 'none'}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
         });
@@ -3088,6 +3093,8 @@ document.getElementById('export-programs-settings-btn').onclick = async function
         csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","",0,0,"none",,\n`;
       }
     });
+    
+    console.log('Generated CSV:', csv); // Debug log
     
     // Create and download the CSV file
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -3121,7 +3128,9 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
   reader.onload = function(e) {
     const csv = e.target.result;
     const lines = csv.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
+    
+    // Parse CSV headers properly
+    const headers = parseCSVLine(lines[0]);
     
     // Validate headers
     const expectedHeaders = ['SKU', 'Program Name', 'Remark', 'Rate Name', 'Net Adult', 'Net Child', 'Fee Type', 'Fee Adult', 'Fee Child'];
@@ -3132,41 +3141,64 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
       return;
     }
     
+    console.log('CSV headers:', headers); // Debug log
+    
     // Parse CSV data
     const programs = {};
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       
-      const values = line.split(',').map(v => v.trim());
-      const sku = values[0];
-      const programName = values[1];
-      const remark = values[2];
-      const rateName = values[3];
-      const netAdult = parseFloat(values[4]) || 0;
-      const netChild = parseFloat(values[5]) || 0;
-      const feeType = values[6];
-      const feeAdult = parseFloat(values[7]) || 0;
-      const feeChild = parseFloat(values[8]) || 0;
-      
-      if (!programs[sku]) {
-        programs[sku] = {
-          sku: sku,
-          program: programName,
-          remark: remark,
-          rates: []
-        };
+      try {
+        const values = parseCSVLine(line);
+        console.log('Parsed line:', values); // Debug log
+        
+        if (values.length < 9) {
+          console.warn('Skipping invalid line:', line);
+          continue;
+        }
+        
+        const sku = values[0];
+        const programName = values[1];
+        const remark = values[2];
+        const rateName = values[3];
+        const netAdult = parseFloat(values[4]) || 0;
+        const netChild = parseFloat(values[5]) || 0;
+        const feeType = values[6];
+        const feeAdult = parseFloat(values[7]) || 0;
+        const feeChild = parseFloat(values[8]) || 0;
+        
+        if (!sku || !programName) {
+          console.warn('Skipping line with missing SKU or Program Name:', line);
+          continue;
+        }
+        
+        if (!programs[sku]) {
+          programs[sku] = {
+            sku: sku,
+            program: programName,
+            remark: remark,
+            rates: []
+          };
+        }
+        
+        // Only add rate if rate name is provided
+        if (rateName && rateName.trim()) {
+          programs[sku].rates.push({
+            name: rateName,
+            net_adult: netAdult,
+            net_child: netChild,
+            fee_type: feeType,
+            fee_adult: feeType !== 'none' ? feeAdult : null,
+            fee_child: feeType !== 'none' ? feeChild : null
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing line:', line, error);
       }
-      
-      programs[sku].rates.push({
-        name: rateName,
-        net_adult: netAdult,
-        net_child: netChild,
-        fee_type: feeType,
-        fee_adult: feeType !== 'none' ? feeAdult : null,
-        fee_child: feeType !== 'none' ? feeChild : null
-      });
     }
+    
+    console.log('Parsed programs:', programs); // Debug log
     
     // Import programs
     importProgramsFromSettings(programs);
@@ -3175,41 +3207,29 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
   reader.readAsText(file);
 });
 
-// Function to import programs from settings modal
-async function importProgramsFromSettings(programs) {
-  const programList = Object.values(programs);
-  let successCount = 0;
-  let errorCount = 0;
+// Helper function to parse CSV line with proper quote handling
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
   
-  for (const program of programList) {
-    try {
-      const response = await fetch('/api/products-rates?type=tour', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(program)
-      });
-      
-      if (response.ok) {
-        successCount++;
-      } else {
-        errorCount++;
-      }
-    } catch (error) {
-      errorCount++;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
     }
   }
   
-  // Show results
-  if (successCount > 0) {
-    alert(`Import completed!\nSuccessfully imported: ${successCount} programs\nErrors: ${errorCount}`);
-    showToast(`Successfully imported ${successCount} programs`, 'success');
-  } else {
-    alert(`Import failed!\nErrors: ${errorCount}`);
-    showToast('Import failed. Please check your file format.', 'error');
-  }
+  // Add the last field
+  result.push(current.trim());
   
-  // Clear the file input
-  document.getElementById('excel-file-input-settings').value = '';
+  return result;
 }
 
 // Download Sample Excel Button Logic (Settings Modal)
@@ -4224,6 +4244,94 @@ function initializeApp() {
 
 // Call this after DOMContentLoaded
 addEventListener('DOMContentLoaded', initializeApp);
+
+// Helper function to parse CSV line with proper quote handling
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  return result;
+}
+
+// Function to import programs from settings modal
+async function importProgramsFromSettings(programs) {
+  const programList = Object.values(programs);
+  let successCount = 0;
+  let errorCount = 0;
+  
+  console.log('Importing programs:', programList); // Debug log
+  
+  for (const program of programList) {
+    try {
+      // Format the data properly for the API
+      const apiData = {
+        sku: program.sku,
+        program: program.program,
+        remark: program.remark,
+        supplier_id: program.supplier_id || null,
+        rates: program.rates.map(rate => ({
+          name: rate.name,
+          netAdult: rate.net_adult,
+          netChild: rate.net_child,
+          feeType: rate.fee_type,
+          feeAdult: rate.fee_adult,
+          feeChild: rate.fee_child
+        }))
+      };
+      
+      console.log('Sending to API:', apiData); // Debug log
+      
+      const response = await fetch('/api/products-rates?type=tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiData)
+      });
+      
+      const responseData = await response.json();
+      console.log('API response:', responseData); // Debug log
+      
+      if (response.ok) {
+        successCount++;
+        console.log(`Successfully imported program: ${program.sku}`);
+      } else {
+        errorCount++;
+        console.error(`Failed to import program ${program.sku}:`, responseData);
+      }
+    } catch (error) {
+      errorCount++;
+      console.error(`Error importing program ${program.sku}:`, error);
+    }
+  }
+  
+  // Show results
+  if (successCount > 0) {
+    alert(`Import completed!\nSuccessfully imported: ${successCount} programs\nErrors: ${errorCount}`);
+    showToast(`Successfully imported ${successCount} programs`, 'success');
+  } else {
+    alert(`Import failed!\nErrors: ${errorCount}`);
+    showToast('Import failed. Please check your file format.', 'error');
+  }
+  
+  // Clear the file input
+  document.getElementById('excel-file-input-settings').value = '';
+}
 
 
 

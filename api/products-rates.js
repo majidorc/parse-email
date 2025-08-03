@@ -319,16 +319,23 @@ module.exports = async (req, res) => {
           return;
         }
         
+        console.log('[PRODUCTS-RATES] Received POST request:', req.body); // Debug log
+        
         const product_id_optional = req.body.productId || req.body.product_id_optional || null;
         const { sku, program, remark, id, supplier_id } = req.body;
         const rates = req.body.rates || [];
         
 
         
-        if (!sku || !program || !Array.isArray(rates) || rates.length === 0) {
+        if (!sku || !program || !Array.isArray(rates)) {
           console.error('[PRODUCTS-RATES] Missing required fields:', { sku, program, ratesLength: rates.length });
           res.status(400).json({ error: 'Missing required fields' });
           return;
+        }
+        
+        // Allow programs without rates during import
+        if (rates.length === 0) {
+          console.log('[PRODUCTS-RATES] Program without rates:', { sku, program });
         }
         
         const client = await pool.connect();
@@ -394,6 +401,8 @@ module.exports = async (req, res) => {
             const rate = rates[i];
             const { name, netAdult, netChild, feeType, feeAdult, feeChild, order } = rate;
             
+            console.log('[PRODUCTS-RATES] Processing rate:', rate); // Debug log
+            
             // Map frontend field names to database field names
             const net_adult = netAdult;
             const net_child = netChild;
@@ -408,7 +417,8 @@ module.exports = async (req, res) => {
               !name || net_adult === null || net_child === null || !fee_type ||
               ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult === null || fee_child === null))
             ) {
-              throw new Error('Invalid rate item: ' + JSON.stringify(rate));
+              console.error('[PRODUCTS-RATES] Invalid rate data:', rate);
+              throw new Error(`Invalid rate item at index ${i}: ${JSON.stringify(rate)}`);
             }
             
             // ALWAYS use the fallback query to avoid rate_order issues

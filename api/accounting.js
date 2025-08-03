@@ -523,22 +523,19 @@ module.exports = async (req, res) => {
         child: b.child
       };
     });
-    // Calculate total benefit for all bookings or for a period if startDate/endDate provided
+    // Calculate total benefit for all bookings matching the current filters (period + search)
     let totalBenefit = 0;
     let prevPeriodBenefit = null;
     try {
+      // Use the same WHERE clause as the main query to get total benefit for the filtered period
       let allDataQuery = `
         SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
         FROM bookings b
         LEFT JOIN products p ON b.sku = p.sku
         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+        ${whereClause}
       `;
-      let allParams = [];
-      if (startDate && endDate) {
-        allDataQuery += ` WHERE b.tour_date >= $1 AND b.tour_date < $2`;
-        allParams = [startDate, endDate];
-      }
-      const { rows: allRows } = await sql.query(allDataQuery, allParams);
+      const { rows: allRows } = await sql.query(allDataQuery, params);
       totalBenefit = allRows.reduce((sum, b) => {
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;
@@ -549,32 +546,54 @@ module.exports = async (req, res) => {
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
         return sum + (paid - netTotal);
       }, 0);
-      // Previous period benefit for percent change
-      if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diff = end.getTime() - start.getTime();
-        const prevStart = new Date(start.getTime() - diff);
-        const prevEnd = new Date(start.getTime());
-        const prevStartStr = prevStart.toISOString().slice(0, 10);
-        const prevEndStr = prevEnd.toISOString().slice(0, 10);
-        let prevQuery = allDataQuery.replace('b.tour_date >= $1 AND b.tour_date < $2', 'b.tour_date >= $1 AND b.tour_date < $2');
-        const { rows: prevRows } = await sql.query(
-          allDataQuery.replace('b.tour_date >= $1 AND b.tour_date < $2', 'b.tour_date >= $1 AND b.tour_date < $2'),
-          [prevStartStr, prevEndStr]
-        );
-        prevPeriodBenefit = prevRows.reduce((sum, b) => {
-          const netAdult = Number(b.net_adult) || 0;
-          const netChild = Number(b.net_child) || 0;
-          const adult = Number(b.adult) || 0;
-          const child = Number(b.child) || 0;
-          const paid = Number(b.paid) || 0;
-          // Use stored net_total if available and column exists, otherwise calculate from rates
-          const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
-          return sum + (paid - netTotal);
-        }, 0);
+      
+      // Previous period benefit for percent change (only if we have date range filters)
+      const hasDateRangeFilter = whereClause.includes('tour_date >=') && whereClause.includes('tour_date <');
+      if (hasDateRangeFilter) {
+        // Extract date range from WHERE clause to calculate previous period
+        const dateMatch = whereClause.match(/tour_date >= \$(\d+) AND tour_date < \$(\d+)/);
+        if (dateMatch && params.length >= 2) {
+          const startDateIndex = parseInt(dateMatch[1]) - 1;
+          const endDateIndex = parseInt(dateMatch[2]) - 1;
+          if (params[startDateIndex] && params[endDateIndex]) {
+            const start = new Date(params[startDateIndex]);
+            const end = new Date(params[endDateIndex]);
+            const diff = end.getTime() - start.getTime();
+            const prevStart = new Date(start.getTime() - diff);
+            const prevEnd = new Date(start.getTime());
+            const prevStartStr = prevStart.toISOString().slice(0, 10);
+            const prevEndStr = prevEnd.toISOString().slice(0, 10);
+            
+            // Create previous period WHERE clause
+            let prevWhereClause = whereClause.replace(
+              /tour_date >= \$(\d+) AND tour_date < \$(\d+)/,
+              `tour_date >= '${prevStartStr}' AND tour_date < '${prevEndStr}'`
+            );
+            
+            let prevDataQuery = `
+              SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
+              FROM bookings b
+              LEFT JOIN products p ON b.sku = p.sku
+              LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+              ${prevWhereClause}
+            `;
+            
+            const { rows: prevRows } = await sql.query(prevDataQuery);
+            prevPeriodBenefit = prevRows.reduce((sum, b) => {
+              const netAdult = Number(b.net_adult) || 0;
+              const netChild = Number(b.net_child) || 0;
+              const adult = Number(b.adult) || 0;
+              const child = Number(b.child) || 0;
+              const paid = Number(b.paid) || 0;
+              // Use stored net_total if available and column exists, otherwise calculate from rates
+              const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+              return sum + (paid - netTotal);
+            }, 0);
+          }
+        }
       }
     } catch (e) {
+      console.error('Error calculating total benefit:', e);
       totalBenefit = 0;
       prevPeriodBenefit = null;
     }

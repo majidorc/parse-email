@@ -523,8 +523,9 @@ module.exports = async (req, res) => {
         child: b.child
       };
     });
-    // Calculate total benefit for all bookings matching the current filters (period + search)
+    // Calculate total benefit and total paid for all bookings matching the current filters (period + search)
     let totalBenefit = 0;
+    let totalPaid = 0;
     let prevPeriodBenefit = null;
     try {
       // Use the exact same query as the main query but without LIMIT/OFFSET
@@ -539,16 +540,20 @@ module.exports = async (req, res) => {
       
       // Use the same params as the main query but without LIMIT and OFFSET
       const { rows: allRows } = await sql.query(allDataQuery, params);
-      totalBenefit = allRows.reduce((sum, b) => {
+      
+      // Calculate total paid and total benefit for the entire period
+      allRows.forEach(b => {
+        const paid = Number(b.paid) || 0;
+        totalPaid += paid;
+        
         const netAdult = Number(b.net_adult) || 0;
         const netChild = Number(b.net_child) || 0;
         const adult = Number(b.adult) || 0;
         const child = Number(b.child) || 0;
-        const paid = Number(b.paid) || 0;
         // Use stored net_total if available and column exists, otherwise calculate from rates
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
-        return sum + (paid - netTotal);
-      }, 0);
+        totalBenefit += (paid - netTotal);
+      });
       
       // Previous period benefit for percent change (only if we have date range filters)
       const hasDateRangeFilter = whereClause.includes('tour_date >=') && whereClause.includes('tour_date <');
@@ -613,6 +618,7 @@ module.exports = async (req, res) => {
       thisMonthCount: parseInt(thisMonthCountRes.rows[0].count, 10),
       thisMonthOpNotSentPaid: parseFloat(thisMonthPaidRes.rows[0].sum),
       totalBenefit,
+      totalPaid,
       prevPeriodBenefit
     });
   } catch (err) {

@@ -921,7 +921,8 @@ function renderAccountingSummary(data) {
   
   // Calculate totals from current data
   const totalBookings = accountingTotalRows || 0;
-  const totalPaid = accountingData.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+  // Use the totalPaid from API response instead of calculating from current page data
+  const totalPaid = data.totalPaid || accountingData.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
   // Use the totalBenefit from API response instead of calculating from current page data
   const totalBenefit = data.totalBenefit || accountingData.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
   

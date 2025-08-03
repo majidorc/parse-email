@@ -4201,19 +4201,15 @@ function initializeApp() {
   const clearCacheBtn = document.getElementById('clear-cache-btn');
   if (clearCacheBtn) {
     clearCacheBtn.onclick = async function() {
-      console.log('[DEBUG] Clear cache button clicked');
       if (!confirm('Clear all cached data? This will log you out and reload the app.')) return;
       
-      console.log('[DEBUG] Starting cache clearing process');
       // Clear all caches
       if ('caches' in window) {
         try {
           const cacheNames = await caches.keys();
-          console.log('[DEBUG] Found caches:', cacheNames);
           await Promise.all(cacheNames.map(name => caches.delete(name)));
-          console.log('[DEBUG] All caches deleted');
         } catch (cacheError) {
-          console.error('[DEBUG] Cache clearing error:', cacheError);
+          console.error('Cache clearing error:', cacheError);
         }
       }
       
@@ -4221,15 +4217,12 @@ function initializeApp() {
       if ('serviceWorker' in navigator) {
         try {
           const regs = await navigator.serviceWorker.getRegistrations();
-          console.log('[DEBUG] Found service workers:', regs.length);
           for (const reg of regs) await reg.unregister();
-          console.log('[DEBUG] All service workers unregistered');
         } catch (swError) {
-          console.error('[DEBUG] Service worker unregister error:', swError);
+          console.error('Service worker unregister error:', swError);
         }
       }
       
-      console.log('[DEBUG] Cache clearing completed, reloading page');
       alert('Cache cleared! The app will now reload.');
       window.location.reload();
     };

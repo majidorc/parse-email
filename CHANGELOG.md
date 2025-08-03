@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2024-12-20
+
+### Added
+- **Enhanced Export/Import**: Added supplier names to CSV export/import functionality
+- **Improved Fee Type Display**: Export now shows "National Park Fee" and "Entrance Fee" instead of codes
+- **Quick Supplier Addition**: Add new suppliers directly from program dropdowns with modal interface
+- **Better CSV Parsing**: Improved CSV parsing with proper quote handling for import
+
+### Changed
+- **Export Format**: CSV now includes supplier column for better data management
+- **Import Logic**: Enhanced import to handle supplier names and convert them to supplier IDs
+- **Supplier Dropdown**: Added "Add New Supplier" option with separator in dropdown
+- **Sample CSV**: Updated sample CSV to include supplier names and readable fee types
+
+### Removed
+- **Legacy Functionality**: Removed "Check Missing Programs from Bookings" button and functionality
+- **Debug Logging**: Removed verbose console logging from cache clearing functionality
+- **Test Files**: Cleaned up test/debug SQL migration files from root directory
+
+### Fixed
+- **Export Pagination**: Fixed export to fetch ALL programs by bypassing pagination limits
+- **Import Validation**: Improved import validation and error handling
+- **Supplier Lookup**: Enhanced supplier lookup during import process
+- **Console Cleanup**: Removed tour date debug logging that was spamming console
+
 ## [2.6.0] - 2024-12-19
 
 ### Fixed

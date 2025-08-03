@@ -24,10 +24,11 @@ A comprehensive booking management system for tour operators, featuring email pa
 - **Average Metrics**: Average sales and benefits per channel
 
 ### Programs Management
-- **Product Catalog**: SKU and program management
-- **Rate Configuration**: Multiple rates per program with fee types
+- **Product Catalog**: SKU and program management with supplier support
+- **Rate Configuration**: Multiple rates per program with fee types (National Park Fee, Entrance Fee)
+- **Import/Export**: CSV import/export functionality with supplier names
+- **Quick Supplier Addition**: Add new suppliers directly from program forms
 - **Pagination**: Efficient browsing of large program catalogs
-- **Auto-sync**: Import missing programs from bookings
 
 ### Accounting Features
 - **Financial Tracking**: Paid amounts, net totals, and benefits
@@ -58,6 +59,7 @@ parse-email/
 │   ├── accounting.js      # Financial tracking
 │   ├── sales-analytics.js # Analytics and reporting
 │   ├── products-rates.js  # Programs and rates management
+│   ├── suppliers.js       # Supplier management
 │   ├── webhook.js         # Email parsing and Telegram integration
 │   └── ...
 ├── public/                # Frontend assets
@@ -67,7 +69,8 @@ parse-email/
 │   └── ...
 ├── notificationManager.js  # Telegram notification system
 ├── db_sample.sql          # Database schema
-└── vercel.json           # Deployment configuration
+├── vercel.json           # Deployment configuration
+└── package.json          # Dependencies and scripts
 ```
 
 ## 🔧 Setup & Installation
@@ -100,48 +103,18 @@ parse-email/
    vercel --prod
    ```
 
-## 📊 Key Features in Detail
+## 📊 Recent Updates
 
-### Email Parsing
-- Supports multiple email formats (Bokun, Thailand Tours, generic)
-- Automatic booking number extraction
-- Customer information parsing
-- Tour date and program detection
-- Passenger count extraction
+### Version 2.7.0 (Latest)
+- **Enhanced Export/Import**: Added supplier names to CSV export/import
+- **Improved Fee Types**: Export shows "National Park Fee" instead of "np"
+- **Quick Supplier Addition**: Add new suppliers directly from program dropdowns
+- **Cleaner Interface**: Removed legacy "Check Missing Programs" functionality
+- **Debug Cleanup**: Removed verbose console logging from cache clearing
 
-### Real-time Analytics
-- Dashboard with key metrics
-- Sales channel analysis
-- Period-based filtering
-- Mobile-responsive design
-- Auto-refresh functionality
-
-### Interactive Management
-- Global period selector
-- Mobile booking cards
-- Inline editing capabilities
-- Rate dropdown management
-- Pagination for large datasets
-
-### Security & Access Control
-- Role-based permissions
-- Session management
-- User whitelist system
-- Secure API endpoints
-
-## 🔄 Recent Updates
-
-- **v2.6**: Fixed mobile booking display and tomorrow button functionality
-- **v2.5**: Added interactive rate dropdowns in accounting tab
-- **v2.4**: Implemented global period selector
-- **v2.3**: Enhanced analytics with average metrics
-- **v2.2**: Added pagination for programs management
-- **v2.1**: Fixed booking count consistency across tabs
-
-## 📞 Support
-
-For issues, feature requests, or questions, please refer to the CHANGELOG.md for detailed version history and recent fixes.
-
-## 📄 License
-
-This project is proprietary software. All rights reserved. 
+### Key Features
+- **Program Management**: Full CRUD operations with supplier support
+- **Rate Management**: Multiple rates per program with fee types
+- **Import/Export**: Complete CSV functionality with supplier data
+- **Real-time Analytics**: Live dashboard with period filtering
+- **Mobile Responsive**: Works on all devices 

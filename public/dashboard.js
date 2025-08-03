@@ -1253,6 +1253,48 @@ window.gotoAccountingPage = function(page) {
 const dashboardBtn = document.getElementById('toggle-dashboard');
 const bookingsBtn = document.getElementById('toggle-bookings');
 const accountingBtn = document.getElementById('toggle-accounting');
+
+// Export functionality
+const exportAccountingBtn = document.getElementById('export-accounting-btn');
+if (exportAccountingBtn) {
+  exportAccountingBtn.onclick = async () => {
+    try {
+      // Get current filters
+      const currentPeriod = document.getElementById('global-period-selector')?.value || 'all';
+      const currentSearch = document.getElementById('search-bar')?.value || '';
+      
+      // Build export URL with current filters
+      let exportUrl = '/api/export-accounting?';
+      if (currentPeriod !== 'all') {
+        exportUrl += `period=${currentPeriod}&`;
+      }
+      if (currentSearch.trim()) {
+        exportUrl += `search=${encodeURIComponent(currentSearch.trim())}&`;
+      }
+      
+      // Trigger download
+      const response = await fetch(exportUrl);
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `accounting_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showToast('Export successful!', 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast('Export failed. Please try again.', 'error');
+    }
+  };
+}
 const dashboardSection = document.getElementById('dashboard-section');
 const bookingsTableSection = document.querySelector('.bookings-table-container');
 const summarySection = document.getElementById('table-summary');

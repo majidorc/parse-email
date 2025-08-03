@@ -365,6 +365,52 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
+    // Debug: Calculate benefit by channel using the channel field to see if it matches our parsed_emails logic
+    let channelBasedViatorBenefit = 0;
+    let channelBasedWebsiteBenefit = 0;
+    
+    if (dateFilter) {
+      const channelViatorResult = await client.query(
+        `SELECT 
+          b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.channel
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         WHERE b.tour_date >= $1 AND b.tour_date < $2 AND b.channel = 'Viator'`,
+        [startDateParam, endDateParam]
+      );
+      
+      const channelWebsiteResult = await client.query(
+        `SELECT 
+          b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.channel
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         WHERE b.tour_date >= $1 AND b.tour_date < $2 AND b.channel = 'Website'`,
+        [startDateParam, endDateParam]
+      );
+      
+      channelBasedViatorBenefit = channelViatorResult.rows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+      
+      channelBasedWebsiteBenefit = channelWebsiteResult.rows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+    }
+
     // Calculate benefit by channel using the same logic as sales calculation
     let viatorBenefitResult;
     let websiteBenefitResult;
@@ -529,11 +575,16 @@ export default async function handler(req, res) {
       websiteBenefit,
       uncategorizedBenefit,
       uncategorizedBookings: uncategorizedBenefitResult.rows,
-      // Include debug data in response
+      // Debug information to investigate the difference
       debug: {
         availableChannels: debugChannels.rows,
         nullChannelsCount: nullChannels.rows[0].null_count,
-        sampleBookings: sampleBookings.rows
+        sampleBookings: sampleBookings.rows,
+        channelBasedViatorBenefit,
+        channelBasedWebsiteBenefit,
+        channelBasedTotal: channelBasedViatorBenefit + channelBasedWebsiteBenefit,
+        difference: (viatorBenefit + websiteBenefit) - totalBenefit,
+        channelDifference: (channelBasedViatorBenefit + channelBasedWebsiteBenefit) - totalBenefit
       }
     });
     

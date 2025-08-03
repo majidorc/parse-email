@@ -14,8 +14,8 @@ module.exports = async (req, res) => {
   // Toggle OP/RI/Customer logic (from toggle-op-customer.js)
   if (req.method === 'POST' && req.body && req.body.type === 'toggle') {
     try {
-      const { booking_number, type } = req.body;
-      if (!booking_number || !['op', 'ri', 'customer'].includes(type)) {
+      const { booking_number, column } = req.body;
+      if (!booking_number || !['op', 'ri', 'customer'].includes(column)) {
         return res.status(400).json({ error: 'Invalid request' });
       }
       // Fetch current state
@@ -24,12 +24,12 @@ module.exports = async (req, res) => {
         return res.status(404).json({ error: 'Booking not found' });
       }
       let { op, ri, customer } = rows[0];
-      if (type === 'op') {
+      if (column === 'op') {
         op = !op;
         if (!op) customer = false; // Unchecking OP also unchecks Customer
-      } else if (type === 'ri') {
+      } else if (column === 'ri') {
         ri = !ri;
-      } else if (type === 'customer') {
+      } else if (column === 'customer') {
         if (!op) {
           return res.status(400).json({ error: 'OP must be ✓ first.' });
         }

@@ -640,16 +640,20 @@ window.handleToggle = async function(column, bookingId, btn) {
 
   // Optionally, add similar rules for other columns if needed
 
-  // Send PATCH request to backend
+  // Send POST request to backend for toggle
   btn.disabled = true;
   try {
-    const res = await fetch(`/api/bookings?booking_number=${bookingId}`, {
-      method: 'PATCH',
+    const res = await fetch('/api/bookings', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ column, value: newValue })
+      body: JSON.stringify({ 
+        type: 'toggle',
+        booking_number: bookingId,
+        column: column 
+      })
     });
     const data = await res.json();
-    if (!res.ok || !data.success) {
+    if (!res.ok) {
       throw new Error(data.error || 'Failed to update');
     }
     // Update local data and UI
@@ -4220,4 +4224,8 @@ function initializeApp() {
 
 // Call this after DOMContentLoaded
 addEventListener('DOMContentLoaded', initializeApp);
+
+
+
+
 

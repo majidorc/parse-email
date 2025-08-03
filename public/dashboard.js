@@ -3066,8 +3066,8 @@ settingsForm.onsubmit = async function(e) {
 // Export Programs Button Logic
 document.getElementById('export-programs-settings-btn').onclick = async function() {
   try {
-    // Fetch all programs from the API
-    const response = await fetch('/api/products-rates?type=tour');
+    // Fetch ALL programs from the API (bypass pagination)
+    const response = await fetch('/api/products-rates?type=tour&limit=10000');
     const data = await response.json();
     
     if (!data.tours || data.tours.length === 0) {
@@ -3076,6 +3076,7 @@ document.getElementById('export-programs-settings-btn').onclick = async function
     }
     
     console.log('Exporting programs:', data.tours); // Debug log
+    console.log('Total programs found:', data.tours.length); // Debug log
     
     // Convert programs to CSV format
     let csv = 'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
@@ -3106,7 +3107,7 @@ document.getElementById('export-programs-settings-btn').onclick = async function
     a.click();
     setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
     
-    showToast('Programs exported successfully!', 'success');
+    showToast(`Successfully exported ${data.tours.length} programs!`, 'success');
     
   } catch (error) {
     console.error('Export error:', error);
@@ -4277,14 +4278,27 @@ async function importProgramsFromSettings(programs) {
   let errorCount = 0;
   
   console.log('Importing programs:', programList); // Debug log
+  console.log('Total programs to import:', programList.length); // Debug log
+  
+  if (programList.length === 0) {
+    alert('No valid programs found in the CSV file.');
+    return;
+  }
   
   for (const program of programList) {
     try {
+      // Validate program data
+      if (!program.sku || !program.program) {
+        console.error('Invalid program data:', program);
+        errorCount++;
+        continue;
+      }
+      
       // Format the data properly for the API
       const apiData = {
         sku: program.sku,
         program: program.program,
-        remark: program.remark,
+        remark: program.remark || '',
         supplier_id: program.supplier_id || null,
         rates: program.rates.map(rate => ({
           name: rate.name,
@@ -4324,6 +4338,11 @@ async function importProgramsFromSettings(programs) {
   if (successCount > 0) {
     alert(`Import completed!\nSuccessfully imported: ${successCount} programs\nErrors: ${errorCount}`);
     showToast(`Successfully imported ${successCount} programs`, 'success');
+    
+    // Refresh the programs table if it exists
+    if (typeof fetchPrograms === 'function') {
+      await fetchPrograms();
+    }
   } else {
     alert(`Import failed!\nErrors: ${errorCount}`);
     showToast('Import failed. Please check your file format.', 'error');

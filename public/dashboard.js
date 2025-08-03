@@ -2529,6 +2529,8 @@ document.addEventListener('DOMContentLoaded', function () {
     addProgramSection.style.display = '';
     // Reset form
     document.getElementById('productForm').reset();
+    // Clear the dbRowId field to ensure we're adding a new program, not editing
+    document.getElementById('dbRowId').value = '';
     document.getElementById('ratesContainer').innerHTML = '';
     let rateItemCounter = 0;
     // Add one rate item by default

@@ -607,6 +607,11 @@ module.exports = async (req, res) => {
     }
 
 
+    // Debug logging
+    console.log('API Debug - totalPaid:', totalPaid);
+    console.log('API Debug - totalBenefit:', totalBenefit);
+    console.log('API Debug - allRows count:', allRows ? allRows.length : 'N/A');
+    
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       bookings,

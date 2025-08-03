@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.7.0] - 2024-12-20
+## [2.7.0] - 2025-08-04
 
 ### Added
 - **Enhanced Export/Import**: Added supplier names to CSV export/import functionality

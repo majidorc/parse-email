@@ -3079,7 +3079,7 @@ document.getElementById('export-programs-settings-btn').onclick = async function
     console.log('Total programs found:', data.tours.length); // Debug log
     
     // Convert programs to CSV format
-    let csv = 'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
+    let csv = 'SKU,Program Name,Supplier,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
     
     data.tours.forEach(program => {
       console.log('Processing program:', program.sku, 'with rates:', program.rates); // Debug log
@@ -3097,11 +3097,11 @@ document.getElementById('export-programs-settings-btn').onclick = async function
             feeTypeDisplay = rate.fee_type;
           }
           
-          csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${feeTypeDisplay}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
+          csv += `"${program.sku || ''}","${program.program || ''}","${program.supplier_name || ''}","${program.remark || ''}","${rate.name || ''}",${rate.net_adult || 0},${rate.net_child || 0},"${feeTypeDisplay}",${rate.fee_adult || ''},${rate.fee_child || ''}\n`;
         });
       } else {
         // If no rates, still export the program with empty rate fields
-        csv += `"${program.sku || ''}","${program.program || ''}","${program.remark || ''}","",0,0,"none",,\n`;
+        csv += `"${program.sku || ''}","${program.program || ''}","${program.supplier_name || ''}","${program.remark || ''}","",0,0,"none",,\n`;
       }
     });
     
@@ -3144,7 +3144,7 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
     const headers = parseCSVLine(lines[0]);
     
     // Validate headers
-    const expectedHeaders = ['SKU', 'Program Name', 'Remark', 'Rate Name', 'Net Adult', 'Net Child', 'Fee Type', 'Fee Adult', 'Fee Child'];
+    const expectedHeaders = ['SKU', 'Program Name', 'Supplier', 'Remark', 'Rate Name', 'Net Adult', 'Net Child', 'Fee Type', 'Fee Adult', 'Fee Child'];
     const isValid = expectedHeaders.every(h => headers.includes(h));
     
     if (!isValid) {
@@ -3164,18 +3164,19 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
         const values = parseCSVLine(line);
         console.log('Parsed line:', values); // Debug log
         
-        if (values.length < 9) {
+        if (values.length < 10) {
           console.warn('Skipping invalid line:', line);
           continue;
         }
         
         const sku = values[0];
         const programName = values[1];
-        const remark = values[2];
-        const rateName = values[3];
-        const netAdult = parseFloat(values[4]) || 0;
-        const netChild = parseFloat(values[5]) || 0;
-        let feeType = values[6];
+        const supplierName = values[2];
+        const remark = values[3];
+        const rateName = values[4];
+        const netAdult = parseFloat(values[5]) || 0;
+        const netChild = parseFloat(values[6]) || 0;
+        let feeType = values[7];
         // Convert readable fee type back to database format
         if (feeType === 'National Park Fee') {
           feeType = 'np';
@@ -3184,8 +3185,8 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
         } else if (feeType === 'none' || feeType === '') {
           feeType = 'none';
         }
-        const feeAdult = parseFloat(values[7]) || 0;
-        const feeChild = parseFloat(values[8]) || 0;
+        const feeAdult = parseFloat(values[8]) || 0;
+        const feeChild = parseFloat(values[9]) || 0;
         
         if (!sku || !programName) {
           console.warn('Skipping line with missing SKU or Program Name:', line);
@@ -3196,6 +3197,7 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
           programs[sku] = {
             sku: sku,
             program: programName,
+            supplier_name: supplierName,
             remark: remark,
             rates: []
           };
@@ -3254,10 +3256,10 @@ function parseCSVLine(line) {
 // Download Sample Excel Button Logic (Settings Modal)
 document.getElementById('download-sample-excel-settings-btn').onclick = function() {
   const sample =
-    'SKU,Program Name,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
-    'HKT0041,Sample Program,Optional remark,With transfer,900,900,none,,\n' +
-    'HKT0041,Sample Program,Optional remark,Without transfer,800,800,Entrance Fee,100,50\n' +
-    'HKT0042,Another Program,Another remark,With National Park,1000,500,National Park Fee,200,100\n';
+    'SKU,Program Name,Supplier,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n' +
+    'HKT0041,Sample Program,Sample Supplier,Optional remark,With transfer,900,900,none,,\n' +
+    'HKT0041,Sample Program,Sample Supplier,Optional remark,Without transfer,800,800,Entrance Fee,100,50\n' +
+    'HKT0042,Another Program,Another Supplier,Another remark,With National Park,1000,500,National Park Fee,200,100\n';
   const blob = new Blob([sample], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4328,6 +4330,25 @@ async function importProgramsFromSettings(programs) {
           feeChild: rate.fee_child
         }))
       };
+      
+      // If supplier name is provided, try to find supplier_id
+      if (program.supplier_name && program.supplier_name.trim()) {
+        try {
+          const supplierResponse = await fetch('/api/products-rates?type=suppliers');
+          if (supplierResponse.ok) {
+            const supplierData = await supplierResponse.json();
+            const supplier = supplierData.suppliers.find(s => s.name === program.supplier_name.trim());
+            if (supplier) {
+              apiData.supplier_id = supplier.id;
+              console.log(`Found supplier: ${program.supplier_name} -> ID: ${supplier.id}`);
+            } else {
+              console.warn(`Supplier not found: ${program.supplier_name}`);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching suppliers:', error);
+        }
+      }
       
       console.log('Sending to API:', apiData); // Debug log
       

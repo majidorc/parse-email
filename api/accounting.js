@@ -614,9 +614,10 @@ module.exports = async (req, res) => {
     console.log('API Debug - totalPaid:', totalPaid);
     console.log('API Debug - totalBenefit:', totalBenefit);
     console.log('API Debug - allRows count:', allRows ? allRows.length : 'N/A');
+    console.log('API Debug - About to send response with totalPaid:', totalPaid, 'totalBenefit:', totalBenefit);
     
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json({
+    const responseData = {
       bookings,
       total,
       page,
@@ -628,9 +629,12 @@ module.exports = async (req, res) => {
       totalBenefit,
       totalPaid,
       prevPeriodBenefit
-    });
+    };
+    console.log('API Debug - Final response data:', responseData);
+    return res.status(200).json(responseData);
   } catch (err) {
     console.error('Accounting API error:', err);
+    console.error('Accounting API error stack:', err.stack);
     if (!res.headersSent) {
       return res.status(500).json({ error: 'Failed to fetch accounting data', details: err.message, stack: err.stack });
     }

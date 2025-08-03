@@ -173,7 +173,7 @@ All notable changes to this project will be documented in this file.
 - **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
 - **Metrics Display**: Average metrics now appear in main analytics section
 
-## [1.10.0] - 2024-12-19
+## [1.10.0] - 2025-08-04
 
 ### Added
 - **Programs Pagination**: Added pagination for programs table
@@ -185,14 +185,14 @@ All notable changes to this project will be documented in this file.
 - **Event Listeners**: Properly re-attach event listeners after pagination
 - **Data Consistency**: Edit functionality uses current page data instead of fetching new data
 
-## [1.9.0] - 2024-12-19
+## [1.9.0] - 2025-08-04
 
 ### Fixed
 - **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
 - **Period Filtering**: All tabs now use consistent period filtering logic
 - **Data Synchronization**: Ensured all tabs show the same data for the same period
 
-## [1.8.0] - 2024-12-19
+## [1.8.0] - 2025-08-04
 
 ### Added
 - **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
@@ -203,7 +203,7 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Added rate dropdowns to bookings table
 - **Better UX**: Quick rate changes without editing entire booking
 
-## [1.7.0] - 2024-12-19
+## [1.7.0] - 2025-08-04
 
 ### Added
 - **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
@@ -216,7 +216,7 @@ All notable changes to this project will be documented in this file.
 - **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
 - **Metrics Display**: Average metrics now appear in main analytics section
 
-## [1.6.0] - 2024-12-19
+## [1.6.0] - 2025-08-04
 
 ### Added
 - **Programs Pagination**: Added pagination for programs table

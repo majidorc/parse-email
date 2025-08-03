@@ -344,7 +344,7 @@ function getRowClass(tourDateStr) {
   else if (date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()) result = 'row-today';
   else if (date.getFullYear() === tomorrow.getFullYear() && date.getMonth() === tomorrow.getMonth() && date.getDate() === tomorrow.getDate()) result = 'row-tomorrow';
   
-  console.log(`Tour date: ${tourDateStr}, Class: ${result}, Date: ${date.toDateString()}, Today: ${today.toDateString()}`);
+  // console.log(`Tour date: ${tourDateStr}, Class: ${result}, Date: ${date.toDateString()}, Today: ${today.toDateString()}`);
   return result;
 }
 

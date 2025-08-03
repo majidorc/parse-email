@@ -355,8 +355,7 @@ export default async function handler(req, res) {
          WHERE b.tour_date >= $1 AND b.tour_date < $2
          AND (
            b.booking_number LIKE 'GYG%' OR
-           pe.sender ILIKE '%info@tours.co.th%' OR
-           (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
+           pe.sender ILIKE '%info@tours.co.th%'
          )`,
         [startDateParam, endDateParam]
       );
@@ -380,8 +379,7 @@ export default async function handler(req, res) {
          LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
          WHERE (
            b.booking_number LIKE 'GYG%' OR
-           pe.sender ILIKE '%info@tours.co.th%' OR
-           (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
+           pe.sender ILIKE '%info@tours.co.th%'
          )`
       );
     }

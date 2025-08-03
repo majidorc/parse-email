@@ -15,14 +15,23 @@ export default async function handler(req, res) {
       console.log('Starting channel consolidation...');
       
       const result = await client.query(`
-        UPDATE bookings 
+        UPDATE bookings b
         SET channel = 
           CASE 
-            WHEN channel IN ('Viator', 'Bokun') THEN 'Viator'
-            WHEN channel IN ('Website', 'GYG', 'OTA') THEN 'Website'
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN pe.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN pe.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END
-        WHERE channel IS NOT NULL
+        FROM parsed_emails pe
+        WHERE b.booking_number = pe.booking_number
+      `);
+      
+      // Also update bookings that don't have parsed_emails records
+      const result2 = await client.query(`
+        UPDATE bookings 
+        SET channel = 'Website'
+        WHERE booking_number NOT IN (SELECT booking_number FROM parsed_emails)
       `);
       
       console.log(`Updated ${result.rowCount} bookings`);

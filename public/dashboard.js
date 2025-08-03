@@ -4108,7 +4108,13 @@ async function populateSupplierDropdown(dropdown, selectedSupplierId = null) {
       // Clear existing options
       dropdown.innerHTML = '';
       
-      // Add "Add New Supplier" option at the top
+      // Add blank option as default
+      const blankOption = document.createElement('option');
+      blankOption.value = '';
+      blankOption.textContent = 'Select a supplier...';
+      dropdown.appendChild(blankOption);
+      
+      // Add "Add New Supplier" option
       const addNewOption = document.createElement('option');
       addNewOption.value = 'add_new';
       addNewOption.textContent = '+ Add New Supplier';
@@ -4137,7 +4143,7 @@ async function populateSupplierDropdown(dropdown, selectedSupplierId = null) {
       dropdown.addEventListener('change', function() {
         if (this.value === 'add_new') {
           showAddSupplierModal();
-          // Reset to first option after showing modal
+          // Reset to blank option after showing modal
           setTimeout(() => {
             this.value = selectedSupplierId || '';
           }, 100);

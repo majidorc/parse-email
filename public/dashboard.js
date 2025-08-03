@@ -1264,7 +1264,7 @@ if (exportAccountingBtn) {
       const currentSearch = document.getElementById('search-bar')?.value || '';
       
       // Build export URL with current filters
-      let exportUrl = '/api/export-accounting?';
+      let exportUrl = '/api/accounting?export=excel&';
       if (currentPeriod !== 'all') {
         exportUrl += `period=${currentPeriod}&`;
       }

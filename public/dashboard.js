@@ -4105,10 +4105,22 @@ async function populateSupplierDropdown(dropdown, selectedSupplierId = null) {
     if (response.ok) {
       const data = await response.json();
       
-      // Clear existing options except the first one
-      const firstOption = dropdown.querySelector('option');
+      // Clear existing options
       dropdown.innerHTML = '';
-      dropdown.appendChild(firstOption);
+      
+      // Add "Add New Supplier" option at the top
+      const addNewOption = document.createElement('option');
+      addNewOption.value = 'add_new';
+      addNewOption.textContent = '+ Add New Supplier';
+      addNewOption.style.fontWeight = 'bold';
+      addNewOption.style.color = '#3b82f6'; // Blue color
+      dropdown.appendChild(addNewOption);
+      
+      // Add separator
+      const separatorOption = document.createElement('option');
+      separatorOption.disabled = true;
+      separatorOption.textContent = '──────────';
+      dropdown.appendChild(separatorOption);
       
       // Add supplier options
       data.suppliers.forEach(supplier => {
@@ -4119,6 +4131,17 @@ async function populateSupplierDropdown(dropdown, selectedSupplierId = null) {
           option.selected = true;
         }
         dropdown.appendChild(option);
+      });
+      
+      // Add event listener for "Add New Supplier" option
+      dropdown.addEventListener('change', function() {
+        if (this.value === 'add_new') {
+          showAddSupplierModal();
+          // Reset to first option after showing modal
+          setTimeout(() => {
+            this.value = selectedSupplierId || '';
+          }, 100);
+        }
       });
     }
   } catch (error) {
@@ -4390,6 +4413,94 @@ async function importProgramsFromSettings(programs) {
   
   // Clear the file input
   document.getElementById('excel-file-input-settings').value = '';
+}
+
+// Function to show add supplier modal
+function showAddSupplierModal() {
+  // Create modal HTML
+  const modalHTML = `
+    <div id="add-supplier-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Supplier</h3>
+          <form id="quick-add-supplier-form">
+            <div class="mb-4">
+              <label for="new-supplier-name" class="block text-sm font-medium text-gray-700 mb-2">Supplier Name *</label>
+              <input type="text" id="new-supplier-name" name="name" required 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     placeholder="Enter supplier name">
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button type="button" onclick="closeAddSupplierModal()" 
+                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                Cancel
+              </button>
+              <button type="submit" 
+                      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                Add Supplier
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  // Add form submission handler
+  const form = document.getElementById('quick-add-supplier-form');
+  form.onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const supplierName = document.getElementById('new-supplier-name').value.trim();
+    if (!supplierName) {
+      showToast('Please enter a supplier name', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/suppliers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: supplierName })
+      });
+      
+      if (response.ok) {
+        const newSupplier = await response.json();
+        showToast('Supplier added successfully', 'success');
+        closeAddSupplierModal();
+        
+        // Refresh the supplier dropdown
+        const supplierDropdown = document.getElementById('supplier');
+        if (supplierDropdown) {
+          await populateSupplierDropdown(supplierDropdown, newSupplier.id);
+        }
+      } else {
+        const error = await response.json();
+        showToast(`Failed to add supplier: ${error.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error adding supplier:', error);
+      showToast('Failed to add supplier', 'error');
+    }
+  };
+  
+  // Focus on input
+  setTimeout(() => {
+    document.getElementById('new-supplier-name').focus();
+  }, 100);
+}
+
+// Function to close add supplier modal
+function closeAddSupplierModal() {
+  const modal = document.getElementById('add-supplier-modal');
+  if (modal) {
+    modal.remove();
+  }
 }
 
 

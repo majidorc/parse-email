@@ -8,7 +8,44 @@ const pool = new Pool({
 export default async function handler(req, res) {
   const client = await pool.connect();
   try {
-    const { startDate, endDate, period } = req.query;
+    const { startDate, endDate, period, updateChannels } = req.query;
+    
+    // Handle channel consolidation if requested
+    if (updateChannels === 'true') {
+      console.log('Starting channel consolidation...');
+      
+      const result = await client.query(`
+        UPDATE bookings 
+        SET channel = 
+          CASE 
+            WHEN channel IN ('Viator', 'Bokun') THEN 'Viator'
+            WHEN channel IN ('Website', 'GYG', 'OTA') THEN 'Website'
+            ELSE 'Website'
+          END
+        WHERE channel IS NOT NULL
+      `);
+      
+      console.log(`Updated ${result.rowCount} bookings`);
+      
+      // Verify the changes
+      const verifyResult = await client.query(`
+        SELECT channel, COUNT(*) as count 
+        FROM bookings 
+        GROUP BY channel 
+        ORDER BY count DESC
+      `);
+      
+      console.log('Current channel distribution:');
+      verifyResult.rows.forEach(row => {
+        console.log(`  ${row.channel}: ${row.count}`);
+      });
+      
+      return res.status(200).json({ 
+        success: true, 
+        updated: result.rowCount,
+        channels: verifyResult.rows 
+      });
+    }
     
     // Debug: Check what channel values exist in the database
     const debugChannels = await client.query(`

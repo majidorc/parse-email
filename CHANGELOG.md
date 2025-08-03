@@ -27,7 +27,7 @@ All notable changes to this project will be documented in this file.
 - **Supplier Lookup**: Enhanced supplier lookup during import process
 - **Console Cleanup**: Removed tour date debug logging that was spamming console
 
-## [2.6.0] - 2024-12-19
+## [2.6.0] - 2025-08-04
 
 ### Fixed
 - **Mobile Booking Display**: Fixed mobile booking cards not showing when clicking "tomorrow" button
@@ -39,7 +39,7 @@ All notable changes to this project will be documented in this file.
 - Added conditional period filtering to prevent conflicts with date searches
 - Implemented tab-specific button visibility logic
 
-## [2.5.0] - 2024-12-19
+## [2.5.0] - 2025-08-04
 
 ### Added
 - **Interactive Rate Dropdowns**: Moved rate dropdown functionality from Bookings to Accounting tab
@@ -50,7 +50,7 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Rate dropdowns now appear in accounting table instead of bookings table
 - **Better UX**: More logical placement of rate management in accounting context
 
-## [2.4.0] - 2024-12-19
+## [2.4.0] - 2025-08-04
 
 ### Added
 - **Global Period Selector**: Single period selector in header controls all tabs
@@ -62,7 +62,7 @@ All notable changes to this project will be documented in this file.
 - **Tab Logic**: Updated tab switching to use global period selector
 - **Consistency**: All tabs now use the same period filtering logic
 
-## [2.3.0] - 2024-12-19
+## [2.3.0] - 2025-08-04
 
 ### Added
 - **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
@@ -76,7 +76,7 @@ All notable changes to this project will be documented in this file.
 - **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
 - **Metrics Display**: Average metrics now appear in main analytics section
 
-## [2.2.0] - 2024-12-19
+## [2.2.0] - 2025-08-04
 
 ### Added
 - **Programs Pagination**: Added pagination for programs table
@@ -88,14 +88,14 @@ All notable changes to this project will be documented in this file.
 - **Event Listeners**: Properly re-attach event listeners after pagination
 - **Data Consistency**: Edit functionality uses current page data instead of fetching new data
 
-## [2.1.0] - 2024-12-19
+## [2.1.0] - 2025-08-04
 
 ### Fixed
 - **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
 - **Period Filtering**: All tabs now use consistent period filtering logic
 - **Data Synchronization**: Ensured all tabs show the same data for the same period
 
-## [2.0.0] - 2024-12-19
+## [2.0.0] - 2025-08-04
 
 ### Added
 - **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
@@ -106,7 +106,7 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Added rate dropdowns to bookings table
 - **Better UX**: Quick rate changes without editing entire booking
 
-## [1.15.0] - 2024-12-19
+## [1.15.0] - 2025-08-04
 
 ### Added
 - **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
@@ -117,7 +117,7 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Added rate dropdowns to bookings table
 - **Better UX**: Quick rate changes without editing entire booking
 
-## [1.14.1] - 2024-12-19
+## [1.14.1] - 2025-08-04
 
 ### Added
 - **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
@@ -130,7 +130,7 @@ All notable changes to this project will be documented in this file.
 - **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
 - **Metrics Display**: Average metrics now appear in main analytics section
 
-## [1.14.0] - 2024-12-19
+## [1.14.0] - 2025-08-04
 
 ### Added
 - **Programs Pagination**: Added pagination for programs table
@@ -142,14 +142,14 @@ All notable changes to this project will be documented in this file.
 - **Event Listeners**: Properly re-attach event listeners after pagination
 - **Data Consistency**: Edit functionality uses current page data instead of fetching new data
 
-## [1.13.0] - 2024-12-19
+## [1.13.0] - 2025-08-04
 
 ### Fixed
 - **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
 - **Period Filtering**: All tabs now use consistent period filtering logic
 - **Data Synchronization**: Ensured all tabs show the same data for the same period
 
-## [1.12.0] - 2024-12-19
+## [1.12.0] - 2025-08-04
 
 ### Added
 - **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
@@ -160,7 +160,7 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Added rate dropdowns to bookings table
 - **Better UX**: Quick rate changes without editing entire booking
 
-## [1.11.0] - 2024-12-19
+## [1.11.0] - 2025-08-04
 
 ### Added
 - **Average Analytics Metrics**: Added 4 new average metrics to analytics tab

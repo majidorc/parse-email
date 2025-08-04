@@ -1639,9 +1639,11 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
-    // Update individual benefit breakdowns
+    // Update individual benefit breakdowns and percentages
     const analyticsViatorBenefitBreakdown = document.getElementById('analytics-viator-benefit-breakdown');
     const analyticsWebsiteBenefitBreakdown = document.getElementById('analytics-website-benefit-breakdown');
+    const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
+    const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');
     
     if (analyticsViatorBenefitBreakdown) {
       analyticsViatorBenefitBreakdown.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1649,13 +1651,11 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsWebsiteBenefitBreakdown) {
       analyticsWebsiteBenefitBreakdown.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
-    
-    // Update Total Benefit with Viator/Website breakdown
-    if (analyticsBenefitBreakdown) {
-      analyticsBenefitBreakdown.textContent = `${Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    if (analyticsViatorBenefitPercentage) {
+      analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitPercent.toFixed(2)}%`;
     }
-    if (analyticsBenefitPercentages) {
-      analyticsBenefitPercentages.textContent = `~${viatorBenefitPercent.toFixed(2)}%/~${websiteBenefitPercent.toFixed(2)}%`;
+    if (analyticsWebsiteBenefitPercentage) {
+      analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitPercent.toFixed(2)}%`;
     }
     
     // Update Total Passengers with Viator/Website breakdown

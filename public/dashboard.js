@@ -1639,6 +1639,17 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
+    // Update individual benefit breakdowns
+    const analyticsViatorBenefitBreakdown = document.getElementById('analytics-viator-benefit-breakdown');
+    const analyticsWebsiteBenefitBreakdown = document.getElementById('analytics-website-benefit-breakdown');
+    
+    if (analyticsViatorBenefitBreakdown) {
+      analyticsViatorBenefitBreakdown.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    if (analyticsWebsiteBenefitBreakdown) {
+      analyticsWebsiteBenefitBreakdown.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    
     // Update Total Benefit with Viator/Website breakdown
     if (analyticsBenefitBreakdown) {
       analyticsBenefitBreakdown.textContent = `${Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;

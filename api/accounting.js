@@ -540,10 +540,15 @@ module.exports = async (req, res) => {
       `;
       
       // Use the same params as the main query but without LIMIT and OFFSET
-      const { rows: allRowsResult } = await sql.query(allDataQuery, params);
+      // Create a new params array without the LIMIT and OFFSET parameters
+      const totalsParams = params.slice(0, -2); // Remove the last 2 parameters (LIMIT and OFFSET)
+      const { rows: allRowsResult } = await sql.query(allDataQuery, totalsParams);
       allRows = allRowsResult;
       
       // Calculate total paid and total benefit for the entire period
+      console.log('Debug - allRows length:', allRows.length);
+      console.log('Debug - Sample row:', allRows[0]);
+      
       allRows.forEach(b => {
         const paid = Number(b.paid) || 0;
         totalPaid += paid;
@@ -555,6 +560,16 @@ module.exports = async (req, res) => {
         // Use stored net_total if available and column exists, otherwise calculate from rates
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
         totalBenefit += (paid - netTotal);
+        
+        console.log('Debug - Row calculation:', {
+          paid,
+          netAdult,
+          netChild,
+          adult,
+          child,
+          netTotal,
+          benefit: paid - netTotal
+        });
       });
       
       // Previous period benefit for percent change (only if we have date range filters)

@@ -4283,8 +4283,6 @@ function initializeApp() {
   const clearCacheBtn = document.getElementById('clear-cache-btn');
   if (clearCacheBtn) {
     clearCacheBtn.onclick = async function() {
-      if (!confirm('Clear all cached data? This will log you out and reload the app.')) return;
-      
       // Clear all caches
       if ('caches' in window) {
         try {

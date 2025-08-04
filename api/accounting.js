@@ -230,24 +230,22 @@ module.exports = async (req, res) => {
       // Create Excel workbook
       const workbook = XLSX.utils.book_new();
 
-      // Format data for Excel (remove channel column since it's now separated)
-      const formatBookingData = (booking) => ({
-        'Booking Number': booking.booking_number,
-        'Book Date': booking.book_date,
-        'Tour Date': booking.tour_date,
-        'Customer Name': booking.customer_name,
-        'Phone Number': booking.phone_number,
-        'SKU': booking.sku,
-        'Program': booking.program,
-        'Rate': booking.rate,
-        'Hotel': booking.hotel,
-        'Adults': booking.adult,
-        'Children': booking.child,
-        'Infants': booking.infant,
-        'Paid Amount': booking.paid,
-        'Net Total': booking.calculated_net_total,
-        'Benefit': booking.benefit
-      });
+             // Format data for Excel (remove phone number and hotel columns)
+       const formatBookingData = (booking) => ({
+         'Booking Number': booking.booking_number,
+         'Book Date': booking.book_date,
+         'Tour Date': booking.tour_date,
+         'Customer Name': booking.customer_name,
+         'SKU': booking.sku,
+         'Program': booking.program,
+         'Rate': booking.rate,
+         'Adults': booking.adult,
+         'Children': booking.child,
+         'Infants': booking.infant,
+         'Paid Amount': booking.paid,
+         'Net Total': booking.calculated_net_total,
+         'Benefit': booking.benefit
+       });
 
       const viatorData = viatorBookings.map(formatBookingData);
       const websiteData = websiteBookings.map(formatBookingData);
@@ -286,37 +284,35 @@ module.exports = async (req, res) => {
         { 'Metric': 'Website Avg Benefit per Booking', 'Value': websiteTotal > 0 ? websiteBenefit / websiteTotal : 0 }
       ];
 
-      // Create worksheets with proper headers
-      const viatorSheet = XLSX.utils.json_to_sheet(viatorData, { header: [
-        'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 'Phone Number', 
-        'SKU', 'Program', 'Rate', 'Hotel', 'Adults', 'Children', 'Infants', 
-        'Paid Amount', 'Net Total', 'Benefit'
-      ]});
-      const websiteSheet = XLSX.utils.json_to_sheet(websiteData, { header: [
-        'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 'Phone Number', 
-        'SKU', 'Program', 'Rate', 'Hotel', 'Adults', 'Children', 'Infants', 
-        'Paid Amount', 'Net Total', 'Benefit'
-      ]});
+             // Create worksheets with proper headers
+       const viatorSheet = XLSX.utils.json_to_sheet(viatorData, { header: [
+         'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 
+         'SKU', 'Program', 'Rate', 'Adults', 'Children', 'Infants', 
+         'Paid Amount', 'Net Total', 'Benefit'
+       ]});
+       const websiteSheet = XLSX.utils.json_to_sheet(websiteData, { header: [
+         'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 
+         'SKU', 'Program', 'Rate', 'Adults', 'Children', 'Infants', 
+         'Paid Amount', 'Net Total', 'Benefit'
+       ]});
       const summarySheet = XLSX.utils.json_to_sheet(summaryData, { header: ['Metric', 'Value']});
 
-      // Set column widths (removed channel column)
-      const colWidths = [
-        { wch: 15 }, // Booking Number
-        { wch: 12 }, // Book Date
-        { wch: 12 }, // Tour Date
-        { wch: 20 }, // Customer Name
-        { wch: 15 }, // Phone Number
-        { wch: 10 }, // SKU
-        { wch: 30 }, // Program
-        { wch: 15 }, // Rate
-        { wch: 20 }, // Hotel
-        { wch: 8 },  // Adults
-        { wch: 8 },  // Children
-        { wch: 8 },  // Infants
-        { wch: 12 }, // Paid Amount
-        { wch: 12 }, // Net Total
-        { wch: 12 }  // Benefit
-      ];
+             // Set column widths (removed phone number and hotel columns)
+       const colWidths = [
+         { wch: 15 }, // Booking Number
+         { wch: 12 }, // Book Date
+         { wch: 12 }, // Tour Date
+         { wch: 20 }, // Customer Name
+         { wch: 10 }, // SKU
+         { wch: 30 }, // Program
+         { wch: 15 }, // Rate
+         { wch: 8 },  // Adults
+         { wch: 8 },  // Children
+         { wch: 8 },  // Infants
+         { wch: 12 }, // Paid Amount
+         { wch: 12 }, // Net Total
+         { wch: 12 }  // Benefit
+       ];
       viatorSheet['!cols'] = colWidths;
       websiteSheet['!cols'] = colWidths;
 

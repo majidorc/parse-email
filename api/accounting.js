@@ -281,10 +281,18 @@ module.exports = async (req, res) => {
         { 'Metric': 'Website Avg Benefit per Booking', 'Value': websiteTotal > 0 ? websiteBenefit / websiteTotal : 0 }
       ];
 
-      // Create worksheets
-      const viatorSheet = XLSX.utils.json_to_sheet(viatorData);
-      const websiteSheet = XLSX.utils.json_to_sheet(websiteData);
-      const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+      // Create worksheets with proper headers
+      const viatorSheet = XLSX.utils.json_to_sheet(viatorData, { header: [
+        'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 'Phone Number', 
+        'SKU', 'Program', 'Rate', 'Hotel', 'Adults', 'Children', 'Infants', 
+        'Paid Amount', 'Net Total', 'Benefit'
+      ]});
+      const websiteSheet = XLSX.utils.json_to_sheet(websiteData, { header: [
+        'Booking Number', 'Book Date', 'Tour Date', 'Customer Name', 'Phone Number', 
+        'SKU', 'Program', 'Rate', 'Hotel', 'Adults', 'Children', 'Infants', 
+        'Paid Amount', 'Net Total', 'Benefit'
+      ]});
+      const summarySheet = XLSX.utils.json_to_sheet(summaryData, { header: ['Metric', 'Value']});
 
       // Set column widths (removed channel column)
       const colWidths = [

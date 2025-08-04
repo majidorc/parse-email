@@ -1278,6 +1278,18 @@ const exportAccountingBtn = document.getElementById('export-accounting-btn');
 if (exportAccountingBtn) {
   exportAccountingBtn.onclick = async () => {
     try {
+      // Show loading state
+      const originalText = exportAccountingBtn.innerHTML;
+      exportAccountingBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Preparing Export...
+      `;
+      exportAccountingBtn.disabled = true;
+      exportAccountingBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      
       // Get current filters
       const currentPeriod = document.getElementById('global-period-selector')?.value || 'all';
       const currentSearch = document.getElementById('search-bar')?.value || '';
@@ -1307,9 +1319,35 @@ if (exportAccountingBtn) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      showToast('Export successful!', 'success');
+      // Show success state briefly
+      exportAccountingBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+        Export Complete!
+      `;
+      exportAccountingBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+      exportAccountingBtn.classList.add('bg-green-500');
+      
+      showToast('Export successful! File downloaded.', 'success');
+      
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        exportAccountingBtn.innerHTML = originalText;
+        exportAccountingBtn.disabled = false;
+        exportAccountingBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-green-500');
+        exportAccountingBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      }, 2000);
+      
     } catch (error) {
       console.error('Export error:', error);
+      
+      // Reset button on error
+      exportAccountingBtn.innerHTML = originalText;
+      exportAccountingBtn.disabled = false;
+      exportAccountingBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      exportAccountingBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      
       showToast('Export failed. Please try again.', 'error');
     }
   };

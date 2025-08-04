@@ -919,12 +919,12 @@ function renderAccountingSummary(data) {
   // Always use the original summary data for all bookings, not filtered
   accountingSummaryData = data;
   
-  // Calculate totals from current data
+  // Calculate totals from current page data only
   const totalBookings = accountingTotalRows || 0;
-  // Use the totalPaid from API response instead of calculating from current page data
-  const totalPaid = data.totalPaid || accountingData.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
-  // Use the totalBenefit from API response instead of calculating from current page data
-  const totalBenefit = data.totalBenefit || accountingData.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
+  // Calculate totalPaid from current page data only
+  const totalPaid = accountingData.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+  // Calculate totalBenefit from current page data only
+  const totalBenefit = accountingData.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
   
   // Debug logging
   console.log('API response data:', data);
@@ -945,8 +945,8 @@ function renderAccountingSummary(data) {
   document.getElementById('accounting-summary').innerHTML = `
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm md:text-base">
       ${statCard('Total Booking', totalBookings, 'text-blue-700', 'bg-blue-50', 'border-blue-100', 'text-blue-800', 'total-booking-card')}
-      ${statCard('Sale', totalPaid, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'sale-card')}
-      ${statCard('Benefit', totalBenefit, 'text-yellow-700', 'bg-yellow-50', 'border-yellow-100', 'text-yellow-800', 'benefit-card')}
+      ${statCard('Sale (Page)', totalPaid, 'text-green-700', 'bg-green-50', 'border-green-100', 'text-green-800', 'sale-card')}
+      ${statCard('Benefit (Page)', totalBenefit, 'text-yellow-700', 'bg-yellow-50', 'border-yellow-100', 'text-yellow-800', 'benefit-card')}
     </div>
     <div class="flex justify-end mt-4">
       <span class="text-xs text-gray-500">Showing <span class="font-semibold text-gray-800">${accountingData.length}</span> of <span class="font-semibold text-gray-800">${accountingTotalRows}</span> results <span class="text-xs text-gray-400 ml-1">(Page ${accountingCurrentPage})</span></span>

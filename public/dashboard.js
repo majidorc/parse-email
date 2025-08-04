@@ -935,10 +935,6 @@ async function renderAccountingSummary(data) {
       // Use analytics data for totals
       totalPaid = (analyticsData.viatorSale || 0) + (analyticsData.websiteSale || 0);
       totalBenefit = analyticsData.totalBenefit || 0;
-      
-      console.log('Analytics data for accounting summary:', analyticsData);
-      console.log('Total Paid from analytics:', totalPaid);
-      console.log('Total Benefit from analytics:', totalBenefit);
     }
   } catch (error) {
     console.error('Error fetching analytics data for accounting summary:', error);
@@ -946,14 +942,6 @@ async function renderAccountingSummary(data) {
   
   // Use API response totals for the entire period, not just current page
   const totalBookings = accountingTotalRows || 0;
-  
-  // Debug logging
-  console.log('API response data:', data);
-  console.log('data.totalPaid:', data.totalPaid);
-  console.log('data.totalBenefit:', data.totalBenefit);
-  console.log('accountingData length:', accountingData.length);
-  console.log('Final totalPaid:', totalPaid);
-  console.log('Final totalBenefit:', totalBenefit);
   
   function statCard(label, value, color, bg, border, valueClass, id = "") {
     return `

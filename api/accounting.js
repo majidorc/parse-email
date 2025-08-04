@@ -187,6 +187,12 @@ module.exports = async (req, res) => {
       const uniqueChannels = [...new Set(bookings.map(b => b.channel))];
       console.log('Debug - Unique channels in data:', uniqueChannels);
       console.log('Debug - Total bookings:', bookings.length);
+      
+      // Log each booking with its channel for debugging
+      console.log('Debug - All bookings with channels:');
+      bookings.forEach((b, index) => {
+        console.log(`Booking ${index + 1}: ${b.booking_number} - Channel: "${b.channel}"`);
+      });
 
       // Calculate summary data
       const totalBookings = bookings.length;
@@ -203,8 +209,9 @@ module.exports = async (req, res) => {
       });
       const websiteBookings = bookings.filter(b => {
         const channel = (b.channel || '').toLowerCase().trim();
+        // Only include specific website channels, not everything that's not viator
         return channel === 'website' || channel === 'direct' || channel === 'own website' || 
-               (!channel.includes('viator') && channel !== '');
+               channel === 'direct website' || channel === 'own' || channel === 'website direct';
       });
 
       // Calculate channel-specific totals

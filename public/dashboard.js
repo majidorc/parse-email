@@ -1314,26 +1314,56 @@ if (exportAccountingBtn) {
       const a = document.createElement('a');
       a.href = url;
       
-      // Create filename with period information
+      // Create filename with actual month/year information
       const today = new Date().toISOString().split('T')[0];
-      let periodName = 'all';
+      let fileName = 'accounting_export_all.xlsx';
       
-      // Map period values to readable names
-      const periodNames = {
-        'thisWeek': 'thisWeek',
-        'lastWeek': 'lastWeek', 
-        'thisMonth': 'thisMonth',
-        'lastMonth': 'lastMonth',
-        'twoMonthsAgo': 'twoMonthsAgo',
-        'threeMonthsAgo': 'threeMonthsAgo',
-        'sixMonthsAgo': 'sixMonthsAgo',
-        'thisYear': 'thisYear',
-        'lastYear': 'lastYear',
-        'all': 'all'
-      };
+      // Get the actual month/year for the selected period
+      const now = new Date();
+      const monthNames = [
+        'january', 'february', 'march', 'april', 'may', 'june',
+        'july', 'august', 'september', 'october', 'november', 'december'
+      ];
       
-      periodName = periodNames[currentPeriod] || 'all';
-      a.download = `accounting_export_${periodName}_${today}.xlsx`;
+      if (currentPeriod === 'thisMonth') {
+        const monthName = monthNames[now.getMonth()];
+        const year = now.getFullYear();
+        fileName = `accounting_${monthName}_${year}.xlsx`;
+      } else if (currentPeriod === 'lastMonth') {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const monthName = monthNames[lastMonth.getMonth()];
+        const year = lastMonth.getFullYear();
+        fileName = `accounting_${monthName}_${year}.xlsx`;
+      } else if (currentPeriod === 'twoMonthsAgo') {
+        const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const monthName = monthNames[twoMonthsAgo.getMonth()];
+        const year = twoMonthsAgo.getFullYear();
+        fileName = `accounting_${monthName}_${year}.xlsx`;
+      } else if (currentPeriod === 'threeMonthsAgo') {
+        const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        const monthName = monthNames[threeMonthsAgo.getMonth()];
+        const year = threeMonthsAgo.getFullYear();
+        fileName = `accounting_${monthName}_${year}.xlsx`;
+      } else if (currentPeriod === 'sixMonthsAgo') {
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        const monthName = monthNames[sixMonthsAgo.getMonth()];
+        const year = sixMonthsAgo.getFullYear();
+        fileName = `accounting_${monthName}_${year}.xlsx`;
+      } else if (currentPeriod === 'thisYear') {
+        const year = now.getFullYear();
+        fileName = `accounting_${year}.xlsx`;
+      } else if (currentPeriod === 'lastYear') {
+        const year = now.getFullYear() - 1;
+        fileName = `accounting_${year}.xlsx`;
+      } else if (currentPeriod === 'thisWeek' || currentPeriod === 'lastWeek') {
+        // For weeks, use the current date
+        fileName = `accounting_export_${currentPeriod}_${today}.xlsx`;
+      } else {
+        // For 'all' or other periods
+        fileName = `accounting_export_all_${today}.xlsx`;
+      }
+      
+      a.download = fileName;
       
       document.body.appendChild(a);
       a.click();

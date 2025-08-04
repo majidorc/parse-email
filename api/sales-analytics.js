@@ -341,6 +341,15 @@ export default async function handler(req, res) {
       hasNetTotalColumn = false;
     }
 
+    // Calculate number of days in the period
+    let periodDays = 1;
+    if (startDateParam && endDateParam) {
+      const startDate = new Date(startDateParam);
+      const endDate = new Date(endDateParam);
+      const diffTime = Math.abs(endDate - startDate);
+      periodDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+    
     // Calculate total benefit for the period
     let totalBenefitResult;
     if (dateFilter) {
@@ -588,6 +597,7 @@ export default async function handler(req, res) {
       websiteBenefit,
       uncategorizedBenefit,
       uncategorizedBookings: uncategorizedBenefitResult.rows,
+      periodDays,
       // Debug information to investigate the difference
       debug: {
         availableChannels: debugChannels.rows,

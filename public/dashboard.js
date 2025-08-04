@@ -1575,9 +1575,10 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const viatorSale = data.viatorSale || 0;
     const websiteSale = data.websiteSale || 0;
     
-    // Calculate average sale per booking for each channel
-    const avgViatorSale = viatorCount > 0 ? viatorSale / viatorCount : 0;
-    const avgWebsiteSale = websiteCount > 0 ? websiteSale / websiteCount : 0;
+    // Calculate average sale per day for each channel
+    const periodDays = data.periodDays || 1; // Default to 1 day if not provided
+    const avgViatorSale = periodDays > 0 ? viatorSale / periodDays : 0;
+    const avgWebsiteSale = periodDays > 0 ? websiteSale / periodDays : 0;
     
     if (avgSaleViator) avgSaleViator.textContent = Number(avgViatorSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (avgSaleWebsite) avgSaleWebsite.textContent = Number(avgWebsiteSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1623,9 +1624,9 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     const websiteBenefit = data.websiteBenefit || 0;
     const totalPassengersCount = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
     
-    // Calculate average benefit per booking for each channel
-    const avgViatorBenefit = viatorCount > 0 ? viatorBenefit / viatorCount : 0;
-    const avgWebsiteBenefit = websiteCount > 0 ? websiteBenefit / websiteCount : 0;
+    // Calculate average benefit per day for each channel
+    const avgViatorBenefit = periodDays > 0 ? viatorBenefit / periodDays : 0;
+    const avgWebsiteBenefit = periodDays > 0 ? websiteBenefit / periodDays : 0;
     
     // Calculate benefit percentages of sales
     const viatorBenefitPercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;

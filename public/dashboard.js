@@ -1313,7 +1313,28 @@ if (exportAccountingBtn) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `accounting_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Create filename with period information
+      const today = new Date().toISOString().split('T')[0];
+      let periodName = 'all';
+      
+      // Map period values to readable names
+      const periodNames = {
+        'thisWeek': 'thisWeek',
+        'lastWeek': 'lastWeek', 
+        'thisMonth': 'thisMonth',
+        'lastMonth': 'lastMonth',
+        'twoMonthsAgo': 'twoMonthsAgo',
+        'threeMonthsAgo': 'threeMonthsAgo',
+        'sixMonthsAgo': 'sixMonthsAgo',
+        'thisYear': 'thisYear',
+        'lastYear': 'lastYear',
+        'all': 'all'
+      };
+      
+      periodName = periodNames[currentPeriod] || 'all';
+      a.download = `accounting_export_${periodName}_${today}.xlsx`;
+      
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

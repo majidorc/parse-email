@@ -496,6 +496,9 @@ module.exports = async (req, res) => {
     `;
     const dataParams = [...params, limit, offset];
     const { rows: bookingsRaw } = await sql.query(dataQuery, dataParams);
+    
+    // Store the original params (without LIMIT and OFFSET) for the totals calculation
+    const originalParams = params;
     // Calculate benefit for each booking
     const bookings = bookingsRaw.map(b => {
       const netAdult = Number(b.net_adult) || 0;
@@ -539,10 +542,8 @@ module.exports = async (req, res) => {
         ORDER BY b.${sort} ${dirStr}
       `;
       
-      // Use the same params as the main query but without LIMIT and OFFSET
-      // Create a new params array without the LIMIT and OFFSET parameters
-      const totalsParams = params.slice(0, -2); // Remove the last 2 parameters (LIMIT and OFFSET)
-      const { rows: allRowsResult } = await sql.query(allDataQuery, totalsParams);
+      // Use the original params array (without LIMIT and OFFSET) for the totals calculation
+      const { rows: allRowsResult } = await sql.query(allDataQuery, originalParams);
       allRows = allRowsResult;
       
       // Calculate total paid and total benefit for the entire period

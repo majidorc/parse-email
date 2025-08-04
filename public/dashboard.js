@@ -1639,18 +1639,10 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
-    // Update individual benefit breakdowns and percentages
-    const analyticsViatorBenefitBreakdown = document.getElementById('analytics-viator-benefit-breakdown');
-    const analyticsWebsiteBenefitBreakdown = document.getElementById('analytics-website-benefit-breakdown');
+    // Update individual benefit percentages
     const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
     const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');
     
-    if (analyticsViatorBenefitBreakdown) {
-      analyticsViatorBenefitBreakdown.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
-    if (analyticsWebsiteBenefitBreakdown) {
-      analyticsWebsiteBenefitBreakdown.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
     if (analyticsViatorBenefitPercentage) {
       analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitPercent.toFixed(2)}%`;
     }

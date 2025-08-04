@@ -183,6 +183,11 @@ module.exports = async (req, res) => {
 
       const { rows: bookings } = await sql.query(query, params);
 
+      // Debug: Log unique channel values to see what's in the database
+      const uniqueChannels = [...new Set(bookings.map(b => b.channel))];
+      console.log('Debug - Unique channels in data:', uniqueChannels);
+      console.log('Debug - Total bookings:', bookings.length);
+
       // Calculate summary data
       const totalBookings = bookings.length;
       const totalPaid = bookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
@@ -191,9 +196,16 @@ module.exports = async (req, res) => {
       const totalChildren = bookings.reduce((sum, b) => sum + (Number(b.child) || 0), 0);
       const totalInfants = bookings.reduce((sum, b) => sum + (Number(b.infant) || 0), 0);
 
-      // Separate bookings by channel
-      const viatorBookings = bookings.filter(b => b.channel === 'viator');
-      const websiteBookings = bookings.filter(b => b.channel === 'website');
+      // Separate bookings by channel (case-insensitive and handle variations)
+      const viatorBookings = bookings.filter(b => {
+        const channel = (b.channel || '').toLowerCase().trim();
+        return channel === 'viator' || channel === 'viator.com' || channel.includes('viator');
+      });
+      const websiteBookings = bookings.filter(b => {
+        const channel = (b.channel || '').toLowerCase().trim();
+        return channel === 'website' || channel === 'direct' || channel === 'own website' || 
+               (!channel.includes('viator') && channel !== '');
+      });
 
       // Calculate channel-specific totals
       const viatorTotal = viatorBookings.length;
@@ -234,6 +246,12 @@ module.exports = async (req, res) => {
 
       const viatorData = viatorBookings.map(formatBookingData);
       const websiteData = websiteBookings.map(formatBookingData);
+
+      // Debug: Log filtered results
+      console.log('Debug - Viator bookings count:', viatorBookings.length);
+      console.log('Debug - Website bookings count:', websiteBookings.length);
+      console.log('Debug - Viator channels:', [...new Set(viatorBookings.map(b => b.channel))]);
+      console.log('Debug - Website channels:', [...new Set(websiteBookings.map(b => b.channel))]);
 
       // Enhanced summary sheet with channel breakdown
       const summaryData = [

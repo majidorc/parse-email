@@ -134,18 +134,31 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Check if net_total column exists
-      let hasNetTotalColumn = false;
-      try {
-        const { rows: columnCheck } = await sql.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'bookings' AND column_name = 'net_total'
-        `);
-        hasNetTotalColumn = columnCheck.length > 0;
-      } catch (err) {
-        hasNetTotalColumn = false;
-      }
+             // Check if net_total column exists
+       let hasNetTotalColumn = false;
+       try {
+         const { rows: columnCheck } = await sql.query(`
+           SELECT column_name 
+           FROM information_schema.columns 
+           WHERE table_name = 'bookings' AND column_name = 'net_total'
+         `);
+         hasNetTotalColumn = columnCheck.length > 0;
+       } catch (err) {
+         hasNetTotalColumn = false;
+       }
+
+       // Check if email column exists
+       let hasEmailColumn = false;
+       try {
+         const { rows: emailColumnCheck } = await sql.query(`
+           SELECT column_name 
+           FROM information_schema.columns 
+           WHERE table_name = 'bookings' AND column_name = 'email'
+         `);
+         hasEmailColumn = emailColumnCheck.length > 0;
+       } catch (err) {
+         hasEmailColumn = false;
+       }
 
              // Get all bookings with benefit calculation
        const query = `
@@ -163,7 +176,7 @@ module.exports = async (req, res) => {
            b.child,
            b.infant,
            b.paid,
-           b.email,
+           ${hasEmailColumn ? 'b.email,' : ''}
            r.net_adult,
            r.net_child${hasNetTotalColumn ? ', b.net_total' : ''},
            CASE 
@@ -184,15 +197,20 @@ module.exports = async (req, res) => {
       const { rows: bookings } = await sql.query(query, params);
 
       // Debug: Log unique email values to see what's in the database
-      const uniqueEmails = [...new Set(bookings.map(b => b.email))];
-      console.log('Debug - Unique emails in data:', uniqueEmails);
-      console.log('Debug - Total bookings:', bookings.length);
-      
-      // Log each booking with its email and booking number for debugging
-      console.log('Debug - All bookings with emails and booking numbers:');
-      bookings.forEach((b, index) => {
-        console.log(`Booking ${index + 1}: ${b.booking_number} - Email: "${b.email}"`);
-      });
+      if (hasEmailColumn) {
+        const uniqueEmails = [...new Set(bookings.map(b => b.email))];
+        console.log('Debug - Unique emails in data:', uniqueEmails);
+        console.log('Debug - Total bookings:', bookings.length);
+        
+        // Log each booking with its email and booking number for debugging
+        console.log('Debug - All bookings with emails and booking numbers:');
+        bookings.forEach((b, index) => {
+          console.log(`Booking ${index + 1}: ${b.booking_number} - Email: "${b.email}"`);
+        });
+      } else {
+        console.log('Debug - Email column does not exist, using booking number only for channel filtering');
+        console.log('Debug - Total bookings:', bookings.length);
+      }
 
       // Calculate summary data
       const totalBookings = bookings.length;
@@ -205,7 +223,7 @@ module.exports = async (req, res) => {
       // Separate bookings by channel based on email source and booking number
       const viatorBookings = bookings.filter(b => {
         // Viator: All bookings from bokun email EXCEPT booking numbers starting with "GYG"
-        const email = (b.email || '').toLowerCase();
+        const email = hasEmailColumn ? (b.email || '').toLowerCase() : '';
         const bookingNumber = (b.booking_number || '').toUpperCase();
         
         return email.includes('bokun') && !bookingNumber.startsWith('GYG');
@@ -213,7 +231,7 @@ module.exports = async (req, res) => {
       
       const websiteBookings = bookings.filter(b => {
         // Website: All bookings from info@tours.co.th AND all booking numbers starting with "GYG"
-        const email = (b.email || '').toLowerCase();
+        const email = hasEmailColumn ? (b.email || '').toLowerCase() : '';
         const bookingNumber = (b.booking_number || '').toUpperCase();
         
         return email.includes('info@tours.co.th') || bookingNumber.startsWith('GYG');
@@ -262,8 +280,10 @@ module.exports = async (req, res) => {
       // Debug: Log filtered results
       console.log('Debug - Viator bookings count:', viatorBookings.length);
       console.log('Debug - Website bookings count:', websiteBookings.length);
-      console.log('Debug - Viator emails:', [...new Set(viatorBookings.map(b => b.email))]);
-      console.log('Debug - Website emails:', [...new Set(websiteBookings.map(b => b.email))]);
+      if (hasEmailColumn) {
+        console.log('Debug - Viator emails:', [...new Set(viatorBookings.map(b => b.email))]);
+        console.log('Debug - Website emails:', [...new Set(websiteBookings.map(b => b.email))]);
+      }
       console.log('Debug - Viator booking numbers:', viatorBookings.map(b => b.booking_number));
       console.log('Debug - Website booking numbers:', websiteBookings.map(b => b.booking_number));
 

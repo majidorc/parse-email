@@ -1277,9 +1277,11 @@ const accountingBtn = document.getElementById('toggle-accounting');
 const exportAccountingBtn = document.getElementById('export-accounting-btn');
 if (exportAccountingBtn) {
   exportAccountingBtn.onclick = async () => {
+    // Store original text before any changes
+    const originalText = exportAccountingBtn.innerHTML;
+    
     try {
       // Show loading state
-      const originalText = exportAccountingBtn.innerHTML;
       exportAccountingBtn.innerHTML = `
         <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

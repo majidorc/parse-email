@@ -915,14 +915,37 @@ let accountingSearch = '';
 const accountingRowsPerPage = 20;
 let accountingSummaryData = null;
 
-function renderAccountingSummary(data) {
+async function renderAccountingSummary(data) {
   // Always use the original summary data for all bookings, not filtered
   accountingSummaryData = data;
   
+  // Get the current period from the global period selector
+  const globalPeriod = document.getElementById('global-period-selector');
+  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+  
+  // Fetch analytics data to get correct period-wide totals
+  let totalPaid = 0;
+  let totalBenefit = 0;
+  
+  try {
+    const analyticsResponse = await fetch(`/api/sales-analytics?period=${period}`);
+    if (analyticsResponse.ok) {
+      const analyticsData = await analyticsResponse.json();
+      
+      // Use analytics data for totals
+      totalPaid = (analyticsData.viatorSale || 0) + (analyticsData.websiteSale || 0);
+      totalBenefit = analyticsData.totalBenefit || 0;
+      
+      console.log('Analytics data for accounting summary:', analyticsData);
+      console.log('Total Paid from analytics:', totalPaid);
+      console.log('Total Benefit from analytics:', totalBenefit);
+    }
+  } catch (error) {
+    console.error('Error fetching analytics data for accounting summary:', error);
+  }
+  
   // Use API response totals for the entire period, not just current page
   const totalBookings = accountingTotalRows || 0;
-  const totalPaid = data.totalPaid || 0;
-  const totalBenefit = data.totalBenefit || 0;
   
   // Debug logging
   console.log('API response data:', data);
@@ -1014,10 +1037,10 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       // Always show the original summary, not filtered
       if (accountingSummaryData) {
         document.getElementById('accounting-summary').style.display = '';
-        renderAccountingSummary(accountingSummaryData);
+        await renderAccountingSummary(accountingSummaryData);
       } else {
         document.getElementById('accounting-summary').style.display = '';
-        renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
+        await renderAccountingSummary({ lastMonthCount: 0, lastMonthOpNotSentPaid: 0, thisMonthCount: 0, thisMonthOpNotSentPaid: 0 });
       }
       return;
     }
@@ -1027,14 +1050,14 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     // Always show the original summary, not filtered
     document.getElementById('accounting-summary').style.display = '';
     if (!accountingSummaryData) {
-      renderAccountingSummary({
+      await renderAccountingSummary({
         lastMonthCount: data.lastMonthCount || 0,
         lastMonthOpNotSentPaid: data.lastMonthOpNotSentPaid || 0,
         thisMonthCount: data.thisMonthCount || 0,
         thisMonthOpNotSentPaid: data.thisMonthOpNotSentPaid || 0
       });
     } else {
-      renderAccountingSummary(accountingSummaryData);
+      await renderAccountingSummary(accountingSummaryData);
     }
     renderAccountingTable();
     renderAccountingPagination();

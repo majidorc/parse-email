@@ -191,11 +191,30 @@ module.exports = async (req, res) => {
       const totalChildren = bookings.reduce((sum, b) => sum + (Number(b.child) || 0), 0);
       const totalInfants = bookings.reduce((sum, b) => sum + (Number(b.infant) || 0), 0);
 
+      // Separate bookings by channel
+      const viatorBookings = bookings.filter(b => b.channel === 'viator');
+      const websiteBookings = bookings.filter(b => b.channel === 'website');
+
+      // Calculate channel-specific totals
+      const viatorTotal = viatorBookings.length;
+      const viatorPaid = viatorBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+      const viatorBenefit = viatorBookings.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
+      const viatorAdults = viatorBookings.reduce((sum, b) => sum + (Number(b.adult) || 0), 0);
+      const viatorChildren = viatorBookings.reduce((sum, b) => sum + (Number(b.child) || 0), 0);
+      const viatorInfants = viatorBookings.reduce((sum, b) => sum + (Number(b.infant) || 0), 0);
+
+      const websiteTotal = websiteBookings.length;
+      const websitePaid = websiteBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+      const websiteBenefit = websiteBookings.reduce((sum, b) => sum + (Number(b.benefit) || 0), 0);
+      const websiteAdults = websiteBookings.reduce((sum, b) => sum + (Number(b.adult) || 0), 0);
+      const websiteChildren = websiteBookings.reduce((sum, b) => sum + (Number(b.child) || 0), 0);
+      const websiteInfants = websiteBookings.reduce((sum, b) => sum + (Number(b.infant) || 0), 0);
+
       // Create Excel workbook
       const workbook = XLSX.utils.book_new();
 
-      // Format data for Excel
-      const excelData = bookings.map(booking => ({
+      // Format data for Excel (remove channel column since it's now separated)
+      const formatBookingData = (booking) => ({
         'Booking Number': booking.booking_number,
         'Book Date': booking.book_date,
         'Tour Date': booking.tour_date,
@@ -205,32 +224,51 @@ module.exports = async (req, res) => {
         'Program': booking.program,
         'Rate': booking.rate,
         'Hotel': booking.hotel,
-        'Channel': booking.channel,
         'Adults': booking.adult,
         'Children': booking.child,
         'Infants': booking.infant,
         'Paid Amount': booking.paid,
         'Net Total': booking.calculated_net_total,
         'Benefit': booking.benefit
-      }));
+      });
 
-      // Add summary sheet
+      const viatorData = viatorBookings.map(formatBookingData);
+      const websiteData = websiteBookings.map(formatBookingData);
+
+      // Enhanced summary sheet with channel breakdown
       const summaryData = [
         { 'Metric': 'Total Bookings', 'Value': totalBookings },
+        { 'Metric': 'Viator Bookings', 'Value': viatorTotal },
+        { 'Metric': 'Website Bookings', 'Value': websiteTotal },
         { 'Metric': 'Total Paid Amount', 'Value': totalPaid },
+        { 'Metric': 'Viator Paid Amount', 'Value': viatorPaid },
+        { 'Metric': 'Website Paid Amount', 'Value': websitePaid },
         { 'Metric': 'Total Benefit', 'Value': totalBenefit },
+        { 'Metric': 'Viator Benefit', 'Value': viatorBenefit },
+        { 'Metric': 'Website Benefit', 'Value': websiteBenefit },
         { 'Metric': 'Total Adults', 'Value': totalAdults },
+        { 'Metric': 'Viator Adults', 'Value': viatorAdults },
+        { 'Metric': 'Website Adults', 'Value': websiteAdults },
         { 'Metric': 'Total Children', 'Value': totalChildren },
+        { 'Metric': 'Viator Children', 'Value': viatorChildren },
+        { 'Metric': 'Website Children', 'Value': websiteChildren },
         { 'Metric': 'Total Infants', 'Value': totalInfants },
+        { 'Metric': 'Viator Infants', 'Value': viatorInfants },
+        { 'Metric': 'Website Infants', 'Value': websiteInfants },
         { 'Metric': 'Average Paid per Booking', 'Value': totalBookings > 0 ? totalPaid / totalBookings : 0 },
-        { 'Metric': 'Average Benefit per Booking', 'Value': totalBookings > 0 ? totalBenefit / totalBookings : 0 }
+        { 'Metric': 'Average Benefit per Booking', 'Value': totalBookings > 0 ? totalBenefit / totalBookings : 0 },
+        { 'Metric': 'Viator Avg Paid per Booking', 'Value': viatorTotal > 0 ? viatorPaid / viatorTotal : 0 },
+        { 'Metric': 'Viator Avg Benefit per Booking', 'Value': viatorTotal > 0 ? viatorBenefit / viatorTotal : 0 },
+        { 'Metric': 'Website Avg Paid per Booking', 'Value': websiteTotal > 0 ? websitePaid / websiteTotal : 0 },
+        { 'Metric': 'Website Avg Benefit per Booking', 'Value': websiteTotal > 0 ? websiteBenefit / websiteTotal : 0 }
       ];
 
       // Create worksheets
-      const bookingsSheet = XLSX.utils.json_to_sheet(excelData);
+      const viatorSheet = XLSX.utils.json_to_sheet(viatorData);
+      const websiteSheet = XLSX.utils.json_to_sheet(websiteData);
       const summarySheet = XLSX.utils.json_to_sheet(summaryData);
 
-      // Set column widths
+      // Set column widths (removed channel column)
       const colWidths = [
         { wch: 15 }, // Booking Number
         { wch: 12 }, // Book Date
@@ -241,7 +279,6 @@ module.exports = async (req, res) => {
         { wch: 30 }, // Program
         { wch: 15 }, // Rate
         { wch: 20 }, // Hotel
-        { wch: 10 }, // Channel
         { wch: 8 },  // Adults
         { wch: 8 },  // Children
         { wch: 8 },  // Infants
@@ -249,11 +286,13 @@ module.exports = async (req, res) => {
         { wch: 12 }, // Net Total
         { wch: 12 }  // Benefit
       ];
-      bookingsSheet['!cols'] = colWidths;
+      viatorSheet['!cols'] = colWidths;
+      websiteSheet['!cols'] = colWidths;
 
       // Add worksheets to workbook
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-      XLSX.utils.book_append_sheet(workbook, bookingsSheet, 'Bookings');
+      XLSX.utils.book_append_sheet(workbook, viatorSheet, 'Viator Bookings');
+      XLSX.utils.book_append_sheet(workbook, websiteSheet, 'Website Bookings');
 
       // Generate filename
       const now = new Date();

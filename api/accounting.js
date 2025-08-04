@@ -325,15 +325,56 @@ module.exports = async (req, res) => {
       XLSX.utils.book_append_sheet(workbook, viatorSheet, 'Viator Bookings');
       XLSX.utils.book_append_sheet(workbook, websiteSheet, 'Website Bookings');
 
-             // Generate filename with month and export time
-       const now = new Date();
+             // Generate filename with the actual month of the selected period
        const monthNames = [
          'january', 'february', 'march', 'april', 'may', 'june',
          'july', 'august', 'september', 'october', 'november', 'december'
        ];
-       const currentMonth = monthNames[now.getMonth()];
-       const exportTime = now.toISOString().slice(0, 19).replace(/:/g, '-'); // Format: YYYY-MM-DDTHH-MM-SS
-       const filename = `accounting_${currentMonth}_${exportTime}.xlsx`;
+       
+       let filename;
+       if (period === 'thisMonth') {
+         const currentMonth = monthNames[new Date().getMonth()];
+         const year = new Date().getFullYear();
+         filename = `accounting_${currentMonth}_${year}.xlsx`;
+       } else if (period === 'lastMonth') {
+         const lastMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+         const monthName = monthNames[lastMonth.getMonth()];
+         const year = lastMonth.getFullYear();
+         filename = `accounting_${monthName}_${year}.xlsx`;
+       } else if (period === 'twoMonthsAgo') {
+         const twoMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1);
+         const monthName = monthNames[twoMonthsAgo.getMonth()];
+         const year = twoMonthsAgo.getFullYear();
+         filename = `accounting_${monthName}_${year}.xlsx`;
+       } else if (period === 'threeMonthsAgo') {
+         const threeMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 3, 1);
+         const monthName = monthNames[threeMonthsAgo.getMonth()];
+         const year = threeMonthsAgo.getFullYear();
+         filename = `accounting_${monthName}_${year}.xlsx`;
+       } else if (period === 'sixMonthsAgo') {
+         const sixMonthsAgo = new Date(new Date().getFullYear(), new Date().getMonth() - 6, 1);
+         const monthName = monthNames[sixMonthsAgo.getMonth()];
+         const year = sixMonthsAgo.getFullYear();
+         filename = `accounting_${monthName}_${year}.xlsx`;
+       } else if (period === 'thisYear') {
+         const year = new Date().getFullYear();
+         filename = `accounting_${year}.xlsx`;
+       } else if (period === 'lastYear') {
+         const year = new Date().getFullYear() - 1;
+         filename = `accounting_${year}.xlsx`;
+       } else if (period === 'thisWeek' || period === 'lastWeek') {
+         // For weeks, use the current date
+         const now = new Date();
+         const currentMonth = monthNames[now.getMonth()];
+         const year = now.getFullYear();
+         filename = `accounting_${currentMonth}_${year}.xlsx`;
+       } else {
+         // For 'all' or other periods, use current month
+         const now = new Date();
+         const currentMonth = monthNames[now.getMonth()];
+         const year = now.getFullYear();
+         filename = `accounting_${currentMonth}_${year}.xlsx`;
+       }
 
       // Generate buffer
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });

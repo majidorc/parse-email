@@ -77,7 +77,7 @@ async function handleTelegramCallback(callbackQuery, res) {
                 
                 if (columnCheck.rows.length > 0) {
                     update.national_park_fee = !booking.national_park_fee;
-
+                } else {
                     // Send a message to the user that this feature is not available
                     try {
                         const token = await getTelegramBotToken();
@@ -89,12 +89,12 @@ async function handleTelegramCallback(callbackQuery, res) {
                     } catch (popupErr) {
                         console.error('Error sending Telegram popup alert:', popupErr.response ? popupErr.response.data : popupErr.message);
                     }
-                                    return res.status(200).send('Column not found');
+                    return res.status(200).send('Column not found');
+                }
+            } catch (err) {
+                console.error('Error checking column existence:', err.message);
+                return res.status(200).send('Error checking column');
             }
-        } catch (err) {
-            console.error('Error checking column existence:', err.message);
-            return res.status(200).send('Error checking column');
-        }
     } else if (buttonType === 'transfer') {
         // Check if no_transfer column exists before trying to update it
         try {
@@ -106,7 +106,7 @@ async function handleTelegramCallback(callbackQuery, res) {
             
             if (columnCheck.rows.length > 0) {
                 update.no_transfer = !booking.no_transfer;
-
+            } else {
                 // Send a message to the user that this feature is not available
                 try {
                     const token = await getTelegramBotToken();

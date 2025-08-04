@@ -325,10 +325,15 @@ module.exports = async (req, res) => {
       XLSX.utils.book_append_sheet(workbook, viatorSheet, 'Viator Bookings');
       XLSX.utils.book_append_sheet(workbook, websiteSheet, 'Website Bookings');
 
-      // Generate filename
-      const now = new Date();
-      const timestamp = now.toISOString().split('T')[0];
-      const filename = `accounting_export_${timestamp}.xlsx`;
+             // Generate filename with month and export time
+       const now = new Date();
+       const monthNames = [
+         'january', 'february', 'march', 'april', 'may', 'june',
+         'july', 'august', 'september', 'october', 'november', 'december'
+       ];
+       const currentMonth = monthNames[now.getMonth()];
+       const exportTime = now.toISOString().slice(0, 19).replace(/:/g, '-'); // Format: YYYY-MM-DDTHH-MM-SS
+       const filename = `accounting_${currentMonth}_${exportTime}.xlsx`;
 
       // Generate buffer
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });

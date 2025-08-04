@@ -22,37 +22,89 @@ module.exports = async (req, res) => {
       let params = [];
       let paramIndex = 1;
       
+      // Period filtering function (same as main function)
+      function getBangkokDateRange(period) {
+        const now = new Date();
+        function getStartOfWeek(date) {
+          const d = new Date(date);
+          const day = d.getUTCDay();
+          const diff = (day === 0 ? -6 : 1) - day;
+          d.setUTCDate(d.getUTCDate() + diff);
+          d.setUTCHours(0, 0, 0, 0);
+          return d;
+        }
+        function getStartOfYear(date) {
+          return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        }
+        function getStartOfNextYear(date) {
+          return new Date(Date.UTC(date.getUTCFullYear() + 1, 0, 1));
+        }
+        let start, end;
+        switch (period) {
+          case 'thisWeek': {
+            start = getStartOfWeek(now);
+            end = new Date(start);
+            end.setUTCDate(start.getUTCDate() + 7);
+            break;
+          }
+          case 'lastWeek': {
+            end = getStartOfWeek(now);
+            start = new Date(end);
+            start.setUTCDate(end.getUTCDate() - 7);
+            break;
+          }
+          case 'thisMonth': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+            break;
+          }
+          case 'lastMonth': {
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+            break;
+          }
+          case 'twoMonthsAgo': {
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+            break;
+          }
+          case 'threeMonthsAgo': {
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1));
+            break;
+          }
+          case 'sixMonthsAgo': {
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1));
+            break;
+          }
+          case 'thisYear': {
+            start = getStartOfYear(now);
+            end = getStartOfNextYear(now);
+            break;
+          }
+          case 'lastYear': {
+            end = getStartOfYear(now);
+            start = getStartOfYear(new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)));
+            break;
+          }
+          case 'all':
+          default:
+            start = new Date(Date.UTC(2000, 0, 1));
+            end = new Date(Date.UTC(2100, 0, 1));
+            break;
+        }
+        return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+      }
+
+      // Get date range for period filtering
+      const [periodStart, periodEnd] = getBangkokDateRange(period);
+      
       // Period filtering
       if (period && period !== 'all') {
-        const now = new Date();
-        let start, end;
-        
-        switch (period) {
-          case 'thisWeek':
-            start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-            end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'lastWeek':
-            start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
-            end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'thisMonth':
-            start = new Date(now.getFullYear(), now.getMonth(), 1);
-            end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            break;
-          case 'lastMonth':
-            start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            end = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          default:
-            break;
-        }
-        
-        if (start && end) {
-          whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`;
-          params.push(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
-          paramIndex += 2;
-        }
+        whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`;
+        params.push(periodStart, periodEnd);
+        paramIndex += 2;
       } else if (startDate && endDate) {
         whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date <= $${paramIndex + 1}`;
         params.push(startDate, endDate);

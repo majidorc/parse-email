@@ -147,51 +147,51 @@ module.exports = async (req, res) => {
         hasNetTotalColumn = false;
       }
 
-      // Get all bookings with benefit calculation
-      const query = `
-        SELECT 
-          b.booking_number,
-          b.book_date,
-          b.tour_date,
-          b.sku,
-          b.program,
-          b.rate,
-          b.hotel,
-          b.customer_name,
-          b.phone_number,
-          b.adult,
-          b.child,
-          b.infant,
-          b.paid,
-          b.channel,
-          r.net_adult,
-          r.net_child${hasNetTotalColumn ? ', b.net_total' : ''},
-          CASE 
-            WHEN ${hasNetTotalColumn ? 'b.net_total IS NOT NULL' : 'FALSE'} THEN b.net_total
-            ELSE (COALESCE(r.net_adult, 0) * b.adult + COALESCE(r.net_child, 0) * b.child)
-          END AS calculated_net_total,
-          b.paid - CASE 
-            WHEN ${hasNetTotalColumn ? 'b.net_total IS NOT NULL' : 'FALSE'} THEN b.net_total
-            ELSE (COALESCE(r.net_adult, 0) * b.adult + COALESCE(r.net_child, 0) * b.child)
-          END AS benefit
-        FROM bookings b
-        LEFT JOIN products p ON b.sku = p.sku
-        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
-        ${whereClause}
-        ORDER BY b.tour_date DESC, b.booking_number
-      `;
+             // Get all bookings with benefit calculation
+       const query = `
+         SELECT 
+           b.booking_number,
+           b.book_date,
+           b.tour_date,
+           b.sku,
+           b.program,
+           b.rate,
+           b.hotel,
+           b.customer_name,
+           b.phone_number,
+           b.adult,
+           b.child,
+           b.infant,
+           b.paid,
+           b.email,
+           r.net_adult,
+           r.net_child${hasNetTotalColumn ? ', b.net_total' : ''},
+           CASE 
+             WHEN ${hasNetTotalColumn ? 'b.net_total IS NOT NULL' : 'FALSE'} THEN b.net_total
+             ELSE (COALESCE(r.net_adult, 0) * b.adult + COALESCE(r.net_child, 0) * b.child)
+           END AS calculated_net_total,
+           b.paid - CASE 
+             WHEN ${hasNetTotalColumn ? 'b.net_total IS NOT NULL' : 'FALSE'} THEN b.net_total
+             ELSE (COALESCE(r.net_adult, 0) * b.adult + COALESCE(r.net_child, 0) * b.child)
+           END AS benefit
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         ${whereClause}
+         ORDER BY b.tour_date DESC, b.booking_number
+       `;
 
       const { rows: bookings } = await sql.query(query, params);
 
-      // Debug: Log unique channel values to see what's in the database
-      const uniqueChannels = [...new Set(bookings.map(b => b.channel))];
-      console.log('Debug - Unique channels in data:', uniqueChannels);
+      // Debug: Log unique email values to see what's in the database
+      const uniqueEmails = [...new Set(bookings.map(b => b.email))];
+      console.log('Debug - Unique emails in data:', uniqueEmails);
       console.log('Debug - Total bookings:', bookings.length);
       
-      // Log each booking with its channel for debugging
-      console.log('Debug - All bookings with channels:');
+      // Log each booking with its email and booking number for debugging
+      console.log('Debug - All bookings with emails and booking numbers:');
       bookings.forEach((b, index) => {
-        console.log(`Booking ${index + 1}: ${b.booking_number} - Channel: "${b.channel}"`);
+        console.log(`Booking ${index + 1}: ${b.booking_number} - Email: "${b.email}"`);
       });
 
       // Calculate summary data
@@ -202,16 +202,21 @@ module.exports = async (req, res) => {
       const totalChildren = bookings.reduce((sum, b) => sum + (Number(b.child) || 0), 0);
       const totalInfants = bookings.reduce((sum, b) => sum + (Number(b.infant) || 0), 0);
 
-      // Separate bookings by channel (case-insensitive and handle variations)
+      // Separate bookings by channel based on email source and booking number
       const viatorBookings = bookings.filter(b => {
-        const channel = (b.channel || '').toLowerCase().trim();
-        return channel === 'viator' || channel === 'viator.com' || channel.includes('viator');
+        // Viator: All bookings from bokun email EXCEPT booking numbers starting with "GYG"
+        const email = (b.email || '').toLowerCase();
+        const bookingNumber = (b.booking_number || '').toUpperCase();
+        
+        return email.includes('bokun') && !bookingNumber.startsWith('GYG');
       });
+      
       const websiteBookings = bookings.filter(b => {
-        const channel = (b.channel || '').toLowerCase().trim();
-        // Only include specific website channels, not everything that's not viator
-        return channel === 'website' || channel === 'direct' || channel === 'own website' || 
-               channel === 'direct website' || channel === 'own' || channel === 'website direct';
+        // Website: All bookings from info@tours.co.th AND all booking numbers starting with "GYG"
+        const email = (b.email || '').toLowerCase();
+        const bookingNumber = (b.booking_number || '').toUpperCase();
+        
+        return email.includes('info@tours.co.th') || bookingNumber.startsWith('GYG');
       });
 
       // Calculate channel-specific totals
@@ -257,8 +262,10 @@ module.exports = async (req, res) => {
       // Debug: Log filtered results
       console.log('Debug - Viator bookings count:', viatorBookings.length);
       console.log('Debug - Website bookings count:', websiteBookings.length);
-      console.log('Debug - Viator channels:', [...new Set(viatorBookings.map(b => b.channel))]);
-      console.log('Debug - Website channels:', [...new Set(websiteBookings.map(b => b.channel))]);
+      console.log('Debug - Viator emails:', [...new Set(viatorBookings.map(b => b.email))]);
+      console.log('Debug - Website emails:', [...new Set(websiteBookings.map(b => b.email))]);
+      console.log('Debug - Viator booking numbers:', viatorBookings.map(b => b.booking_number));
+      console.log('Debug - Website booking numbers:', websiteBookings.map(b => b.booking_number));
 
       // Enhanced summary sheet with channel breakdown
       const summaryData = [

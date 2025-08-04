@@ -313,8 +313,12 @@ module.exports = async (req, res) => {
          { wch: 12 }, // Net Total
          { wch: 12 }  // Benefit
        ];
-      viatorSheet['!cols'] = colWidths;
-      websiteSheet['!cols'] = colWidths;
+             viatorSheet['!cols'] = colWidths;
+       websiteSheet['!cols'] = colWidths;
+       
+       // Freeze the first row (headers) in both sheets
+       viatorSheet['!freeze'] = { rows: 1, cols: 0 };
+       websiteSheet['!freeze'] = { rows: 1, cols: 0 };
 
       // Add worksheets to workbook
       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');

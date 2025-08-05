@@ -123,7 +123,7 @@ self.addEventListener('sync', event => {
 async function syncBookings() {
   try {
     // Check for new bookings or sync data
-    const response = await fetch('/api/notifications?sync=true');
+    const response = await fetch('/api/bookings?sync=true');
     if (response.ok) {
       const data = await response.json();
       if (data.newBookings && data.newBookings.length > 0) {

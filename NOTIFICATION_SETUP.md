@@ -68,9 +68,9 @@ The service worker (`/service-worker.js`) handles:
 
 ### API Endpoints
 
-- `/api/notifications` - Check for new notifications
-- `/api/notifications?check_new=true` - Check recent notifications
-- `/api/notifications?sync=true` - Background sync
+- `/api/bookings` - Check for new notifications
+- `/api/bookings?check_new=true` - Check recent notifications
+- `/api/bookings?sync=true` - Background sync
 
 ## Browser Support
 
@@ -122,7 +122,7 @@ testNotifications.testSendNotification();
 To customize notification behavior, edit:
 - `public/dashboard.js` - Frontend notification logic
 - `public/service-worker.js` - Background notification handling
-- `api/notifications.js` - API endpoint logic
+- `api/bookings.js` - API endpoint logic (merged with bookings API)
 
 ## Security Considerations
 

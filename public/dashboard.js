@@ -73,7 +73,7 @@ function startNotificationCheck() {
 // Check for new bookings and show notifications
 async function checkForNewBookings() {
   try {
-    const response = await fetch('/api/notifications?check_new=true');
+    const response = await fetch('/api/bookings?check_new=true');
     if (response.ok) {
       const data = await response.json();
       const currentCount = data.total || 0;

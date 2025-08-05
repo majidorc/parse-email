@@ -4707,6 +4707,47 @@ function parseCSVLine(line) {
   return result;
 }
 
+// Handle booking deletion
+async function handleDelete(bookingNumber, button) {
+  if (!confirm(`Are you sure you want to delete booking ${bookingNumber}? This action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    // Disable the button to prevent double-clicks
+    button.disabled = true;
+    button.textContent = 'Deleting...';
+
+    const response = await fetch(`/api/bookings`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ booking_number: bookingNumber })
+    });
+
+    if (response.ok) {
+      showToast(`Booking ${bookingNumber} deleted successfully`, 'success');
+      // Refresh the current view
+      if (bookingsBtn.classList.contains('active')) {
+        fetchBookings(currentPage, currentSort, currentDir, searchTerm);
+      } else if (accountingBtn.classList.contains('active')) {
+        fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch);
+      }
+    } else {
+      const errorData = await response.json();
+      showToast(`Failed to delete booking: ${errorData.error || 'Unknown error'}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    showToast('Failed to delete booking: Network error', 'error');
+  } finally {
+    // Re-enable the button
+    button.disabled = false;
+    button.textContent = '❌';
+  }
+}
+
 // Function to import programs from settings modal
 async function importProgramsFromSettings(programs) {
   const programList = Object.values(programs);

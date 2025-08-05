@@ -1693,6 +1693,17 @@ async function handler(req, res) {
                       start_time: extractedInfo.start_time
                     });
 
+                    // Trigger web notification for new booking
+                    await triggerWebNotification({
+                      booking_number: extractedInfo.bookingNumber,
+                      customer_name: extractedInfo.name,
+                      program: extractedInfo.program,
+                      tour_date: extractedInfo.isoDate,
+                      adult,
+                      child,
+                      infant
+                    });
+
                     results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'inserted' });
                 }
             } catch (error) {
@@ -1721,6 +1732,22 @@ async function notifyBookingUpdate(bookingNumber, action = 'updated') {
         // 3. Implement WebSocket or SSE broadcasting
     } catch (error) {
         console.error('Error sending notification:', error);
+    }
+}
+
+// Function to trigger web notifications for new bookings
+async function triggerWebNotification(booking) {
+    try {
+        // Store notification in database for web clients to check
+        await sql`
+            INSERT INTO web_notifications (booking_number, customer_name, program, tour_date, adult, child, infant, created_at)
+            VALUES (${booking.booking_number}, ${booking.customer_name}, ${booking.program}, ${booking.tour_date}, ${booking.adult}, ${booking.child}, ${booking.infant}, NOW())
+            ON CONFLICT (booking_number) DO NOTHING
+        `;
+        
+        console.log(`[WEB-NOTIFICATION] Stored notification for booking ${booking.booking_number}`);
+    } catch (error) {
+        console.error('Error storing web notification:', error);
     }
 }
 

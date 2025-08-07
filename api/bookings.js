@@ -628,4 +628,7 @@ module.exports = async (req, res) => {
       });
     }
   }
+  
+  // If we reach here, no valid endpoint was matched
+  return res.status(404).json({ error: 'Endpoint not found' });
 } 

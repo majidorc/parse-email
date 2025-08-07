@@ -509,6 +509,7 @@ class ThailandToursParser extends BaseEmailParser {
         const name = this.extractName();
         const hotel = this.extractHotel();
         const phoneNumber = this.extractPhone();
+        const customerEmail = this.extractCustomerEmail();
         const paid = this._extractPaidForBooking(sectionLines);
         
         return {
@@ -523,6 +524,7 @@ class ThailandToursParser extends BaseEmailParser {
             infant: passengers.infant,
             hotel: hotel,
             phoneNumber: phoneNumber,
+            customerEmail: customerEmail,
             isoDate: this._getISODate(tourDate),
             paid: paid,
             book_date: this.extractBookDate(),

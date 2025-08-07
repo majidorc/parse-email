@@ -646,7 +646,7 @@ function renderTable() {
           return today <= dayAfterTour;
         }
         return `
-          <tr class="${getRowClass(b.tour_date)}">
+          <tr class="${getRowClass(b.tour_date)}" style="background-color: ${getRowClass(b.tour_date) === 'row-past' ? '#F58573' : getRowClass(b.tour_date) === 'row-today' ? '#8CFA97' : getRowClass(b.tour_date) === 'row-tomorrow' ? '#BAFCE5' : getRowClass(b.tour_date) === 'row-future' ? '#F8FCBA' : ''} !important;">
             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium${shouldHighlight('booking_number') ? ' bg-yellow-100' : ''}">${b.booking_number || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>

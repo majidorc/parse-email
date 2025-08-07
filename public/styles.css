@@ -370,20 +370,20 @@ body {
   }
 } 
 
-/* Row background colors for booking table */
-tr.row-past {
+/* Row background colors for booking table - High specificity */
+table tr.row-past {
   background-color: #F58573 !important; /* Red background for past bookings */
 }
 
-tr.row-today {
+table tr.row-today {
   background-color: #8CFA97 !important; /* Green background for today's bookings */
 }
 
-tr.row-tomorrow {
+table tr.row-tomorrow {
   background-color: #BAFCE5 !important; /* Blue background for tomorrow's bookings */
 }
 
-tr.row-future {
+table tr.row-future {
   background-color: #F8FCBA !important; /* Yellow background for future bookings */
 }
 
@@ -442,6 +442,23 @@ div.card-row-tomorrow:hover {
 }
 
 #bookings-body tr.row-future {
+  background-color: #F8FCBA !important;
+}
+
+/* Even more specific selectors to override any conflicting styles */
+#bookings-table tbody#bookings-body tr.row-past {
+  background-color: #F58573 !important;
+}
+
+#bookings-table tbody#bookings-body tr.row-today {
+  background-color: #8CFA97 !important;
+}
+
+#bookings-table tbody#bookings-body tr.row-tomorrow {
+  background-color: #BAFCE5 !important;
+}
+
+#bookings-table tbody#bookings-body tr.row-future {
   background-color: #F8FCBA !important;
 }
 

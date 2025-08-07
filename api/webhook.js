@@ -418,37 +418,27 @@ class ThailandToursParser extends BaseEmailParser {
 
     // NEW: Extract multiple bookings from the same email
     extractMultipleBookings() {
-        const bookings = [];
         const orderNumber = this.extractBookingNumber();
-        
-        console.log('[DEBUG] extractMultipleBookings - Order Number:', orderNumber);
-        
-        // Find all booking sections in the email
         const bookingSections = this._findBookingSections();
-        console.log('[DEBUG] extractMultipleBookings - Found booking sections:', bookingSections.length);
-        
+        const bookings = [];
+
         for (const section of bookingSections) {
-            console.log('[DEBUG] extractMultipleBookings - Processing section:', section[0]);
-            const booking = this._extractSingleBooking(section, orderNumber);
-            if (booking && booking.bookingNumber) {
-                console.log('[DEBUG] extractMultipleBookings - Extracted booking:', booking.bookingNumber, 'with', booking.adult, 'adults');
-                bookings.push(booking);
-            } else {
-                console.log('[DEBUG] extractMultipleBookings - Failed to extract booking from section');
+            try {
+                const booking = this._extractSingleBooking(section, orderNumber);
+                if (booking && booking.bookingNumber) {
+                    bookings.push(booking);
+                }
+            } catch (error) {
+                console.error('[MULTIPLE] Error extracting booking from section:', error);
             }
         }
-        
-        console.log('[DEBUG] extractMultipleBookings - Total bookings extracted:', bookings.length);
-        
-        // If no multiple bookings found, fall back to single booking extraction
+
         if (bookings.length === 0) {
-            console.log('[DEBUG] extractMultipleBookings - No bookings found, falling back to single booking');
-            const singleBooking = this.extractAll();
-            if (singleBooking.bookingNumber && singleBooking.bookingNumber !== 'N/A') {
-                bookings.push(singleBooking);
-            }
+            // Fall back to single booking extraction
+            const { responseTemplate, extractedInfo } = this.formatBookingDetails();
+            return [extractedInfo];
         }
-        
+
         return bookings;
     }
 
@@ -457,17 +447,13 @@ class ThailandToursParser extends BaseEmailParser {
         const sections = [];
         let currentSection = [];
         let inBookingSection = false;
-        
-        console.log('[DEBUG] _findBookingSections - Total lines:', this.lines.length);
-        
+
         for (const line of this.lines) {
-            // Check if this line starts a new booking (look for "Booking #XXXXX" specifically)
-            if (line.includes('Booking #') && /\d+/.test(line)) {
-                console.log('[DEBUG] _findBookingSections - Found booking line:', line);
-                // If we were in a booking section, save it
-                if (inBookingSection && currentSection.length > 0) {
+            // Check if this line starts a new booking section
+            if (line.includes('Booking #') && line.includes('Paid')) {
+                // Save previous section if it exists
+                if (currentSection.length > 0) {
                     sections.push([...currentSection]);
-                    console.log('[DEBUG] _findBookingSections - Saved section with', currentSection.length, 'lines');
                 }
                 // Start new section
                 currentSection = [line];
@@ -476,14 +462,12 @@ class ThailandToursParser extends BaseEmailParser {
                 currentSection.push(line);
             }
         }
-        
-        // Add the last section
-        if (inBookingSection && currentSection.length > 0) {
-            sections.push(currentSection);
-            console.log('[DEBUG] _findBookingSections - Saved final section with', currentSection.length, 'lines');
+
+        // Add the final section if it exists
+        if (currentSection.length > 0) {
+            sections.push([...currentSection]);
         }
-        
-        console.log('[DEBUG] _findBookingSections - Total sections found:', sections.length);
+
         return sections;
     }
 
@@ -560,51 +544,45 @@ class ThailandToursParser extends BaseEmailParser {
 
     // NEW: Extract passengers from a specific section
     _extractPassengersFromSection(sectionLines) {
-        const pax = { adult: '0', child: '0', infant: '0' };
-        
-        console.log('[DEBUG] _extractPassengersFromSection - Processing section with', sectionLines.length, 'lines');
-        
-        // Look for the specific passenger line in this section
+        let adult = 0;
+        let child = 0;
+        let infant = 0;
+
         for (const line of sectionLines) {
-            // Look for patterns like "Adult: 4", "Adults: 4", "Person (+4 Years): 4"
-            const adultMatch = line.match(/adult[s]?[^\d]*(\d+)\s*$/i) || line.match(/adult[s]?.*?:\s*(\d+)/i);
-            if (adultMatch && adultMatch[1]) {
-                console.log('[DEBUG] _extractPassengersFromSection - Found adult match:', line, '->', adultMatch[1]);
-                pax.adult = adultMatch[1]; // Take the first match, don't accumulate
-                break; // Found adult count, stop looking
+            // Look for adult count patterns
+            const adultMatch = line.match(/\*?\s*Adults?\s*\(\+?\d+\)\s*:\s*(\d+)/i);
+            if (adultMatch) {
+                adult = parseInt(adultMatch[1], 10);
+                continue;
             }
-            
-            // Person (+4 Years): N (treat as adult)
-            const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
-            if (personPlusMatch && personPlusMatch[1]) {
-                console.log('[DEBUG] _extractPassengersFromSection - Found person+ match:', line, '->', personPlusMatch[1]);
-                pax.adult = personPlusMatch[1];
-                break; // Found adult count, stop looking
+
+            // Look for "person+" patterns (adults)
+            const personPlusMatch = line.match(/\*?\s*(\d+)\s*person\+/i);
+            if (personPlusMatch) {
+                adult = parseInt(personPlusMatch[1], 10);
+                continue;
+            }
+
+            // Look for child count patterns
+            const childMatch = line.match(/\*?\s*Children?\s*\(\d+\)\s*:\s*(\d+)/i);
+            if (childMatch) {
+                child = parseInt(childMatch[1], 10);
+                continue;
+            }
+
+            // Look for infant count patterns
+            const infantMatch = line.match(/\*?\s*Infants?\s*\(\d+\)\s*:\s*(\d+)/i);
+            if (infantMatch) {
+                infant = parseInt(infantMatch[1], 10);
+                continue;
             }
         }
-        
-        // Look for child count
-        for (const line of sectionLines) {
-            const childMatch = line.match(/child[ren|s]?[^\d]*(\d+)\s*$/i) || line.match(/child[ren|s]?.*?:\s*(\d+)/i);
-            if (childMatch && childMatch[1]) {
-                console.log('[DEBUG] _extractPassengersFromSection - Found child match:', line, '->', childMatch[1]);
-                pax.child = childMatch[1];
-                break; // Found child count, stop looking
-            }
-        }
-        
-        // Look for infant count
-        for (const line of sectionLines) {
-            const infantMatch = line.match(/infant[s]?[^\d]*(\d+)\s*$/i) || line.match(/infant[s]?.*?:\s*(\d+)/i);
-            if (infantMatch && infantMatch[1]) {
-                console.log('[DEBUG] _extractPassengersFromSection - Found infant match:', line, '->', infantMatch[1]);
-                pax.infant = infantMatch[1];
-                break; // Found infant count, stop looking
-            }
-        }
-        
-        console.log('[DEBUG] _extractPassengersFromSection - Final passenger counts:', pax);
-        return pax;
+
+        return {
+            adult: adult.toString(),
+            child: child.toString(),
+            infant: infant.toString()
+        };
     }
 
     // NEW: Extract tour date from a specific section
@@ -760,22 +738,15 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractCustomerEmail() {
-        console.log('[CUSTOMER-EMAIL] Starting extraction for ThailandToursParser');
-        console.log('[CUSTOMER-EMAIL] Total lines to search:', this.lines.length);
-        console.log('[CUSTOMER-EMAIL] First 10 lines for context:', this.lines.slice(0, 10));
-        
         // First, try to find email after hotel information (original approach)
         const hotelIndex = this.lines.findIndex(line => line.toLowerCase().includes('hotel'));
-        console.log('[CUSTOMER-EMAIL] Hotel index found at:', hotelIndex);
         
         if (hotelIndex !== -1) {
             // Look for email pattern in the next few lines after hotel
             for (let i = hotelIndex + 1; i < Math.min(hotelIndex + 5, this.lines.length); i++) {
                 const line = this.lines[i];
-                console.log('[CUSTOMER-EMAIL] Checking line after hotel:', line);
                 const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
                 if (emailMatch) {
-                    console.log('[CUSTOMER-EMAIL] Found email after hotel:', emailMatch[0]);
                     return emailMatch[0];
                 }
             }
@@ -783,30 +754,21 @@ class ThailandToursParser extends BaseEmailParser {
         
         // If not found after hotel, search the entire email for email addresses
         // but exclude common system emails and the sender's own domain
-        console.log('[CUSTOMER-EMAIL] Searching entire email for email addresses...');
-        let foundEmails = [];
         for (const line of this.lines) {
             const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
             if (emailMatch) {
                 const email = emailMatch[0].toLowerCase();
-                foundEmails.push({ email: emailMatch[0], line: line });
-                console.log('[CUSTOMER-EMAIL] Found email in line:', emailMatch[0], 'from line:', line);
                 // Skip system emails and the sender's own domain
                 if (!email.includes('noreply') && 
                     !email.includes('no-reply') && 
                     !email.includes('info@tours.co.th') &&
                     !email.includes('bokun.io') &&
                     !email.includes('tours.co.th')) {
-                    console.log('[CUSTOMER-EMAIL] Returning valid customer email:', emailMatch[0]);
                     return emailMatch[0];
-                } else {
-                    console.log('[CUSTOMER-EMAIL] Skipping system email:', emailMatch[0]);
                 }
             }
         }
         
-        console.log('[CUSTOMER-EMAIL] All found emails:', foundEmails);
-        console.log('[CUSTOMER-EMAIL] No customer email found, returning N/A');
         return 'N/A';
     }
 
@@ -861,43 +823,35 @@ class ThailandToursParser extends BaseEmailParser {
     extractRate() {
         let rate = '';
         
-        console.log('[RATE-EXTRACTION] Looking for rate in full email lines:', this.lines.length, 'lines');
-        
-        // Look for patterns like "Kayaking: With Kayaking", "Kayaking: Without Kayaking", etc.
+        // Look for rate information in the email
         for (const line of this.lines) {
             const trimmedLine = line.trim();
-            console.log('[RATE-EXTRACTION] Checking line:', trimmedLine);
             
-            // Look for patterns like "With Kayaking", "Without Kayaking", etc.
-            if (trimmedLine.includes('With') || trimmedLine.includes('Without')) {
-                // If it's a colon-separated line like "Kayaking: With Kayaking", extract only the part after colon
-                const colonIndex = trimmedLine.indexOf(':');
-                if (colonIndex !== -1 && colonIndex > 0) {
-                    const afterColon = trimmedLine.substring(colonIndex + 1).trim();
-                    if (afterColon) {
-                        rate = afterColon;
-                        console.log('[RATE-EXTRACTION] Found rate (colon pattern):', rate);
-                        break;
-                    }
-                } else {
-                    rate = trimmedLine;
-                    console.log('[RATE-EXTRACTION] Found rate (With/Without):', rate);
-                    break;
-                }
+            // Skip empty lines
+            if (!trimmedLine) continue;
+            
+            // Look for patterns like "Rate: Standard", "Price: Premium", etc.
+            const colonMatch = trimmedLine.match(/^(?:Rate|Price|Cost)\s*:\s*(.+)$/i);
+            if (colonMatch) {
+                rate = colonMatch[1].trim();
+                break;
             }
             
-            // Look for patterns like "Rate:", "Price:", etc.
-            if (trimmedLine.toLowerCase().includes('rate:') || trimmedLine.toLowerCase().includes('price:')) {
-                const colonIndex = trimmedLine.indexOf(':');
-                if (colonIndex !== -1) {
-                    rate = trimmedLine.substring(colonIndex + 1).trim();
-                    console.log('[RATE-EXTRACTION] Found rate (Rate/Price):', rate);
-                    break;
-                }
+            // Look for patterns like "With Transfer: Standard", "Without Transfer: Premium"
+            const withWithoutMatch = trimmedLine.match(/^(?:With|Without)\s+Transfer\s*:\s*(.+)$/i);
+            if (withWithoutMatch) {
+                rate = withWithoutMatch[1].trim();
+                break;
+            }
+            
+            // Look for patterns like "Rate: Standard", "Price: Premium"
+            const ratePriceMatch = trimmedLine.match(/^(?:Rate|Price)\s*:\s*(.+)$/i);
+            if (ratePriceMatch) {
+                rate = ratePriceMatch[1].trim();
+                break;
             }
         }
         
-        console.log('[RATE-EXTRACTION] Final extracted rate:', rate);
         return rate;
     }
 
@@ -1553,13 +1507,6 @@ async function handler(req, res) {
         const results = [];
         for (const extractedInfo of processedBookings) {
             try {
-                console.log('[DEBUG] Processing booking:', {
-                    bookingNumber: extractedInfo.bookingNumber,
-                    customerEmail: extractedInfo.customerEmail,
-                    name: extractedInfo.name,
-                    hotel: extractedInfo.hotel
-                });
-                
                 const { rows: existingBookings } = await sql`
                     SELECT * FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
                 `;

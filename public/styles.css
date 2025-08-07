@@ -462,6 +462,23 @@ div.card-row-tomorrow:hover {
   background-color: #F8FCBA !important;
 }
 
+/* Maximum specificity to override everything */
+body #bookings-table tbody#bookings-body tr.row-past {
+  background-color: #F58573 !important;
+}
+
+body #bookings-table tbody#bookings-body tr.row-today {
+  background-color: #8CFA97 !important;
+}
+
+body #bookings-table tbody#bookings-body tr.row-tomorrow {
+  background-color: #BAFCE5 !important;
+}
+
+body #bookings-table tbody#bookings-body tr.row-future {
+  background-color: #F8FCBA !important;
+}
+
 #booking-cards-container div.card-row-past {
   background-color: #fecaca !important;
   border-color: #f87171 !important;

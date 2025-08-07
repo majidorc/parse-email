@@ -760,19 +760,49 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractCustomerEmail() {
-        // Look for email address after hotel information
-        // The email is typically found after the hotel line in the address block
+        console.log('[CUSTOMER-EMAIL] Starting extraction for ThailandToursParser');
+        console.log('[CUSTOMER-EMAIL] Total lines to search:', this.lines.length);
+        
+        // First, try to find email after hotel information (original approach)
         const hotelIndex = this.lines.findIndex(line => line.toLowerCase().includes('hotel'));
+        console.log('[CUSTOMER-EMAIL] Hotel index found at:', hotelIndex);
+        
         if (hotelIndex !== -1) {
             // Look for email pattern in the next few lines after hotel
             for (let i = hotelIndex + 1; i < Math.min(hotelIndex + 5, this.lines.length); i++) {
                 const line = this.lines[i];
+                console.log('[CUSTOMER-EMAIL] Checking line after hotel:', line);
                 const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
                 if (emailMatch) {
+                    console.log('[CUSTOMER-EMAIL] Found email after hotel:', emailMatch[0]);
                     return emailMatch[0];
                 }
             }
         }
+        
+        // If not found after hotel, search the entire email for email addresses
+        // but exclude common system emails and the sender's own domain
+        console.log('[CUSTOMER-EMAIL] Searching entire email for email addresses...');
+        for (const line of this.lines) {
+            const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+            if (emailMatch) {
+                const email = emailMatch[0].toLowerCase();
+                console.log('[CUSTOMER-EMAIL] Found email in line:', emailMatch[0], 'from line:', line);
+                // Skip system emails and the sender's own domain
+                if (!email.includes('noreply') && 
+                    !email.includes('no-reply') && 
+                    !email.includes('info@tours.co.th') &&
+                    !email.includes('bokun.io') &&
+                    !email.includes('tours.co.th')) {
+                    console.log('[CUSTOMER-EMAIL] Returning valid customer email:', emailMatch[0]);
+                    return emailMatch[0];
+                } else {
+                    console.log('[CUSTOMER-EMAIL] Skipping system email:', emailMatch[0]);
+                }
+            }
+        }
+        
+        console.log('[CUSTOMER-EMAIL] No customer email found, returning N/A');
         return 'N/A';
     }
 
@@ -1519,6 +1549,13 @@ async function handler(req, res) {
         const results = [];
         for (const extractedInfo of processedBookings) {
             try {
+                console.log('[DEBUG] Processing booking:', {
+                    bookingNumber: extractedInfo.bookingNumber,
+                    customerEmail: extractedInfo.customerEmail,
+                    name: extractedInfo.name,
+                    hotel: extractedInfo.hotel
+                });
+                
                 const { rows: existingBookings } = await sql`
                     SELECT * FROM bookings WHERE booking_number = ${extractedInfo.bookingNumber};
                 `;

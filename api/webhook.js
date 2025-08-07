@@ -762,6 +762,7 @@ class ThailandToursParser extends BaseEmailParser {
     extractCustomerEmail() {
         console.log('[CUSTOMER-EMAIL] Starting extraction for ThailandToursParser');
         console.log('[CUSTOMER-EMAIL] Total lines to search:', this.lines.length);
+        console.log('[CUSTOMER-EMAIL] First 10 lines for context:', this.lines.slice(0, 10));
         
         // First, try to find email after hotel information (original approach)
         const hotelIndex = this.lines.findIndex(line => line.toLowerCase().includes('hotel'));
@@ -783,10 +784,12 @@ class ThailandToursParser extends BaseEmailParser {
         // If not found after hotel, search the entire email for email addresses
         // but exclude common system emails and the sender's own domain
         console.log('[CUSTOMER-EMAIL] Searching entire email for email addresses...');
+        let foundEmails = [];
         for (const line of this.lines) {
             const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
             if (emailMatch) {
                 const email = emailMatch[0].toLowerCase();
+                foundEmails.push({ email: emailMatch[0], line: line });
                 console.log('[CUSTOMER-EMAIL] Found email in line:', emailMatch[0], 'from line:', line);
                 // Skip system emails and the sender's own domain
                 if (!email.includes('noreply') && 
@@ -802,6 +805,7 @@ class ThailandToursParser extends BaseEmailParser {
             }
         }
         
+        console.log('[CUSTOMER-EMAIL] All found emails:', foundEmails);
         console.log('[CUSTOMER-EMAIL] No customer email found, returning N/A');
         return 'N/A';
     }

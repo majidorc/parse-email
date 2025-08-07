@@ -663,7 +663,6 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
-              <button class="delete-btn ml-2 text-red-500 hover:text-red-700" title="Delete booking" onclick="handleDelete('${b.booking_number}', this)">❌</button>
             </td>
         </tr>
         `;
@@ -4675,6 +4674,34 @@ function initializeApp() {
   initializeGlobalPeriodSelector();
   checkSession();
   updateDashboardBenefitCard();
+  
+  // Initialize global refresh button
+  const globalRefreshBtn = document.getElementById('global-refresh-btn');
+  if (globalRefreshBtn) {
+    globalRefreshBtn.onclick = async function() {
+      // Show refresh indicator
+      showRefreshIndicator();
+      
+      // Refresh based on current active tab
+      if (dashboardBtn.classList.contains('active')) {
+        fetchDashboardAnalytics();
+        updateDashboardBenefitCard();
+      } else if (bookingsBtn.classList.contains('active')) {
+        forceRefresh();
+      } else if (accountingBtn.classList.contains('active')) {
+        fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+      } else if (programsBtn.classList.contains('active')) {
+        fetchPrograms(1, document.getElementById('programs-search-bar')?.value || '');
+      } else if (analyticsBtn.classList.contains('active')) {
+        fetchSalesAnalytics();
+      } else if (suppliersBtn.classList.contains('active')) {
+        fetchSuppliers();
+      }
+      
+      // Update last refresh time
+      updateLastRefreshTime();
+    };
+  }
   
   // Initialize notifications
   initializeNotifications();

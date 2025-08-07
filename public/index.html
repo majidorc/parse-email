@@ -205,6 +205,12 @@
           <option value="lastYear">Last Year</option>
           <option value="all">All Time</option>
         </select>
+        <button id="global-refresh-btn" type="button" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-2 text-sm" title="Refresh all data">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
       </div>
       <!-- Programs Section (pixel-perfect match) -->
       <div id="programs-section" style="display:none;">
@@ -412,12 +418,7 @@
               </svg>
             </div>
           </div>
-          <button id="manual-refresh-btn" type="button" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-2" title="Refresh bookings">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span class="hidden sm:inline">Refresh</span>
-          </button>
+
 
         </div>
       </div>

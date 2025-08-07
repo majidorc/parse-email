@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   hotel TEXT,
   phone_number TEXT,
   customer_name TEXT,
+  customer_email TEXT, -- NEW: Customer email address
   adult INTEGER DEFAULT 0,
   child INTEGER DEFAULT 0,
   infant INTEGER DEFAULT 0,

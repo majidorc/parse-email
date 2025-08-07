@@ -339,6 +339,7 @@ class BokunParser extends BaseEmailParser {
   }
   extractHotel() { return this.findValueByLabel('Pick-up').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim(); }
   extractPhone() { return this.findValueByLabel('Customer phone').replace(/\D/g, ''); }
+  extractCustomerEmail() { return this.findValueByLabel('Customer email'); }
   extractSKU() {
     // Product field: e.g., 'HKT0041 - ...'
     const product = this.findValueByLabel('Product');
@@ -388,6 +389,7 @@ class BokunParser extends BaseEmailParser {
       name: this.extractName(),
       adult: passengers.adult, child: passengers.child, infant: passengers.infant,
       hotel: this.extractHotel(), phoneNumber: this.extractPhone(),
+      customerEmail: this.extractCustomerEmail(),
       isoDate: this._getISODate(tourDate),
       paid: this.extractPaid(),
       book_date: this.extractBookDate(),
@@ -755,6 +757,23 @@ class ThailandToursParser extends BaseEmailParser {
         return 'N/A';
     }
 
+    extractCustomerEmail() {
+        // Look for email address after hotel information
+        // The email is typically found after the hotel line in the address block
+        const hotelIndex = this.lines.findIndex(line => line.toLowerCase().includes('hotel'));
+        if (hotelIndex !== -1) {
+            // Look for email pattern in the next few lines after hotel
+            for (let i = hotelIndex + 1; i < Math.min(hotelIndex + 5, this.lines.length); i++) {
+                const line = this.lines[i];
+                const emailMatch = line.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+                if (emailMatch) {
+                    return emailMatch[0];
+                }
+            }
+        }
+        return 'N/A';
+    }
+
     extractSKU() {
         // Find a line with (#CODE) and extract CODE
         const line = this.lines.find(l => /\(#([A-Z0-9]+)\)/.test(l));
@@ -869,6 +888,7 @@ class ThailandToursParser extends BaseEmailParser {
             infant: passengers.infant,
             hotel: this.extractHotel(),
             phoneNumber: this.extractPhone(),
+            customerEmail: this.extractCustomerEmail(),
             isoDate: this._getISODate(tourDate),
             paid: this.extractPaid(),
             book_date: this.extractBookDate(),
@@ -1651,14 +1671,15 @@ async function handler(req, res) {
                     }
 
                     await sql`
-                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
                           sku = EXCLUDED.sku,
                           program = EXCLUDED.program,
                           customer_name = EXCLUDED.customer_name,
+                          customer_email = EXCLUDED.customer_email,
                           adult = EXCLUDED.adult,
                           child = EXCLUDED.child,
                           infant = EXCLUDED.infant,

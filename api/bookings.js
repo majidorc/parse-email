@@ -193,10 +193,10 @@ module.exports = async (req, res) => {
           WHERE booking_number = $2
         `;
         await sql.query(query, [value, booking_number]);
-        res.status(200).json({ success: true });
+        return res.status(200).json({ success: true });
       } catch (err) {
         console.error('Failed to update booking:', err); // Log full error to Vercel logs
-        res.status(500).json({ error: 'Failed to update booking', details: err.message, stack: err.stack });
+        return res.status(500).json({ error: 'Failed to update booking', details: err.message, stack: err.stack });
       }
     }
     if (req.method === 'DELETE') {
@@ -485,7 +485,7 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.status(200).json({
+    return res.status(200).json({
       bookings,
       total,
       page,
@@ -502,7 +502,7 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('Bookings API error:', err);
-    res.status(500).json({ error: 'Failed to fetch bookings', details: err.message, stack: err.stack });
+    return res.status(500).json({ error: 'Failed to fetch bookings', details: err.message, stack: err.stack });
   }
 
   // Order bookings endpoint - merged from order-bookings.js

@@ -539,7 +539,7 @@ module.exports = async (req, res) => {
         bookingsByDate[tourDate].push(booking);
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         order_number,
         bookings,
         summary: {
@@ -558,7 +558,7 @@ module.exports = async (req, res) => {
 
     } catch (err) {
       console.error('Order bookings API error:', err);
-      res.status(500).json({ error: 'Failed to fetch order bookings', details: err.message });
+      return res.status(500).json({ error: 'Failed to fetch order bookings', details: err.message });
     }
   }
 

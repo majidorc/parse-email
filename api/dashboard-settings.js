@@ -324,8 +324,14 @@ module.exports = async (req, res) => {
         return sum + (paid - netTotal);
       }, 0);
       
-      const percentBenefit = lastTotalBenefit === 0 ? null : ((totalBenefit - lastTotalBenefit) / Math.abs(lastTotalBenefit)) * 100;
-      const prevPeriodBenefit = lastTotalBenefit;
+      percentBenefit = lastTotalBenefit === 0 ? null : ((totalBenefit - lastTotalBenefit) / Math.abs(lastTotalBenefit)) * 100;
+      prevPeriodBenefit = lastTotalBenefit;
+      
+      console.log('Benefit calculation debug:');
+      console.log('- totalBenefit:', totalBenefit);
+      console.log('- lastTotalBenefit (prevPeriodBenefit):', lastTotalBenefit);
+      console.log('- percentBenefit:', percentBenefit);
+      console.log('- prevPeriod:', prevPeriod);
     }
     const { rows: paxRows } = await sql.query(
       `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,

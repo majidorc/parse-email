@@ -305,7 +305,11 @@ module.exports = async (req, res) => {
       if (row.booking_number.startsWith('6')) {
         websiteCount++;
         websitePassengers += pax;
-      } else if (row.booking_number.startsWith('GYG') || !row.booking_number.startsWith('6')) {
+      } else if (row.booking_number.startsWith('GYG')) {
+        otaCount++;
+        otaPassengers += pax;
+      } else {
+        // Any other booking number format goes to OTA
         otaCount++;
         otaPassengers += pax;
       }

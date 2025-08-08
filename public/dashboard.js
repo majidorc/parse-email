@@ -665,7 +665,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-              <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">📱</button>
+              <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">LINE</button>
             </td>
         </tr>
         `;
@@ -705,7 +705,7 @@ function renderTable() {
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
           ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-          <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">📱</button>
+          <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">LINE</button>
         </div>
       </div>
       `;

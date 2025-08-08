@@ -1172,16 +1172,8 @@ async function sendLineMessage(bookingNumber, button) {
     // Generate the notification text using the same function as copy button
     const notificationText = generateNotificationText(bookingData);
 
-    // Prompt for custom message (optional)
-    const customMessage = prompt('Enter custom message (or leave empty to use default notification text):', '');
-
-    if (customMessage === null) {
-      // User cancelled
-      return;
-    }
-
-    // Use custom message or default notification text
-    const messageToSend = customMessage || notificationText;
+    // Use the default notification text directly
+    const messageToSend = notificationText;
     
     // URL encode the message for the Line URL scheme
     const encodedMessage = encodeURIComponent(messageToSend);

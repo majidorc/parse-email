@@ -663,6 +663,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
+              ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
             </td>
         </tr>
         `;
@@ -699,7 +700,10 @@ function renderTable() {
           ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
         </div>
         <div class="mb-1 flex items-center"><span class="font-bold">🏷️Rate:</span> <span>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</span></div>
-        <div class="mt-2 text-right"><button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button></div>
+        <div class="mt-2 text-right">
+          <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
+          ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
+        </div>
       </div>
       `;
     }).join('');
@@ -1089,6 +1093,48 @@ function generateNotificationText(b) {
     ];
   }
   return lines.join('\n');
+}
+
+// Function to send email to customer
+async function sendCustomerEmail(bookingNumber, button) {
+  try {
+    button.textContent = '📧 Sending...';
+    button.disabled = true;
+    
+    const response = await fetch('/api/send-customer-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ booking_number: bookingNumber })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      button.textContent = '✅ Sent!';
+      setTimeout(() => { 
+        button.textContent = '📧 Email'; 
+        button.disabled = false;
+      }, 2000);
+      showToast('Email sent successfully to customer', 'success');
+    } else {
+      button.textContent = '❌ Failed';
+      setTimeout(() => { 
+        button.textContent = '📧 Email'; 
+        button.disabled = false;
+      }, 2000);
+      showToast(result.error || 'Failed to send email', 'error');
+    }
+  } catch (error) {
+    console.error('Error sending email:', error);
+    button.textContent = '❌ Error';
+    setTimeout(() => { 
+      button.textContent = '📧 Email'; 
+      button.disabled = false;
+    }, 2000);
+    showToast('Error sending email', 'error');
+  }
 }
 
 // --- ACCOUNTING TABLE LOGIC ---

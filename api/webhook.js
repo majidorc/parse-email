@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+ const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 const cheerio = require('cheerio');
 const axios = require('axios');
@@ -1402,6 +1402,18 @@ async function handler(req, res) {
                         const nm = new NotificationManager();
                         const tourDate = existingBookings[0].tour_date;
                         await nm.sendCancellationNotification(bookingNumber, 'Email cancellation received', null, tourDate);
+                        
+                        // Trigger web notification for cancellation
+                        await triggerWebNotification({
+                            booking_number: bookingNumber,
+                            customer_name: existingBookings[0].customer_name,
+                            program: existingBookings[0].program,
+                            tour_date: existingBookings[0].tour_date,
+                            adult: existingBookings[0].adult,
+                            child: existingBookings[0].child,
+                            infant: existingBookings[0].infant,
+                            action: 'cancelled'
+                        });
                     }
                     
                     // Delete from all relevant tables
@@ -1593,6 +1605,19 @@ async function handler(req, res) {
                         UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
                         WHERE booking_number = ${extractedInfo.bookingNumber}
                       `;
+                      
+                      // Trigger web notification for booking update
+                      await triggerWebNotification({
+                        booking_number: extractedInfo.bookingNumber,
+                        customer_name: extractedInfo.name,
+                        program: extractedInfo.program,
+                        tour_date: extractedInfo.isoDate,
+                        adult,
+                        child,
+                        infant,
+                        action: 'updated'
+                      });
+                      
                       results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'updated' });
                     } else {
                       results.push({ bookingNumber: extractedInfo.bookingNumber, action: 'unchanged' });
@@ -1746,17 +1771,27 @@ async function notifyBookingUpdate(bookingNumber, action = 'updated') {
     }
 }
 
-// Function to trigger web notifications for new bookings
+// Function to trigger web notifications for new bookings, updates, and cancellations
 async function triggerWebNotification(booking) {
     try {
+        const action = booking.action || 'new';
+        
         // Store notification in database for web clients to check
         await sql`
-            INSERT INTO web_notifications (booking_number, customer_name, program, tour_date, adult, child, infant, created_at)
-            VALUES (${booking.booking_number}, ${booking.customer_name}, ${booking.program}, ${booking.tour_date}, ${booking.adult}, ${booking.child}, ${booking.infant}, NOW())
-            ON CONFLICT (booking_number) DO NOTHING
+            INSERT INTO web_notifications (booking_number, customer_name, program, tour_date, adult, child, infant, created_at, action)
+            VALUES (${booking.booking_number}, ${booking.customer_name}, ${booking.program}, ${booking.tour_date}, ${booking.adult}, ${booking.child}, ${booking.infant}, NOW(), ${action})
+            ON CONFLICT (booking_number) DO UPDATE SET
+                customer_name = EXCLUDED.customer_name,
+                program = EXCLUDED.program,
+                tour_date = EXCLUDED.tour_date,
+                adult = EXCLUDED.adult,
+                child = EXCLUDED.child,
+                infant = EXCLUDED.infant,
+                action = EXCLUDED.action,
+                created_at = NOW()
         `;
         
-        console.log(`[WEB-NOTIFICATION] Stored notification for booking ${booking.booking_number}`);
+        console.log(`[WEB-NOTIFICATION] Stored ${action} notification for booking ${booking.booking_number}`);
     } catch (error) {
         console.error('Error storing web notification:', error);
     }

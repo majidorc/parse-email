@@ -51,9 +51,19 @@ function getBangkokDateRange(period) {
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1));
       break;
     }
+    case 'fourMonthsAgo': {
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1));
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 4, 1));
+      break;
+    }
     case 'sixMonthsAgo': {
       end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1));
+      break;
+    }
+    case 'sevenMonthsAgo': {
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, 1));
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 7, 1));
       break;
     }
     case 'thisYear': {
@@ -227,13 +237,16 @@ module.exports = async (req, res) => {
       `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} GROUP BY program ORDER BY count DESC`, [start, end, ...channelFilter.params]
     );
-    let percentNew = null, percentEarnings = null, percentTotal = null;
+    let percentNew = null, percentEarnings = null, percentTotal = null, percentBenefit = null;
     let prevPeriod = null;
     switch (period) {
       case 'thisWeek': prevPeriod = 'lastWeek'; break;
       case 'lastWeek': prevPeriod = 'prevLastWeek'; break;
       case 'thisMonth': prevPeriod = 'lastMonth'; break;
       case 'lastMonth': prevPeriod = 'prevLastMonth'; break;
+      case 'twoMonthsAgo': prevPeriod = 'threeMonthsAgo'; break;
+      case 'threeMonthsAgo': prevPeriod = 'fourMonthsAgo'; break;
+      case 'sixMonthsAgo': prevPeriod = 'sevenMonthsAgo'; break;
       case 'thisYear': prevPeriod = 'lastYear'; break;
       case 'lastYear': prevPeriod = 'prevLastYear'; break;
       case 'all':
@@ -288,6 +301,30 @@ module.exports = async (req, res) => {
       );
       const lastTotal = parseInt(lastTotalRows[0].count, 10);
       percentTotal = lastTotal === 0 ? null : ((totalBookings - lastTotal) / lastTotal) * 100;
+      
+      // Benefit percent change
+      const { rows: lastBenefitRows } = await sql.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql}`,
+        [prevStart, prevEnd, ...channelFilter.params]
+      );
+      
+      const lastTotalBenefit = lastBenefitRows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        // Use stored net_total if available and column exists, otherwise calculate from rates
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+      
+      const percentBenefit = lastTotalBenefit === 0 ? null : ((totalBenefit - lastTotalBenefit) / Math.abs(lastTotalBenefit)) * 100;
     }
     const { rows: paxRows } = await sql.query(
       `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
@@ -333,6 +370,7 @@ module.exports = async (req, res) => {
       percentNew,
       percentEarnings,
       percentTotal,
+      percentBenefit,
       period,
       start,
       end,

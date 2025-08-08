@@ -41,6 +41,12 @@ img,video{max-width:100%;height:auto}
 .antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 
 /* Enhanced Tab Button Styling */
+.tab-btn-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+}
+
 .tab-btn-container button {
   position: relative;
   overflow: hidden;
@@ -48,6 +54,8 @@ img,video{max-width:100%;height:auto}
   transition: all 0.3s ease;
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .tab-btn-container button:hover {
@@ -76,6 +84,23 @@ img,video{max-width:100%;height:auto}
   height: 3px;
   background: rgba(255,255,255,0.8);
   border-radius: 2px 2px 0 0;
+}
+
+/* Responsive adjustments for very small screens */
+@media (max-width: 480px) {
+  .tab-btn-container {
+    gap: 0.25rem !important;
+  }
+  
+  .tab-btn-container button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .tab-btn-container select {
+    padding: 0.5rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
 }
 
 /* Individual tab colors with gradients */

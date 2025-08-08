@@ -237,7 +237,7 @@
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('sku')">SKU <span id="sku-sort-icon"></span></th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('program')">Program <span id="program-sort-icon"></span></th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider" onclick="sortPrograms('program')">Program <span id="program-sort-icon"></span></th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
                     <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('supplier')">Supplier <span id="supplier-sort-icon"></span></th>
@@ -394,6 +394,80 @@
               <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Add Booking</button>
             </div>
           </form>
+        </div>
+      </div>
+      <!-- Email Modal Section (hidden by default) -->
+      <div id="email-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display:none;">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Send Customer Email</h3>
+            <form id="emailForm" class="space-y-4">
+              <div>
+                <label for="email-pickup-time" class="block text-sm font-medium text-gray-700 mb-1">Pickup Time <span class="text-red-500">*</span></label>
+                <input type="text" id="email-pickup-time" name="pickup_time" required class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 08:00 ~ 09:00" value="08:00 ~ 09:00">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Extra Charge</label>
+                <div class="space-y-2">
+                  <label class="flex items-center">
+                    <input type="radio" id="extra-charge-no" name="has_extra_charge" value="false" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
+                    <span class="ml-2 text-sm text-gray-700">No extra charge</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" id="extra-charge-yes" name="has_extra_charge" value="true" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
+                    <span class="ml-2 text-sm text-gray-700">Yes, has extra charge</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div id="private-transfer-section" style="display:none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Type</label>
+                <div class="space-y-2">
+                  <label class="flex items-center">
+                    <input type="radio" id="private-no" name="is_private" value="false" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
+                    <span class="ml-2 text-sm text-gray-700">Regular transfer (1000THB per person)</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" id="private-yes" name="is_private" value="true" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
+                    <span class="ml-2 text-sm text-gray-700">Private transfer (1000THB total)</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">National Park Fee</label>
+                <div class="space-y-2">
+                  <label class="flex items-center">
+                    <input type="radio" id="park-fee-no" name="has_national_park_fee" value="false" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
+                    <span class="ml-2 text-sm text-gray-700">No National Park Fee</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" id="park-fee-yes" name="has_national_park_fee" value="true" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
+                    <span class="ml-2 text-sm text-gray-700">Yes, has National Park Fee</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div id="park-fee-details" style="display:none;">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label for="adult-fee" class="block text-sm font-medium text-gray-700 mb-1">Adult Fee (THB)</label>
+                    <input type="number" id="adult-fee" name="adult_fee" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="400" value="400">
+                  </div>
+                  <div>
+                    <label for="child-fee" class="block text-sm font-medium text-gray-700 mb-1">Child Fee (THB)</label>
+                    <input type="number" id="child-fee" name="child_fee" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="200" value="200">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="border-t border-gray-200 pt-4 flex justify-between">
+                <button type="button" id="cancel-email-modal" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
+                <button type="submit" id="send-email-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Send Email</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
       <!-- Search Bar Section -->

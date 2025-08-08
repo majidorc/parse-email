@@ -540,7 +540,6 @@ function getRowClass(tourDateStr) {
 
 
 
-
 // Function to populate rate dropdowns
 
 
@@ -1100,97 +1099,140 @@ function generateNotificationText(b) {
 
 // Function to send email to customer
 async function sendCustomerEmail(bookingNumber, button) {
-  try {
-    // Prompt for pickup time
-    const pickupTime = prompt('Enter pickup time (e.g., 08:00 ~ 09:00):', '08:00 ~ 09:00');
+  // Store the booking number and button for use in the modal
+  window.currentEmailBooking = { bookingNumber, button };
+  
+  // Show the email modal
+  const emailModal = document.getElementById('email-modal');
+  emailModal.style.display = 'block';
+  
+  // Reset form to default values
+  document.getElementById('email-pickup-time').value = '08:00 ~ 09:00';
+  document.getElementById('extra-charge-no').checked = true;
+  document.getElementById('park-fee-no').checked = true;
+  document.getElementById('private-transfer-section').style.display = 'none';
+  document.getElementById('park-fee-details').style.display = 'none';
+}
 
-    if (pickupTime === null) {
-      // User cancelled
-      return;
+// Initialize email modal event handlers
+function initializeEmailModal() {
+  const emailModal = document.getElementById('email-modal');
+  const cancelBtn = document.getElementById('cancel-email-modal');
+  const emailForm = document.getElementById('emailForm');
+  
+  // Close modal when clicking cancel
+  cancelBtn.addEventListener('click', () => {
+    emailModal.style.display = 'none';
+  });
+  
+  // Close modal when clicking outside
+  emailModal.addEventListener('click', (e) => {
+    if (e.target === emailModal) {
+      emailModal.style.display = 'none';
     }
-
-    // Ask for extra charge
-    const hasExtraCharge = confirm('Have extra charge or not?');
-    let isPrivate = false;
+  });
+  
+  // Handle extra charge radio buttons
+  document.getElementById('extra-charge-no').addEventListener('change', () => {
+    document.getElementById('private-transfer-section').style.display = 'none';
+  });
+  
+  document.getElementById('extra-charge-yes').addEventListener('change', () => {
+    document.getElementById('private-transfer-section').style.display = 'block';
+  });
+  
+  // Handle National Park Fee radio buttons
+  document.getElementById('park-fee-no').addEventListener('change', () => {
+    document.getElementById('park-fee-details').style.display = 'none';
+  });
+  
+  document.getElementById('park-fee-yes').addEventListener('change', () => {
+    document.getElementById('park-fee-details').style.display = 'block';
+  });
+  
+  // Handle form submission
+  emailForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const { bookingNumber, button } = window.currentEmailBooking;
+    
+    // Get form values
+    const pickupTime = document.getElementById('email-pickup-time').value;
+    const hasExtraCharge = document.getElementById('extra-charge-yes').checked;
+    const isPrivate = document.getElementById('private-yes').checked;
+    const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
+    const adultFee = parseInt(document.getElementById('adult-fee').value) || 0;
+    const childFee = parseInt(document.getElementById('child-fee').value) || 0;
+    
+    // Construct pickup line
     let pickupLine = '';
-
     if (hasExtraCharge) {
-      isPrivate = confirm('Private is yes?');
       if (isPrivate) {
         pickupLine = ' ( extra charge for Private Roundtrip transfer 1000THB )';
       } else {
         pickupLine = ' ( extra charge for roundtrip transfer 1000THB per person )';
       }
     }
-
-    // Ask for National Park Fee
-    const hasNationalParkFee = confirm('Have National Park Fee?');
-    let adultFee = 0;
-    let childFee = 0;
+    
+    // Construct National Park Fee text
     let nationalParkFeeText = '';
-
     if (hasNationalParkFee) {
-      const adultFeeInput = prompt('Enter Adult Fee (THB):', '400');
-      const childFeeInput = prompt('Enter Child Fee (THB):', '200');
-      
-      if (adultFeeInput === null || childFeeInput === null) {
-        // User cancelled
-        return;
-      }
-      
-      adultFee = parseInt(adultFeeInput) || 0;
-      childFee = parseInt(childFeeInput) || 0;
-      
       nationalParkFeeText = `\n\nThe national park fee of THB ${adultFee} per adult and THB ${childFee} per child is excluded from the tour price. Please prepare cash for this fee. This fee is a maintenance fee collected by the Thai government department. There is no exception.`;
     }
-
+    
+    // Close modal
+    emailModal.style.display = 'none';
+    
+    // Update button state
     button.textContent = '📧 Sending...';
     button.disabled = true;
+    
+    try {
+      const response = await fetch('/api/daily-scheduler', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          booking_number: bookingNumber,
+          pickup_time: pickupTime,
+          has_extra_charge: hasExtraCharge,
+          is_private: isPrivate,
+          pickup_line: pickupLine,
+          has_national_park_fee: hasNationalParkFee,
+          adult_fee: adultFee,
+          child_fee: childFee,
+          national_park_fee_text: nationalParkFeeText
+        })
+      });
 
-    const response = await fetch('/api/daily-scheduler', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        booking_number: bookingNumber,
-        pickup_time: pickupTime,
-        has_extra_charge: hasExtraCharge,
-        is_private: isPrivate,
-        pickup_line: pickupLine,
-        has_national_park_fee: hasNationalParkFee,
-        adult_fee: adultFee,
-        child_fee: childFee,
-        national_park_fee_text: nationalParkFeeText
-      })
-    });
+      const result = await response.json();
 
-    const result = await response.json();
-
-    if (response.ok) {
-      button.textContent = '✅ Sent!';
+      if (response.ok) {
+        button.textContent = '✅ Sent!';
+        setTimeout(() => {
+          button.textContent = '✉️';
+          button.disabled = false;
+        }, 2000);
+        showToast('Email sent successfully to customer', 'success');
+      } else {
+        button.textContent = '❌ Failed';
+        setTimeout(() => {
+          button.textContent = '✉️';
+          button.disabled = false;
+        }, 2000);
+        showToast(result.error || 'Failed to send email', 'error');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      button.textContent = '❌ Error';
       setTimeout(() => {
         button.textContent = '✉️';
         button.disabled = false;
       }, 2000);
-      showToast('Email sent successfully to customer', 'success');
-    } else {
-      button.textContent = '❌ Failed';
-      setTimeout(() => {
-        button.textContent = '✉️';
-        button.disabled = false;
-      }, 2000);
-      showToast(result.error || 'Failed to send email', 'error');
+      showToast('Error sending email', 'error');
     }
-  } catch (error) {
-    console.error('Error sending email:', error);
-    button.textContent = '❌ Error';
-    setTimeout(() => {
-      button.textContent = '✉️';
-      button.disabled = false;
-    }, 2000);
-    showToast('Error sending email', 'error');
-  }
+  });
 }
 
 async function sendLineMessage(bookingNumber, button) {
@@ -4829,6 +4871,7 @@ function initializeApp() {
   initializeAddBooking();
   initializeSuppliers();
   initializeGlobalPeriodSelector();
+  initializeEmailModal();
   checkSession();
   updateDashboardBenefitCard();
   

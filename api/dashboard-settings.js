@@ -148,7 +148,8 @@ module.exports = async (req, res) => {
   function getChannelFilterSql(col = 'booking_number') {
     if (!channel) return { sql: '', params: [] };
     if (channel === 'Website') return { sql: `AND ${col} LIKE '6%'`, params: [] };
-    if (channel === 'OTA') return { sql: `AND (${col} LIKE 'GYG%' OR ${col} NOT LIKE '6%')`, params: [] };
+    if (channel === 'Viator') return { sql: `AND ${col} LIKE '1%'`, params: [] };
+    if (channel === 'OTA') return { sql: `AND (${col} LIKE 'GYG%' OR (${col} NOT LIKE '6%' AND ${col} NOT LIKE '1%'))`, params: [] };
     return { sql: '', params: [] };
   }
   try {
@@ -299,12 +300,15 @@ module.exports = async (req, res) => {
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
-    let websiteCount = 0, otaCount = 0, websitePassengers = 0, otaPassengers = 0;
+    let websiteCount = 0, viatorCount = 0, otaCount = 0, websitePassengers = 0, viatorPassengers = 0, otaPassengers = 0;
     allRows.forEach(row => {
       const pax = Number(row.adult) + Number(row.child) + Number(row.infant);
       if (row.booking_number.startsWith('6')) {
         websiteCount++;
         websitePassengers += pax;
+      } else if (row.booking_number.startsWith('1')) {
+        viatorCount++;
+        viatorPassengers += pax;
       } else if (row.booking_number.startsWith('GYG')) {
         otaCount++;
         otaPassengers += pax;
@@ -316,6 +320,7 @@ module.exports = async (req, res) => {
     });
     const channels = [
       { channel: 'Website', count: websiteCount, passengers: websitePassengers },
+      { channel: 'Viator', count: viatorCount, passengers: viatorPassengers },
       { channel: 'OTA', count: otaCount, passengers: otaPassengers }
     ];
     // Add cache control headers to prevent caching

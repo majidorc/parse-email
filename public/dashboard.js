@@ -1110,6 +1110,8 @@ async function sendCustomerEmail(bookingNumber, button) {
   document.getElementById('email-pickup-time').value = '08:00 ~ 09:00';
   document.getElementById('extra-charge-no').checked = true;
   document.getElementById('park-fee-no').checked = true;
+  document.getElementById('regular-transfer-amount').value = '1000';
+  document.getElementById('private-transfer-amount').value = '1000';
   document.getElementById('private-transfer-section').style.display = 'none';
   document.getElementById('park-fee-details').style.display = 'none';
 }
@@ -1163,14 +1165,16 @@ function initializeEmailModal() {
     const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
     const adultFee = parseInt(document.getElementById('adult-fee').value) || 0;
     const childFee = parseInt(document.getElementById('child-fee').value) || 0;
+    const regularTransferAmount = parseInt(document.getElementById('regular-transfer-amount').value) || 1000;
+    const privateTransferAmount = parseInt(document.getElementById('private-transfer-amount').value) || 1000;
     
     // Construct pickup line
     let pickupLine = '';
     if (hasExtraCharge) {
       if (isPrivate) {
-        pickupLine = ' ( extra charge for Private Roundtrip transfer 1000THB )';
+        pickupLine = ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
       } else {
-        pickupLine = ' ( extra charge for roundtrip transfer 1000THB per person )';
+        pickupLine = ` ( extra charge for roundtrip transfer ${regularTransferAmount}THB per person )`;
       }
     }
     

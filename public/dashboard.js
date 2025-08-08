@@ -1114,6 +1114,9 @@ async function sendCustomerEmail(bookingNumber, button) {
   document.getElementById('private-transfer-amount').value = '1000';
   document.getElementById('private-transfer-section').style.display = 'none';
   document.getElementById('park-fee-details').style.display = 'none';
+  // Set initial transfer amount field visibility (regular transfer is default)
+  document.getElementById('regular-transfer-amount').parentElement.style.display = 'block';
+  document.getElementById('private-transfer-amount').parentElement.style.display = 'none';
 }
 
 // Initialize email modal event handlers
@@ -1141,6 +1144,17 @@ function initializeEmailModal() {
   
   document.getElementById('extra-charge-yes').addEventListener('change', () => {
     document.getElementById('private-transfer-section').style.display = 'block';
+  });
+  
+  // Handle transfer type radio buttons
+  document.getElementById('private-no').addEventListener('change', () => {
+    document.getElementById('regular-transfer-amount').parentElement.style.display = 'block';
+    document.getElementById('private-transfer-amount').parentElement.style.display = 'none';
+  });
+  
+  document.getElementById('private-yes').addEventListener('change', () => {
+    document.getElementById('regular-transfer-amount').parentElement.style.display = 'none';
+    document.getElementById('private-transfer-amount').parentElement.style.display = 'block';
   });
   
   // Handle National Park Fee radio buttons

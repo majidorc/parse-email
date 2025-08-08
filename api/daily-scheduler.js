@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
         }
     }
 
-    // Original daily scheduler functionality
+    // Original daily scheduler functionality - only for cron jobs
     if (req.method !== 'POST') {
         return res.status(405).send({ error: 'Method Not Allowed' });
     }

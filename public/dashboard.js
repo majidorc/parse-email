@@ -658,6 +658,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('op') ? ' bg-yellow-100' : ''}">${iconButton('op', b.booking_number, b.op)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('ri') ? ' bg-yellow-100' : ''}">${iconButton('ri', b.booking_number, b.ri)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center${shouldHighlight('customer') ? ' bg-yellow-100' : ''}">${iconButton('customer', b.booking_number, b.customer)}</td>
+
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('adult') ? ' bg-yellow-100' : ''}">${b.adult || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('child') ? ' bg-yellow-100' : ''}">${b.child || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
@@ -1098,15 +1099,26 @@ function generateNotificationText(b) {
 // Function to send email to customer
 async function sendCustomerEmail(bookingNumber, button) {
   try {
+    // Prompt for pickup time
+    const pickupTime = prompt('Enter pickup time (e.g., 08:00 ~ 09:00):', '08:00 ~ 09:00');
+    
+    if (pickupTime === null) {
+      // User cancelled
+      return;
+    }
+    
     button.textContent = '📧 Sending...';
     button.disabled = true;
     
-                 const response = await fetch('/api/daily-scheduler', {
+    const response = await fetch('/api/daily-scheduler', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ booking_number: bookingNumber })
+      body: JSON.stringify({ 
+        booking_number: bookingNumber,
+        pickup_time: pickupTime
+      })
     });
     
     const result = await response.json();

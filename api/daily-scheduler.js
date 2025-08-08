@@ -51,6 +51,9 @@ module.exports = async (req, res) => {
                 .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '')
                 .trim() : '';
             
+            // Get pickup time from request or use default
+            const pickupTime = req.body.pickup_time || '08:00 ~ 09:00';
+            
             // Construct customer-friendly email message
             const customerMessage = `Hello ${booking.customer_name},
 
@@ -61,7 +64,7 @@ We are pleased to confirm your booking, as detailed below.
 
 Tour date: ${tourDate}
 Pick up: ${cleanHotel}
-Pickup time: 08:00 ~ 09:00
+Pickup time: ${pickupTime}
 
 ** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
 We will try to be on time as possible , please just call us if driver be later more than 10 mins**

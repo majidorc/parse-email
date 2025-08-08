@@ -55,15 +55,10 @@ img,video{max-width:100%;height:auto}
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   white-space: nowrap;
-  min-width: 120px;
-  width: 120px;
-  height: 40px;
-  padding: 0.5rem 0.75rem;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .tab-btn-container button:hover {
@@ -94,26 +89,61 @@ img,video{max-width:100%;height:auto}
   border-radius: 2px 2px 0 0;
 }
 
-/* Consistent sizing for select and refresh button */
+/* Responsive sizing for select and refresh button */
 .tab-btn-container select {
-  min-width: 120px;
-  width: 120px;
-  height: 40px;
-  padding: 0.5rem 0.75rem;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
 }
 
 #global-refresh-btn {
-  min-width: 120px;
-  width: 120px;
-  height: 40px;
-  padding: 0.5rem 0.75rem;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 640px) {
+  .tab-btn-container button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .tab-btn-container select {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  #global-refresh-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-btn-container {
+    gap: 0.25rem;
+  }
+  
+  .tab-btn-container button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .tab-btn-container select {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  #global-refresh-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
 }
 
 /* Individual tab colors with gradients */

@@ -665,7 +665,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-              <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
+              <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">📱</button>
             </td>
         </tr>
         `;
@@ -705,7 +705,7 @@ function renderTable() {
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
           ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-          <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
+          <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">📱</button>
         </div>
       </div>
       `;
@@ -1153,15 +1153,21 @@ async function sendCustomerEmail(bookingNumber, button) {
 
 async function sendLineMessage(bookingNumber, button) {
   try {
-    // Find the booking data from the current table
-    const bookingRow = document.querySelector(`tr[data-booking-number="${bookingNumber}"]`);
-    if (!bookingRow) {
+    // Find the booking data from the copy button in the same row as the clicked button
+    const row = button.closest('tr') || button.closest('.card-row-past, .card-row-today, .card-row-tomorrow, .card-row-future');
+    if (!row) {
       showToast('Booking data not found', 'error');
       return;
     }
 
-    // Get booking data from the row's data attribute
-    const bookingData = JSON.parse(bookingRow.querySelector('.copy-btn').getAttribute('data-booking'));
+    // Get booking data from the copy button's data attribute
+    const copyButton = row.querySelector('.copy-btn');
+    if (!copyButton) {
+      showToast('Booking data not found', 'error');
+      return;
+    }
+
+    const bookingData = JSON.parse(copyButton.getAttribute('data-booking'));
     
     // Generate the notification text using the same function as copy button
     const notificationText = generateNotificationText(bookingData);

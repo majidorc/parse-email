@@ -572,13 +572,15 @@ body #bookings-table tbody#bookings-body tr.row-future {
   border-radius: 4px;
   font-size: 14px;
   transition: all 0.2s ease;
-  color: #00b900;
+  color: #00c300;
+  font-weight: bold;
 }
 
 .line-btn:hover {
-  background-color: #f3f4f6;
-  color: #009900;
+  background-color: #e8f5e8;
+  color: #00a000;
   transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 195, 0, 0.2);
 }
 
 .line-btn:disabled {
@@ -589,6 +591,7 @@ body #bookings-table tbody#bookings-body tr.row-future {
 
 .line-btn:disabled:hover {
   background-color: transparent;
-  color: #00b900;
+  color: #00c300;
   transform: none;
+  box-shadow: none;
 } 

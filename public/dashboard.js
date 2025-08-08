@@ -1470,27 +1470,34 @@ function renderAccountingTable() {
   if (!accountingData.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No results found.</td></tr>';
   } else {
-    tbody.innerHTML = accountingData.map(b => `
-      <tr>
-        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-        <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
-        <td class="px-4 py-3 text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
-        <td class="px-4 py-3 text-sm rate-cell" 
-            data-booking-number="${b.booking_number}" 
-            data-sku="${b.sku || ''}" 
-            data-current-rate="${b.rate || ''}"
-            style="cursor: pointer;"
-            title="Click to edit rate">
-          ${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}
-        </td>
-        <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
-        <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
-        <td class="px-4 py-3 text-sm text-yellow-900 font-semibold">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>
-        <td class="px-4 py-3 text-center">${userRole === 'admin' ? `<button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button>` : ''}</td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = accountingData.map(b => {
+      // Check if paid or net values are missing or zero
+      const hasPaid = b.paid !== null && b.paid !== undefined && Number(b.paid) > 0;
+      const hasNet = typeof b.net_total === 'number' && b.net_total > 0;
+      const missingValues = !hasPaid || !hasNet;
+      
+      return `
+        <tr class="${missingValues ? 'bg-yellow-100' : ''}">
+          <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
+          <td class="px-4 py-3 text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
+          <td class="px-4 py-3 text-sm rate-cell" 
+              data-booking-number="${b.booking_number}" 
+              data-sku="${b.sku || ''}" 
+              data-current-rate="${b.rate || ''}"
+              style="cursor: pointer;"
+              title="Click to edit rate">
+            ${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}
+          </td>
+          <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
+          <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
+          <td class="px-4 py-3 text-sm text-yellow-900 font-semibold">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>
+          <td class="px-4 py-3 text-center">${userRole === 'admin' ? `<button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button>` : ''}</td>
+        </tr>
+      `;
+    }).join('');
     // Add inline edit handlers
     setTimeout(() => {
       document.querySelectorAll('.accounting-paid-cell').forEach(cell => {

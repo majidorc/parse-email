@@ -1101,7 +1101,7 @@ async function sendCustomerEmail(bookingNumber, button) {
     button.textContent = '📧 Sending...';
     button.disabled = true;
     
-    const response = await fetch('/api/send-customer-email', {
+                 const response = await fetch('/api/daily-scheduler', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

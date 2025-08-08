@@ -153,6 +153,9 @@ module.exports = async (req, res) => {
   // Default: dashboard analytics
   const period = req.query.period || 'thisMonth';
   const [start, end] = getBangkokDateRange(period);
+  console.log('=== DASHBOARD DEBUG ===');
+  console.log('Period:', period);
+  console.log('Date range:', start, 'to', end);
   const channel = req.query.channel;
   // Helper to get channel filter SQL and params
   function getChannelFilterSql(col = 'booking_number') {
@@ -326,6 +329,11 @@ module.exports = async (req, res) => {
       
       percentBenefit = lastTotalBenefit === 0 ? null : ((totalBenefit - lastTotalBenefit) / Math.abs(lastTotalBenefit)) * 100;
       prevPeriodBenefit = lastTotalBenefit;
+      console.log('Benefit comparison:');
+      console.log('- Current period benefit:', totalBenefit);
+      console.log('- Previous period benefit:', lastTotalBenefit);
+      console.log('- Comparison period:', prevPeriod);
+      console.log('- Percentage:', percentBenefit);
     }
     const { rows: paxRows } = await sql.query(
       `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,

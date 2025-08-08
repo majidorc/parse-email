@@ -6,7 +6,7 @@ const axios = require('axios');
 // This is the main function for the daily cron job
 module.exports = async (req, res) => {
     // Handle customer email sending
-    if (req.method === 'POST' && req.body && req.body.booking_number) {
+    if (req.method === 'POST' && req.body && req.body.booking_number && (!req.body.action || req.body.action !== 'line')) {
         const session = getSession(req);
         if (!session) return res.status(401).json({ error: 'Not authenticated' });
         const userRole = session.role;

@@ -237,7 +237,7 @@ module.exports = async (req, res) => {
       `SELECT program, COUNT(*) AS count, COALESCE(SUM(adult),0) + COALESCE(SUM(child),0) AS total_pax
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql} GROUP BY program ORDER BY count DESC`, [start, end, ...channelFilter.params]
     );
-    let percentNew = null, percentEarnings = null, percentTotal = null, percentBenefit = null;
+    let percentNew = null, percentEarnings = null, percentTotal = null, percentBenefit = null, prevPeriodBenefit = null;
     let prevPeriod = null;
     switch (period) {
       case 'thisWeek': prevPeriod = 'lastWeek'; break;
@@ -325,6 +325,7 @@ module.exports = async (req, res) => {
       }, 0);
       
       const percentBenefit = lastTotalBenefit === 0 ? null : ((totalBenefit - lastTotalBenefit) / Math.abs(lastTotalBenefit)) * 100;
+      const prevPeriodBenefit = lastTotalBenefit;
     }
     const { rows: paxRows } = await sql.query(
       `SELECT COALESCE(SUM(adult),0) AS adults, COALESCE(SUM(child),0) AS children FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
@@ -371,6 +372,7 @@ module.exports = async (req, res) => {
       percentEarnings,
       percentTotal,
       percentBenefit,
+      prevPeriodBenefit,
       period,
       start,
       end,

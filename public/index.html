@@ -188,14 +188,14 @@
         <span id="bangkok-datetime" class="text-xs md:text-sm font-medium text-gray-500 px-2"></span>
       </div>
       <!-- Table Toggle Section -->
-      <div class="mb-4 tab-btn-container flex flex-wrap justify-center gap-2 sm:gap-4">
-        <button id="toggle-dashboard" class="px-3 py-2 rounded font-semibold bg-indigo-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Dashboard</button>
-        <button id="toggle-bookings" class="px-3 py-2 rounded font-semibold bg-blue-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Bookings</button>
-        <button id="toggle-programs" class="px-3 py-2 rounded font-semibold bg-green-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Programs</button>
-        <button id="toggle-accounting" class="px-3 py-2 rounded font-semibold bg-pink-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Accounting</button>
-        <button id="toggle-analytics" class="px-3 py-2 rounded font-semibold bg-yellow-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Analytics</button>
-        <button id="toggle-suppliers" class="px-3 py-2 rounded font-semibold bg-orange-600 text-white text-xs sm:text-sm transition-colors duration-200" type="button">Suppliers</button>
-        <select id="global-period-selector" class="px-2 py-2 rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs sm:text-sm">
+      <div class="mb-4 tab-btn-container flex flex-wrap justify-center gap-2">
+        <button id="toggle-dashboard" class="rounded font-semibold bg-indigo-600 text-white transition-colors duration-200" type="button">Dashboard</button>
+        <button id="toggle-bookings" class="rounded font-semibold bg-blue-600 text-white transition-colors duration-200" type="button">Bookings</button>
+        <button id="toggle-programs" class="rounded font-semibold bg-green-600 text-white transition-colors duration-200" type="button">Programs</button>
+        <button id="toggle-accounting" class="rounded font-semibold bg-pink-600 text-white transition-colors duration-200" type="button">Accounting</button>
+        <button id="toggle-analytics" class="rounded font-semibold bg-yellow-600 text-white transition-colors duration-200" type="button">Analytics</button>
+        <button id="toggle-suppliers" class="rounded font-semibold bg-orange-600 text-white transition-colors duration-200" type="button">Suppliers</button>
+        <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="thisMonth">This Month</option>
           <option value="lastMonth">Last Month</option>
           <option value="twoMonthsAgo">2 Months Ago</option>
@@ -205,11 +205,11 @@
           <option value="lastYear">Last Year</option>
           <option value="all">All Time</option>
         </select>
-        <button id="global-refresh-btn" type="button" class="px-2 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 text-xs sm:text-sm" title="Refresh all data">
-          <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1" title="Refresh all data">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span class="hidden sm:inline">Refresh</span>
+          <span>Refresh</span>
         </button>
       </div>
       <!-- Programs Section (pixel-perfect match) -->

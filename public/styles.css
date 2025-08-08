@@ -561,4 +561,34 @@ body #bookings-table tbody#bookings-body tr.row-future {
   background-color: transparent;
   color: #6b7280;
   transform: none;
+}
+
+/* Line button styles */
+.line-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: #00b900;
+}
+
+.line-btn:hover {
+  background-color: #f3f4f6;
+  color: #009900;
+  transform: scale(1.1);
+}
+
+.line-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.line-btn:disabled:hover {
+  background-color: transparent;
+  color: #00b900;
+  transform: none;
 } 

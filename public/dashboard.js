@@ -665,6 +665,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
+              <button class="line-btn ml-1" title="Send message to Line group" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
             </td>
         </tr>
         `;
@@ -704,6 +705,7 @@ function renderTable() {
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
           ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
+          <button class="line-btn ml-1" title="Send message to Line group" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
         </div>
       </div>
       `;
@@ -1101,39 +1103,39 @@ async function sendCustomerEmail(bookingNumber, button) {
   try {
     // Prompt for pickup time
     const pickupTime = prompt('Enter pickup time (e.g., 08:00 ~ 09:00):', '08:00 ~ 09:00');
-    
+
     if (pickupTime === null) {
       // User cancelled
       return;
     }
-    
+
     button.textContent = '📧 Sending...';
     button.disabled = true;
-    
+
     const response = await fetch('/api/daily-scheduler', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         booking_number: bookingNumber,
         pickup_time: pickupTime
       })
     });
-    
+
     const result = await response.json();
-    
+
     if (response.ok) {
       button.textContent = '✅ Sent!';
-      setTimeout(() => { 
-        button.textContent = '📧 Email'; 
+      setTimeout(() => {
+        button.textContent = '📧 Email';
         button.disabled = false;
       }, 2000);
       showToast('Email sent successfully to customer', 'success');
     } else {
       button.textContent = '❌ Failed';
-      setTimeout(() => { 
-        button.textContent = '📧 Email'; 
+      setTimeout(() => {
+        button.textContent = '📧 Email';
         button.disabled = false;
       }, 2000);
       showToast(result.error || 'Failed to send email', 'error');
@@ -1141,11 +1143,63 @@ async function sendCustomerEmail(bookingNumber, button) {
   } catch (error) {
     console.error('Error sending email:', error);
     button.textContent = '❌ Error';
-    setTimeout(() => { 
-      button.textContent = '📧 Email'; 
+    setTimeout(() => {
+      button.textContent = '📧 Email';
       button.disabled = false;
     }, 2000);
     showToast('Error sending email', 'error');
+  }
+}
+
+async function sendLineMessage(bookingNumber, button) {
+  try {
+    // Prompt for custom message
+    const customMessage = prompt('Enter custom message (or leave empty for default):', '');
+
+    if (customMessage === null) {
+      // User cancelled
+      return;
+    }
+
+    button.textContent = '💬 Sending...';
+    button.disabled = true;
+
+    const response = await fetch('/api/send-line-message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        booking_number: bookingNumber,
+        message: customMessage || null // Send null if empty to use default message
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      button.textContent = '✅ Sent!';
+      setTimeout(() => {
+        button.textContent = '💬 Line';
+        button.disabled = false;
+      }, 2000);
+      showToast('Message sent successfully to Line group', 'success');
+    } else {
+      button.textContent = '❌ Failed';
+      setTimeout(() => {
+        button.textContent = '💬 Line';
+        button.disabled = false;
+      }, 2000);
+      showToast(result.error || 'Failed to send Line message', 'error');
+    }
+  } catch (error) {
+    console.error('Error sending Line message:', error);
+    button.textContent = '❌ Error';
+    setTimeout(() => {
+      button.textContent = '💬 Line';
+      button.disabled = false;
+    }, 2000);
+    showToast('Error sending Line message', 'error');
   }
 }
 

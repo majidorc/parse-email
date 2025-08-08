@@ -38,19 +38,51 @@ module.exports = async (req, res) => {
             // Create notification manager instance
             const notificationManager = new NotificationManager();
             
-            // Construct the notification message
-            const message = notificationManager.constructNotificationMessage(booking);
+            // Format tour date as "09 Aug 2025"
+            const tourDate = booking.tour_date ? new Date(booking.tour_date).toLocaleDateString('en-GB', { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric' 
+            }) : 'N/A';
+            
+            // Clean hotel name - remove "THAILAND" from the end and zip codes
+            const cleanHotel = booking.hotel ? booking.hotel
+                .replace(/\s*THAILAND\s*$/i, '')
+                .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '')
+                .trim() : '';
+            
+            // Construct customer-friendly email message
+            const customerMessage = `Hello ${booking.customer_name},
+
+Warm Greetings from Thailand Tours
+Thank you for choosing to book your trip with us!
+
+We are pleased to confirm your booking, as detailed below.
+
+Tour date: ${tourDate}
+Pick up: ${cleanHotel}
+Pickup time: 08:00 ~ 09:00
+
+** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
+We will try to be on time as possible , please just call us if driver be later more than 10 mins**
+
+Should you require any other assistance, please do not hesitate to contact us at anytime by replying to this email.
+
+We wish you a great day and a fantastic trip!
+
+Best Regards,
+Thailand Tours team`;
             
             // Send email to customer
             const mailOptions = {
                 from: process.env.SMTP_FROM || process.env.SMTP_USER,
                 to: booking.customer_email,
                 subject: `Booking Confirmation: ${booking.booking_number} - ${booking.program || 'Tour'}`,
-                text: message,
+                text: customerMessage,
                 html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #4F46E5; margin-bottom: 20px;">Booking Confirmation</h2>
                     <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <pre style="font-family: 'Courier New', monospace; white-space: pre-wrap; margin: 0;">${message}</pre>
+                        <pre style="font-family: 'Courier New', monospace; white-space: pre-wrap; margin: 0;">${customerMessage}</pre>
                     </div>
                     <p style="color: #6B7280; font-size: 14px; margin-top: 20px;">
                         Thank you for your booking. If you have any questions, please don't hesitate to contact us.

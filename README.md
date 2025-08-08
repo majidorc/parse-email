@@ -16,6 +16,7 @@ A comprehensive booking management system for tour operators, featuring email pa
 - **Booking Status Tracking**: OP, RI, Customer status management
 - **Date-based Filtering**: Tomorrow, today, and custom date filtering
 - **Search Functionality**: Search bookings by customer name, booking number, hotel, etc.
+- **Customer Email Communication**: Send booking confirmation emails directly to customers
 
 ### Analytics & Reporting
 - **Sales Analytics**: Channel breakdown (Viator vs Website)
@@ -39,6 +40,11 @@ A comprehensive booking management system for tour operators, featuring email pa
 - **Role-based Access**: Admin, Programs Manager, Accounting, Reservation roles
 - **Session Management**: Secure authentication system
 - **User Whitelist**: Controlled access management
+
+### Email Features
+- **Customer Notifications**: Professional booking confirmation emails with pickup details
+- **SMTP Integration**: Secure email delivery using STARTTLS
+- **Email Templates**: Customer-friendly email templates with tour details
 
 ## 🛠️ Technical Stack
 

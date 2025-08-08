@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2025-08-08
+
+### Added
+- **Customer Email Feature**: Added email icon in bookings action column for bookings with customer_email
+- **Direct Customer Communication**: Send booking confirmation emails directly to customers
+- **Customer-Friendly Email Template**: Professional booking confirmation email with pickup details
+- **Email Button Styling**: Added hover effects and disabled states for email buttons
+
+### Changed
+- **Email Template**: Updated customer email to use friendly, professional format with pickup instructions
+- **SMTP Configuration**: Updated to use STARTTLS instead of SSL for better compatibility
+- **API Integration**: Merged customer email functionality into daily-scheduler API to stay within Vercel limits
+
+### Fixed
+- **Email Icon Display**: Fixed missing customer_email field in bookings API query
+- **SMTP Connection**: Resolved TLS version error by switching to STARTTLS
+- **API Flow**: Fixed 500 errors when sending customer emails by adding proper return statements
+- **Database Query**: Added customer_email field to main bookings SELECT query
+
+### Technical
+- Updated SMTP configuration in notificationManager.js for better email delivery
+- Enhanced daily-scheduler.js to handle both cron jobs and customer email requests
+- Added proper error handling and user feedback for email sending process
+
 ## [2.7.0] - 2025-08-04
 
 ### Added

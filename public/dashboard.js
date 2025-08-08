@@ -664,7 +664,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center${shouldHighlight('infant') ? ' bg-yellow-100' : ''}">${b.infant || ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
-              ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
+              ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">✉️</button>` : ''}
               <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">LINE</button>
             </td>
         </tr>
@@ -704,7 +704,7 @@ function renderTable() {
         <div class="mb-1 flex items-center"><span class="font-bold">🏷️Rate:</span> <span>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</span></div>
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
-          ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
+          ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">✉️</button>` : ''}
           <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">LINE</button>
         </div>
       </div>
@@ -1109,6 +1109,41 @@ async function sendCustomerEmail(bookingNumber, button) {
       return;
     }
 
+    // Ask for extra charge
+    const hasExtraCharge = confirm('Have extra charge or not?');
+    let isPrivate = false;
+    let pickupLine = '';
+
+    if (hasExtraCharge) {
+      isPrivate = confirm('Private is yes?');
+      if (isPrivate) {
+        pickupLine = ' ( extra charge for Private Roundtrip transfer 1000THB )';
+      } else {
+        pickupLine = ' ( extra charge for roundtrip transfer 1000THB per person )';
+      }
+    }
+
+    // Ask for National Park Fee
+    const hasNationalParkFee = confirm('Have National Park Fee?');
+    let adultFee = 0;
+    let childFee = 0;
+    let nationalParkFeeText = '';
+
+    if (hasNationalParkFee) {
+      const adultFeeInput = prompt('Enter Adult Fee (THB):', '400');
+      const childFeeInput = prompt('Enter Child Fee (THB):', '200');
+      
+      if (adultFeeInput === null || childFeeInput === null) {
+        // User cancelled
+        return;
+      }
+      
+      adultFee = parseInt(adultFeeInput) || 0;
+      childFee = parseInt(childFeeInput) || 0;
+      
+      nationalParkFeeText = `\n\nThe national park fee of THB ${adultFee} per adult and THB ${childFee} per child is excluded from the tour price. Please prepare cash for this fee. This fee is a maintenance fee collected by the Thai government department. There is no exception.`;
+    }
+
     button.textContent = '📧 Sending...';
     button.disabled = true;
 
@@ -1119,7 +1154,14 @@ async function sendCustomerEmail(bookingNumber, button) {
       },
       body: JSON.stringify({
         booking_number: bookingNumber,
-        pickup_time: pickupTime
+        pickup_time: pickupTime,
+        has_extra_charge: hasExtraCharge,
+        is_private: isPrivate,
+        pickup_line: pickupLine,
+        has_national_park_fee: hasNationalParkFee,
+        adult_fee: adultFee,
+        child_fee: childFee,
+        national_park_fee_text: nationalParkFeeText
       })
     });
 
@@ -1128,14 +1170,14 @@ async function sendCustomerEmail(bookingNumber, button) {
     if (response.ok) {
       button.textContent = '✅ Sent!';
       setTimeout(() => {
-        button.textContent = '📧 Email';
+        button.textContent = '✉️';
         button.disabled = false;
       }, 2000);
       showToast('Email sent successfully to customer', 'success');
     } else {
       button.textContent = '❌ Failed';
       setTimeout(() => {
-        button.textContent = '📧 Email';
+        button.textContent = '✉️';
         button.disabled = false;
       }, 2000);
       showToast(result.error || 'Failed to send email', 'error');
@@ -1144,7 +1186,7 @@ async function sendCustomerEmail(bookingNumber, button) {
     console.error('Error sending email:', error);
     button.textContent = '❌ Error';
     setTimeout(() => {
-      button.textContent = '📧 Email';
+      button.textContent = '✉️';
       button.disabled = false;
     }, 2000);
     showToast('Error sending email', 'error');

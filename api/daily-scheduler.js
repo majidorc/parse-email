@@ -55,6 +55,17 @@ module.exports = async (req, res) => {
             // Get pickup time from request or use default
             const pickupTime = req.body.pickup_time || '08:00 ~ 09:00';
             
+            // Get extra charge and pickup line information
+            const hasExtraCharge = req.body.has_extra_charge || false;
+            const pickupLine = req.body.pickup_line || '';
+            
+            // Get National Park Fee information
+            const hasNationalParkFee = req.body.has_national_park_fee || false;
+            const nationalParkFeeText = req.body.national_park_fee_text || '';
+            
+            // Construct pickup line with hotel and extra charge info
+            const pickupInfo = `Pick up: ${cleanHotel}${pickupLine}`;
+            
             // Construct customer-friendly email message
             const customerMessage = `Hello ${booking.customer_name},
 
@@ -64,11 +75,11 @@ Thank you for choosing to book your trip with us!
 We are pleased to confirm your booking, as detailed below.
 
 Tour date: ${tourDate}
-Pick up: ${cleanHotel}
+${pickupInfo}
 Pickup time: ${pickupTime}
 
 ** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
-We will try to be on time as possible , please just call us if driver be later more than 10 mins**
+We will try to be on time as possible , please just call us if driver be later more than 10 mins**${nationalParkFeeText}
 
 Should you require any other assistance, please do not hesitate to contact us at anytime by replying to this email.
 

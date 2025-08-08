@@ -4317,12 +4317,20 @@ async function updateDashboardBenefitCard() {
   try {
     const res = await fetch(url);
     const data = await res.json();
+    console.log('Dashboard data received:', data);
+    console.log('totalBenefit:', data.totalBenefit);
+    console.log('prevPeriodBenefit:', data.prevPeriodBenefit);
+    console.log('percentBenefit:', data.percentBenefit);
+    
     if (data.totalBenefit !== undefined) {
       document.getElementById('dashboard-benefit').textContent = Number(data.totalBenefit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       // Percent change
       let percent = null;
       if (typeof data.prevPeriodBenefit === 'number' && data.prevPeriodBenefit !== 0) {
         percent = ((data.totalBenefit - data.prevPeriodBenefit) / Math.abs(data.prevPeriodBenefit)) * 100;
+        console.log('Calculated percent:', percent);
+      } else {
+        console.log('No valid prevPeriodBenefit:', typeof data.prevPeriodBenefit, data.prevPeriodBenefit);
       }
       const benefitChange = document.getElementById('dashboard-benefit-change');
       if (percent !== null) {

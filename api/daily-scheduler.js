@@ -92,12 +92,12 @@ Thailand Tours team`;
             const mailOptions = {
                 from: process.env.SMTP_FROM || process.env.SMTP_USER,
                 to: booking.customer_email,
-                subject: `Booking Confirmation: ${booking.booking_number} - ${booking.program || 'Tour'}`,
+                subject: `Booking Confirmation ${booking.booking_number} - ${booking.program || 'Tour'}`,
                 text: customerMessage,
                 html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #4F46E5; margin-bottom: 20px;">Booking Confirmation</h2>
+                    <h2 style="color: #4F46E5; margin-bottom: 20px;">Booking Confirmation ${booking.booking_number}</h2>
                     <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <pre style="font-family: 'Courier New', monospace; white-space: pre-wrap; margin: 0;">${customerMessage}</pre>
+                        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; line-height: 1.6; color: #333; white-space: pre-wrap; margin: 0;">${customerMessage}</div>
                     </div>
                     <p style="color: #6B7280; font-size: 14px; margin-top: 20px;">
                         Thank you for your booking. If you have any questions, please don't hesitate to contact us.

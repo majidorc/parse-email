@@ -300,28 +300,21 @@ module.exports = async (req, res) => {
        FROM bookings WHERE tour_date >= $1 AND tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
     );
-    let websiteCount = 0, viatorCount = 0, otaCount = 0, websitePassengers = 0, viatorPassengers = 0, otaPassengers = 0;
+    let websiteCount = 0, viatorCount = 0, websitePassengers = 0, viatorPassengers = 0;
     allRows.forEach(row => {
       const pax = Number(row.adult) + Number(row.child) + Number(row.infant);
-      if (row.booking_number.startsWith('6')) {
-        websiteCount++;
-        websitePassengers += pax;
-      } else if (row.booking_number.startsWith('1')) {
+      if (row.booking_number.startsWith('1')) {
         viatorCount++;
         viatorPassengers += pax;
-      } else if (row.booking_number.startsWith('GYG')) {
-        otaCount++;
-        otaPassengers += pax;
       } else {
-        // Any other booking number format goes to OTA
-        otaCount++;
-        otaPassengers += pax;
+        // All other booking numbers go to Website (including '6', 'GYG', and any others)
+        websiteCount++;
+        websitePassengers += pax;
       }
     });
     const channels = [
       { channel: 'Website', count: websiteCount, passengers: websitePassengers },
-      { channel: 'Viator', count: viatorCount, passengers: viatorPassengers },
-      { channel: 'OTA', count: otaCount, passengers: otaPassengers }
+      { channel: 'Viator', count: viatorCount, passengers: viatorPassengers }
     ];
     // Add cache control headers to prevent caching
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

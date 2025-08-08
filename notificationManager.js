@@ -7,11 +7,14 @@ class NotificationManager {
         // Setup nodemailer transporter for email
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT || 465,
-            secure: true,
+            port: process.env.SMTP_PORT || 587,
+            secure: false, // Use STARTTLS instead of SSL
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
+            },
+            tls: {
+                rejectUnauthorized: false // Allow self-signed certificates
             }
         });
         this.telegramBotToken = null;

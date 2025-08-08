@@ -665,7 +665,7 @@ function renderTable() {
             <td class="px-4 py-3 whitespace-nowrap text-center">
               <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
               ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-              <button class="line-btn ml-1" title="Send message to Line group" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
+              <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
             </td>
         </tr>
         `;
@@ -705,7 +705,7 @@ function renderTable() {
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
           ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">📧</button>` : ''}
-          <button class="line-btn ml-1" title="Send message to Line group" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
+          <button class="line-btn ml-1" title="Open Line app with message" onclick="sendLineMessage('${b.booking_number}', this)">💬</button>
         </div>
       </div>
       `;
@@ -1174,46 +1174,37 @@ async function sendLineMessage(bookingNumber, button) {
       return;
     }
 
-    button.textContent = '💬 Sending...';
-    button.disabled = true;
-
-    const response = await fetch('/api/daily-scheduler', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        booking_number: bookingNumber,
-        action: 'line',
-        message: customMessage || notificationText // Use custom message or default notification text
-      })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      button.textContent = '✅ Sent!';
-      setTimeout(() => {
-        button.textContent = '💬 Line';
-        button.disabled = false;
-      }, 2000);
-      showToast('Message sent successfully to Line group', 'success');
-    } else {
-      button.textContent = '❌ Failed';
-      setTimeout(() => {
-        button.textContent = '💬 Line';
-        button.disabled = false;
-      }, 2000);
-      showToast(result.error || 'Failed to send Line message', 'error');
+    // Use custom message or default notification text
+    const messageToSend = customMessage || notificationText;
+    
+    // URL encode the message for the Line URL scheme
+    const encodedMessage = encodeURIComponent(messageToSend);
+    
+    // Create Line URL scheme
+    const lineUrl = `line://msg/text/${encodedMessage}`;
+    
+    // Show confirmation dialog
+    const confirmed = confirm(`This will open the Line app with the following message:\n\n${messageToSend}\n\nDo you want to continue?`);
+    
+    if (confirmed) {
+      // Try to open Line app with the message
+      try {
+        window.location.href = lineUrl;
+        showToast('Opening Line app with message...', 'success');
+      } catch (error) {
+        console.error('Error opening Line app:', error);
+        showToast('Failed to open Line app. Please copy the message and send manually.', 'error');
+        
+        // Fallback: copy to clipboard
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(messageToSend);
+          showToast('Message copied to clipboard. Please paste in Line app.', 'info');
+        }
+      }
     }
   } catch (error) {
-    console.error('Error sending Line message:', error);
-    button.textContent = '❌ Error';
-    setTimeout(() => {
-      button.textContent = '💬 Line';
-      button.disabled = false;
-    }, 2000);
-    showToast('Error sending Line message', 'error');
+    console.error('Error preparing Line message:', error);
+    showToast('Error preparing Line message', 'error');
   }
 }
 

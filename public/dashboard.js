@@ -1164,13 +1164,14 @@ async function sendLineMessage(bookingNumber, button) {
     button.textContent = '💬 Sending...';
     button.disabled = true;
 
-    const response = await fetch('/api/send-line-message', {
+    const response = await fetch('/api/daily-scheduler', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         booking_number: bookingNumber,
+        action: 'line',
         message: customMessage || null // Send null if empty to use default message
       })
     });

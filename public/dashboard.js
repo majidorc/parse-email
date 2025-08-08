@@ -1153,8 +1153,21 @@ async function sendCustomerEmail(bookingNumber, button) {
 
 async function sendLineMessage(bookingNumber, button) {
   try {
-    // Prompt for custom message
-    const customMessage = prompt('Enter custom message (or leave empty for default):', '');
+    // Find the booking data from the current table
+    const bookingRow = document.querySelector(`tr[data-booking-number="${bookingNumber}"]`);
+    if (!bookingRow) {
+      showToast('Booking data not found', 'error');
+      return;
+    }
+
+    // Get booking data from the row's data attribute
+    const bookingData = JSON.parse(bookingRow.querySelector('.copy-btn').getAttribute('data-booking'));
+    
+    // Generate the notification text using the same function as copy button
+    const notificationText = generateNotificationText(bookingData);
+
+    // Prompt for custom message (optional)
+    const customMessage = prompt('Enter custom message (or leave empty to use default notification text):', '');
 
     if (customMessage === null) {
       // User cancelled
@@ -1172,7 +1185,7 @@ async function sendLineMessage(bookingNumber, button) {
       body: JSON.stringify({
         booking_number: bookingNumber,
         action: 'line',
-        message: customMessage || null // Send null if empty to use default message
+        message: customMessage || notificationText // Use custom message or default notification text
       })
     });
 

@@ -141,9 +141,10 @@ Thailand Tours team`;
 
             const booking = rows[0];
 
-            // Construct the message if not provided
+            // Use the provided message (which should be the notification text from frontend)
             let lineMessage = message;
             if (!lineMessage) {
+                // Fallback message if somehow no message is provided
                 lineMessage = `📋 Booking Update: ${booking.booking_number}
 👤 Customer: ${booking.customer_name || 'N/A'}
 📅 Tour Date: ${booking.tour_date ? booking.tour_date.substring(0, 10) : 'N/A'}

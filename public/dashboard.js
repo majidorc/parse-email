@@ -1440,39 +1440,56 @@ function renderAccountingTable() {
       
       // Add SKU editing handlers
       document.querySelectorAll('.accounting-sku-cell').forEach(cell => {
+        // Remove any existing click handlers to prevent duplicates
+        cell.onclick = null;
+        
         cell.onclick = function(e) {
           console.log('SKU cell clicked:', cell);
           if (cell.querySelector('input')) {
             console.log('Input already exists, returning');
             return;
           }
+          
           const bookingNumber = cell.getAttribute('data-booking');
           const currentValue = cell.getAttribute('data-current-sku') || '';
           console.log('Editing SKU for booking:', bookingNumber, 'current value:', currentValue);
-          cell.innerHTML = `<input type='text' class='border px-2 py-1 w-32' value='${currentValue}' autofocus />`;
+          
+          // Create input element
+          cell.innerHTML = `<input type='text' class='border px-2 py-1 w-32' value='${currentValue}' />`;
           const input = cell.querySelector('input');
-          input.focus();
-          input.select();
+          
+          // Focus and select after a small delay to ensure it's rendered
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 10);
+          
           let hasSaved = false;
-          let isProcessing = false;
+          let savePromise = null;
           
           function saveSkuInput() {
-            if (hasSaved || isProcessing) return;
+            if (hasSaved || savePromise) {
+              console.log('Save already in progress or completed');
+              return;
+            }
             hasSaved = true;
-            isProcessing = true;
             
             const newValue = input.value.trim();
-            console.log('Saving SKU:', newValue, 'for booking:', bookingNumber);
             
-            // Remove input and show saving state
-            try {
-              cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
-            } catch (e) {
-              console.log('Cell already modified, skipping innerHTML update');
+            // Skip if value hasn't changed
+            if (newValue === currentValue) {
+              console.log('SKU value unchanged, reverting to display mode');
+              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
               return;
             }
             
-            fetch(`/api/accounting?booking_number=${bookingNumber}`, {
+            console.log('Saving SKU:', newValue, 'for booking:', bookingNumber);
+            
+            // Show saving state
+            cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+            
+            // Make the API call
+            savePromise = fetch(`/api/accounting?booking_number=${bookingNumber}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sku: newValue })
@@ -1484,74 +1501,66 @@ function renderAccountingTable() {
             .then(data => {
               console.log('API Response data:', data);
               if (data.success) {
-                // Update the accounting data array directly to prevent overwrite
+                // Update the accounting data array directly
                 const booking = accountingData.find(b => b.booking_number === bookingNumber);
                 if (booking) {
                   booking.sku = newValue;
-                  console.log('Updated local data for booking:', bookingNumber);
+                  console.log('Updated local data for booking:', bookingNumber, 'to:', newValue);
                 }
                 
-                // Update the cell immediately with new value
-                try {
-                  cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
-                  cell.setAttribute('data-current-sku', newValue);
-                  showToast('SKU updated successfully', 'success');
-                } catch (e) {
-                  console.log('Cell update error, but data was saved successfully');
-                }
+                // Update the cell with new value
+                cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
+                cell.setAttribute('data-current-sku', newValue);
                 
-                // Refresh table after a delay to ensure data consistency
-                setTimeout(() => {
-                  console.log('Refreshing accounting table...');
-                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
-                }, 500);
+                showToast('SKU updated successfully', 'success');
+                
+                // Skip table refresh to prevent overwriting our change
+                console.log('SKU update completed, skipping table refresh');
               } else {
                 console.error('API returned error:', data);
-                try {
-                  cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-                } catch (e) {
-                  console.log('Could not update cell with error state');
-                }
+                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
                 showToast('Failed to update SKU: ' + (data.error || 'Unknown error'), 'error');
               }
             })
             .catch(error => {
               console.error('Fetch error:', error);
-              try {
-                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-              } catch (e) {
-                console.log('Could not update cell with error state');
-              }
+              cell.innerHTML = `<span class='text-red-500'>Error</span>`;
               showToast('Network error updating SKU', 'error');
             })
             .finally(() => {
-              isProcessing = false;
+              savePromise = null;
             });
           }
           
           function cancelEdit() {
-            if (hasSaved || isProcessing) return;
+            if (hasSaved || savePromise) return;
             hasSaved = true;
-            try {
-              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
-            } catch (e) {
-              console.log('Could not cancel edit, cell already modified');
-            }
+            cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+            console.log('Edit cancelled');
           }
           
-          input.onblur = saveSkuInput;
-          input.onkeydown = function(ev) {
+          // Event handlers
+          input.addEventListener('blur', saveSkuInput);
+          input.addEventListener('keydown', function(ev) {
             if (ev.key === 'Enter') {
               ev.preventDefault();
+              ev.stopPropagation();
               saveSkuInput();
             }
             if (ev.key === 'Escape') {
               ev.preventDefault();
+              ev.stopPropagation();
               cancelEdit();
             }
-          };
+          });
         };
-        cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
+        
+        cell.onkeydown = function(e) { 
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            cell.click(); 
+          }
+        };
       });
       
       // Add rate cell click handlers

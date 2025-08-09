@@ -434,10 +434,13 @@ module.exports = async (req, res) => {
       // Handle SKU update
       if (sku !== undefined) {
         try {
-          await sql.query('UPDATE bookings SET sku = $1 WHERE booking_number = $2', [sku, bookingNumber]);
+          console.log('PATCH SKU:', sku, 'for booking:', bookingNumber);
+          const result = await sql.query('UPDATE bookings SET sku = $1 WHERE booking_number = $2', [sku, bookingNumber]);
+          console.log('SKU update result:', result.rowCount, 'rows affected');
           res.setHeader('Cache-Control', 'no-store');
           return res.status(200).json({ success: true });
         } catch (err) {
+          console.error('SKU update error:', err);
           return res.status(500).json({ success: false, error: err.message });
         }
       }

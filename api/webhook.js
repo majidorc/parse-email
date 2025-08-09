@@ -306,7 +306,30 @@ class BokunParser extends BaseEmailParser {
     return 'N/A';
   }
   extractProgram() {
-    return this.findValueByLabel('Product').replace(/^[A-Z0-9]+\s*-\s*/, '').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    let program = this.findValueByLabel('Product').replace(/^[A-Z0-9]+\s*-\s*/, '').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Extract start time from the date field and append to program
+    const startTime = this.extractStartTime();
+    if (startTime && startTime !== 'N/A') {
+      program += ` - [${startTime}]`;
+    }
+    
+    return program;
+  }
+  
+  extractStartTime() {
+    // Look for time in the Date field: "Sun 10.Aug '25 @ 08:00"
+    const dateText = this.findValueByLabel('Date');
+    const timeMatch = dateText.match(/@\s*(\d{2}:\d{2})/);
+    if (timeMatch && timeMatch[1]) {
+      // Convert 24-hour to 12-hour format with am/pm
+      const [hours, minutes] = timeMatch[1].split(':');
+      const hour24 = parseInt(hours, 10);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'pm' : 'am';
+      return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+    return 'N/A';
   }
   extractName() { return this.findValueByLabel('Customer'); }
   extractPassengers() {
@@ -650,15 +673,74 @@ class ThailandToursParser extends BaseEmailParser {
     extractProgram() {
         // The program name is the line right before the line with the product code, e.g., "(#HKT0022)"
         const codeIndex = this.lines.findIndex(line => /\(#([A-Z0-9]+)\)/.test(line));
+        let program = 'N/A';
+        
         if (codeIndex > 0) {
             // Check the line immediately before the code; it might be blank.
             const lineBefore = this.lines[codeIndex - 1].trim();
             if (lineBefore) {
-                return lineBefore;
+                program = lineBefore;
             }
             // If the line before was blank, check the one before that.
-            if (codeIndex > 1 && this.lines[codeIndex - 2]) {
-                return this.lines[codeIndex - 2].trim();
+            else if (codeIndex > 1 && this.lines[codeIndex - 2]) {
+                program = this.lines[codeIndex - 2].trim();
+            }
+        }
+        
+        // Extract pickup time and append to program if found
+        const pickupTime = this.extractPickupTime();
+        if (pickupTime && pickupTime !== 'N/A' && program !== 'N/A') {
+            program += ` - [${pickupTime}]`;
+        }
+        
+        return program;
+    }
+    
+    extractPickupTime() {
+        // Look for "Pickup time: 08:00-08:30 PM" format
+        const pickupLine = this.lines.find(line => /pickup time:/i.test(line));
+        if (pickupLine) {
+            const timeMatch = pickupLine.match(/pickup time:\s*(.+)/i);
+            if (timeMatch && timeMatch[1]) {
+                let timeStr = timeMatch[1].trim();
+                
+                // If it's a range like "08:00-08:30 PM", take the first time
+                const rangeMatch = timeStr.match(/^(\d{2}:\d{2})/);
+                if (rangeMatch) {
+                    const time = rangeMatch[1];
+                    // Check if PM is mentioned in the original string
+                    const isPM = /pm/i.test(timeStr);
+                    const isAM = /am/i.test(timeStr);
+                    
+                    if (isPM || isAM) {
+                        // Convert to 12-hour format
+                        const [hours, minutes] = time.split(':');
+                        const hour24 = parseInt(hours, 10);
+                        
+                        if (isPM && hour24 !== 12) {
+                            // PM time (but not 12 PM)
+                            const hour12 = hour24;
+                            return `${hour12.toString().padStart(2, '0')}:${minutes} pm`;
+                        } else if (isAM && hour24 === 12) {
+                            // 12 AM becomes 12 am
+                            return `12:${minutes} am`;
+                        } else if (isAM) {
+                            // AM time
+                            return `${hour24.toString().padStart(2, '0')}:${minutes} am`;
+                        } else {
+                            // PM time
+                            return `${hour24.toString().padStart(2, '0')}:${minutes} pm`;
+                        }
+                    } else {
+                        // No AM/PM specified, assume 24-hour format and convert
+                        const hour24 = parseInt(hours, 10);
+                        const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+                        const ampm = hour24 >= 12 ? 'pm' : 'am';
+                        return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+                    }
+                }
+                
+                return timeStr; // Return original if no pattern matches
             }
         }
         return 'N/A';
@@ -912,6 +994,8 @@ class ThailandToursParser extends BaseEmailParser {
         console.log('- Booking Number:', bookingNumber);
         console.log('- Tour Date:', tourDate);
         console.log('- Passengers:', passengers);
+        console.log('- Pickup Time:', this.extractPickupTime());
+        console.log('- Program (with time):', this.extractProgram());
         console.log('- First 10 lines of email:', this.lines.slice(0, 10));
         
         return {

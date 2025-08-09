@@ -319,7 +319,7 @@ module.exports = async (req, res) => {
           return;
         }
         
-        console.log('[PRODUCTS-RATES] Received POST request:', req.body); // Debug log
+
         
         const product_id_optional = req.body.productId || req.body.product_id_optional || null;
         const { sku, program, remark, id, supplier_id } = req.body;
@@ -398,7 +398,7 @@ module.exports = async (req, res) => {
             const rate = rates[i];
             const { name, netAdult, netChild, feeType, feeAdult, feeChild, order } = rate;
             
-            console.log('[PRODUCTS-RATES] Processing rate:', rate); // Debug log
+
             
             // Map frontend field names to database field names
             const net_adult = netAdult;

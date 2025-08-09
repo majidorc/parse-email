@@ -577,9 +577,7 @@ export default async function handler(req, res) {
       (parseInt(websiteChannelData.total_infants) || 0) : 0;
     
     // Debug logging for passenger counts
-    console.log('Debug - Available channels:', debugChannels.rows);
-    console.log('Debug - NULL channels count:', nullChannels.rows[0].null_count);
-    console.log('Debug - Sample bookings:', sampleBookings.rows);
+
 
     res.status(200).json({
       salesByChannel: salesByChannelResult.rows,

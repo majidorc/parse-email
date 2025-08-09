@@ -990,13 +990,7 @@ class ThailandToursParser extends BaseEmailParser {
         const tourDate = this.extractTourDate();
         const bookingNumber = this.extractBookingNumber();
         
-        console.log('[THAILAND TOURS DEBUG] Extracting booking data:');
-        console.log('- Booking Number:', bookingNumber);
-        console.log('- Tour Date:', tourDate);
-        console.log('- Passengers:', passengers);
-        console.log('- Pickup Time:', this.extractPickupTime());
-        console.log('- Program (with time):', this.extractProgram());
-        console.log('- First 10 lines of email:', this.lines.slice(0, 10));
+
         
         return {
             bookingNumber: bookingNumber,

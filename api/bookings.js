@@ -200,34 +200,31 @@ module.exports = async (req, res) => {
       }
     }
     if (req.method === 'DELETE') {
-      console.log('[DEBUG] DELETE request received for booking_number:', booking_number);
-      console.log('[DEBUG] User role:', userRole);
+
       
       // Only Admin can delete bookings
       if (userRole !== 'admin') {
-        console.log('[DEBUG] Access denied - user is not admin');
+
         return res.status(403).json({ error: 'Forbidden: Admins only' });
       }
       
       try {
-        console.log('[DEBUG] Fetching booking details before deletion');
+
         // Get booking details before deletion
         const { rows: bookingDetails } = await sql`SELECT tour_date FROM bookings WHERE booking_number = ${booking_number}`;
-        console.log('[DEBUG] Booking details found:', bookingDetails.length > 0);
+
         
         // Send cancellation notification to Telegram
         const NotificationManager = require('../notificationManager');
         const nm = new NotificationManager();
         const tourDate = bookingDetails.length > 0 ? bookingDetails[0].tour_date : null;
-        console.log('[DEBUG] Sending cancellation notification');
+
         await nm.sendCancellationNotification(booking_number, 'Manual deletion by admin', null, tourDate);
 
-        console.log('[DEBUG] Deleting booking from database');
         await sql`DELETE FROM bookings WHERE booking_number = ${booking_number}`;
-        console.log('[DEBUG] Booking deleted successfully');
         return res.status(200).json({ success: true });
       } catch (err) {
-        console.error('[DEBUG] Failed to delete booking:', err);
+        console.error('Failed to delete booking:', err);
         return res.status(500).json({ error: 'Failed to delete booking', details: err.message });
       }
     }

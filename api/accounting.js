@@ -185,11 +185,8 @@ module.exports = async (req, res) => {
       const { rows: bookings } = await sql.query(query, params);
 
       // Debug: Log booking numbers for channel filtering
-      console.log('Debug - Total bookings:', bookings.length);
-      console.log('Debug - All booking numbers:');
-      bookings.forEach((b, index) => {
-        console.log(`Booking ${index + 1}: ${b.booking_number}`);
-      });
+
+
 
       // Calculate summary data
       const totalBookings = bookings.length;
@@ -251,10 +248,7 @@ module.exports = async (req, res) => {
       const websiteData = websiteBookings.map(formatBookingData);
 
       // Debug: Log filtered results
-      console.log('Debug - Viator bookings count:', viatorBookings.length);
-      console.log('Debug - Website bookings count:', websiteBookings.length);
-      console.log('Debug - Viator booking numbers:', viatorBookings.map(b => b.booking_number));
-      console.log('Debug - Website booking numbers:', websiteBookings.map(b => b.booking_number));
+
 
       // Enhanced summary sheet with channel breakdown
       const summaryData = [
@@ -726,8 +720,7 @@ module.exports = async (req, res) => {
       allRows = allRowsResult;
       
       // Calculate total paid and total benefit for the entire period
-      console.log('Debug - allRows length:', allRows.length);
-      console.log('Debug - Sample row:', allRows[0]);
+
       
       allRows.forEach(b => {
         const paid = Number(b.paid) || 0;
@@ -741,15 +734,7 @@ module.exports = async (req, res) => {
         const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
         totalBenefit += (paid - netTotal);
         
-        console.log('Debug - Row calculation:', {
-          paid,
-          netAdult,
-          netChild,
-          adult,
-          child,
-          netTotal,
-          benefit: paid - netTotal
-        });
+
       });
       
       // Previous period benefit for percent change (only if we have date range filters)
@@ -806,10 +791,7 @@ module.exports = async (req, res) => {
 
 
     // Debug logging
-    console.log('API Debug - totalPaid:', totalPaid);
-    console.log('API Debug - totalBenefit:', totalBenefit);
-    console.log('API Debug - allRows count:', allRows ? allRows.length : 'N/A');
-    console.log('API Debug - About to send response with totalPaid:', totalPaid, 'totalBenefit:', totalBenefit);
+
     
     res.setHeader('Cache-Control', 'no-store');
     const responseData = {
@@ -825,7 +807,7 @@ module.exports = async (req, res) => {
       totalPaid,
       prevPeriodBenefit
     };
-    console.log('API Debug - Final response data:', responseData);
+
     return res.status(200).json(responseData);
   } catch (err) {
     console.error('Accounting API error:', err);

@@ -1441,9 +1441,14 @@ function renderAccountingTable() {
       // Add SKU editing handlers
       document.querySelectorAll('.accounting-sku-cell').forEach(cell => {
         cell.onclick = function(e) {
-          if (cell.querySelector('input')) return;
+          console.log('SKU cell clicked:', cell);
+          if (cell.querySelector('input')) {
+            console.log('Input already exists, returning');
+            return;
+          }
           const bookingNumber = cell.getAttribute('data-booking');
           const currentValue = cell.getAttribute('data-current-sku') || '';
+          console.log('Editing SKU for booking:', bookingNumber, 'current value:', currentValue);
           cell.innerHTML = `<input type='text' class='border px-2 py-1 w-32' value='${currentValue}' autofocus />`;
           const input = cell.querySelector('input');
           input.focus();
@@ -1453,17 +1458,26 @@ function renderAccountingTable() {
             if (hasSaved) return;
             hasSaved = true;
             const newValue = input.value.trim();
+            console.log('Saving SKU:', newValue, 'for booking:', bookingNumber);
             cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+            
             fetch(`/api/accounting?booking_number=${bookingNumber}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ sku: newValue })
-            }).then(r => r.json()).then(data => {
+            })
+            .then(response => {
+              console.log('API Response status:', response.status);
+              return response.json();
+            })
+            .then(data => {
+              console.log('API Response data:', data);
               if (data.success) {
                 // Update the accounting data array directly to prevent overwrite
                 const booking = accountingData.find(b => b.booking_number === bookingNumber);
                 if (booking) {
                   booking.sku = newValue;
+                  console.log('Updated local data for booking:', bookingNumber);
                 }
                 
                 // Update the cell immediately with new value
@@ -1474,15 +1488,19 @@ function renderAccountingTable() {
                 
                 // Refresh table after a delay to ensure data consistency
                 setTimeout(() => {
+                  console.log('Refreshing accounting table...');
                   fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
                 }, 1000);
               } else {
+                console.error('API returned error:', data);
                 cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-                showToast('Failed to update SKU', 'error');
+                showToast('Failed to update SKU: ' + (data.error || 'Unknown error'), 'error');
               }
-            }).catch(() => {
+            })
+            .catch(error => {
+              console.error('Fetch error:', error);
               cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-              showToast('Error updating SKU', 'error');
+              showToast('Network error updating SKU', 'error');
             });
           }
           input.onblur = saveSkuInput;

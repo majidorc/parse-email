@@ -396,7 +396,7 @@ module.exports = async (req, res) => {
   const bookingNumber = req.query.booking_number;
   if (bookingNumber) {
     if (req.method === 'PATCH') {
-      const { paid, net_total } = req.body;
+      const { paid, net_total, sku } = req.body;
       
       // Handle paid amount update
       if (paid !== undefined) {
@@ -437,7 +437,18 @@ module.exports = async (req, res) => {
         }
       }
       
-      return res.status(400).json({ success: false, error: 'Missing paid or net_total' });
+      // Handle SKU update
+      if (sku !== undefined) {
+        try {
+          await sql.query('UPDATE bookings SET sku = $1 WHERE booking_number = $2', [sku, bookingNumber]);
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(200).json({ success: true });
+        } catch (err) {
+          return res.status(500).json({ success: false, error: err.message });
+        }
+      }
+      
+      return res.status(400).json({ success: false, error: 'Missing paid, net_total, or sku' });
     } else if (req.method === 'DELETE') {
       // Only Admin can delete bookings
       if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });

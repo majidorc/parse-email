@@ -1324,7 +1324,13 @@ function renderAccountingTable() {
           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${b.booking_number || ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
           <td class="px-4 py-3 whitespace-nowrap text-sm">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm">${b.sku || ''}</td>
+          <td class="px-4 py-3 text-sm accounting-sku-cell" 
+              data-booking="${b.booking_number}" 
+              data-current-sku="${b.sku || ''}"
+              style="cursor: pointer;"
+              title="Click to edit SKU">
+            ${b.sku || '<span class="text-gray-400">Click to add</span>'}
+          </td>
           <td class="px-4 py-3 text-sm">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '')}</td>
           <td class="px-4 py-3 text-sm rate-cell" 
               data-booking-number="${b.booking_number}" 
@@ -1431,6 +1437,51 @@ function renderAccountingTable() {
           cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
         });
       }
+      
+      // Add SKU editing handlers
+      document.querySelectorAll('.accounting-sku-cell').forEach(cell => {
+        cell.onclick = function(e) {
+          if (cell.querySelector('input')) return;
+          const bookingNumber = cell.getAttribute('data-booking');
+          const currentValue = cell.getAttribute('data-current-sku') || '';
+          cell.innerHTML = `<input type='text' class='border px-2 py-1 w-32' value='${currentValue}' autofocus />`;
+          const input = cell.querySelector('input');
+          input.focus();
+          input.select();
+          let hasSaved = false;
+          function saveSkuInput() {
+            if (hasSaved) return;
+            hasSaved = true;
+            const newValue = input.value.trim();
+            cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+            fetch(`/api/accounting?booking_number=${bookingNumber}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sku: newValue })
+            }).then(r => r.json()).then(data => {
+              if (data.success) {
+                // Add cache-busting param to ensure fresh data
+                fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+                showToast('SKU updated successfully', 'success');
+              } else {
+                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                showToast('Failed to update SKU', 'error');
+              }
+            }).catch(() => {
+              cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+              showToast('Error updating SKU', 'error');
+            });
+          }
+          input.onblur = saveSkuInput;
+          input.onkeydown = function(ev) {
+            if (ev.key === 'Enter') saveSkuInput();
+            if (ev.key === 'Escape') {
+              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+            }
+          };
+        };
+        cell.onkeydown = function(e) { if (e.key === 'Enter') cell.click(); };
+      });
       
       // Add rate cell click handlers
       document.querySelectorAll('.rate-cell').forEach(cell => {

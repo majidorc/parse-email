@@ -413,7 +413,19 @@ class ThailandToursParser extends BaseEmailParser {
     }
     
     extractBookingNumber() {
-        return this._findLineValue('ORDER NUMBER:');
+        // Try multiple formats
+        let bookingNumber = this._findLineValue('ORDER NUMBER:');
+        if (bookingNumber === 'N/A') {
+            bookingNumber = this._findLineValue('Order number:');
+        }
+        if (bookingNumber === 'N/A') {
+            // Try to find it in the subject line or anywhere in the email
+            const orderMatch = this.lines.join(' ').match(/(?:order|booking)\s*#?\s*:?\s*(\d+)/i);
+            if (orderMatch) {
+                bookingNumber = orderMatch[1];
+            }
+        }
+        return bookingNumber;
     }
 
     // NEW: Extract multiple bookings from the same email
@@ -653,12 +665,27 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractTourDate() {
-        // The tour date is on a line like "* June 22, 2025"
-        const dateLine = this.lines.find(line => line.trim().startsWith('*') && /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(line));
+        // Try multiple formats:
+        // 1. "* June 22, 2025" (old format)
+        let dateLine = this.lines.find(line => line.trim().startsWith('*') && /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(line));
         if (dateLine) {
             const dateMatch = dateLine.match(/[A-Za-z]+ \d{1,2}, \d{4}/);
             if (dateMatch) return dateMatch[0];
         }
+        
+        // 2. "August 9, 2025" (new format) - look for standalone date
+        dateLine = this.lines.find(line => /^[A-Za-z]+ \d{1,2}, \d{4}$/.test(line.trim()));
+        if (dateLine) {
+            return dateLine.trim();
+        }
+        
+        // 3. Look for date in booking sections
+        dateLine = this.lines.find(line => /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec) \d{1,2}, \d{4}/i.test(line));
+        if (dateLine) {
+            const dateMatch = dateLine.match(/([A-Za-z]+ \d{1,2}, \d{4})/i);
+            if (dateMatch) return dateMatch[1];
+        }
+        
         return 'N/A';
     }
 
@@ -686,15 +713,27 @@ class ThailandToursParser extends BaseEmailParser {
                 pax.adult = (parseInt(pax.adult, 10) + parseInt(personPlusMatch[1], 10)).toString();
             }
         }
-        // If no explicit adult/child/infant found, fallback to 'Person: N'
+        // If no explicit adult/child/infant found, fallback to 'Person: N' or 'Person ฿1099: N'
         if (pax.adult === '0' && pax.child === '0' && pax.infant === '0') {
-            const personLine = this.lines.find(line => /person\s*:\s*\d+/i.test(line));
+            // Try standard format: "Person: N"
+            let personLine = this.lines.find(line => /person\s*:\s*\d+/i.test(line));
             if (personLine) {
                 const personMatch = personLine.match(/person\s*:\s*(\d+)/i);
                 if (personMatch && personMatch[1]) {
                     pax.adult = (parseInt(pax.adult, 10) + parseInt(personMatch[1], 10)).toString();
                     pax.child = '0';
                     pax.infant = '0';
+                }
+            } else {
+                // Try new format: "Person ฿1099: N"
+                personLine = this.lines.find(line => /person\s*[฿\w]*\d*\s*:\s*\d+/i.test(line));
+                if (personLine) {
+                    const personMatch = personLine.match(/person\s*[฿\w]*\d*\s*:\s*(\d+)/i);
+                    if (personMatch && personMatch[1]) {
+                        pax.adult = (parseInt(pax.adult, 10) + parseInt(personMatch[1], 10)).toString();
+                        pax.child = '0';
+                        pax.infant = '0';
+                    }
                 }
             }
         }
@@ -867,8 +906,16 @@ class ThailandToursParser extends BaseEmailParser {
     extractAll() {
         const passengers = this.extractPassengers();
         const tourDate = this.extractTourDate();
+        const bookingNumber = this.extractBookingNumber();
+        
+        console.log('[THAILAND TOURS DEBUG] Extracting booking data:');
+        console.log('- Booking Number:', bookingNumber);
+        console.log('- Tour Date:', tourDate);
+        console.log('- Passengers:', passengers);
+        console.log('- First 10 lines of email:', this.lines.slice(0, 10));
+        
         return {
-            bookingNumber: this.extractBookingNumber(),
+            bookingNumber: bookingNumber,
             tourDate: tourDate,
             sku: this.extractSKU(),
             program: this.extractProgram(),

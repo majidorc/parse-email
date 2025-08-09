@@ -1663,33 +1663,42 @@ async function handler(req, res) {
                     // Compare all relevant fields
                     const existing = existingBookings[0];
                     let changed = false;
-                    // Use the rate from email parsing (which includes addon information) for field comparison
+                    // PRIORITY: If SKU exists, look up correct program name and rate from database for comparison
+                    let comparisonProgram = extractedInfo.program;
                     let comparisonRate = extractedInfo.rate;
-                    // Only fall back to database lookup if no rate was extracted from email
-                    if ((!comparisonRate || comparisonRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
+                    
+                    // If SKU is provided, prioritize database program name over email program name
+                    if (extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                         try {
-                            // Look up the first available rate for this SKU
-                            const { rows: rateRows } = await sql`
-                                SELECT r.name 
+                            // Look up the correct program name and rate for this SKU
+                            const { rows: productRows } = await sql`
+                                SELECT p.program, r.name as rate_name
                                 FROM products p 
-                                JOIN rates r ON p.id = r.product_id 
+                                LEFT JOIN rates r ON p.id = r.product_id 
                                 WHERE p.sku = ${extractedInfo.sku}
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;
                             
-                            if (rateRows.length > 0) {
-                                comparisonRate = rateRows[0].name;
+                            if (productRows.length > 0) {
+                                // PRIORITY: Use database program name if SKU matches
+                                if (productRows[0].program) {
+                                    comparisonProgram = productRows[0].program;
+                                }
+                                // Use database rate if no rate was extracted from email
+                                if ((!comparisonRate || comparisonRate.trim() === '') && productRows[0].rate_name) {
+                                    comparisonRate = productRows[0].rate_name;
+                                }
                             }
                         } catch (error) {
-                            console.error(`[AUTO-RATE] Error looking up rate for field comparison SKU ${extractedInfo.sku}:`, error);
+                            console.error(`[SKU-PRIORITY-UPDATE] Error looking up program/rate for SKU ${extractedInfo.sku}:`, error);
                         }
                     }
 
                     const fields = [
                       ['tour_date', extractedInfo.isoDate],
                       ['sku', extractedInfo.sku],
-                      ['program', extractedInfo.program],
+                      ['program', comparisonProgram],
                       ['customer_name', extractedInfo.name],
                       ['adult', adult],
                       ['child', child],
@@ -1733,7 +1742,7 @@ async function handler(req, res) {
                     }
                     if (anyFieldChanged || clearHighlight) {
                       await sql`
-                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${extractedInfo.program}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
+                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
                         WHERE booking_number = ${extractedInfo.bookingNumber}
                       `;
                       
@@ -1741,7 +1750,7 @@ async function handler(req, res) {
                       await triggerWebNotification({
                         booking_number: extractedInfo.bookingNumber,
                         customer_name: extractedInfo.name,
-                        program: extractedInfo.program,
+                        program: comparisonProgram,
                         tour_date: extractedInfo.isoDate,
                         adult,
                         child,
@@ -1784,41 +1793,52 @@ async function handler(req, res) {
                       }
                     }
 
-                    // Use the rate from email parsing (which includes addon information)
+                    // PRIORITY: If SKU exists in email, look up correct program name from database
+                    let finalProgram = extractedInfo.program;
                     let finalRate = extractedInfo.rate;
-                    console.log(`[RATE-DEBUG] Extracted rate from email: "${extractedInfo.rate}"`);
-                    console.log(`[RATE-DEBUG] SKU: "${extractedInfo.sku}"`);
                     
-                    // Only fall back to database lookup if no rate was extracted from email
-                    if ((!finalRate || finalRate.trim() === '') && extractedInfo.sku && extractedInfo.sku.trim() !== '') {
+                    console.log(`[SKU-PRIORITY] Email SKU: "${extractedInfo.sku}"`);
+                    console.log(`[SKU-PRIORITY] Email program: "${extractedInfo.program}"`);
+                    console.log(`[SKU-PRIORITY] Email rate: "${extractedInfo.rate}"`);
+                    
+                    // If SKU is provided, prioritize database program name over email program name
+                    if (extractedInfo.sku && extractedInfo.sku.trim() !== '') {
                         try {
-                            // Look up the first available rate for this SKU
-                            const { rows: rateRows } = await sql`
-                                SELECT r.name 
+                            // Look up the correct program name and rate for this SKU
+                            const { rows: productRows } = await sql`
+                                SELECT p.program, r.name as rate_name
                                 FROM products p 
-                                JOIN rates r ON p.id = r.product_id 
+                                LEFT JOIN rates r ON p.id = r.product_id 
                                 WHERE p.sku = ${extractedInfo.sku}
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;
                             
-                            console.log(`[RATE-DEBUG] Database lookup found ${rateRows.length} rates for SKU ${extractedInfo.sku}`);
-                            if (rateRows.length > 0) {
-                                finalRate = rateRows[0].name;
-                                console.log(`[RATE-DEBUG] Using database rate: "${finalRate}"`);
+                            console.log(`[SKU-PRIORITY] Database lookup found ${productRows.length} products for SKU ${extractedInfo.sku}`);
+                            if (productRows.length > 0) {
+                                // PRIORITY: Use database program name if SKU matches
+                                if (productRows[0].program) {
+                                    finalProgram = productRows[0].program;
+                                    console.log(`[SKU-PRIORITY] Using database program: "${finalProgram}" (overriding email program)`);
+                                }
+                                // Use database rate if no rate was extracted from email
+                                if ((!finalRate || finalRate.trim() === '') && productRows[0].rate_name) {
+                                    finalRate = productRows[0].rate_name;
+                                    console.log(`[SKU-PRIORITY] Using database rate: "${finalRate}"`);
+                                }
                             } else {
-                                console.log(`[RATE-DEBUG] No rates found in database for SKU ${extractedInfo.sku}`);
+                                console.log(`[SKU-PRIORITY] No products found in database for SKU ${extractedInfo.sku}, using email program`);
                             }
                         } catch (error) {
-                            console.error(`[AUTO-RATE] Error looking up rate for SKU ${extractedInfo.sku}:`, error);
+                            console.error(`[SKU-PRIORITY] Error looking up program/rate for SKU ${extractedInfo.sku}:`, error);
                         }
                     } else {
-                        console.log(`[RATE-DEBUG] Using email-extracted rate: "${finalRate}"`);
+                        console.log(`[SKU-PRIORITY] No SKU provided, using email program: "${finalProgram}"`);
                     }
 
                     await sql`
                         INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${extractedInfo.program}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
@@ -1845,7 +1865,7 @@ async function handler(req, res) {
                       booking_number: extractedInfo.bookingNumber,
                       tour_date: extractedInfo.isoDate,
                       sku: extractedInfo.sku,
-                      program: extractedInfo.program,
+                      program: finalProgram,
                       customer_name: extractedInfo.name,
                       adult,
                       child,
@@ -1864,7 +1884,7 @@ async function handler(req, res) {
                     await triggerWebNotification({
                       booking_number: extractedInfo.bookingNumber,
                       customer_name: extractedInfo.name,
-                      program: extractedInfo.program,
+                      program: finalProgram,
                       tour_date: extractedInfo.isoDate,
                       adult,
                       child,

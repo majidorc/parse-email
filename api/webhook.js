@@ -237,10 +237,10 @@ class BaseEmailParser {
     const hotel = extractedInfo.hotel;
     const phoneNumber = extractedInfo.phoneNumber;
     
-    // Clean hotel name - remove "THAILAND" from the end and zip codes like "Phuket 83150"
+    // Clean hotel name - extract just the hotel name (first part before comma or address details)
     const cleanHotel = hotel ? hotel
-        .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" from the end
-        .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
+        .split(',')[0] // Take only the part before the first comma
+        .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" if present
         .trim() : '';
     
     // For webhook, we'll use the transfer version (full format) as default

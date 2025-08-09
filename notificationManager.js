@@ -59,10 +59,10 @@ class NotificationManager {
         const hotel = booking.hotel;
         const phoneNumber = booking.phone_number || '';
         
-        // Clean hotel name - remove "THAILAND" from the end and zip codes like "Phuket 83150"
+        // Clean hotel name - extract just the hotel name (first part before comma or address details)
         const cleanHotel = hotel ? hotel
-            .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" from the end
-            .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '') // Remove zip codes like "Phuket 83150"
+            .split(',')[0] // Take only the part before the first comma
+            .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" if present
             .trim() : '';
         
         // Get program icon based on program name

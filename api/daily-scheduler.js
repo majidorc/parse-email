@@ -46,10 +46,10 @@ module.exports = async (req, res) => {
                 year: 'numeric' 
             }) : 'N/A';
             
-            // Clean hotel name - remove "THAILAND" from the end and zip codes
+            // Clean hotel name - extract just the hotel name (first part before comma or address details)
             const cleanHotel = booking.hotel ? booking.hotel
-                .replace(/\s*THAILAND\s*$/i, '')
-                .replace(/\s+[A-Za-z]+\s+\d{5}\s*$/i, '')
+                .split(',')[0] // Take only the part before the first comma
+                .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" if present
                 .trim() : '';
             
             // Get pickup time from request or use default

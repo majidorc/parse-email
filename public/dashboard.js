@@ -1455,7 +1455,7 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     
 
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:red;">Failed to load data.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load data.</td></tr>';
     if (accountingSummaryData) {
       document.getElementById('accounting-summary').style.display = '';
       renderAccountingSummary(accountingSummaryData);
@@ -1468,7 +1468,7 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
 function renderAccountingTable() {
   const tbody = document.getElementById('accounting-body');
   if (!accountingData.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No results found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">No results found.</td></tr>';
   } else {
     tbody.innerHTML = accountingData.map(b => {
       // Check if paid or net values are missing or zero
@@ -1491,6 +1491,8 @@ function renderAccountingTable() {
               title="Click to edit rate">
             ${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}
           </td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.adult || 0}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || 0}</td>
           <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
           <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
           <td class="px-4 py-3 text-sm text-yellow-900 font-semibold">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>

@@ -562,44 +562,7 @@ body #bookings-table tbody#bookings-body tr.row-future {
   border-color: #60a5fa !important;
 }
 
-/* Notification Badge Styles */
-.notification-badge {
-  animation: pulse 2s infinite;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Settings gear button with notification badge */
-#settings-gear-btn {
-  position: relative;
-}
-
-#settings-gear-btn .notification-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  z-index: 60;
-  min-width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  color: white;
-  background-color: #ef4444;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
 
 /* Email button styles */
 .email-btn {

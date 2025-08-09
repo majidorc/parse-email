@@ -33,79 +33,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Handle push notifications
-self.addEventListener('push', event => {
-  console.log('Push event received:', event);
-  
-  let notificationData = {
-    title: 'New Booking Received',
-    body: 'A new booking has been added to your system.',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: 'new-booking',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'view',
-        title: 'View Booking',
-        icon: '/icon-192.png'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss'
-      }
-    ]
-  };
 
-  // If we have data from the push event, use it
-  if (event.data) {
-    try {
-      const data = event.data.json();
-      notificationData = {
-        ...notificationData,
-        title: data.title || notificationData.title,
-        body: data.body || notificationData.body,
-        data: data.booking || {}
-      };
-    } catch (e) {
-      console.log('Could not parse push data:', e);
-    }
-  }
-
-  event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
-  );
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', event => {
-  console.log('Notification clicked:', event);
-  
-  event.notification.close();
-
-  if (event.action === 'view') {
-    // Open the dashboard and focus on bookings
-    event.waitUntil(
-      clients.openWindow('/').then(windowClient => {
-        // Send a message to the main window to show bookings
-        if (windowClient) {
-          windowClient.postMessage({
-            type: 'SHOW_BOOKINGS',
-            booking: event.notification.data
-          });
-        }
-      })
-    );
-  } else if (event.action === 'dismiss') {
-    // Just close the notification
-    event.notification.close();
-  } else {
-    // Default action - open the dashboard
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
-});
 
 // Handle background sync for offline functionality
 self.addEventListener('sync', event => {

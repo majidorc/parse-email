@@ -1,17 +1,15 @@
 // Google Analytics tracking - will be initialized with settings
 let gaInitialized = false;
 
-// Notification system variables
-let notificationPermission = 'default';
+// Service Worker registration
 let serviceWorkerRegistration = null;
-let lastBookingCount = 0;
 
-// Initialize notifications
-async function initializeNotifications() {
+// Initialize service worker only
+async function initializeServiceWorker() {
   try {
     // Check if service workers are supported
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.log('Service Workers or Push API not supported');
+    if (!('serviceWorker' in navigator)) {
+      console.log('Service Workers not supported');
       return;
     }
 
@@ -19,173 +17,16 @@ async function initializeNotifications() {
     serviceWorkerRegistration = await navigator.serviceWorker.register('/service-worker.js');
     console.log('Service Worker registered:', serviceWorkerRegistration);
 
-    // Check notification permission
-    notificationPermission = await Notification.requestPermission();
-    console.log('Notification permission:', notificationPermission);
-
-    // Listen for messages from service worker
-    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
-
-    // Set up periodic checking for new bookings
-    startNotificationCheck();
-
   } catch (error) {
-    console.error('Failed to initialize notifications:', error);
+    console.error('Failed to initialize service worker:', error);
   }
 }
 
-// Handle messages from service worker
-function handleServiceWorkerMessage(event) {
-  if (event.data && event.data.type === 'SHOW_BOOKINGS') {
-    // Switch to bookings tab when notification is clicked
-    document.getElementById('toggle-bookings').click();
-    
-    // If we have booking data, highlight it
-    if (event.data.booking) {
-      highlightBooking(event.data.booking);
-    }
-  }
-}
 
-// Highlight a specific booking in the table
-function highlightBooking(booking) {
-  const rows = document.querySelectorAll('#bookings-body tr');
-  rows.forEach(row => {
-    const bookingNumberCell = row.querySelector('td[data-booking-number]');
-    if (bookingNumberCell && bookingNumberCell.textContent.trim() === booking.booking_number) {
-      row.classList.add('bg-yellow-100', 'animate-pulse');
-      setTimeout(() => {
-        row.classList.remove('bg-yellow-100', 'animate-pulse');
-      }, 3000);
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  });
-}
 
-// Start periodic checking for new bookings
-function startNotificationCheck() {
-  // Check every 30 seconds for new bookings
-  setInterval(async () => {
-    await checkForNewBookings();
-  }, 30000);
-}
 
-// Check for new bookings and show notifications
-async function checkForNewBookings() {
-  try {
-    const response = await fetch('/api/bookings?check_new=true');
-    if (response.ok) {
-      const data = await response.json();
-      const currentCount = data.total || 0;
-      
-      if (lastBookingCount > 0 && currentCount > lastBookingCount) {
-        const newBookings = currentCount - lastBookingCount;
-        showNewBookingNotification(newBookings);
-      }
-      
-      lastBookingCount = currentCount;
-    }
-  } catch (error) {
-    console.log('Failed to check for new bookings:', error);
-  }
-}
 
-// Show notification for new bookings
-function showNewBookingNotification(newBookingsCount) {
-  if (notificationPermission !== 'granted') return;
 
-  const notification = new Notification('New Bookings Received', {
-    body: `${newBookingsCount} new booking${newBookingsCount > 1 ? 's' : ''} added to your system`,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: 'new-bookings',
-    requireInteraction: true,
-    actions: [
-      {
-        action: 'view',
-        title: 'View Bookings',
-        icon: '/icon-192.png'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss'
-      }
-    ]
-  });
-
-  notification.onclick = function(event) {
-    if (event.action === 'view') {
-      document.getElementById('toggle-bookings').click();
-      window.focus();
-    }
-    notification.close();
-  };
-
-  // Add notification badge to settings gear
-  addNotificationBadge(newBookingsCount);
-}
-
-// Add notification badge to settings gear icon
-function addNotificationBadge(count) {
-  const settingsGearBtn = document.getElementById('settings-gear-btn');
-  if (!settingsGearBtn) return;
-
-  // Remove existing badge
-  const existingBadge = settingsGearBtn.querySelector('.notification-badge');
-  if (existingBadge) {
-    existingBadge.remove();
-  }
-
-  // Add new badge
-  const badge = document.createElement('div');
-  badge.className = 'notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold';
-  badge.textContent = count > 9 ? '9+' : count;
-  badge.style.zIndex = '60';
-  
-  settingsGearBtn.style.position = 'relative';
-  settingsGearBtn.appendChild(badge);
-
-  // Remove badge after 5 seconds
-  setTimeout(() => {
-    if (badge.parentNode) {
-      badge.remove();
-    }
-  }, 5000);
-}
-
-// Request notification permission
-async function requestNotificationPermission() {
-  try {
-    const permission = await Notification.requestPermission();
-    notificationPermission = permission;
-    
-    if (permission === 'granted') {
-      showToast('Notifications enabled! You will receive alerts for new bookings.', 'success');
-    } else {
-      showToast('Notification permission denied. You can enable it in your browser settings.', 'warning');
-    }
-    
-    return permission;
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
-    return 'denied';
-  }
-}
-
-// Send push notification (for testing)
-async function sendTestNotification() {
-  if (serviceWorkerRegistration && notificationPermission === 'granted') {
-    try {
-      await serviceWorkerRegistration.showNotification('Test Notification', {
-        body: 'This is a test notification from your booking system',
-        icon: '/icon-192.png',
-        tag: 'test-notification'
-      });
-    } catch (error) {
-      console.error('Failed to send test notification:', error);
-    }
-  }
-}
 
 function initializeGoogleAnalytics(measurementId) {
   if (gaInitialized || !measurementId) return;
@@ -3596,57 +3437,7 @@ settingsGearBtn.onclick = async () => {
 settingsModalClose.onclick = () => { settingsModal.style.display = 'none'; };
 settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
 
-// Notification button event handlers
-const notificationPermissionBtn = document.getElementById('notification-permission-btn');
-const testNotificationBtn = document.getElementById('test-notification-btn');
-const notificationStatus = document.getElementById('notification-status');
-const notificationStatusText = document.getElementById('notification-status-text');
 
-if (notificationPermissionBtn) {
-  notificationPermissionBtn.onclick = async () => {
-    try {
-      const permission = await requestNotificationPermission();
-      updateNotificationStatus(permission);
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
-      showToast('Failed to request notification permission', 'error');
-    }
-  };
-}
-
-if (testNotificationBtn) {
-  testNotificationBtn.onclick = async () => {
-    try {
-      await sendTestNotification();
-      showToast('Test notification sent!', 'success');
-    } catch (error) {
-      console.error('Error sending test notification:', error);
-      showToast('Failed to send test notification', 'error');
-    }
-  };
-}
-
-// Update notification status display
-function updateNotificationStatus(permission) {
-  if (notificationStatus && notificationStatusText) {
-    notificationStatus.style.display = 'block';
-    notificationStatusText.textContent = permission;
-    
-    if (permission === 'granted') {
-      notificationStatusText.className = 'text-green-600 font-semibold';
-      notificationPermissionBtn.textContent = 'Notifications Enabled';
-      notificationPermissionBtn.className = 'bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2 text-sm';
-    } else if (permission === 'denied') {
-      notificationStatusText.className = 'text-red-600 font-semibold';
-      notificationPermissionBtn.textContent = 'Enable Notifications';
-      notificationPermissionBtn.className = 'bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2 text-sm';
-    } else {
-      notificationStatusText.className = 'text-yellow-600 font-semibold';
-      notificationPermissionBtn.textContent = 'Enable Notifications';
-      notificationPermissionBtn.className = 'bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2 text-sm';
-    }
-  }
-}
 
 // Whitelist accordion functionality
 const whitelistToggle = document.getElementById('whitelist-toggle');
@@ -4948,8 +4739,8 @@ function initializeApp() {
     };
   }
   
-  // Initialize notifications
-  initializeNotifications();
+  // Initialize service worker only
+  initializeServiceWorker();
 }
 
 // Call this after DOMContentLoaded

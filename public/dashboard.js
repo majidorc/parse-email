@@ -441,11 +441,15 @@ function forceRefresh() {
 }
 
 // Force refresh dashboard analytics when bookings are modified
-function forceRefreshDashboard() {
-  // Refresh dashboard analytics
-  fetchDashboardAnalytics();
-  // Also refresh benefit card
-  updateDashboardBenefitCard();
+async function forceRefreshDashboard() {
+  console.log('[BENEFIT DEBUG] Force refreshing dashboard...');
+  // Refresh dashboard analytics first
+  await fetchDashboardAnalytics();
+  // Add a small delay to ensure API has processed any changes
+  setTimeout(() => {
+    console.log('[BENEFIT DEBUG] Updating benefit card after delay...');
+    updateDashboardBenefitCard();
+  }, 500);
 }
 
 function stopAutoRefresh() {
@@ -2358,7 +2362,8 @@ function initializeGlobalPeriodSelector() {
       
       // Update dashboard analytics
       if (document.getElementById('dashboard-section').style.display !== 'none') {
-        fetchDashboardAnalytics();
+        console.log('[BENEFIT DEBUG] Period changed, refreshing dashboard...');
+        forceRefreshDashboard();
       }
       
       // Update sales analytics if analytics tab is active
@@ -4314,31 +4319,60 @@ function getDashboardPeriodRange() {
 async function updateDashboardBenefitCard() {
   const globalPeriod = document.getElementById('global-period-selector');
   const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-  let url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
+  
+  // Add stronger cache-busting with random component
+  const timestamp = Date.now() + Math.random();
+  let url = `/api/dashboard-settings?period=${period}&_ts=${timestamp}&_nocache=1`;
   if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
+  
   try {
-    const res = await fetch(url);
+    console.log('[BENEFIT DEBUG] Fetching benefit data for period:', period);
+    const res = await fetch(url, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     const data = await res.json();
+    
+    console.log('[BENEFIT DEBUG] Received data:', {
+      totalBenefit: data.totalBenefit,
+      prevPeriodBenefit: data.prevPeriodBenefit,
+      percentBenefit: data.percentBenefit,
+      period: period
+    });
     
     if (data.totalBenefit !== undefined) {
       document.getElementById('dashboard-benefit').textContent = Number(data.totalBenefit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      // Percent change
+      
+      // Use the backend-calculated percentage if available, otherwise calculate it
       let percent = null;
-      if (typeof data.prevPeriodBenefit === 'number' && data.prevPeriodBenefit !== 0) {
+      if (data.percentBenefit !== null && data.percentBenefit !== undefined) {
+        percent = Number(data.percentBenefit);
+        console.log('[BENEFIT DEBUG] Using backend-calculated percentage:', percent);
+      } else if (typeof data.prevPeriodBenefit === 'number' && data.prevPeriodBenefit !== 0) {
         percent = ((data.totalBenefit - data.prevPeriodBenefit) / Math.abs(data.prevPeriodBenefit)) * 100;
+        console.log('[BENEFIT DEBUG] Calculated percentage on frontend:', percent);
       }
+      
       const benefitChange = document.getElementById('dashboard-benefit-change');
-      if (percent !== null) {
+      if (percent !== null && !isNaN(percent)) {
         const up = percent >= 0;
         benefitChange.innerHTML = `<span class='${up ? 'text-green-600' : 'text-red-600'}'>${up ? '+' : ''}${percent.toFixed(2)}%</span> vs previous period`;
+        console.log('[BENEFIT DEBUG] Updated benefit change display:', percent.toFixed(2) + '%');
       } else {
         benefitChange.textContent = '-- %';
+        console.log('[BENEFIT DEBUG] No valid percentage data');
       }
     } else {
       document.getElementById('dashboard-benefit').textContent = '-';
       document.getElementById('dashboard-benefit-change').textContent = '-- %';
+      console.log('[BENEFIT DEBUG] No benefit data available');
     }
   } catch (err) {
+    console.error('[BENEFIT DEBUG] Error fetching benefit data:', err);
     document.getElementById('dashboard-benefit').textContent = '-';
     document.getElementById('dashboard-benefit-change').textContent = '-- %';
   }
@@ -4912,8 +4946,8 @@ function initializeApp() {
       
       // Refresh based on current active tab
       if (dashboardBtn.classList.contains('active')) {
-        fetchDashboardAnalytics();
-        updateDashboardBenefitCard();
+        console.log('[BENEFIT DEBUG] Global refresh - Dashboard tab active');
+        await forceRefreshDashboard();
       } else if (bookingsBtn.classList.contains('active')) {
         forceRefresh();
       } else if (accountingBtn.classList.contains('active')) {

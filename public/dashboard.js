@@ -1505,14 +1505,35 @@ function renderAccountingTable() {
                 const booking = accountingData.find(b => b.booking_number === bookingNumber);
                 if (booking) {
                   booking.sku = newValue;
-                  console.log('Updated local data for booking:', bookingNumber, 'to:', newValue);
+                  console.log('Updated local data for booking:', bookingNumber, 'SKU to:', newValue);
+                  
+                  // Update program name if returned from API
+                  if (data.programName) {
+                    booking.program = data.programName;
+                    console.log('Updated program name for booking:', bookingNumber, 'to:', data.programName);
+                    
+                    // Find and update the program cell in the same row
+                    const row = cell.closest('tr');
+                    if (row) {
+                      const programCell = row.querySelector('td:nth-child(5)'); // Program is 5th column
+                      if (programCell) {
+                        const programDiv = programCell.querySelector('.text-sm.font-medium');
+                        if (programDiv) {
+                          programDiv.textContent = data.programName;
+                          console.log('Updated program cell display to:', data.programName);
+                        }
+                      }
+                    }
+                  }
                 }
                 
                 // Update the cell with new value
                 cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
                 cell.setAttribute('data-current-sku', newValue);
                 
-                showToast('SKU updated successfully', 'success');
+                showToast(data.programName ? 
+                  'SKU and program updated successfully' : 
+                  'SKU updated successfully', 'success');
                 
                 // Skip table refresh to prevent overwriting our change
                 console.log('SKU update completed, skipping table refresh');

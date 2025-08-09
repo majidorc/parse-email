@@ -435,10 +435,36 @@ module.exports = async (req, res) => {
       if (sku !== undefined) {
         try {
           console.log('PATCH SKU:', sku, 'for booking:', bookingNumber);
+          
+          // Update the SKU
           const result = await sql.query('UPDATE bookings SET sku = $1 WHERE booking_number = $2', [sku, bookingNumber]);
           console.log('SKU update result:', result.rowCount, 'rows affected');
+          
+          // Look up program name by SKU
+          let programName = null;
+          if (sku && sku.trim() !== '') {
+            try {
+              const productResult = await sql.query('SELECT program FROM products WHERE sku = $1 LIMIT 1', [sku]);
+              if (productResult.rows.length > 0 && productResult.rows[0].program) {
+                programName = productResult.rows[0].program;
+                console.log('Found program for SKU:', sku, '->', programName);
+                
+                // Update the program name in the booking
+                await sql.query('UPDATE bookings SET program = $1 WHERE booking_number = $2', [programName, bookingNumber]);
+                console.log('Updated program name for booking:', bookingNumber);
+              } else {
+                console.log('No program found for SKU:', sku);
+              }
+            } catch (lookupErr) {
+              console.error('Error looking up program for SKU:', sku, lookupErr);
+            }
+          }
+          
           res.setHeader('Cache-Control', 'no-store');
-          return res.status(200).json({ success: true });
+          return res.status(200).json({ 
+            success: true, 
+            programName: programName 
+          });
         } catch (err) {
           console.error('SKU update error:', err);
           return res.status(500).json({ success: false, error: err.message });

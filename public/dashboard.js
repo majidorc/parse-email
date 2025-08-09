@@ -1478,10 +1478,12 @@ function renderAccountingTable() {
             
             // Skip if value hasn't changed
             if (newValue === currentValue) {
-              console.log('SKU value unchanged, reverting to display mode');
+              console.log('SKU value unchanged, reverting to display mode. Current:', currentValue, 'New:', newValue);
               cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
               return;
             }
+            
+            console.log('SKU value changed from:', currentValue, 'to:', newValue);
             
             console.log('Saving SKU:', newValue, 'for booking:', bookingNumber);
             

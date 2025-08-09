@@ -1,5 +1,0 @@
-[33m0e31930[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add customer email feature with professional template
-[33m57b29c4[m Fix: Update SMTP configuration to use STARTTLS instead of SSL to resolve TLS version error
-[33mea19485[m Fix: Add proper return statement in daily-scheduler to prevent 500 errors when sending customer emails
-[33md53c349[m Fix: Add customer_email field to bookings API query to enable email icon display
-[33mcaaec64[m Merge email functionality into daily-scheduler to reduce function count - Fix Vercel Hobby plan limit

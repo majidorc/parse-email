@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2025-01-09
+
+### Added
+- **Interactive SKU Editing**: Click-to-edit SKU fields in accounting tab with inline editing
+- **Automatic Program Name Updates**: SKU changes automatically lookup and update program names from database
+- **Adult/Child Columns**: Added separate adult and child passenger tracking columns in accounting table
+- **Enhanced Email Parsing**: Pickup time extraction from Thailand Tours emails ("Pickup time: 08:00-08:30 PM")
+- **Start Time Extraction**: Bokun email start time extraction ("Date Sun 10.Aug '25 @ 08:00")
+- **SKU Priority Matching**: Database program names take priority over email program names when SKU exists
+- **Program Column Width**: Made program name column wider for better display of long names
+
+### Changed
+- **Tab Button Styling**: Enhanced tab buttons to be bigger and more readable
+- **Hotel Name Shortening**: Long hotel names automatically shortened in emails (e.g., "Hotel : Paradox Resort Phuket" instead of full address)
+- **Benefit Percentage Display**: Fixed real-time benefit percentage updates with proper cache control
+- **Service Worker**: Simplified to handle only caching functionality, removed web notifications
+
+### Fixed
+- **SKU Editing Race Conditions**: Prevented multiple simultaneous saves and DOM conflicts
+- **Benefit Percentage Caching**: Fixed dashboard benefit percentage not updating correctly
+- **Email Parsing Issues**: Improved Thailand Tours parser for booking numbers, dates, and passenger counts
+- **Table Refresh Conflicts**: SKU updates no longer trigger table refresh to prevent visual updates being overwritten
+
+### Removed
+- **Web Notifications**: Removed all web notification functionality as it was not working properly
+- **Debug Console Logs**: Cleaned up all debug logging from dashboard, accounting, and API endpoints
+- **Notification Badge Styles**: Removed CSS and JavaScript for notification badges and pulse animations
+
+### Technical
+- Enhanced API logging for SKU updates with database row count verification
+- Improved frontend event handling with preventDefault and stopPropagation
+- Added comprehensive error handling for DOM manipulation during SKU editing
+- Updated accounting API to return program name along with success status
+
 ## [2.8.0] - 2025-08-08
 
 ### Added
@@ -43,7 +77,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - **Legacy Functionality**: Removed "Check Missing Programs from Bookings" button and functionality
 - **Debug Logging**: Removed verbose console logging from cache clearing functionality
-- **Test Files**: Cleaned up test/debug SQL migration files from root directory
 
 ### Fixed
 - **Export Pagination**: Fixed export to fetch ALL programs by bypassing pagination limits
@@ -130,293 +163,14 @@ All notable changes to this project will be documented in this file.
 - **UI Enhancement**: Added rate dropdowns to bookings table
 - **Better UX**: Quick rate changes without editing entire booking
 
-## [1.15.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [1.14.1] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [1.14.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [1.13.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
-## [1.12.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [1.11.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [1.10.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [1.9.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
-## [1.8.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [1.7.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [1.6.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [1.5.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
-## [1.4.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [1.3.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [1.2.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [1.1.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
 ## [1.0.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [0.9.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [0.8.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [0.7.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
-## [0.6.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [0.5.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [0.4.0] - 2025-08-04
-
-### Added
-- **Programs Pagination**: Added pagination for programs table
-- **Search Functionality**: Search programs by name or SKU
-- **Edit Button Fix**: Fixed edit functionality for programs on all paginated pages
-
-### Fixed
-- **Programs Edit**: Edit buttons now work correctly on all pages, not just page 1
-- **Event Listeners**: Properly re-attach event listeners after pagination
-- **Data Consistency**: Edit functionality uses current page data instead of fetching new data
-
-## [0.3.0] - 2025-08-04
-
-### Fixed
-- **Booking Count Consistency**: Fixed inconsistent booking counts across Dashboard, Accounting, and Analytics tabs
-- **Period Filtering**: All tabs now use consistent period filtering logic
-- **Data Synchronization**: Ensured all tabs show the same data for the same period
-
-## [0.2.0] - 2025-08-04
-
-### Added
-- **Interactive Rate Dropdowns**: Rate dropdowns in bookings table for easy rate changes
-- **Real-time Updates**: Automatic table refresh after rate changes
-- **Smart Dropdown Population**: Dropdowns populated based on available rates for each SKU
-
-### Changed
-- **UI Enhancement**: Added rate dropdowns to bookings table
-- **Better UX**: Quick rate changes without editing entire booking
-
-## [0.1.0] - 2025-08-04
-
-### Added
-- **Average Analytics Metrics**: Added 4 new average metrics to analytics tab
-  - Avg. Sale Viator
-  - Avg. Sale Website  
-  - Avg. Ben. Viator
-  - Avg. Ben. Website
-
-### Changed
-- **Analytics Layout**: Reorganized analytics cards for better visual hierarchy
-- **Metrics Display**: Average metrics now appear in main analytics section
-
-## [0.0.1] - 2025-08-04
 
 ### Added
 - **Initial Release**: Basic booking management system
 - **Email Parsing**: Support for Bokun and Thailand Tours email formats
 - **Telegram Notifications**: Real-time booking notifications
 - **Dashboard**: Basic analytics and booking management
-- **User Management**: Role-based access control 
+- **User Management**: Role-based access control
+- **Programs Management**: SKU and program catalog with rates
+- **Accounting Features**: Financial tracking and reporting
+- **Analytics**: Sales and performance metrics

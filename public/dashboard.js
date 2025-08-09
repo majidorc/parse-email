@@ -1460,8 +1460,15 @@ function renderAccountingTable() {
               body: JSON.stringify({ sku: newValue })
             }).then(r => r.json()).then(data => {
               if (data.success) {
-                // Add cache-busting param to ensure fresh data
-                fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+                // Update the cell immediately with new value
+                cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
+                cell.setAttribute('data-current-sku', newValue);
+                
+                // Also refresh the full table to ensure consistency
+                setTimeout(() => {
+                  fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+                }, 100);
+                
                 showToast('SKU updated successfully', 'success');
               } else {
                 cell.innerHTML = `<span class='text-red-500'>Error</span>`;

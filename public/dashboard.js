@@ -1454,12 +1454,23 @@ function renderAccountingTable() {
           input.focus();
           input.select();
           let hasSaved = false;
+          let isProcessing = false;
+          
           function saveSkuInput() {
-            if (hasSaved) return;
+            if (hasSaved || isProcessing) return;
             hasSaved = true;
+            isProcessing = true;
+            
             const newValue = input.value.trim();
             console.log('Saving SKU:', newValue, 'for booking:', bookingNumber);
-            cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+            
+            // Remove input and show saving state
+            try {
+              cell.innerHTML = `<span class='text-gray-400'>Saving...</span>`;
+            } catch (e) {
+              console.log('Cell already modified, skipping innerHTML update');
+              return;
+            }
             
             fetch(`/api/accounting?booking_number=${bookingNumber}`, {
               method: 'PATCH',
@@ -1481,33 +1492,62 @@ function renderAccountingTable() {
                 }
                 
                 // Update the cell immediately with new value
-                cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
-                cell.setAttribute('data-current-sku', newValue);
-                
-                showToast('SKU updated successfully', 'success');
+                try {
+                  cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
+                  cell.setAttribute('data-current-sku', newValue);
+                  showToast('SKU updated successfully', 'success');
+                } catch (e) {
+                  console.log('Cell update error, but data was saved successfully');
+                }
                 
                 // Refresh table after a delay to ensure data consistency
                 setTimeout(() => {
                   console.log('Refreshing accounting table...');
                   fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
-                }, 1000);
+                }, 500);
               } else {
                 console.error('API returned error:', data);
-                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                try {
+                  cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                } catch (e) {
+                  console.log('Could not update cell with error state');
+                }
                 showToast('Failed to update SKU: ' + (data.error || 'Unknown error'), 'error');
               }
             })
             .catch(error => {
               console.error('Fetch error:', error);
-              cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+              try {
+                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+              } catch (e) {
+                console.log('Could not update cell with error state');
+              }
               showToast('Network error updating SKU', 'error');
+            })
+            .finally(() => {
+              isProcessing = false;
             });
           }
+          
+          function cancelEdit() {
+            if (hasSaved || isProcessing) return;
+            hasSaved = true;
+            try {
+              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+            } catch (e) {
+              console.log('Could not cancel edit, cell already modified');
+            }
+          }
+          
           input.onblur = saveSkuInput;
           input.onkeydown = function(ev) {
-            if (ev.key === 'Enter') saveSkuInput();
+            if (ev.key === 'Enter') {
+              ev.preventDefault();
+              saveSkuInput();
+            }
             if (ev.key === 'Escape') {
-              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+              ev.preventDefault();
+              cancelEdit();
             }
           };
         };

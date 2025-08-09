@@ -2714,7 +2714,7 @@ function renderProgramsTable(programs) {
         <div class="text-sm font-medium text-gray-900">${product.sku}</div>
         <div class="text-sm text-gray-500">Product ID: ${product.product_id_optional || ''}</div>
       </td>
-      <td class="px-6 py-4 whitespace-normal max-w-xs">
+      <td class="px-6 py-4 whitespace-normal program-name-cell">
         <div class="text-sm font-medium text-gray-900">${product.program}</div>
       </td>
       <td class="px-6 py-4 whitespace-nowrap">

@@ -1460,16 +1460,22 @@ function renderAccountingTable() {
               body: JSON.stringify({ sku: newValue })
             }).then(r => r.json()).then(data => {
               if (data.success) {
+                // Update the accounting data array directly to prevent overwrite
+                const booking = accountingData.find(b => b.booking_number === bookingNumber);
+                if (booking) {
+                  booking.sku = newValue;
+                }
+                
                 // Update the cell immediately with new value
                 cell.innerHTML = newValue || '<span class="text-gray-400">Click to add</span>';
                 cell.setAttribute('data-current-sku', newValue);
                 
-                // Also refresh the full table to ensure consistency
+                showToast('SKU updated successfully', 'success');
+                
+                // Refresh table after a delay to ensure data consistency
                 setTimeout(() => {
                   fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
-                }, 100);
-                
-                showToast('SKU updated successfully', 'success');
+                }, 1000);
               } else {
                 cell.innerHTML = `<span class='text-red-500'>Error</span>`;
                 showToast('Failed to update SKU', 'error');

@@ -960,6 +960,126 @@ async function sendCustomerEmail(bookingNumber, button) {
   // Set initial transfer amount field visibility (regular transfer is default)
   document.getElementById('regular-transfer-amount').parentElement.style.display = 'block';
   document.getElementById('private-transfer-amount').parentElement.style.display = 'none';
+  
+  // Hide preview initially and clear any previous content
+  document.getElementById('email-preview').classList.add('hidden');
+  document.getElementById('preview-subject').textContent = '';
+  document.getElementById('preview-to').textContent = '';
+  document.getElementById('preview-content').textContent = '';
+  
+  // Fetch booking details for preview
+  await fetchBookingDetailsForPreview(bookingNumber);
+}
+
+// Function to fetch booking details for preview
+async function fetchBookingDetailsForPreview(bookingNumber) {
+  try {
+    const response = await fetch(`/api/bookings?search=${bookingNumber}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.bookings && data.bookings.length > 0) {
+        const booking = data.bookings[0];
+        window.currentEmailPreviewData = booking;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching booking details for preview:', error);
+  }
+}
+
+// Function to generate email preview
+function generateEmailPreview() {
+  const { bookingNumber } = window.currentEmailBooking;
+  const booking = window.currentEmailPreviewData;
+  
+  if (!booking) {
+    showToast('Unable to load booking details for preview', 'error');
+    return;
+  }
+  
+  // Show loading state
+  const previewBtn = document.getElementById('preview-email-btn');
+  const originalText = previewBtn.innerHTML;
+  previewBtn.innerHTML = `
+    <svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+    </svg>
+    Generating...
+  `;
+  previewBtn.disabled = true;
+  
+  // Get form values
+  const pickupTime = document.getElementById('email-pickup-time').value;
+  const hasExtraCharge = document.getElementById('extra-charge-yes').checked;
+  const isPrivate = document.getElementById('private-yes').checked;
+  const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
+  const adultFee = parseInt(document.getElementById('adult-fee').value) || 0;
+  const childFee = parseInt(document.getElementById('child-fee').value) || 0;
+  const regularTransferAmount = parseInt(document.getElementById('regular-transfer-amount').value) || 1000;
+  const privateTransferAmount = parseInt(document.getElementById('private-transfer-amount').value) || 1000;
+  
+  // Format tour date
+  const tourDate = booking.tour_date ? new Date(booking.tour_date).toLocaleDateString('en-GB', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric' 
+  }) : 'N/A';
+  
+  // Clean hotel name
+  const cleanHotel = booking.hotel ? booking.hotel
+    .split(',')[0]
+    .replace(/\s*THAILAND\s*$/i, '')
+    .trim() : '';
+  
+  // Construct pickup info
+  let pickupInfo = `Pick up: ${cleanHotel}`;
+  if (hasExtraCharge) {
+    if (isPrivate) {
+      pickupInfo += ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
+    } else {
+      pickupInfo += ` ( extra charge for roundtrip transfer ${regularTransferAmount}THB per person )`;
+    }
+  }
+  
+  // Construct National Park Fee text
+  let nationalParkFeeText = '';
+  if (hasNationalParkFee) {
+    nationalParkFeeText = `\n\nThe national park fee of THB ${adultFee} per adult and THB ${childFee} per child is excluded from the tour price. Please prepare cash for this fee. This fee is a maintenance fee collected by the Thai government department. There is no exception.`;
+  }
+  
+  // Generate email content
+  const emailContent = `Hello ${booking.customer_name},
+
+Warm Greetings from Thailand Tours
+Thank you for choosing to book your trip with us!
+
+We are pleased to confirm your booking, as detailed below.
+
+Tour date: ${tourDate}
+${pickupInfo}
+Pickup time: ${pickupTime}
+
+** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
+We will try to be on time as possible , please just call us if driver be later more than 10 mins**${nationalParkFeeText}
+
+Should you require any other assistance, please do not hesitate to contact us at anytime by replying to this email.
+
+We wish you a great day and a fantastic trip!
+
+Best Regards,
+Thailand Tours team`;
+  
+  // Update preview elements
+  document.getElementById('preview-subject').textContent = `Booking Confirmation ${booking.booking_number} - ${booking.program || 'Tour'}`;
+  document.getElementById('preview-to').textContent = booking.customer_email || 'Customer Email';
+  document.getElementById('preview-content').textContent = emailContent;
+  
+  // Show preview
+  document.getElementById('email-preview').classList.remove('hidden');
+  
+  // Restore button state
+  previewBtn.innerHTML = originalText;
+  previewBtn.disabled = false;
 }
 
 // Initialize email modal event handlers
@@ -971,12 +1091,16 @@ function initializeEmailModal() {
   // Close modal when clicking cancel
   cancelBtn.addEventListener('click', () => {
     emailModal.style.display = 'none';
+    // Clear preview when closing
+    document.getElementById('email-preview').classList.add('hidden');
   });
   
   // Close modal when clicking outside
   emailModal.addEventListener('click', (e) => {
     if (e.target === emailModal) {
       emailModal.style.display = 'none';
+      // Clear preview when closing
+      document.getElementById('email-preview').classList.add('hidden');
     }
   });
   
@@ -1007,6 +1131,38 @@ function initializeEmailModal() {
   
   document.getElementById('park-fee-yes').addEventListener('change', () => {
     document.getElementById('park-fee-details').style.display = 'block';
+  });
+  
+  // Add preview button event listener
+  document.getElementById('preview-email-btn').addEventListener('click', generateEmailPreview);
+  
+  // Add real-time preview updates for form fields
+  const previewFields = [
+    'email-pickup-time',
+    'extra-charge-no', 'extra-charge-yes',
+    'private-no', 'private-yes',
+    'regular-transfer-amount', 'private-transfer-amount',
+    'park-fee-no', 'park-fee-yes',
+    'adult-fee', 'child-fee'
+  ];
+  
+  previewFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      if (field.type === 'radio') {
+        field.addEventListener('change', () => {
+          if (document.getElementById('email-preview').classList.contains('hidden') === false) {
+            generateEmailPreview();
+          }
+        });
+      } else {
+        field.addEventListener('input', () => {
+          if (document.getElementById('email-preview').classList.contains('hidden') === false) {
+            generateEmailPreview();
+          }
+        });
+      }
+    }
   });
   
   // Handle form submission

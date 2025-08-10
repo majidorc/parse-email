@@ -440,6 +440,28 @@
                 </div>
               </div>
               
+              <!-- Email Preview Section -->
+              <div class="border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-between mb-3">
+                  <label class="block text-sm font-medium text-gray-700">Email Preview</label>
+                  <button type="button" id="preview-email-btn" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition duration-200 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Preview Email
+                  </button>
+                </div>
+                <div id="email-preview" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-64 overflow-y-auto transition-all duration-300 ease-in-out">
+                  <div class="text-xs text-gray-600 mb-2">Subject: <span id="preview-subject" class="font-medium"></span></div>
+                  <div class="text-xs text-gray-600 mb-2">To: <span id="preview-to" class="font-medium"></span></div>
+                  <div class="border-t border-gray-200 pt-2">
+                    <div id="preview-content" class="text-sm text-gray-800 whitespace-pre-wrap"></div>
+                  </div>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">Click "Preview Email" to see how your email will look before sending.</div>
+              </div>
+              
               <div class="border-t border-gray-200 pt-4 flex justify-between">
                 <button type="button" id="cancel-email-modal" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
                 <button type="submit" id="send-email-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Send Email</button>

@@ -951,11 +951,12 @@ async function sendCustomerEmail(bookingNumber, button) {
   
   // Reset form to default values
   document.getElementById('email-pickup-time').value = '08:00 ~ 09:00';
-  document.getElementById('extra-charge-no').checked = true;
+  document.getElementById('transfer-free').checked = true;
   document.getElementById('park-fee-no').checked = true;
   document.getElementById('regular-transfer-amount').value = '1000';
   document.getElementById('private-transfer-amount').value = '1000';
-  document.getElementById('private-transfer-section').style.display = 'none';
+  document.getElementById('pier-location-section').style.display = 'none';
+  document.getElementById('extra-charge-section').style.display = 'none';
   document.getElementById('park-fee-details').style.display = 'none';
   // Set initial transfer amount field visibility (regular transfer is default)
   document.getElementById('regular-transfer-amount').parentElement.style.display = 'block';
@@ -1010,13 +1011,15 @@ function generateEmailPreview() {
   
   // Get form values
   const pickupTime = document.getElementById('email-pickup-time').value;
-  const hasExtraCharge = document.getElementById('extra-charge-yes').checked;
+  const transferOption = document.querySelector('input[name="has_transfer"]:checked').value;
   const isPrivate = document.getElementById('private-yes').checked;
   const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
   const adultFee = parseInt(document.getElementById('adult-fee').value) || 0;
   const childFee = parseInt(document.getElementById('child-fee').value) || 0;
   const regularTransferAmount = parseInt(document.getElementById('regular-transfer-amount').value) || 1000;
   const privateTransferAmount = parseInt(document.getElementById('private-transfer-amount').value) || 1000;
+  const pierLocation = document.getElementById('pier-location').value;
+  const pierLocationUrl = document.getElementById('pier-location-url').value;
   
   // Format tour date
   const tourDate = booking.tour_date ? new Date(booking.tour_date).toLocaleDateString('en-GB', { 
@@ -1033,7 +1036,7 @@ function generateEmailPreview() {
   
   // Construct pickup info
   let pickupInfo = `Pick up: ${cleanHotel}`;
-  if (hasExtraCharge) {
+  if (transferOption === 'extra') {
     if (isPrivate) {
       pickupInfo += ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
     } else {
@@ -1048,16 +1051,29 @@ function generateEmailPreview() {
   }
   
   // Generate email content
-  const emailContent = `Hello ${booking.customer_name},
+  let emailContent = `Hello ${booking.customer_name},
 
 Warm Greetings from Thailand Tours
 Thank you for choosing to book your trip with us!
 
 We are pleased to confirm your booking, as detailed below.
 
-Tour date: ${tourDate}
+Tour date: ${tourDate}`;
+
+  // Add transfer information based on option
+  if (transferOption === 'no') {
+    // Without transfer - show pier location
+    emailContent += `
+Please Check-in around ${pickupTime}
+${pierLocation} ( ${pierLocationUrl} )`;
+  } else {
+    // With transfer - show pickup info
+    emailContent += `
 ${pickupInfo}
-Pickup time: ${pickupTime}
+Pickup time: ${pickupTime}`;
+  }
+
+  emailContent += `
 
 ** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
 We will try to be on time as possible , please just call us if driver be later more than 10 mins**${nationalParkFeeText}
@@ -1104,13 +1120,20 @@ function initializeEmailModal() {
     }
   });
   
-  // Handle extra charge radio buttons
-  document.getElementById('extra-charge-no').addEventListener('change', () => {
-    document.getElementById('private-transfer-section').style.display = 'none';
+  // Handle transfer option radio buttons
+  document.getElementById('transfer-no').addEventListener('change', () => {
+    document.getElementById('pier-location-section').style.display = 'block';
+    document.getElementById('extra-charge-section').style.display = 'none';
   });
   
-  document.getElementById('extra-charge-yes').addEventListener('change', () => {
-    document.getElementById('private-transfer-section').style.display = 'block';
+  document.getElementById('transfer-free').addEventListener('change', () => {
+    document.getElementById('pier-location-section').style.display = 'none';
+    document.getElementById('extra-charge-section').style.display = 'none';
+  });
+  
+  document.getElementById('transfer-extra').addEventListener('change', () => {
+    document.getElementById('pier-location-section').style.display = 'none';
+    document.getElementById('extra-charge-section').style.display = 'block';
   });
   
   // Handle transfer type radio buttons
@@ -1139,9 +1162,10 @@ function initializeEmailModal() {
   // Add real-time preview updates for form fields
   const previewFields = [
     'email-pickup-time',
-    'extra-charge-no', 'extra-charge-yes',
+    'transfer-no', 'transfer-free', 'transfer-extra',
     'private-no', 'private-yes',
     'regular-transfer-amount', 'private-transfer-amount',
+    'pier-location', 'pier-location-url',
     'park-fee-no', 'park-fee-yes',
     'adult-fee', 'child-fee'
   ];
@@ -1173,17 +1197,19 @@ function initializeEmailModal() {
     
     // Get form values
     const pickupTime = document.getElementById('email-pickup-time').value;
-    const hasExtraCharge = document.getElementById('extra-charge-yes').checked;
+    const transferOption = document.querySelector('input[name="has_transfer"]:checked').value;
     const isPrivate = document.getElementById('private-yes').checked;
     const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
     const adultFee = parseInt(document.getElementById('adult-fee').value) || 0;
     const childFee = parseInt(document.getElementById('child-fee').value) || 0;
     const regularTransferAmount = parseInt(document.getElementById('regular-transfer-amount').value) || 1000;
     const privateTransferAmount = parseInt(document.getElementById('private-transfer-amount').value) || 1000;
+    const pierLocation = document.getElementById('pier-location').value;
+    const pierLocationUrl = document.getElementById('pier-location-url').value;
     
     // Construct pickup line
     let pickupLine = '';
-    if (hasExtraCharge) {
+    if (transferOption === 'extra') {
       if (isPrivate) {
         pickupLine = ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
       } else {
@@ -1213,13 +1239,15 @@ function initializeEmailModal() {
         body: JSON.stringify({
           booking_number: bookingNumber,
           pickup_time: pickupTime,
-          has_extra_charge: hasExtraCharge,
+          transfer_option: transferOption,
           is_private: isPrivate,
           pickup_line: pickupLine,
           has_national_park_fee: hasNationalParkFee,
           adult_fee: adultFee,
           child_fee: childFee,
-          national_park_fee_text: nationalParkFeeText
+          national_park_fee_text: nationalParkFeeText,
+          pier_location: pierLocation,
+          pier_location_url: pierLocationUrl
         })
       });
 

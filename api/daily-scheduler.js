@@ -55,16 +55,27 @@ module.exports = async (req, res) => {
             // Get pickup time from request or use default
             const pickupTime = req.body.pickup_time || '08:00 ~ 09:00';
             
-            // Get extra charge and pickup line information
-            const hasExtraCharge = req.body.has_extra_charge || false;
+            // Get transfer option and related information
+            const transferOption = req.body.transfer_option || 'free';
             const pickupLine = req.body.pickup_line || '';
+            const pierLocation = req.body.pier_location || 'SEA ANGEL PIER PHUKET';
+            const pierLocationUrl = req.body.pier_location_url || 'https://goo.gl/maps/V6pHgA5XZWq';
             
             // Get National Park Fee information
             const hasNationalParkFee = req.body.has_national_park_fee || false;
             const nationalParkFeeText = req.body.national_park_fee_text || '';
             
-            // Construct pickup line with hotel and extra charge info
-            const pickupInfo = `Pick up: ${cleanHotel}${pickupLine}`;
+            // Construct pickup info based on transfer option
+            let pickupInfo = '';
+            if (transferOption === 'no') {
+                // Without transfer - show pier location
+                pickupInfo = `Please Check-in around ${pickupTime}
+${pierLocation} ( ${pierLocationUrl} )`;
+            } else {
+                // With transfer - show pickup info
+                pickupInfo = `Pick up: ${cleanHotel}${pickupLine}
+Pickup time: ${pickupTime}`;
+            }
             
             // Construct customer-friendly email message
             const customerMessage = `Hello ${booking.customer_name},
@@ -76,7 +87,6 @@ We are pleased to confirm your booking, as detailed below.
 
 Tour date: ${tourDate}
 ${pickupInfo}
-Pickup time: ${pickupTime}
 
 ** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
 We will try to be on time as possible , please just call us if driver be later more than 10 mins**${nationalParkFeeText}

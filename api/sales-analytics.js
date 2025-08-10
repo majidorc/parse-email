@@ -509,6 +509,13 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
+    // Extract Viator and Website metrics (moved here for comparison calculation)
+    const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
+    const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
+    
+    const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
+    const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
+
     // NEW: Calculate comparison data for previous month period
     let comparisonData = null;
     if (dateFilter && startDateParam && endDateParam) {
@@ -722,12 +729,7 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
-    // Extract Viator and Website metrics
-    const viatorData = viatorWebsiteResult.rows.find(row => row.type === 'Viator');
-    const websiteData = viatorWebsiteResult.rows.find(row => row.type === 'Website');
-    
-    const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
-    const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
+    // Extract Viator and Website metrics (already defined above)
     const viatorCount = viatorData ? parseInt(viatorData.bookings, 10) : 0;
     const websiteCount = websiteData ? parseInt(websiteData.bookings, 10) : 0;
     

@@ -210,12 +210,7 @@ class NotificationManager {
     async sendAll(booking) {
         const message = this.constructNotificationMessage(booking);
         const results = [];
-        if (config.notifications.email.enabled) {
-            try {
-                await this.sendEmail(booking, message);
-                results.push('email');
-            } catch (e) { console.error('Email notification failed:', e); }
-        }
+        // Email notifications disabled - only send Telegram
         if (config.notifications.telegram.enabled) {
             try {
                 await this.sendTelegramWithButtons(booking);

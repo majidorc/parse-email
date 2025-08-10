@@ -11,7 +11,7 @@
   ],
   "notifications": {
     "email": {
-      "enabled": true
+      "enabled": false
     },
     "telegram": {
       "enabled": true

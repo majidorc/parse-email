@@ -2344,6 +2344,74 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitPercent.toFixed(2)}%`;
     }
     
+    // NEW: Update comparison indicators for key metrics
+    if (data.comparison) {
+      // Helper function to format comparison text with color
+      const formatComparison = (percentChange, metricName) => {
+        if (percentChange === null || percentChange === undefined) {
+          return `<span class="text-gray-500">No data</span>`;
+        }
+        const isPositive = percentChange >= 0;
+        const color = isPositive ? 'text-green-600' : 'text-red-600';
+        const arrow = isPositive ? '↗' : '↘';
+        const sign = isPositive ? '+' : '';
+        return `<span class="${color}">${arrow} ${sign}${percentChange.toFixed(1)}%</span>`;
+      };
+      
+      // Update Total Sale comparison
+      const analyticsTotalSaleComparison = document.getElementById('analytics-total-sale-comparison');
+      if (analyticsTotalSaleComparison) {
+        analyticsTotalSaleComparison.innerHTML = formatComparison(data.comparison.totalSale.percentChange, 'Total Sale');
+      }
+      
+      // Update Viator Sale comparison
+      const analyticsViatorSaleComparison = document.getElementById('analytics-viator-sale-comparison');
+      if (analyticsViatorSaleComparison) {
+        analyticsViatorSaleComparison.innerHTML = formatComparison(data.comparison.viatorSale.percentChange, 'Viator Sale');
+      }
+      
+      // Update Website Sale comparison
+      const analyticsWebsiteSaleComparison = document.getElementById('analytics-website-sale-comparison');
+      if (analyticsWebsiteSaleComparison) {
+        analyticsWebsiteSaleComparison.innerHTML = formatComparison(data.comparison.websiteSale.percentChange, 'Website Sale');
+      }
+      
+      // Update Total Benefit comparison
+      const analyticsTotalBenefitComparison = document.getElementById('analytics-total-benefit-comparison');
+      if (analyticsTotalBenefitComparison) {
+        analyticsTotalBenefitComparison.innerHTML = formatComparison(data.comparison.totalBenefit.percentChange, 'Total Benefit');
+      }
+      
+      // Update Viator Benefit comparison
+      const analyticsViatorBenefitComparison = document.getElementById('analytics-viator-benefit-comparison');
+      if (analyticsViatorBenefitComparison) {
+        analyticsViatorBenefitComparison.innerHTML = formatComparison(data.comparison.viatorBenefit.percentChange, 'Viator Benefit');
+      }
+      
+      // Update Website Benefit comparison
+      const analyticsWebsiteBenefitComparison = document.getElementById('analytics-website-benefit-comparison');
+      if (analyticsWebsiteBenefitComparison) {
+        analyticsWebsiteBenefitComparison.innerHTML = formatComparison(data.comparison.websiteBenefit.percentChange, 'Website Benefit');
+      }
+    } else {
+      // If no comparison data, show "No comparison" for all comparison elements
+      const comparisonElements = [
+        'analytics-total-sale-comparison',
+        'analytics-viator-sale-comparison',
+        'analytics-website-sale-comparison',
+        'analytics-total-benefit-comparison',
+        'analytics-viator-benefit-comparison',
+        'analytics-website-benefit-comparison'
+      ];
+      
+      comparisonElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.innerHTML = '<span class="text-gray-500">No comparison</span>';
+        }
+      });
+    }
+    
     // Update Total Passengers with Viator/Website breakdown
     if (analyticsTotalPassengers) {
       const viatorPassengers = data.viatorPassengers || 0;
@@ -2352,6 +2420,50 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
     }
     if (analyticsPassengersBreakdown) {
       analyticsPassengersBreakdown.textContent = `Total: ${totalPassengersCount}`;
+    }
+    
+    // NEW: Update comparison summary section
+    const comparisonSummary = document.getElementById('comparison-summary');
+    if (comparisonSummary && data.comparison) {
+      comparisonSummary.style.display = 'block';
+      
+      // Update period dates
+      const comparisonCurrentPeriod = document.getElementById('comparison-current-period');
+      const comparisonPreviousPeriod = document.getElementById('comparison-previous-period');
+      
+      if (comparisonCurrentPeriod) {
+        const startDate = new Date(data.comparison.previousPeriod.endDate);
+        const endDate = new Date(startDate.getTime() + (periodDays * 24 * 60 * 60 * 1000));
+        comparisonCurrentPeriod.textContent = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+      }
+      
+      if (comparisonPreviousPeriod) {
+        const prevStartDate = new Date(data.comparison.previousPeriod.startDate);
+        const prevEndDate = new Date(data.comparison.previousPeriod.endDate);
+        comparisonPreviousPeriod.textContent = `${prevStartDate.toLocaleDateString()} - ${prevEndDate.toLocaleDateString()}`;
+      }
+      
+      // Calculate and display overall performance indicator
+      const comparisonOverallIndicator = document.getElementById('comparison-overall-indicator');
+      if (comparisonOverallIndicator) {
+        // Calculate average percentage change across all key metrics
+        const metrics = [
+          data.comparison.totalSale.percentChange,
+          data.comparison.viatorSale.percentChange,
+          data.comparison.websiteSale.percentChange,
+          data.comparison.totalBenefit.percentChange
+        ];
+        
+        const avgChange = metrics.reduce((sum, val) => sum + val, 0) / metrics.length;
+        const isPositive = avgChange >= 0;
+        const color = isPositive ? 'text-green-600' : 'text-red-600';
+        const arrow = isPositive ? '↗' : '↘';
+        const sign = isPositive ? '+' : '';
+        
+        comparisonOverallIndicator.innerHTML = `<span class="${color}">${arrow} ${sign}${avgChange.toFixed(1)}%</span>`;
+      }
+    } else if (comparisonSummary) {
+      comparisonSummary.style.display = 'none';
     }
     
     // Update channel table

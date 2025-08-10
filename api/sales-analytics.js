@@ -509,6 +509,175 @@ export default async function handler(req, res) {
       return sum + (paid - netTotal);
     }, 0);
 
+    // NEW: Calculate comparison data for previous month period
+    let comparisonData = null;
+    if (dateFilter && startDateParam && endDateParam) {
+      // Calculate the previous period dates
+      const startDate = new Date(startDateParam);
+      const endDate = new Date(endDateParam);
+      const periodDuration = endDate.getTime() - startDate.getTime();
+      
+      // Calculate previous period start and end
+      const prevEndDate = new Date(startDate.getTime());
+      const prevStartDate = new Date(prevEndDate.getTime() - periodDuration);
+      
+      const prevStartDateParam = prevStartDate.toISOString().split('T')[0];
+      const prevEndDateParam = prevEndDate.toISOString().split('T')[0];
+      
+      // Get previous period data for comparison
+      const prevTotalSummaryResult = await client.query(`
+        SELECT 
+          COUNT(*) AS total_bookings,
+          COALESCE(SUM(paid), 0) AS total_sales,
+          COALESCE(SUM(adult), 0) AS total_adults,
+          COALESCE(SUM(child), 0) AS total_children,
+          COALESCE(SUM(infant), 0) AS total_infants
+        FROM bookings
+        WHERE tour_date >= $1 AND tour_date < $2
+      `, [prevStartDateParam, prevEndDateParam]);
+      
+      const prevViatorWebsiteResult = await client.query(`
+        SELECT 
+          CASE
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
+          END AS type,
+          COUNT(*) AS bookings,
+          COALESCE(SUM(b.paid), 0) AS sales
+        FROM bookings b
+        LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+        WHERE b.tour_date >= $1 AND b.tour_date < $2
+        GROUP BY 
+          CASE
+            WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
+            ELSE 'Website'
+          END
+      `, [prevStartDateParam, prevEndDateParam]);
+      
+      const prevTotalBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         WHERE b.tour_date >= $1 AND b.tour_date < $2`,
+        [prevStartDateParam, prevEndDateParam]
+      );
+      
+      const prevViatorBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
+         WHERE b.tour_date >= $1 AND b.tour_date < $2
+         AND pe.sender ILIKE '%bokun.io%'
+         AND b.booking_number NOT LIKE 'GYG%'`,
+        [prevStartDateParam, prevEndDateParam]
+      );
+      
+      const prevWebsiteBenefitResult = await client.query(
+        `SELECT 
+          b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+         FROM bookings b
+         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+         LEFT JOIN parsed_emails pe ON b.booking_number = pe.booking_number
+         WHERE b.tour_date >= $1 AND b.tour_date < $2
+         AND (
+           b.booking_number LIKE 'GYG%' OR
+           pe.sender ILIKE '%info@tours.co.th%' OR
+           (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
+         )`,
+        [prevStartDateParam, prevEndDateParam]
+      );
+      
+      // Calculate previous period values
+      const prevTotalSale = parseFloat(prevTotalSummaryResult.rows[0].total_sales);
+      const prevViatorData = prevViatorWebsiteResult.rows.find(row => row.type === 'Viator');
+      const prevWebsiteData = prevViatorWebsiteResult.rows.find(row => row.type === 'Website');
+      const prevViatorSale = prevViatorData ? parseFloat(prevViatorData.sales) : 0;
+      const prevWebsiteSale = prevWebsiteData ? parseFloat(prevWebsiteData.sales) : 0;
+      
+      const prevTotalBenefit = prevTotalBenefitResult.rows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+      
+      const prevViatorBenefit = prevViatorBenefitResult.rows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+      
+      const prevWebsiteBenefit = prevWebsiteBenefitResult.rows.reduce((sum, b) => {
+        const netAdult = Number(b.net_adult) || 0;
+        const netChild = Number(b.net_child) || 0;
+        const adult = Number(b.adult) || 0;
+        const child = Number(b.child) || 0;
+        const paid = Number(b.paid) || 0;
+        const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+        return sum + (paid - netTotal);
+      }, 0);
+      
+      // Calculate percentage changes
+      const calculatePercentChange = (current, previous) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+      };
+      
+      comparisonData = {
+        previousPeriod: {
+          startDate: prevStartDateParam,
+          endDate: prevEndDateParam
+        },
+        totalSale: {
+          current: totalSummaryResult.rows[0].total_sales,
+          previous: prevTotalSale,
+          percentChange: calculatePercentChange(parseFloat(totalSummaryResult.rows[0].total_sales), prevTotalSale)
+        },
+        viatorSale: {
+          current: viatorSale,
+          previous: prevViatorSale,
+          percentChange: calculatePercentChange(viatorSale, prevViatorSale)
+        },
+        websiteSale: {
+          current: websiteSale,
+          previous: prevWebsiteSale,
+          percentChange: calculatePercentChange(websiteSale, prevWebsiteSale)
+        },
+        totalBenefit: {
+          current: totalBenefit,
+          previous: prevTotalBenefit,
+          percentChange: calculatePercentChange(totalBenefit, prevTotalBenefit)
+        },
+        viatorBenefit: {
+          current: viatorBenefit,
+          previous: prevViatorBenefit,
+          percentChange: calculatePercentChange(viatorBenefit, prevViatorBenefit)
+        },
+        websiteBenefit: {
+          current: websiteBenefit,
+          previous: prevWebsiteBenefit,
+          percentChange: calculatePercentChange(websiteBenefit, prevWebsiteBenefit)
+        }
+      };
+    }
+
     // Find bookings that aren't captured by either Viator or Website categories
     let uncategorizedBenefitResult;
     if (dateFilter) {
@@ -606,7 +775,8 @@ export default async function handler(req, res) {
         channelBasedTotal: channelBasedViatorBenefit + channelBasedWebsiteBenefit,
         difference: (viatorBenefit + websiteBenefit) - totalBenefit,
         channelDifference: (channelBasedViatorBenefit + channelBasedWebsiteBenefit) - totalBenefit
-      }
+      },
+      comparison: comparisonData
     });
     
   } catch (err) {

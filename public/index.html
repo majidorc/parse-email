@@ -655,14 +655,17 @@
           <div class="bg-yellow-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-yellow-700 font-semibold mb-1">Total Sale</div>
             <div id="analytics-total-bookings" class="text-2xl font-bold text-yellow-900">-</div>
+            <div id="analytics-total-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-pink-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
                             <div class="text-sm text-pink-700 font-semibold mb-1">Viator Sale</div>
             <div id="analytics-new-bookings" class="text-2xl font-bold text-pink-900">-</div>
+            <div id="analytics-viator-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-green-700 font-semibold mb-1">Website Sale</div>
             <div id="analytics-total-earnings" class="text-2xl font-bold text-green-900">-</div>
+            <div id="analytics-website-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-blue-700 font-semibold mb-1">Viator vs Website</div>
@@ -680,16 +683,19 @@
           <div class="bg-indigo-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-indigo-700 font-semibold mb-1">Total Benefit</div>
             <div id="analytics-total-benefit" class="text-2xl font-bold text-indigo-900">-</div>
+            <div id="analytics-total-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-purple-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-purple-700 font-semibold mb-1">Viator Benefit</div>
             <div id="analytics-viator-benefit" class="text-2xl font-bold text-purple-900">-</div>
             <div id="analytics-viator-benefit-percentage" class="text-xs text-purple-500 mt-1">~25.70%</div>
+            <div id="analytics-viator-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-teal-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-teal-700 font-semibold mb-1">Website Benefit</div>
             <div id="analytics-website-benefit" class="text-2xl font-bold text-teal-900">-</div>
             <div id="analytics-website-benefit-percentage" class="text-xs text-teal-500 mt-1">~46.82%</div>
+            <div id="analytics-website-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
           </div>
           <div class="bg-amber-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
             <div class="text-sm text-amber-700 font-semibold mb-1">Total Passengers</div>
@@ -725,7 +731,22 @@
             <h3 class="text-lg font-semibold text-gray-800">Sales Analytics by Channel</h3>
           </div>
           
-
+          <!-- NEW: Comparison Summary Section -->
+          <div id="comparison-summary" class="bg-blue-50 rounded-lg p-4 mb-6" style="display:none;">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-base font-semibold text-blue-800 mb-2">Period Comparison</h4>
+                <div class="text-sm text-blue-700">
+                  <span id="comparison-current-period">Current Period</span> vs 
+                  <span id="comparison-previous-period">Previous Period</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-blue-600 mb-1">Overall Performance</div>
+                <div id="comparison-overall-indicator" class="text-lg font-bold text-blue-800">-</div>
+              </div>
+            </div>
+          </div>
           
           <!-- Sales Charts and Tables -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

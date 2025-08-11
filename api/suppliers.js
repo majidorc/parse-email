@@ -58,17 +58,23 @@ async function handleGet(req, res, client) {
       SELECT 
         COUNT(DISTINCT s.id) as suppliers_count,
         COUNT(DISTINCT p.id) as programs_count,
-        COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_paid,
-        COALESCE(SUM(
-          CASE 
+        COALESCE(SUM(supplier_totals.total_net), 0) as total_paid,
+        COALESCE(SUM(supplier_totals.current_month_net), 0) as total_due
+      FROM suppliers s
+      LEFT JOIN (
+        SELECT 
+          p.supplier_id,
+          SUM(COALESCE(b.net_total, 0)) as total_net,
+          SUM(CASE 
             WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
             THEN COALESCE(b.net_total, 0)
             ELSE 0 
-          END
-        ), 0) as total_due
-      FROM suppliers s
-      LEFT JOIN products p ON s.id = p.supplier_id
-      LEFT JOIN bookings b ON p.sku = b.sku
+          END) as current_month_net
+        FROM products p
+        LEFT JOIN bookings b ON p.sku = b.sku
+        WHERE b.net_total IS NOT NULL
+        GROUP BY p.supplier_id
+      ) supplier_totals ON s.id = supplier_totals.supplier_id
     `);
     
     return res.status(200).json(analyticsResult.rows[0]);
@@ -82,26 +88,31 @@ async function handleGet(req, res, client) {
       s.created_at,
       COUNT(DISTINCT p.id) as programs_count,
       COUNT(DISTINCT b.booking_number) as bookings_count,
-      COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_amount,
-      COALESCE(SUM(
-        CASE 
+      COALESCE(supplier_stats.total_net, 0) as total_amount,
+      COALESCE(supplier_stats.last_month_net, 0) as paid_last_month,
+      COALESCE(supplier_stats.current_month_net, 0) as due_this_month
+    FROM suppliers s
+    LEFT JOIN (
+      SELECT 
+        p.supplier_id,
+        SUM(COALESCE(b.net_total, 0)) as total_net,
+        SUM(CASE 
           WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
           AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
           THEN COALESCE(b.net_total, 0)
           ELSE 0 
-        END
-      ), 0) as paid_last_month,
-      COALESCE(SUM(
-        CASE 
+        END) as last_month_net,
+        SUM(CASE 
           WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
           THEN COALESCE(b.net_total, 0)
           ELSE 0 
-        END
-      ), 0) as due_this_month
-    FROM suppliers s
-    LEFT JOIN products p ON s.id = p.supplier_id
-    LEFT JOIN bookings b ON p.sku = b.sku
-    GROUP BY s.id, s.name, s.created_at
+        END) as current_month_net
+      FROM products p
+      LEFT JOIN bookings b ON p.sku = b.sku
+      WHERE b.net_total IS NOT NULL
+      GROUP BY p.supplier_id
+    ) supplier_stats ON s.id = supplier_stats.supplier_id
+    GROUP BY s.id, s.name, s.created_at, supplier_stats.total_net, supplier_stats.last_month_net, supplier_stats.current_month_net
     ORDER BY s.name
   `);
   

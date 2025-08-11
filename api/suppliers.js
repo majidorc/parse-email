@@ -69,7 +69,6 @@ async function handleGet(req, res, client) {
       FROM suppliers s
       LEFT JOIN products p ON s.id = p.supplier_id
       LEFT JOIN bookings b ON p.sku = b.sku
-      WHERE b.net_total IS NOT NULL
     `);
     
     return res.status(200).json(analyticsResult.rows[0]);
@@ -102,7 +101,6 @@ async function handleGet(req, res, client) {
     FROM suppliers s
     LEFT JOIN products p ON s.id = p.supplier_id
     LEFT JOIN bookings b ON p.sku = b.sku
-    WHERE b.net_total IS NOT NULL
     GROUP BY s.id, s.name, s.created_at
     ORDER BY s.name
   `);

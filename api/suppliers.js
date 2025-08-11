@@ -91,7 +91,7 @@ async function handleGet(req, res, client) {
     const analyticsResult = await client.query(`
       SELECT 
         COUNT(DISTINCT s.id) as suppliers_count,
-        COUNT(DISTINCT p.id) as programs_count,
+        COUNT(DISTINCT p.sku) as programs_count,
         COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_paid,
         COALESCE(SUM(
           CASE 

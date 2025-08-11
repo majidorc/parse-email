@@ -4880,7 +4880,11 @@ function renderSuppliersTable() {
   } else {
     tbody.innerHTML = suppliersData.map(supplier => `
       <tr>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${supplier.name}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          <button class="text-blue-600 hover:text-blue-900 font-semibold supplier-name-btn" data-id="${supplier.id}" data-name="${supplier.name}">
+            ${supplier.name}
+          </button>
+        </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.programs_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.bookings_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.total_amount ? Number(supplier.total_amount).toFixed(2) : '0.00'}</td>
@@ -4892,6 +4896,15 @@ function renderSuppliersTable() {
         </td>
       </tr>
     `).join('');
+    
+    // Add event listeners for supplier name clicks
+    document.querySelectorAll('.supplier-name-btn').forEach(btn => {
+      btn.onclick = function() {
+        const id = this.getAttribute('data-id');
+        const name = this.getAttribute('data-name');
+        showSupplierPrograms(id, name);
+      };
+    });
     
     // Add event listeners for edit and delete buttons
     document.querySelectorAll('.edit-supplier-btn').forEach(btn => {
@@ -4975,6 +4988,86 @@ async function deleteSupplier(id) {
   } catch (error) {
     console.error('Error deleting supplier:', error);
     showToast('Failed to delete supplier', 'error');
+  }
+}
+
+async function showSupplierPrograms(supplierId, supplierName) {
+  try {
+    // Fetch programs for this supplier
+    const response = await fetch(`/api/suppliers?id=${supplierId}&programs=true`);
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Create and show modal
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+      modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+          <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-medium text-gray-900">Programs for ${supplierName}</h3>
+              <button class="text-gray-400 hover:text-gray-600 close-modal-btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bookings Count</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Net Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  ${data.programs && data.programs.length > 0 ? 
+                    data.programs.map(program => `
+                      <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${program.sku || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.name || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.bookings_count || 0}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.total_net ? Number(program.total_net).toFixed(2) : '0.00'}</td>
+                      </tr>
+                    `).join('') : 
+                    '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No programs found for this supplier</td></tr>'
+                  }
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-4 text-sm text-gray-600">
+              <p><strong>Total Programs:</strong> ${data.programs ? data.programs.length : 0}</p>
+              <p><strong>Total Bookings:</strong> ${data.total_bookings || 0}</p>
+              <p><strong>Total Net Amount:</strong> ${data.total_net ? Number(data.total_net).toFixed(2) : '0.00'}</p>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Add close functionality
+      modal.querySelector('.close-modal-btn').onclick = () => {
+        document.body.removeChild(modal);
+      };
+      
+      // Close on outside click
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      };
+      
+    } else {
+      showToast('Failed to fetch supplier programs', 'error');
+    }
+  } catch (error) {
+    console.error('Error fetching supplier programs:', error);
+    showToast('Failed to fetch supplier programs', 'error');
   }
 }
 

@@ -36,7 +36,41 @@ export default async function handler(req, res) {
 }
 
 async function handleGet(req, res, client) {
-  const { id, analytics } = req.query;
+  const { id, analytics, programs } = req.query;
+  
+  if (id && programs === 'true') {
+    // Get programs for specific supplier
+    const programsResult = await client.query(`
+      SELECT 
+        p.sku,
+        p.name,
+        COUNT(DISTINCT b.booking_number) as bookings_count,
+        COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_net
+      FROM products p
+      LEFT JOIN bookings b ON p.sku = b.sku
+      WHERE p.supplier_id = $1
+      GROUP BY p.id, p.sku, p.name
+      ORDER BY p.name
+    `, [id]);
+    
+    // Get summary totals
+    const summaryResult = await client.query(`
+      SELECT 
+        COUNT(DISTINCT p.id) as total_programs,
+        COUNT(DISTINCT b.booking_number) as total_bookings,
+        COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_net
+      FROM products p
+      LEFT JOIN bookings b ON p.sku = b.sku
+      WHERE p.supplier_id = $1
+    `, [id]);
+    
+    return res.status(200).json({
+      programs: programsResult.rows,
+      total_programs: summaryResult.rows[0]?.total_programs || 0,
+      total_bookings: summaryResult.rows[0]?.total_bookings || 0,
+      total_net: summaryResult.rows[0]?.total_net || 0
+    });
+  }
   
   if (id) {
     // Get specific supplier

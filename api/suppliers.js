@@ -1,13 +1,25 @@
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+// For Vercel serverless functions, we need to create a new connection each time
+// This is the recommended pattern for Neon + Vercel
+const createPool = () => {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 1, // Limit connections for serverless
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+};
 
 export default async function handler(req, res) {
-  const client = await pool.connect();
+  let client;
+  let pool;
+  
   try {
+    pool = createPool();
+    client = await pool.connect();
+    
     const { method } = req;
     
     switch (method) {
@@ -29,9 +41,46 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('Suppliers API error:', err);
-    res.status(500).json({ error: err.message });
+    
+    // Log the full error for debugging
+    console.error('Full error details:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint,
+      where: err.where,
+      schema: err.schema,
+      table: err.table,
+      column: err.column,
+      dataType: err.dataType,
+      constraint: err.constraint
+    });
+    
+    // Provide specific error messages
+    if (err.code === 'ECONNREFUSED') {
+      res.status(500).json({ error: 'Database connection refused. Please check your database configuration.' });
+    } else if (err.code === 'ENOTFOUND') {
+      res.status(500).json({ error: 'Database host not found. Please check your database URL.' });
+    } else if (err.code === '28P01') {
+      res.status(500).json({ error: 'Database authentication failed. Please check your credentials.' });
+    } else if (err.code === '3D000') {
+      res.status(500).json({ error: 'Database does not exist. Please check your database name.' });
+    } else if (err.code === '42P01') {
+      res.status(500).json({ error: 'Table not found. Please check your database schema.' });
+    } else {
+      res.status(500).json({ 
+        error: 'Database error occurred',
+        details: err.message,
+        code: err.code
+      });
+    }
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
+    if (pool) {
+      await pool.end();
+    }
   }
 }
 

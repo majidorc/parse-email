@@ -1,22 +1,32 @@
-const { Pool } = require('pg');
-const { sql } = require('@vercel/postgres');
-const { getSession } = require('./auth.js');
+import { Pool } from 'pg';
+import { sql } from '@vercel/postgres';
+import { getSession } from './auth.js';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+// For Vercel serverless functions, we need to create a new connection each time
+const createPool = () => {
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 1, // Limit connections for serverless
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+};
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
+  let client;
+  let pool;
+  
   try {
+    pool = createPool();
+    client = await pool.connect();
+    
     const type = req.query.type;
     
     // Add basic health check for debugging
     if (type === 'health') {
       try {
-        const testClient = await pool.connect();
-        const testResult = await testClient.query('SELECT 1 as test');
-        testClient.release();
+        const testResult = await client.query('SELECT 1 as test');
         return res.status(200).json({ 
           status: 'ok', 
           database: 'connected',
@@ -51,12 +61,11 @@ module.exports = async (req, res) => {
 
     // Test database connection and table existence
     try {
-      const testClient = await pool.connect();
-      const testResult = await testClient.query('SELECT 1 as test');
+      const testResult = await client.query('SELECT 1 as test');
 
       
       // Check if tables exist
-      const tablesResult = await testClient.query(`
+      const tablesResult = await client.query(`
         SELECT table_name 
         FROM information_schema.tables 
         WHERE table_schema = 'public' 
@@ -64,7 +73,6 @@ module.exports = async (req, res) => {
       `);
 
       
-      testClient.release();
     } catch (dbErr) {
       console.error('[PRODUCTS-RATES] Database connection test failed:', dbErr);
       return res.status(500).json({ error: 'Database connection failed', details: dbErr.message });
@@ -164,7 +172,6 @@ module.exports = async (req, res) => {
         res.status(400).json({ error: 'Missing required fields' });
         return;
       }
-      const client = await pool.connect();
       try {
         await client.query('BEGIN');
         const prodResult = await client.query(
@@ -478,7 +485,6 @@ module.exports = async (req, res) => {
           res.status(400).json({ error: 'Missing id' });
           return;
         }
-        const client = await pool.connect();
         try {
           await client.query('BEGIN');
           await client.query('DELETE FROM rates WHERE product_id = $1', [id]);
@@ -489,8 +495,6 @@ module.exports = async (req, res) => {
           await client.query('ROLLBACK');
           console.error('[PRODUCTS-RATES] Error in tour DELETE logic:', err);
           res.status(500).json({ error: err.message, stack: err.stack });
-        } finally {
-          client.release();
         }
         return;
       }
@@ -568,5 +572,12 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('[PRODUCTS-RATES] Unhandled error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
+  } finally {
+    if (client) {
+      client.release();
+    }
+    if (pool) {
+      await pool.end();
+    }
   }
-}; 
+} 

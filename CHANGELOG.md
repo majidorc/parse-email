@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2025-01-09
+
+### Added
+- **Supplier Programs View**: Click on suppliers to see all their programs with booking counts and revenue
+- **Program Analytics per Supplier**: Track total programs, bookings, and net amounts for each supplier
+- **Interactive Supplier Dashboard**: Real-time supplier performance metrics with detailed breakdowns
+
+### Changed
+- **Database Connection Pattern**: Updated to proper Vercel serverless pattern for better reliability
+- **API Error Handling**: Enhanced error messages with specific database error codes and details
+- **Connection Management**: Improved database connection lifecycle for serverless environment
+
+### Fixed
+- **Suppliers API 500 Errors**: Resolved database connection issues causing 500 Internal Server Errors
+- **Programs Tab 500 Errors**: Fixed connection conflicts in products-rates API
+- **Database Column Mismatch**: Fixed SQL query using 'program' column instead of non-existent 'name' column
+- **Connection Pool Issues**: Eliminated persistent connection pools that don't work in serverless environment
+- **Client Release Conflicts**: Fixed multiple client.release() calls causing connection errors
+
+### Technical
+- **Vercel Optimization**: Implemented proper serverless database connection pattern
+- **Connection Cleanup**: Added proper connection cleanup in finally blocks
+- **Error Logging**: Enhanced error logging with detailed database error information
+- **MCP Integration**: Configured Model Context Protocol for Neon database connectivity
+
 ## [3.0.0] - 2025-01-09
 
 ### Added

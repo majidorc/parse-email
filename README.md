@@ -34,6 +34,12 @@ A comprehensive booking management system for tour operators, featuring email pa
 - **Pagination**: Efficient browsing of large program catalogs
 - **Program Name Column**: Enhanced display with wider columns for long program names
 
+### Supplier Management
+- **Supplier Programs View**: Click on suppliers to see all their programs with booking counts and revenue
+- **Program Analytics**: Track total programs, bookings, and net amounts per supplier
+- **Interactive Supplier Dashboard**: Real-time supplier performance metrics
+- **Supplier-Program Relationships**: Clear mapping between suppliers and their tour programs
+
 ### Accounting Features
 - **Financial Tracking**: Paid amounts, net totals, and benefits
 - **Interactive Editing**: Inline editing of paid amounts, net totals, and SKUs
@@ -61,11 +67,12 @@ A comprehensive booking management system for tour operators, featuring email pa
 
 - **Frontend**: HTML5, CSS3 (Tailwind CSS), JavaScript (ES6+)
 - **Backend**: Node.js, Express.js
-- **Database**: PostgreSQL (Vercel Postgres)
+- **Database**: PostgreSQL (Neon Database)
 - **Deployment**: Vercel (Serverless Functions)
 - **Notifications**: Telegram Bot API
 - **Email Parsing**: Custom parsers for multiple email formats
 - **Service Workers**: Caching and offline functionality
+- **MCP Integration**: Model Context Protocol for enhanced database connectivity
 
 ## 📁 Project Structure
 
@@ -77,7 +84,7 @@ parse-email/
 │   ├── accounting.js      # Financial tracking with SKU editing
 │   ├── sales-analytics.js # Analytics and reporting
 │   ├── products-rates.js  # Programs and rates management
-│   ├── suppliers.js       # Supplier management
+│   ├── suppliers.js       # Supplier management with programs view
 │   ├── webhook.js         # Email parsing and Telegram integration
 │   └── ...
 ├── public/                # Frontend assets

@@ -50,13 +50,21 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- SUPPLIERS TABLE
+CREATE TABLE IF NOT EXISTS suppliers (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- PRODUCTS TABLE
 CREATE TABLE IF NOT EXISTS products (
   id SERIAL PRIMARY KEY,
   sku TEXT,
   product_id_optional TEXT,
   program TEXT,
-  remark TEXT
+  remark TEXT,
+  supplier_id INTEGER REFERENCES suppliers(id) ON DELETE SET NULL
 );
 
 -- RATES TABLE
@@ -91,6 +99,9 @@ CREATE INDEX IF NOT EXISTS idx_bookings_hotel ON bookings(hotel);
 CREATE INDEX IF NOT EXISTS idx_bookings_no_transfer ON bookings(no_transfer);
 CREATE INDEX IF NOT EXISTS idx_bookings_order_number ON bookings(order_number); -- NEW: Index for order_number
 CREATE INDEX IF NOT EXISTS idx_rates_product_id ON rates(product_id);
+CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
+CREATE INDEX IF NOT EXISTS idx_products_supplier_id ON products(supplier_id);
+CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_role ON user_whitelist(role);
 CREATE INDEX IF NOT EXISTS idx_user_whitelist_email ON user_whitelist(email);
 CREATE INDEX IF NOT EXISTS idx_parsed_emails_sender ON parsed_emails(sender);
@@ -104,4 +115,12 @@ ON CONFLICT (email) DO NOTHING;
 -- Sample settings record (optional)
 INSERT INTO settings (id, telegram_bot_token, telegram_chat_id, notification_email_to, google_analytics_id, updated_at)
 VALUES (1, '', '', '', '', NOW())
-ON CONFLICT (id) DO NOTHING; 
+ON CONFLICT (id) DO NOTHING;
+
+-- Sample suppliers (optional)
+INSERT INTO suppliers (name) VALUES 
+  ('See Sea Sky'),
+  ('Thailand Tours'),
+  ('Bangkok Adventures'),
+  ('Phuket Paradise')
+ON CONFLICT (name) DO NOTHING; 

@@ -93,14 +93,14 @@ async function handleGet(req, res, client) {
       const programsResult = await client.query(`
         SELECT 
           p.sku,
-          p.name,
+          p.program as name,
           COUNT(DISTINCT b.booking_number) as bookings_count,
           COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_net
         FROM products p
         LEFT JOIN bookings b ON p.sku = b.sku
         WHERE p.supplier_id = $1
-        GROUP BY p.sku, p.name
-        ORDER BY p.name
+        GROUP BY p.sku, p.program
+        ORDER BY p.program
       `, [id]);
       
       // Get summary totals

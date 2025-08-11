@@ -49,7 +49,7 @@ async function handleGet(req, res, client) {
       FROM products p
       LEFT JOIN bookings b ON p.sku = b.sku
       WHERE p.supplier_id = $1
-      GROUP BY p.id, p.sku, p.name
+      GROUP BY p.sku, p.name
       ORDER BY p.name
     `, [id]);
     

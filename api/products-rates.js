@@ -198,8 +198,6 @@ export default async function handler(req, res) {
         await client.query('ROLLBACK');
         console.error('[PRODUCTS-RATES] Error in product logic:', err);
         res.status(500).json({ error: err.message });
-      } finally {
-        client.release();
       }
       return;
     }
@@ -208,8 +206,6 @@ export default async function handler(req, res) {
     if (type === 'tour') {
       if (req.method === 'GET') {
         try {
-          const client = await pool.connect();
-          
           // Check if this is a SKU-specific request for rates
           const sku = req.query.sku;
           if (sku) {
@@ -222,7 +218,6 @@ export default async function handler(req, res) {
               ORDER BY r.name
             `;
             const ratesResult = await client.query(ratesQuery, [sku]);
-            client.release();
             res.status(200).json({ rates: ratesResult.rows });
             return;
           }
@@ -293,7 +288,6 @@ export default async function handler(req, res) {
             ...product,
             rates: ratesByProduct[product.id] || []
           }));
-          client.release();
           res.status(200).json({ 
             tours: productsWithRates,
             pagination: {
@@ -345,9 +339,7 @@ export default async function handler(req, res) {
           console.log('[PRODUCTS-RATES] Program without rates:', { sku, program });
         }
         
-        const client = await pool.connect();
         try {
-  
           await client.query('BEGIN');
           
           let productId = id;
@@ -468,10 +460,6 @@ export default async function handler(req, res) {
             hint: err.hint,
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
           });
-        } finally {
-          if (client) {
-            client.release();
-          }
         }
         return;
       }

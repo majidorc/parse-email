@@ -82,32 +82,26 @@ async function handleGet(req, res, client) {
       s.created_at,
       COUNT(DISTINCT p.id) as programs_count,
       COUNT(DISTINCT b.booking_number) as bookings_count,
-      COALESCE(supplier_totals.total_net, 0) as total_amount,
-      COALESCE(supplier_totals.last_month_net, 0) as paid_last_month,
-      COALESCE(supplier_totals.current_month_net, 0) as due_this_month
-    FROM suppliers s
-    LEFT JOIN (
-      SELECT 
-        p.supplier_id,
-        SUM(COALESCE(b.net_total, 0)) as total_net,
-        SUM(CASE 
+      COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_amount,
+      COALESCE(SUM(
+        CASE 
           WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
           AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
           THEN COALESCE(b.net_total, 0)
           ELSE 0 
-        END) as last_month_net,
-        SUM(CASE 
+        END
+      ), 0) as paid_last_month,
+      COALESCE(SUM(
+        CASE 
           WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
           THEN COALESCE(b.net_total, 0)
           ELSE 0 
-        END) as current_month_net
-      FROM products p
-      LEFT JOIN bookings b ON p.sku = b.sku
-      GROUP BY p.supplier_id
-    ) supplier_totals ON s.id = supplier_totals.supplier_id
+        END
+      ), 0) as due_this_month
+    FROM suppliers s
     LEFT JOIN products p ON s.id = p.supplier_id
     LEFT JOIN bookings b ON p.sku = b.sku
-    GROUP BY s.id, s.name, s.created_at, supplier_totals.total_net, supplier_totals.last_month_net, supplier_totals.current_month_net
+    GROUP BY s.id, s.name, s.created_at
     ORDER BY s.name
   `);
   

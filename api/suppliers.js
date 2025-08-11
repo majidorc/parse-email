@@ -62,7 +62,7 @@ async function handleGet(req, res, client) {
         COALESCE(SUM(
           CASE 
             WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
-            THEN b.paid - COALESCE(b.net_total, 0)
+            THEN COALESCE(b.net_total, 0)
             ELSE 0 
           END
         ), 0) as total_due
@@ -94,7 +94,7 @@ async function handleGet(req, res, client) {
       COALESCE(SUM(
         CASE 
           WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
-          THEN b.paid - COALESCE(b.net_total, 0)
+          THEN COALESCE(b.net_total, 0)
           ELSE 0 
         END
       ), 0) as due_this_month

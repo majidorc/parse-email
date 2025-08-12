@@ -5681,7 +5681,7 @@ async function toggleBookingsAccordion(supplierId) {
   }
 }
 
-async function loadSupplierBookings(supplierId, bookingsListElement, page = 1, pageSize = 25) {
+async function loadSupplierBookings(supplierId, bookingsListElement, page = 1, pageSize = 10) {
   try {
     const response = await fetch(`/api/suppliers?id=${supplierId}&bookings=true&page=${page}&limit=${pageSize}`);
     if (response.ok) {
@@ -5766,7 +5766,7 @@ function displaySupplierBookings(bookingsListElement, bookings, page, totalPages
   bookingsListElement.innerHTML = listHtml + paginationHtml;
 }
 
-function changeSupplierBookingsPage(supplierId, newPage, pageSize = 25) {
+function changeSupplierBookingsPage(supplierId, newPage, pageSize = 10) {
   const accordionRow = document.querySelector(`[data-supplier-accordion="${supplierId}"]`);
   if (!accordionRow) return;
   const content = accordionRow.querySelector('.bookings-accordion-content');

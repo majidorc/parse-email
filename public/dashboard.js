@@ -4876,10 +4876,10 @@ async function fetchSuppliers() {
 function renderSuppliersTable() {
   const tbody = document.getElementById('suppliers-table-body');
   if (!suppliersData.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">No suppliers found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-400">No suppliers found.</td></tr>';
   } else {
     tbody.innerHTML = suppliersData.map(supplier => `
-      <tr>
+      <tr data-supplier-id="${supplier.id}">
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
           <button class="text-blue-600 hover:text-blue-900 font-semibold supplier-name-btn" data-id="${supplier.id}" data-name="${supplier.name}">
             ${supplier.name}
@@ -5004,47 +5004,107 @@ async function fixBookingNets() {
 
 
 async function showSupplierPrograms(supplierId, supplierName) {
+  // Check if this supplier row already has an expanded accordion
+  const existingAccordion = document.querySelector(`[data-supplier-accordion="${supplierId}"]`);
+  if (existingAccordion) {
+    // If accordion exists, toggle it
+    if (existingAccordion.classList.contains('hidden')) {
+      existingAccordion.classList.remove('hidden');
+      const arrow = existingAccordion.previousElementSibling.querySelector('.accordion-arrow');
+      arrow.style.transform = 'rotate(180deg)';
+    } else {
+      existingAccordion.classList.add('hidden');
+      const arrow = existingAccordion.previousElementSibling.querySelector('.accordion-arrow');
+      arrow.style.transform = 'rotate(0deg)';
+    }
+    return;
+  }
+
   try {
     // Fetch programs for this supplier
     const response = await fetch(`/api/suppliers?id=${supplierId}&programs=true`);
     if (response.ok) {
       const data = await response.json();
       
-      // Update modal content
-      document.getElementById('supplier-modal-title').textContent = `Supplier: ${supplierName}`;
-      document.getElementById('modal-programs-count').textContent = data.total_programs || 0;
-      document.getElementById('modal-bookings-count').textContent = data.total_bookings || 0;
-      document.getElementById('modal-total-net').textContent = data.total_net ? Number(data.total_net).toFixed(2) : '0.00';
-      
       // Find the supplier in suppliersData to get additional info
       const supplier = suppliersData.find(s => s.id == supplierId);
-      if (supplier) {
-        document.getElementById('modal-this-month-net').textContent = supplier.this_month_net ? Number(supplier.this_month_net).toFixed(2) : '0.00';
+      if (!supplier) {
+        showToast('Supplier not found', 'error');
+        return;
       }
+
+      // Find the supplier row and insert accordion after it
+      const supplierRow = document.querySelector(`[data-supplier-id="${supplierId}"]`);
+      if (!supplierRow) {
+        showToast('Supplier row not found', 'error');
+        return;
+      }
+
+      // Create accordion row
+      const accordionRow = document.createElement('tr');
+      accordionRow.className = 'bg-gray-50';
+      accordionRow.setAttribute('data-supplier-accordion', supplierId);
       
-      // Populate programs list
-      const programsList = document.getElementById('modal-programs-list');
-      if (data.programs && data.programs.length > 0) {
-        programsList.innerHTML = data.programs.map(program => `
-          <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <h5 class="font-semibold text-gray-800">${program.name || 'N/A'}</h5>
-                <p class="text-sm text-gray-600">SKU: ${program.sku || 'N/A'}</p>
+      const accordionCell = document.createElement('td');
+      accordionCell.colSpan = 7; // Match the number of columns in the table
+      accordionCell.className = 'px-6 py-4';
+      
+      // Create accordion content
+      accordionCell.innerHTML = `
+        <div class="space-y-4">
+          <!-- Supplier Summary -->
+          <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <h4 class="font-semibold text-gray-800 mb-3">Supplier Summary</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">${data.total_programs || 0}</div>
+                <div class="text-gray-600">Total Programs</div>
               </div>
-              <div class="text-right">
-                <div class="text-lg font-bold text-blue-600">${program.total_net ? Number(program.total_net).toFixed(2) : '0.00'}</div>
-                <div class="text-sm text-gray-500">${program.bookings_count || 0} bookings</div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">${data.total_bookings || 0}</div>
+                <div class="text-gray-600">Total Bookings</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600">${data.total_net ? Number(data.total_net).toFixed(2) : '0.00'}</div>
+                <div class="text-gray-600">Total Net Amount</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-orange-600">${supplier.this_month_net ? Number(supplier.this_month_net).toFixed(2) : '0.00'}</div>
+                <div class="text-gray-600">This Month Net</div>
               </div>
             </div>
           </div>
-        `).join('');
-      } else {
-        programsList.innerHTML = '<div class="text-center text-gray-500 py-4">No programs found for this supplier</div>';
-      }
+
+          <!-- Programs Accordion -->
+          <div class="border border-gray-200 rounded-lg bg-white">
+            <div class="bg-gray-100 px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" onclick="toggleProgramsAccordion(${supplierId})">
+              <div class="flex items-center justify-between">
+                <h4 class="font-semibold text-gray-800">Programs & Bookings Details</h4>
+                <svg class="accordion-arrow w-5 h-5 text-gray-600 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="programs-accordion-content hidden border-t border-gray-200">
+              <div class="p-4">
+                <div class="programs-list space-y-3">
+                  ${generateProgramsList(data.programs || [])}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      accordionRow.appendChild(accordionCell);
       
-      // Show modal
-      document.getElementById('supplier-modal').style.display = 'block';
+      // Insert accordion row after the supplier row
+      supplierRow.parentNode.insertBefore(accordionRow, supplierRow.nextSibling);
+      
+      // Show the accordion
+      accordionRow.classList.remove('hidden');
+      const arrow = accordionRow.querySelector('.accordion-arrow');
+      arrow.style.transform = 'rotate(180deg)';
       
     } else {
       showToast('Failed to fetch supplier programs', 'error');
@@ -5533,14 +5593,35 @@ function closeAddSupplierModal() {
   }
 }
 
-// Supplier Modal Functions
-function closeSupplierModal() {
-  document.getElementById('supplier-modal').style.display = 'none';
+
+
+function generateProgramsList(programs) {
+  if (!programs || programs.length === 0) {
+    return '<div class="text-gray-500 text-center py-4">No programs found for this supplier</div>';
+  }
+
+  return programs.map(program => `
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0">
+        <div class="flex-1">
+          <div class="font-medium text-gray-800">${program.sku || 'N/A'}</div>
+          <div class="text-gray-600 text-sm">${program.name || 'N/A'}</div>
+        </div>
+        <div class="text-right space-y-1">
+          <div class="text-sm font-medium text-gray-800">Total Net: ${program.total_net ? Number(program.total_net).toFixed(2) : '0.00'}</div>
+          <div class="text-sm text-gray-600">Bookings: ${program.bookings_count || 0}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
-function toggleProgramsAccordion() {
-  const content = document.getElementById('programs-accordion-content');
-  const arrow = document.getElementById('accordion-arrow');
+function toggleProgramsAccordion(supplierId) {
+  const accordionRow = document.querySelector(`[data-supplier-accordion="${supplierId}"]`);
+  if (!accordionRow) return;
+  
+  const content = accordionRow.querySelector('.programs-accordion-content');
+  const arrow = accordionRow.querySelector('.accordion-arrow');
   
   if (content.classList.contains('hidden')) {
     content.classList.remove('hidden');
@@ -5551,24 +5632,7 @@ function toggleProgramsAccordion() {
   }
 }
 
-// Initialize modal event listeners
-document.addEventListener('DOMContentLoaded', function() {
-  // Close modal when clicking close button
-  const closeBtn = document.getElementById('close-supplier-modal');
-  if (closeBtn) {
-    closeBtn.onclick = closeSupplierModal;
-  }
-  
-  // Close modal when clicking outside
-  const modal = document.getElementById('supplier-modal');
-  if (modal) {
-    modal.onclick = function(e) {
-      if (e.target === modal) {
-        closeSupplierModal();
-      }
-    };
-  }
-});
+
 
 
 

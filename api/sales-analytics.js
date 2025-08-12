@@ -116,6 +116,10 @@ export default async function handler(req, res) {
           start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
           end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
           break;
+        case 'next2Months':
+          start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 3, 1);
+          break;
         case 'twoMonthsAgo':
           start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
           end = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -135,6 +139,10 @@ export default async function handler(req, res) {
         case 'next6Months':
           start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
           end = new Date(now.getFullYear(), now.getMonth() + 7, 1);
+          break;
+        case 'nextYear':
+          start = new Date(now.getFullYear() + 1, 0, 1);
+          end = new Date(now.getFullYear() + 2, 0, 1);
           break;
         case 'thisYear':
           start = new Date(now.getFullYear(), 0, 1);

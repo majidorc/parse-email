@@ -86,7 +86,26 @@ async function handleGet(req, res, client) {
   
   if (id && bookings === 'true') {
     try {
-      // Get all bookings for specific supplier
+      // Pagination params
+      const pageSize = Math.max(1, Math.min(parseInt(req.query.limit, 10) || 50, 200));
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const offset = (page - 1) * pageSize;
+
+      // Count total
+      const countResult = await client.query(`
+        SELECT COUNT(*)::int AS total
+        FROM bookings b
+        WHERE b.sku IN (
+          SELECT DISTINCT p.sku
+          FROM products p
+          WHERE p.supplier_id = $1
+        )
+      `, [id]);
+
+      const total = countResult.rows[0]?.total || 0;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+      // Get paged bookings for specific supplier
       const bookingsResult = await client.query(`
         SELECT 
           b.booking_number,
@@ -105,10 +124,15 @@ async function handleGet(req, res, client) {
           WHERE p.supplier_id = $1
         )
         ORDER BY b.tour_date DESC, b.book_date DESC
-      `, [id]);
+        LIMIT $2 OFFSET $3
+      `, [id, pageSize, offset]);
       
       return res.status(200).json({
-        bookings: bookingsResult.rows
+        bookings: bookingsResult.rows,
+        total,
+        page,
+        pageSize,
+        totalPages
       });
     } catch (error) {
       console.error('Error fetching supplier bookings:', error);

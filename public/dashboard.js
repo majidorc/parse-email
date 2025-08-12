@@ -222,14 +222,20 @@ async function fetchBookings(page = 1, sort = currentSort, dir = currentDir, sea
     if (search) params.append('search', search);
     if (cacheBuster) params.append('_ts', cacheBuster);
     
-    // Add period parameter from global period selector, but not for date searches
-    const globalPeriod = document.getElementById('global-period-selector');
-    const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-    
-    // Don't add period filter if we're doing a date search (YYYY-MM-DD format)
-    const isDateSearch = search && /^\d{4}-\d{2}-\d{2}$/.test(search);
-    if (!isDateSearch) {
-      params.append('period', period);
+    // Add custom date range if available (highest priority)
+    if (window.customStartDate && window.customEndDate) {
+      params.append('startDate', window.customStartDate);
+      params.append('endDate', window.customEndDate);
+    } else {
+      // Add period parameter from global period selector, but not for date searches
+      const globalPeriod = document.getElementById('global-period-selector');
+      const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+      
+      // Don't add period filter if we're doing a date search (YYYY-MM-DD format)
+      const isDateSearch = search && /^\d{4}-\d{2}-\d{2}$/.test(search);
+      if (!isDateSearch) {
+        params.append('period', period);
+      }
     }
     
     const res = await fetch(`/api/bookings?${params.toString()}`);
@@ -1441,10 +1447,16 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     if (search) params.append('search', search);
     if (cacheBuster) params.append('_ts', cacheBuster);
     
-    // Add period parameter from global period selector
-    const globalPeriod = document.getElementById('global-period-selector');
-    const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-    params.append('period', period);
+    // Add custom date range if available (highest priority)
+    if (window.customStartDate && window.customEndDate) {
+      params.append('startDate', window.customStartDate);
+      params.append('endDate', window.customEndDate);
+    } else {
+      // Add period parameter from global period selector
+      const globalPeriod = document.getElementById('global-period-selector');
+      const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+      params.append('period', period);
+    }
     
     const res = await fetch(`/api/accounting?${params.toString()}`);
     const data = await res.json();
@@ -2250,7 +2262,15 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
   // Set a new timeout to prevent rapid calls
   salesAnalyticsTimeout = setTimeout(async () => {
     try {
-      const response = await fetch(`/api/sales-analytics?period=${period}`);
+      // Check for custom date range first
+      let url;
+      if (window.customStartDate && window.customEndDate) {
+        url = `/api/sales-analytics?startDate=${window.customStartDate}&endDate=${window.customEndDate}`;
+      } else {
+        url = `/api/sales-analytics?period=${period}`;
+      }
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -2656,13 +2676,34 @@ function updateSalesChannelChart(data) {
   }
 }
 
+// Function to clear custom date range
+function clearCustomDateRange() {
+  window.customStartDate = null;
+  window.customEndDate = null;
+  const customStart = document.getElementById('custom-start-date');
+  const customEnd = document.getElementById('custom-end-date');
+  if (customStart) customStart.value = '';
+  if (customEnd) customEnd.value = '';
+  
+  // Reset period selector to default if it was on custom
+  const globalPeriodSelector = document.getElementById('global-period-selector');
+  if (globalPeriodSelector && globalPeriodSelector.value === 'custom') {
+    globalPeriodSelector.value = 'thisMonth';
+    const customControls = document.getElementById('custom-range-controls');
+    if (customControls) {
+      customControls.style.display = 'none';
+    }
+  }
+}
+
 // Initialize global period selector
 function initializeGlobalPeriodSelector() {
   const globalPeriodSelector = document.getElementById('global-period-selector');
-  const customControls = document.getElementById('custom-range-controls');
-  const customStart = document.getElementById('custom-start-date');
-  const customEnd = document.getElementById('custom-end-date');
-  const applyCustom = document.getElementById('apply-custom-range');
+      const customControls = document.getElementById('custom-range-controls');
+    const customStart = document.getElementById('custom-start-date');
+    const customEnd = document.getElementById('custom-end-date');
+    const applyCustom = document.getElementById('apply-custom-range');
+    const clearCustom = document.getElementById('clear-custom-range');
   
   if (globalPeriodSelector) {
     // Ensure default selection is This Month on load
@@ -2674,6 +2715,11 @@ function initializeGlobalPeriodSelector() {
       // Toggle custom controls visibility
       if (customControls) {
         customControls.style.display = period === 'custom' ? '' : 'none';
+      }
+      
+      // Clear custom date range if switching away from custom
+      if (period !== 'custom') {
+        clearCustomDateRange();
       }
       
       // Update dashboard analytics
@@ -2712,30 +2758,54 @@ function initializeGlobalPeriodSelector() {
         const startVal = customStart.value;
         const endVal = customEnd.value;
         if (!startVal || !endVal) return;
-        // Directly set query params for APIs
-        const addRange = (url) => {
-          const u = new URL(url, window.location.origin);
-          u.searchParams.set('startDate', startVal);
-          u.searchParams.set('endDate', endVal);
-          return u.pathname + '?' + u.searchParams.toString();
-        };
+        
+        // Store custom date range globally
+        window.customStartDate = startVal;
+        window.customEndDate = endVal;
+        
         // Bookings
         if (document.getElementById('bookings-table-container') && document.getElementById('bookings-table-container').style.display !== 'none') {
-          // Temporarily override fetchBookings to include range
-          const params = new URLSearchParams({ page: 1, limit: rowsPerPage, sort: currentSort, dir: currentDir, startDate: startVal, endDate: endVal });
-          fetch(`/api/bookings?${params.toString()}`).then(r=>r.json()).then(data=>{
-            bookingsData = data.bookings||[]; totalRows = data.total||0; currentPage = data.page||1; renderTable(); renderPagination();
-          });
+          // Use the existing fetchBookings function with custom date range
+          fetchBookings(1, currentSort, currentDir, searchTerm);
         }
         // Accounting
         if (document.getElementById('accounting-table-container') && document.getElementById('accounting-table-container').style.display !== 'none') {
-          const params = new URLSearchParams({ page: 1, limit: accountingRowsPerPage, sort: accountingSort, dir: accountingDir, startDate: startVal, endDate: endVal });
-          fetch(`/api/accounting?${params.toString()}`).then(r=>r.json()).then(data=>{
-            accountingData = data.bookings||[]; accountingTotalRows = data.total||0; accountingCurrentPage = data.page||1; renderAccountingTable(); renderAccountingPagination();
-          });
+          fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
         }
         // Dashboard refresh
         forceRefreshDashboard();
+      };
+    }
+    
+    // Set default dates when custom is selected
+    if (customStart && customEnd) {
+      const today = new Date();
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 1);
+      
+      customStart.value = nextMonth.toISOString().split('T')[0];
+      customEnd.value = nextMonthEnd.toISOString().split('T')[0];
+    }
+    
+    // Clear custom date range button
+    if (clearCustom) {
+      clearCustom.onclick = function() {
+        clearCustomDateRange();
+        // Reset period selector to default
+        if (globalPeriodSelector) {
+          globalPeriodSelector.value = 'thisMonth';
+        }
+        // Refresh all data
+        forceRefreshDashboard();
+        if (document.getElementById('bookings-table-container') && document.getElementById('bookings-table-container').style.display !== 'none') {
+          fetchBookings(1, currentSort, currentDir, searchTerm);
+        }
+        if (document.getElementById('accounting-table-container') && document.getElementById('accounting-table-container').style.display !== 'none') {
+          fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+        }
+        if (document.getElementById('analytics-section') && document.getElementById('analytics-section').style.display !== 'none') {
+          fetchSalesAnalytics('thisMonth');
+        }
       };
     }
   }
@@ -2824,7 +2894,14 @@ function fetchDashboardAnalytics() {
   const bookingsChange = document.getElementById('dashboard-total-bookings-change');
   const newChange = document.getElementById('dashboard-new-bookings-change');
   const earningsChange = document.getElementById('dashboard-total-earnings-change');
-  let url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
+  // Check for custom date range first
+  let url;
+  if (window.customStartDate && window.customEndDate) {
+    url = `/api/dashboard-settings?startDate=${window.customStartDate}&endDate=${window.customEndDate}&_ts=${Date.now()}`;
+  } else {
+    url = `/api/dashboard-settings?period=${period}&_ts=${Date.now()}`;
+  }
+  
   if (dashboardChannelFilter) url += `&channel=${encodeURIComponent(dashboardChannelFilter)}`;
   fetch(url)
     .then(res => res.json())
@@ -5398,6 +5475,9 @@ function initializeApp() {
     globalRefreshBtn.onclick = async function() {
       // Show refresh indicator
       showRefreshIndicator();
+      
+      // Clear custom date range on refresh
+      clearCustomDateRange();
       
       // Refresh based on current active tab
       if (dashboardBtn.classList.contains('active')) {

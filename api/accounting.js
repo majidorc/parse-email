@@ -88,6 +88,31 @@ module.exports = async (req, res) => {
             start = getStartOfYear(new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)));
             break;
           }
+          case 'nextMonth': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+            break;
+          }
+          case 'next2Months': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 3, 1));
+            break;
+          }
+          case 'next3Months': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 4, 1));
+            break;
+          }
+          case 'next6Months': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 7, 1));
+            break;
+          }
+          case 'nextYear': {
+            start = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear() + 2, 0, 1));
+            break;
+          }
           case 'all':
           default:
             start = new Date(Date.UTC(2000, 0, 1));
@@ -575,6 +600,31 @@ module.exports = async (req, res) => {
       case 'lastYear': {
         end = getStartOfYear(now);
         start = getStartOfYear(new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1)));
+        break;
+      }
+      case 'nextMonth': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+        break;
+      }
+      case 'next2Months': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 3, 1));
+        break;
+      }
+      case 'next3Months': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 4, 1));
+        break;
+      }
+      case 'next6Months': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 7, 1));
+        break;
+      }
+      case 'nextYear': {
+        start = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear() + 2, 0, 1));
         break;
       }
       case 'all':

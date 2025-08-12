@@ -41,6 +41,23 @@ function getBangkokDateRange(period) {
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
       break;
     }
+    case 'nextMonth': {
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+      break;
+    }
+    case 'next3Months': {
+      // Covers next 3 full calendar months
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 4, 1));
+      break;
+    }
+    case 'next6Months': {
+      // Covers next 6 full calendar months
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 7, 1));
+      break;
+    }
     case 'twoMonthsAgo': {
       end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
       start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));

@@ -2659,6 +2659,10 @@ function updateSalesChannelChart(data) {
 // Initialize global period selector
 function initializeGlobalPeriodSelector() {
   const globalPeriodSelector = document.getElementById('global-period-selector');
+  const customControls = document.getElementById('custom-range-controls');
+  const customStart = document.getElementById('custom-start-date');
+  const customEnd = document.getElementById('custom-end-date');
+  const applyCustom = document.getElementById('apply-custom-range');
   
   if (globalPeriodSelector) {
     // Ensure default selection is This Month on load
@@ -2667,6 +2671,10 @@ function initializeGlobalPeriodSelector() {
     }
     globalPeriodSelector.addEventListener('change', function() {
       const period = this.value;
+      // Toggle custom controls visibility
+      if (customControls) {
+        customControls.style.display = period === 'custom' ? '' : 'none';
+      }
       
       // Update dashboard analytics
       if (document.getElementById('dashboard-section').style.display !== 'none') {
@@ -2697,6 +2705,28 @@ function initializeGlobalPeriodSelector() {
         fetchBookings(1, currentSort, currentDir, searchTerm);
       }
     });
+
+    if (applyCustom) {
+      applyCustom.onclick = function() {
+        if (!customStart || !customEnd) return;
+        const startVal = customStart.value;
+        const endVal = customEnd.value;
+        if (!startVal || !endVal) return;
+        // Encode as search override for Bookings and Accounting: date:start,end
+        const encoded = `date:${startVal},${endVal}`;
+        // Bookings
+        if (document.getElementById('bookings-table-container') && document.getElementById('bookings-table-container').style.display !== 'none') {
+          fetchBookings(1, currentSort, currentDir, encoded);
+        }
+        // Accounting
+        if (document.getElementById('accounting-table-container') && document.getElementById('accounting-table-container').style.display !== 'none') {
+          accountingSearch = encoded;
+          fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+        }
+        // Dashboard + Analytics use existing endpoints that support start/end via query handled in accounting export only; for now just refresh dashboard
+        forceRefreshDashboard();
+      };
+    }
   }
 }
 

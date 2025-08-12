@@ -177,8 +177,16 @@
           <option value="sixMonthsAgo">6 Months Ago</option>
           <option value="thisYear">This Year</option>
           <option value="lastYear">Last Year</option>
+          <option value="custom">Custom Range…</option>
           <option value="all">All Time</option>
         </select>
+        <!-- Custom date range controls -->
+        <div id="custom-range-controls" class="flex items-center gap-2 ml-2" style="display:none;">
+          <input id="custom-start-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm" />
+          <span class="text-gray-500 text-xs sm:text-sm">to</span>
+          <input id="custom-end-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm" />
+          <button id="apply-custom-range" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Apply</button>
+        </div>
         <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 px-2 py-2 text-xs sm:text-sm hidden sm:inline" title="Refresh all data">
           <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

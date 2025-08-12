@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
 // For Vercel serverless functions, we need to create a new connection each time
 // This is the recommended pattern for Neon + Vercel
@@ -12,7 +12,7 @@ const createPool = () => {
   });
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   let client;
   let pool;
   

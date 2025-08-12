@@ -136,10 +136,6 @@ export default async function handler(req, res) {
           start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
           end = new Date(now.getFullYear(), now.getMonth() + 7, 1);
           break;
-        case 'thisAndNextMonth':
-          start = new Date(now.getFullYear(), now.getMonth(), 1);
-          end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
-          break;
         case 'thisYear':
           start = new Date(now.getFullYear(), 0, 1);
           end = new Date(now.getFullYear() + 1, 0, 1);
@@ -153,6 +149,12 @@ export default async function handler(req, res) {
           break;
       }
       
+      // If an unknown period was provided (not 'all'), default to thisMonth
+      if (!start && !end && period && period !== 'all') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      }
+
       if (start && end) {
         dateFilter = 'WHERE tour_date >= $1 AND tour_date < $2';
         startDateParam = start.toISOString().split('T')[0];

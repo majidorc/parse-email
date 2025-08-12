@@ -32,11 +32,8 @@ export default async function handler(req, res) {
       case 'PUT':
         await handlePut(req, res, client);
         break;
-      case 'DELETE':
-        await handleDelete(req, res, client);
-        break;
       default:
-        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        res.setHeader('Allow', ['GET', 'POST', 'PUT']);
         res.status(405).end(`Method ${method} Not Allowed`);
     }
   } catch (err) {
@@ -199,7 +196,7 @@ async function handleGet(req, res, client) {
       COALESCE(b_stats.bookings_count, 0) as bookings_count,
       COALESCE(b_stats.total_amount, 0) as total_amount,
       COALESCE(b_stats.paid_last_month, 0) as paid_last_month,
-      COALESCE(b_stats.due_this_month, 0) as due_this_month
+      COALESCE(b_stats.this_month_net, 0) as this_month_net
     FROM suppliers s
     LEFT JOIN (
       SELECT 
@@ -227,7 +224,7 @@ async function handleGet(req, res, client) {
             THEN COALESCE(b.net_total, 0)
             ELSE 0 
           END
-        ), 0) as due_this_month
+        ), 0) as this_month_net
       FROM products p
       LEFT JOIN bookings b ON p.sku = b.sku
       GROUP BY p.supplier_id
@@ -285,23 +282,4 @@ async function handlePut(req, res, client) {
     }
     throw err;
   }
-}
-
-async function handleDelete(req, res, client) {
-  const { id } = req.query;
-  
-  if (!id) {
-    return res.status(400).json({ error: 'ID is required' });
-  }
-  
-  const result = await client.query(
-    'DELETE FROM suppliers WHERE id = $1 RETURNING *',
-    [id]
-  );
-  
-  if (result.rows.length === 0) {
-    return res.status(404).json({ error: 'Supplier not found' });
-  }
-  
-  res.status(200).json({ message: 'Supplier deleted successfully' });
 } 

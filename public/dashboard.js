@@ -4889,10 +4889,9 @@ function renderSuppliersTable() {
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.bookings_count || 0}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.total_amount ? Number(supplier.total_amount).toFixed(2) : '0.00'}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.paid_last_month ? Number(supplier.paid_last_month).toFixed(2) : '0.00'}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.due_this_month ? Number(supplier.due_this_month).toFixed(2) : '0.00'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${supplier.this_month_net ? Number(supplier.this_month_net).toFixed(2) : '0.00'}</td>
         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <button class="text-indigo-600 hover:text-indigo-900 edit-supplier-btn" data-id="${supplier.id}" data-name="${supplier.name}">Edit</button>
-          <button class="text-red-600 hover:text-red-900 ml-4 delete-supplier-btn" data-id="${supplier.id}">Delete</button>
         </td>
       </tr>
     `).join('');
@@ -4915,12 +4914,7 @@ function renderSuppliersTable() {
       };
     });
     
-    document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
-      btn.onclick = function() {
-        const id = this.getAttribute('data-id');
-        deleteSupplier(id);
-      };
-    });
+
   }
 }
 
@@ -4970,26 +4964,7 @@ async function updateSupplier(id, name) {
   }
 }
 
-async function deleteSupplier(id) {
-  if (!confirm('Are you sure you want to delete this supplier?')) return;
-  
-  try {
-    const response = await fetch(`/api/suppliers?id=${id}`, {
-      method: 'DELETE'
-    });
-    
-    if (response.ok) {
-      showToast('Supplier deleted successfully', 'success');
-      fetchSuppliers();
-    } else {
-      const error = await response.json();
-      showToast(`Failed to delete supplier: ${error.error}`, 'error');
-    }
-  } catch (error) {
-    console.error('Error deleting supplier:', error);
-    showToast('Failed to delete supplier', 'error');
-  }
-}
+
 
 async function showSupplierPrograms(supplierId, supplierName) {
   try {

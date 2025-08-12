@@ -5010,69 +5010,41 @@ async function showSupplierPrograms(supplierId, supplierName) {
     if (response.ok) {
       const data = await response.json();
       
-      // Create and show modal
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
-      modal.innerHTML = `
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-          <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-medium text-gray-900">Programs for ${supplierName}</h3>
-              <button class="text-gray-400 hover:text-gray-600 close-modal-btn">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bookings Count</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Net Amount</th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  ${data.programs && data.programs.length > 0 ? 
-                    data.programs.map(program => `
-                      <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${program.sku || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.name || 'N/A'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.bookings_count || 0}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${program.total_net ? Number(program.total_net).toFixed(2) : '0.00'}</td>
-                      </tr>
-                    `).join('') : 
-                    '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No programs found for this supplier</td></tr>'
-                  }
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="mt-4 text-sm text-gray-600">
-              <p><strong>Total Programs:</strong> ${data.programs ? data.programs.length : 0}</p>
-              <p><strong>Total Bookings:</strong> ${data.total_bookings || 0}</p>
-              <p><strong>Total Net Amount:</strong> ${data.total_net ? Number(data.total_net).toFixed(2) : '0.00'}</p>
+      // Update modal content
+      document.getElementById('supplier-modal-title').textContent = `Supplier: ${supplierName}`;
+      document.getElementById('modal-programs-count').textContent = data.total_programs || 0;
+      document.getElementById('modal-bookings-count').textContent = data.total_bookings || 0;
+      document.getElementById('modal-total-net').textContent = data.total_net ? Number(data.total_net).toFixed(2) : '0.00';
+      
+      // Find the supplier in suppliersData to get additional info
+      const supplier = suppliersData.find(s => s.id == supplierId);
+      if (supplier) {
+        document.getElementById('modal-this-month-net').textContent = supplier.this_month_net ? Number(supplier.this_month_net).toFixed(2) : '0.00';
+      }
+      
+      // Populate programs list
+      const programsList = document.getElementById('modal-programs-list');
+      if (data.programs && data.programs.length > 0) {
+        programsList.innerHTML = data.programs.map(program => `
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h5 class="font-semibold text-gray-800">${program.name || 'N/A'}</h5>
+                <p class="text-sm text-gray-600">SKU: ${program.sku || 'N/A'}</p>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-bold text-blue-600">${program.total_net ? Number(program.total_net).toFixed(2) : '0.00'}</div>
+                <div class="text-sm text-gray-500">${program.bookings_count || 0} bookings</div>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `).join('');
+      } else {
+        programsList.innerHTML = '<div class="text-center text-gray-500 py-4">No programs found for this supplier</div>';
+      }
       
-      document.body.appendChild(modal);
-      
-      // Add close functionality
-      modal.querySelector('.close-modal-btn').onclick = () => {
-        document.body.removeChild(modal);
-      };
-      
-      // Close on outside click
-      modal.onclick = (e) => {
-        if (e.target === modal) {
-          document.body.removeChild(modal);
-        }
-      };
+      // Show modal
+      document.getElementById('supplier-modal').style.display = 'block';
       
     } else {
       showToast('Failed to fetch supplier programs', 'error');
@@ -5560,6 +5532,43 @@ function closeAddSupplierModal() {
     modal.remove();
   }
 }
+
+// Supplier Modal Functions
+function closeSupplierModal() {
+  document.getElementById('supplier-modal').style.display = 'none';
+}
+
+function toggleProgramsAccordion() {
+  const content = document.getElementById('programs-accordion-content');
+  const arrow = document.getElementById('accordion-arrow');
+  
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+    arrow.style.transform = 'rotate(180deg)';
+  } else {
+    content.classList.add('hidden');
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+
+// Initialize modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Close modal when clicking close button
+  const closeBtn = document.getElementById('close-supplier-modal');
+  if (closeBtn) {
+    closeBtn.onclick = closeSupplierModal;
+  }
+  
+  // Close modal when clicking outside
+  const modal = document.getElementById('supplier-modal');
+  if (modal) {
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        closeSupplierModal();
+      }
+    };
+  }
+});
 
 
 

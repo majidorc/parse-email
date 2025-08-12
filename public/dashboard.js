@@ -2780,11 +2780,11 @@ function initializeGlobalPeriodSelector() {
     // Set default dates when custom is selected
     if (customStart && customEnd) {
       const today = new Date();
-      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 1);
+      const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
       
-      customStart.value = nextMonth.toISOString().split('T')[0];
-      customEnd.value = nextMonthEnd.toISOString().split('T')[0];
+      customStart.value = currentMonthStart.toISOString().split('T')[0];
+      customEnd.value = currentMonthEnd.toISOString().split('T')[0];
     }
     
     // Clear custom date range button
@@ -3661,7 +3661,7 @@ function addRateItem() {
         </div>
         <button type="button" class="remove-rate-btn text-gray-400 hover:text-red-600 transition duration-150" data-remove-id="${rateItemId}">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0 18 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </button>
       </div>

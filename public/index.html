@@ -163,27 +163,43 @@
         <button id="toggle-accounting" class="rounded font-semibold bg-pink-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Accounting</button>
         <button id="toggle-analytics" class="rounded font-semibold bg-yellow-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Analytics</button>
         <button id="toggle-suppliers" class="rounded font-semibold bg-orange-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Suppliers</button>
-        <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-2 py-2 text-xs sm:text-sm">
-          <option value="thisMonth" selected>This Month</option>
-          <option value="lastMonth">Last Month</option>
-          <option value="thisYear">This Year</option>
-          <option value="lastYear">Last Year</option>
-          <option value="custom">Custom Range…</option>
-        </select>
-        <!-- Custom date range controls -->
-        <div id="custom-range-controls" class="flex items-center gap-2 ml-2" style="display:none;">
-          <input id="custom-start-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm" />
-          <span class="text-gray-500 text-xs sm:text-sm">to</span>
-          <input id="custom-end-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm" />
-          <button id="apply-custom-range" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Apply</button>
-          <button id="clear-custom-range" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Clear</button>
+      </div>
+      
+      <!-- Period Selector and Custom Range Section -->
+      <div class="mb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div class="flex items-center gap-2">
+          <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-xs sm:text-sm">
+            <option value="thisMonth" selected>This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisYear">This Year</option>
+            <option value="lastYear">Last Year</option>
+            <option value="custom">Custom Range…</option>
+          </select>
+          <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 px-3 py-2 text-xs sm:text-sm" title="Refresh all data">
+            <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh</span>
+          </button>
         </div>
-        <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 px-2 py-2 text-xs sm:text-sm hidden sm:inline" title="Refresh all data">
-          <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Refresh</span>
-        </button>
+        
+        <!-- Custom date range controls -->
+        <div id="custom-range-controls" class="flex flex-col sm:flex-row items-center gap-2" style="display:none;">
+          <div class="flex flex-col sm:flex-row items-center gap-2">
+            <div class="flex items-center gap-1">
+              <label for="custom-start-date" class="text-gray-600 text-xs sm:text-sm whitespace-nowrap">From:</label>
+              <input id="custom-start-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm w-32 sm:w-auto" value="" />
+            </div>
+            <div class="flex items-center gap-1">
+              <label for="custom-end-date" class="text-gray-600 text-xs sm:text-sm whitespace-nowrap">To:</label>
+              <input id="custom-end-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm w-32 sm:w-auto" value="" />
+            </div>
+          </div>
+          <div class="flex gap-1">
+            <button id="apply-custom-range" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Apply</button>
+            <button id="clear-custom-range" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Clear</button>
+          </div>
+        </div>
       </div>
       <!-- Programs Section (pixel-perfect match) -->
       <div id="programs-section" style="display:none;">

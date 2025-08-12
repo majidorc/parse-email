@@ -100,6 +100,10 @@ export default async function handler(req, res) {
           start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
           end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
           break;
+        case 'nextWeek':
+          start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() + 7);
+          end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
         case 'thisMonth':
           start = new Date(now.getFullYear(), now.getMonth(), 1);
           end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -107,6 +111,10 @@ export default async function handler(req, res) {
         case 'lastMonth':
           start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
           end = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'nextMonth':
+          start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
           break;
         case 'twoMonthsAgo':
           start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -116,9 +124,21 @@ export default async function handler(req, res) {
           start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
           end = new Date(now.getFullYear(), now.getMonth() - 2, 1);
           break;
+        case 'next3Months':
+          start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 4, 1);
+          break;
         case 'sixMonthsAgo':
           start = new Date(now.getFullYear(), now.getMonth() - 6, 1);
           end = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+          break;
+        case 'next6Months':
+          start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 7, 1);
+          break;
+        case 'thisAndNextMonth':
+          start = new Date(now.getFullYear(), now.getMonth(), 1);
+          end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
           break;
         case 'thisYear':
           start = new Date(now.getFullYear(), 0, 1);

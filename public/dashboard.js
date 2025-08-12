@@ -2661,6 +2661,10 @@ function initializeGlobalPeriodSelector() {
   const globalPeriodSelector = document.getElementById('global-period-selector');
   
   if (globalPeriodSelector) {
+    // Ensure default selection is This Month on load
+    if (!globalPeriodSelector.value) {
+      globalPeriodSelector.value = 'thisMonth';
+    }
     globalPeriodSelector.addEventListener('change', function() {
       const period = this.value;
       

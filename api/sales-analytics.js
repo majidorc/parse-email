@@ -253,6 +253,8 @@ export default async function handler(req, res) {
     
     // Top programs by sales - ADDED CANCELLED FILTER
     let topProgramsResult;
+    // Will hold comparison for top programs when a date filter is active
+    let topProgramsComparison = null;
     if (dateFilter) {
       topProgramsResult = await client.query(`
         SELECT 
@@ -646,6 +648,40 @@ export default async function handler(req, res) {
         if (previous === 0) return current > 0 ? 100 : 0;
         return ((current - previous) / previous) * 100;
       };
+
+      // Top programs comparison: previous period vs current
+      // Fetch previous period top programs (not limited by current top 10, but we'll merge and display current top 10 with deltas)
+      const prevTopProgramsResult = await client.query(`
+        SELECT 
+          program,
+          COUNT(*) AS bookings,
+          COALESCE(SUM(paid), 0) AS sales
+        FROM bookings
+        WHERE tour_date >= $1 AND tour_date < $2
+          AND program IS NOT NULL AND program != ''
+        GROUP BY program
+        ORDER BY sales DESC
+        LIMIT 50
+      `, [prevStartDateParam, prevEndDateParam]);
+
+      // Build map for quick lookup of previous metrics
+      const prevMap = new Map(prevTopProgramsResult.rows.map(r => [r.program, r]));
+
+      // Merge with current top programs (limited to displayed set) and compute deltas
+      topProgramsComparison = (topProgramsResult.rows || []).map(r => {
+        const prev = prevMap.get(r.program) || { bookings: 0, sales: 0 };
+        const currentSales = parseFloat(r.sales) || 0;
+        const previousSales = parseFloat(prev.sales) || 0;
+        const salesPercentChange = calculatePercentChange(currentSales, previousSales);
+        return {
+          program: r.program,
+          bookings: parseInt(r.bookings, 10) || 0,
+          sales: currentSales,
+          previousBookings: parseInt(prev.bookings, 10) || 0,
+          previousSales,
+          salesPercentChange
+        };
+      });
       
       comparisonData = {
         previousPeriod: {
@@ -778,7 +814,8 @@ export default async function handler(req, res) {
         difference: (viatorBenefit + websiteBenefit) - totalBenefit,
         channelDifference: (channelBasedViatorBenefit + channelBasedWebsiteBenefit) - totalBenefit
       },
-      comparison: comparisonData
+      comparison: comparisonData,
+      topProgramsComparison
     });
     
   } catch (err) {

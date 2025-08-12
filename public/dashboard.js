@@ -2504,14 +2504,28 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       
     }
     
-    // Update top programs
+    // Update top programs (with optional comparison)
     const topProgramsDiv = document.getElementById('sales-top-programs');
     if (topProgramsDiv) {
       let programsHtml = '';
       
       if (data.topPrograms.length > 0) {
+        const comparisonMap = new Map((data.topProgramsComparison || []).map(p => [p.program, p]));
         programsHtml = '<div class="space-y-2">';
         data.topPrograms.forEach((program, index) => {
+          const comp = comparisonMap.get(program.program);
+          const sales = Number(program.sales) || 0;
+          let compareHtml = '';
+          if (comp) {
+            const pct = comp.salesPercentChange || 0;
+            const arrow = pct >= 0 ? '↗' : '↘';
+            const color = pct >= 0 ? 'text-green-600' : 'text-red-600';
+            const prev = Number(comp.previousSales) || 0;
+            compareHtml = `
+              <div class="text-xs text-gray-500">Prev: ${prev.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+              <div class="${color} text-xs">${arrow} ${pct.toFixed(1)}%</div>
+            `;
+          }
           programsHtml += `
             <div class="flex justify-between items-center p-2 bg-white rounded">
               <div class="flex-1">
@@ -2519,7 +2533,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
                 <div class="text-sm text-gray-500">${program.bookings} bookings</div>
               </div>
               <div class="text-right">
-                <div class="font-semibold text-green-600">${Number(program.sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="font-semibold text-green-600">${sales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                ${compareHtml}
               </div>
             </div>
           `;

@@ -186,49 +186,34 @@ async function handleGet(req, res, client) {
     return res.status(200).json(analyticsResult.rows[0]);
   }
   
-  // Get all suppliers with their stats
+  // Get all suppliers with their stats - SIMPLE VERSION
   const result = await client.query(`
     SELECT 
       s.id,
       s.name,
       s.created_at,
-      COALESCE(p_stats.programs_count, 0) as programs_count,
-      COALESCE(b_stats.bookings_count, 0) as bookings_count,
-      COALESCE(b_stats.total_amount, 0) as total_amount,
-      COALESCE(b_stats.paid_last_month, 0) as paid_last_month,
-      COALESCE(b_stats.this_month_net, 0) as this_month_net
+      COUNT(DISTINCT p.sku) as programs_count,
+      COUNT(DISTINCT b.booking_number) as bookings_count,
+      COALESCE(SUM(b.net_total), 0) as total_amount,
+      COALESCE(SUM(
+        CASE 
+          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+          AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
+          THEN b.net_total
+          ELSE 0 
+        END
+      ), 0) as paid_last_month,
+      COALESCE(SUM(
+        CASE 
+          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
+          THEN b.net_total
+          ELSE 0 
+        END
+      ), 0) as this_month_net
     FROM suppliers s
-    LEFT JOIN (
-      SELECT 
-        supplier_id,
-        COUNT(DISTINCT sku) as programs_count
-      FROM products 
-      GROUP BY supplier_id
-    ) p_stats ON s.id = p_stats.supplier_id
-    LEFT JOIN (
-      SELECT 
-        p.supplier_id,
-        COUNT(DISTINCT b.booking_number) as bookings_count,
-        COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_amount,
-        COALESCE(SUM(
-          CASE 
-            WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-            AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
-            THEN COALESCE(b.net_total, 0)
-            ELSE 0 
-          END
-        ), 0) as paid_last_month,
-        COALESCE(SUM(
-          CASE 
-            WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
-            THEN COALESCE(b.net_total, 0)
-            ELSE 0 
-          END
-        ), 0) as this_month_net
-      FROM products p
-      LEFT JOIN bookings b ON p.sku = b.sku
-      GROUP BY p.supplier_id
-    ) b_stats ON s.id = b_stats.supplier_id
+    LEFT JOIN products p ON s.id = p.supplier_id
+    LEFT JOIN bookings b ON p.sku = b.sku
+    GROUP BY s.id, s.name, s.created_at
     ORDER BY s.name
   `);
   

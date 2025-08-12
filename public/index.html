@@ -164,12 +164,15 @@
         <button id="toggle-analytics" class="rounded font-semibold bg-yellow-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Analytics</button>
         <button id="toggle-suppliers" class="rounded font-semibold bg-orange-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Suppliers</button>
         <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-2 py-2 text-xs sm:text-sm">
-          <option value="thisMonth" selected>This Month</option>
-          <option value="lastMonth">Last Month</option>
+          <!-- Future first -->
+          <option value="next6Months">Next 6 Months</option>
+          <option value="next3Months">Next 3 Months</option>
           <option value="thisAndNextMonth">This + Next Month</option>
           <option value="nextMonth">Next Month</option>
-          <option value="next3Months">Next 3 Months</option>
-          <option value="next6Months">Next 6 Months</option>
+          <!-- Current in middle -->
+          <option value="thisMonth" selected>This Month</option>
+          <!-- Past after -->
+          <option value="lastMonth">Last Month</option>
           <option value="twoMonthsAgo">2 Months Ago</option>
           <option value="threeMonthsAgo">3 Months Ago</option>
           <option value="sixMonthsAgo">6 Months Ago</option>

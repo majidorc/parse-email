@@ -538,9 +538,16 @@ export default async function handler(req, res) {
     const viatorSale = viatorData ? parseFloat(viatorData.sales) : 0;
     const websiteSale = websiteData ? parseFloat(websiteData.sales) : 0;
 
+    // Determine if selected period is fully in the future (comparison disabled for future)
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const isFuturePeriod = startDateParam && endDateParam
+      ? new Date(startDateParam) >= todayStart
+      : false;
+
     // NEW: Calculate comparison data for previous month period
     let comparisonData = null;
-    if (dateFilter && startDateParam && endDateParam) {
+    if (dateFilter && startDateParam && endDateParam && !isFuturePeriod) {
       // Calculate the previous period dates
       const startDate = new Date(startDateParam);
       const endDate = new Date(endDateParam);

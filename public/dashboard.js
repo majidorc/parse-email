@@ -5000,7 +5000,7 @@ async function fixBookingNets() {
         'Content-Type': 'application/json',
       }
     });
-
+    
     if (response.ok) {
       const result = await response.json();
       showToast(`Successfully fixed ${result.summary.fixed_count} bookings!`, 'success');
@@ -5092,8 +5092,8 @@ async function showSupplierPrograms(supplierId, supplierName) {
                 <div class="text-gray-600">This Month Net</div>
               </div>
             </div>
-          </div>
-
+            </div>
+            
           <!-- Programs Accordion -->
           <div class="border border-gray-200 rounded-lg bg-white">
             <div class="bg-gray-100 px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" onclick="toggleProgramsAccordion(${supplierId})">
@@ -5141,7 +5141,7 @@ async function showSupplierPrograms(supplierId, supplierName) {
           </div>
         </div>
       `;
-
+      
       accordionRow.appendChild(accordionCell);
       
       // Insert accordion row after the supplier row

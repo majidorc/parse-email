@@ -15,6 +15,9 @@
     },
     "api/suppliers.js": {
       "maxDuration": 30
+    },
+    "api/fix-booking-nets.js": {
+      "maxDuration": 60
     }
   },
   "routes": [

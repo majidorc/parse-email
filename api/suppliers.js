@@ -82,7 +82,39 @@ module.exports = async function handler(req, res) {
 }
 
 async function handleGet(req, res, client) {
-  const { id, analytics, programs } = req.query;
+  const { id, analytics, programs, bookings } = req.query;
+  
+  if (id && bookings === 'true') {
+    try {
+      // Get all bookings for specific supplier
+      const bookingsResult = await client.query(`
+        SELECT 
+          b.booking_number,
+          b.sku,
+          b.program,
+          b.tour_date,
+          b.book_date,
+          b.customer_name,
+          b.adult,
+          b.child,
+          b.net_total
+        FROM bookings b
+        WHERE b.sku IN (
+          SELECT DISTINCT p.sku 
+          FROM products p 
+          WHERE p.supplier_id = $1
+        )
+        ORDER BY b.tour_date DESC, b.book_date DESC
+      `, [id]);
+      
+      return res.status(200).json({
+        bookings: bookingsResult.rows
+      });
+    } catch (error) {
+      console.error('Error fetching supplier bookings:', error);
+      return res.status(500).json({ error: 'Database error: ' + error.message });
+    }
+  }
   
   if (id && programs === 'true') {
     try {

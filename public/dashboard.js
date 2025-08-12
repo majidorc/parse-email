@@ -5093,6 +5093,33 @@ async function showSupplierPrograms(supplierId, supplierName) {
               </div>
             </div>
           </div>
+
+          <!-- Bookings Accordion -->
+          <div class="border border-gray-200 rounded-lg bg-white">
+            <div class="bg-gray-100 px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors" onclick="toggleBookingsAccordion(${supplierId})">
+              <div class="flex items-center justify-between">
+                <h4 class="font-semibold text-gray-800">View All Bookings</h4>
+                <svg class="bookings-accordion-arrow w-5 h-5 text-gray-600 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="bookings-accordion-content hidden border-t border-gray-200">
+              <div class="p-4">
+                <div class="bookings-list">
+                  <div class="text-center py-4">
+                    <div class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Loading bookings...
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       `;
 
@@ -5630,6 +5657,101 @@ function toggleProgramsAccordion(supplierId) {
     content.classList.add('hidden');
     arrow.style.transform = 'rotate(0deg)';
   }
+}
+
+async function toggleBookingsAccordion(supplierId) {
+  const accordionRow = document.querySelector(`[data-supplier-accordion="${supplierId}"]`);
+  if (!accordionRow) return;
+  
+  const content = accordionRow.querySelector('.bookings-accordion-content');
+  const arrow = accordionRow.querySelector('.bookings-accordion-arrow');
+  
+  if (content.classList.contains('hidden')) {
+    content.classList.remove('hidden');
+    arrow.style.transform = 'rotate(180deg)';
+    
+    // Load bookings if not already loaded
+    const bookingsList = content.querySelector('.bookings-list');
+    if (bookingsList.querySelector('.text-center')) {
+      await loadSupplierBookings(supplierId, bookingsList);
+    }
+  } else {
+    content.classList.add('hidden');
+    arrow.style.transform = 'rotate(0deg)';
+  }
+}
+
+async function loadSupplierBookings(supplierId, bookingsListElement) {
+  try {
+    const response = await fetch(`/api/suppliers?id=${supplierId}&bookings=true`);
+    if (response.ok) {
+      const data = await response.json();
+      displaySupplierBookings(data.bookings || [], bookingsListElement);
+    } else {
+      bookingsListElement.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load bookings</div>';
+    }
+  } catch (error) {
+    console.error('Error loading supplier bookings:', error);
+    bookingsListElement.innerHTML = '<div class="text-red-500 text-center py-4">Error loading bookings</div>';
+  }
+}
+
+function displaySupplierBookings(bookings, bookingsListElement) {
+  if (!bookings || bookings.length === 0) {
+    bookingsListElement.innerHTML = '<div class="text-gray-500 text-center py-4">No bookings found for this supplier</div>';
+    return;
+  }
+
+  const bookingsHtml = bookings.map(booking => `
+    <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3 hover:shadow-md transition-shadow">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Booking:</span>
+            <span class="text-sm font-semibold text-gray-800">${booking.booking_number || 'N/A'}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">SKU:</span>
+            <span class="text-sm text-gray-800">${booking.sku || 'N/A'}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Program:</span>
+            <span class="text-sm text-gray-800">${booking.program || 'N/A'}</span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Tour Date:</span>
+            <span class="text-sm text-gray-800">${booking.tour_date ? new Date(booking.tour_date).toLocaleDateString() : 'N/A'}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Book Date:</span>
+            <span class="text-sm text-gray-800">${booking.book_date ? new Date(booking.book_date).toLocaleDateString() : 'N/A'}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Customer:</span>
+            <span class="text-sm text-gray-800">${booking.customer_name || 'N/A'}</span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Adults:</span>
+            <span class="text-sm text-gray-800">${booking.adult || 0}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Children:</span>
+            <span class="text-sm text-gray-800">${booking.child || 0}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-500">Net Total:</span>
+            <span class="text-sm font-semibold text-green-600">${booking.net_total ? Number(booking.net_total).toFixed(2) : '0.00'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  bookingsListElement.innerHTML = bookingsHtml;
 }
 
 

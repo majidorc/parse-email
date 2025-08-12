@@ -173,7 +173,7 @@ async function handleGet(req, res, client) {
         COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_paid,
         COALESCE(SUM(
           CASE 
-            WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
+            WHEN b.tour_date >= DATE_TRUNC('month', CURRENT_DATE) 
             THEN COALESCE(b.net_total, 0)
             ELSE 0 
           END
@@ -197,15 +197,15 @@ async function handleGet(req, res, client) {
       COALESCE(SUM(b.net_total), 0) as total_amount,
       COALESCE(SUM(
         CASE 
-          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-          AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
+          WHEN b.tour_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+          AND b.tour_date < DATE_TRUNC('month', CURRENT_DATE)
           THEN b.net_total
           ELSE 0 
         END
       ), 0) as paid_last_month,
       COALESCE(SUM(
         CASE 
-          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
+          WHEN b.tour_date >= DATE_TRUNC('month', CURRENT_DATE) 
           THEN b.net_total
           ELSE 0 
         END

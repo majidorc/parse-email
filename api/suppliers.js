@@ -114,11 +114,38 @@ async function handleGet(req, res, client) {
         WHERE p.supplier_id = $1
       `, [id]);
       
+      // DEBUG: Get raw data to investigate
+      const debugResult = await client.query(`
+        SELECT 
+          'products' as table_name,
+          p.id as product_id,
+          p.sku,
+          p.program,
+          p.supplier_id
+        FROM products p
+        WHERE p.supplier_id = $1
+        UNION ALL
+        SELECT 
+          'bookings' as table_name,
+          NULL as product_id,
+          b.sku,
+          b.program,
+          NULL as supplier_id
+        FROM bookings b
+        WHERE b.sku IN (
+          SELECT DISTINCT p.sku 
+          FROM products p 
+          WHERE p.supplier_id = $1
+        )
+        ORDER BY table_name, sku
+      `, [id]);
+      
       return res.status(200).json({
         programs: programsResult.rows,
         total_programs: summaryResult.rows[0]?.total_programs || 0,
         total_bookings: summaryResult.rows[0]?.total_bookings || 0,
-        total_net: summaryResult.rows[0]?.total_net || 0
+        total_net: summaryResult.rows[0]?.total_net || 0,
+        debug: debugResult.rows
       });
     } catch (error) {
       console.error('Error fetching supplier programs:', error);
@@ -168,28 +195,43 @@ async function handleGet(req, res, client) {
       s.id,
       s.name,
       s.created_at,
-      COUNT(DISTINCT p.sku) as programs_count,
-      COUNT(DISTINCT b.booking_number) as bookings_count,
-      COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_amount,
-      COALESCE(SUM(
-        CASE 
-          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
-          AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
-          THEN COALESCE(b.net_total, 0)
-          ELSE 0 
-        END
-      ), 0) as paid_last_month,
-      COALESCE(SUM(
-        CASE 
-          WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
-          THEN COALESCE(b.net_total, 0)
-          ELSE 0 
-        END
-      ), 0) as due_this_month
+      COALESCE(p_stats.programs_count, 0) as programs_count,
+      COALESCE(b_stats.bookings_count, 0) as bookings_count,
+      COALESCE(b_stats.total_amount, 0) as total_amount,
+      COALESCE(b_stats.paid_last_month, 0) as paid_last_month,
+      COALESCE(b_stats.due_this_month, 0) as due_this_month
     FROM suppliers s
-    LEFT JOIN products p ON s.id = p.supplier_id
-    LEFT JOIN bookings b ON p.sku = b.sku
-    GROUP BY s.id, s.name, s.created_at
+    LEFT JOIN (
+      SELECT 
+        supplier_id,
+        COUNT(DISTINCT sku) as programs_count
+      FROM products 
+      GROUP BY supplier_id
+    ) p_stats ON s.id = p_stats.supplier_id
+    LEFT JOIN (
+      SELECT 
+        p.supplier_id,
+        COUNT(DISTINCT b.booking_number) as bookings_count,
+        COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_amount,
+        COALESCE(SUM(
+          CASE 
+            WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+            AND b.book_date < DATE_TRUNC('month', CURRENT_DATE)
+            THEN COALESCE(b.net_total, 0)
+            ELSE 0 
+          END
+        ), 0) as paid_last_month,
+        COALESCE(SUM(
+          CASE 
+            WHEN b.book_date >= DATE_TRUNC('month', CURRENT_DATE) 
+            THEN COALESCE(b.net_total, 0)
+            ELSE 0 
+          END
+        ), 0) as due_this_month
+      FROM products p
+      LEFT JOIN bookings b ON p.sku = b.sku
+      GROUP BY p.supplier_id
+    ) b_stats ON s.id = b_stats.supplier_id
     ORDER BY s.name
   `);
   

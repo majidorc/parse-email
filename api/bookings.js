@@ -290,6 +290,8 @@ module.exports = async (req, res) => {
 
   const search = req.query.search ? req.query.search.trim() : '';
   const period = req.query.period || 'all';
+  const startDate = req.query.startDate || null;
+  const endDate = req.query.endDate || null;
 
   // Period filtering function (same as dashboard-settings.js)
   function getBangkokDateRange(period) {
@@ -402,8 +404,13 @@ module.exports = async (req, res) => {
     // Build WHERE clause combining search and period filtering
     const conditions = [];
     
-    // Period filtering
-    if (period !== 'all') {
+    // Date range filtering (highest priority)
+    if (startDate && endDate) {
+      conditions.push(`(tour_date AT TIME ZONE 'Asia/Bangkok')::date >= $${paramIndex} AND (tour_date AT TIME ZONE 'Asia/Bangkok')::date < $${paramIndex + 1}`);
+      params.push(startDate, endDate);
+      paramIndex += 2;
+    } else if (period !== 'all') {
+      // Period filtering
       conditions.push(`(tour_date AT TIME ZONE 'Asia/Bangkok')::date >= $${paramIndex} AND (tour_date AT TIME ZONE 'Asia/Bangkok')::date < $${paramIndex + 1}`);
       params.push(periodStart, periodEnd);
       paramIndex += 2;
@@ -411,7 +418,13 @@ module.exports = async (req, res) => {
     
     // Search filtering
     const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
-    if (dateSearchMatch) {
+    const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
+    if (dateRangeMatch) {
+      // Date range search overrides period filtering
+      conditions.push(`(tour_date AT TIME ZONE 'Asia/Bangkok')::date >= $${paramIndex} AND (tour_date AT TIME ZONE 'Asia/Bangkok')::date < $${paramIndex + 1}`);
+      params = [dateRangeMatch[1], dateRangeMatch[2]];
+      paramIndex = 3;
+    } else if (dateSearchMatch) {
       // Date-only search overrides period filtering
       conditions.push(`(tour_date AT TIME ZONE 'Asia/Bangkok')::date = $${paramIndex}`);
       params = [search]; // Reset params for date search

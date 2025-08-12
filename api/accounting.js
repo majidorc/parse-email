@@ -125,14 +125,14 @@ module.exports = async (req, res) => {
       // Get date range for period filtering
       const [periodStart, periodEnd] = getBangkokDateRange(period);
       
-      // Period filtering
-      if (period && period !== 'all') {
-        whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`;
-        params.push(periodStart, periodEnd);
-        paramIndex += 2;
-      } else if (startDate && endDate) {
+      // Date range has priority over period
+      if (startDate && endDate) {
         whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date <= $${paramIndex + 1}`;
         params.push(startDate, endDate);
+        paramIndex += 2;
+      } else if (period && period !== 'all') {
+        whereClause = `WHERE tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`;
+        params.push(periodStart, periodEnd);
         paramIndex += 2;
       }
       
@@ -535,6 +535,8 @@ module.exports = async (req, res) => {
 
   const search = req.query.search ? req.query.search.trim() : '';
   const period = req.query.period || 'all';
+  const startDate = req.query.startDate || null;
+  const endDate = req.query.endDate || null;
 
   // Period filtering function (same as dashboard-settings.js)
   function getBangkokDateRange(period) {
@@ -650,13 +652,18 @@ module.exports = async (req, res) => {
     const conditions = [];
     const conditionsUnaliased = [];
     
-    // Period filtering
-    if (period !== 'all') {
-      conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
-      conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
-      params.push(periodStart, periodEnd);
-      paramIndex += 2;
-    }
+  // Date range has priority over period
+  if (startDate && endDate) {
+    conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
+    conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
+    params.push(startDate, endDate);
+    paramIndex += 2;
+  } else if (period !== 'all') {
+    conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
+    conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
+    params.push(periodStart, periodEnd);
+    paramIndex += 2;
+  }
     
     // Search filtering
     const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);

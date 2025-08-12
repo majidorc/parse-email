@@ -2712,18 +2712,29 @@ function initializeGlobalPeriodSelector() {
         const startVal = customStart.value;
         const endVal = customEnd.value;
         if (!startVal || !endVal) return;
-        // Encode as search override for Bookings and Accounting: date:start,end
-        const encoded = `date:${startVal},${endVal}`;
+        // Directly set query params for APIs
+        const addRange = (url) => {
+          const u = new URL(url, window.location.origin);
+          u.searchParams.set('startDate', startVal);
+          u.searchParams.set('endDate', endVal);
+          return u.pathname + '?' + u.searchParams.toString();
+        };
         // Bookings
         if (document.getElementById('bookings-table-container') && document.getElementById('bookings-table-container').style.display !== 'none') {
-          fetchBookings(1, currentSort, currentDir, encoded);
+          // Temporarily override fetchBookings to include range
+          const params = new URLSearchParams({ page: 1, limit: rowsPerPage, sort: currentSort, dir: currentDir, startDate: startVal, endDate: endVal });
+          fetch(`/api/bookings?${params.toString()}`).then(r=>r.json()).then(data=>{
+            bookingsData = data.bookings||[]; totalRows = data.total||0; currentPage = data.page||1; renderTable(); renderPagination();
+          });
         }
         // Accounting
         if (document.getElementById('accounting-table-container') && document.getElementById('accounting-table-container').style.display !== 'none') {
-          accountingSearch = encoded;
-          fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
+          const params = new URLSearchParams({ page: 1, limit: accountingRowsPerPage, sort: accountingSort, dir: accountingDir, startDate: startVal, endDate: endVal });
+          fetch(`/api/accounting?${params.toString()}`).then(r=>r.json()).then(data=>{
+            accountingData = data.bookings||[]; accountingTotalRows = data.total||0; accountingCurrentPage = data.page||1; renderAccountingTable(); renderAccountingPagination();
+          });
         }
-        // Dashboard + Analytics use existing endpoints that support start/end via query handled in accounting export only; for now just refresh dashboard
+        // Dashboard refresh
         forceRefreshDashboard();
       };
     }

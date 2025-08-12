@@ -5010,12 +5010,12 @@ async function showSupplierPrograms(supplierId, supplierName) {
     // If accordion exists, toggle it
     if (existingAccordion.classList.contains('hidden')) {
       existingAccordion.classList.remove('hidden');
-      const arrow = existingAccordion.previousElementSibling.querySelector('.accordion-arrow');
-      arrow.style.transform = 'rotate(180deg)';
+      const arrow = existingAccordion.querySelector('.accordion-arrow');
+      if (arrow) arrow.style.transform = 'rotate(180deg)';
     } else {
       existingAccordion.classList.add('hidden');
-      const arrow = existingAccordion.previousElementSibling.querySelector('.accordion-arrow');
-      arrow.style.transform = 'rotate(0deg)';
+      const arrow = existingAccordion.querySelector('.accordion-arrow');
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
     }
     return;
   }

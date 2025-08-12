@@ -101,14 +101,53 @@ module.exports = async (req, res) => {
         return res.status(409).json({ error: 'Booking number already exists' });
       }
 
+      // Calculate net_total for the booking
+      let netTotal = 0;
+      if (sku && rate) {
+        try {
+          const { rows: rateRows } = await sql`
+            SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
+            FROM rates r
+            JOIN products p ON r.product_id = p.id
+            WHERE p.sku = ${sku} AND r.name = ${rate}
+            LIMIT 1
+          `;
+          
+          if (rateRows.length > 0) {
+            const rateData = rateRows[0];
+            
+            // Calculate net_total based on passengers and rates
+            if (adult > 0) {
+              netTotal += (rateData.net_adult * adult);
+              if (rateData.fee_type === 'per_person' && rateData.fee_adult) {
+                netTotal += (rateData.fee_adult * adult);
+              }
+            }
+            
+            if (child > 0) {
+              netTotal += (rateData.net_child * child);
+              if (rateData.fee_type === 'per_person' && rateData.fee_child) {
+                netTotal += (rateData.fee_child * child);
+              }
+            }
+            
+            if (rateData.fee_type === 'total' && rateData.fee_adult) {
+              netTotal += rateData.fee_adult;
+            }
+          }
+        } catch (error) {
+          console.error('Error calculating net_total for manual booking:', error);
+        }
+      }
+
       // Insert new booking
       await sql`
         INSERT INTO bookings (
           booking_number, tour_date, customer_name, phone_number, sku, program, rate, hotel,
-          adult, child, infant, paid, channel, national_park_fee, no_transfer, book_date
+          adult, child, infant, paid, channel, national_park_fee, no_transfer, book_date, net_total
         ) VALUES (
           ${booking_number}, ${tour_date}, ${customer_name}, ${phone_number}, ${sku}, ${program}, ${rate}, ${hotel},
-          ${adult}, ${child}, ${infant}, ${paid}, ${channel}, ${national_park_fee}, ${no_transfer}, NOW()
+          ${adult}, ${child}, ${infant}, ${paid}, ${channel}, ${national_park_fee}, ${no_transfer}, NOW(), ${netTotal}
         )
       `;
 

@@ -1830,9 +1830,52 @@ async function handler(req, res) {
                         console.log(`[SKU-PRIORITY] No SKU provided, using email program: "${finalProgram}"`);
                     }
 
+                    // Calculate net_total for the booking
+                    let netTotal = 0;
+                    if (extractedInfo.sku && finalRate) {
+                        try {
+                            const { rows: rateRows } = await sql`
+                                SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
+                                FROM rates r
+                                JOIN products p ON r.product_id = p.id
+                                WHERE p.sku = ${extractedInfo.sku} AND r.name = ${finalRate}
+                                LIMIT 1
+                            `;
+                            
+                            if (rateRows.length > 0) {
+                                const rate = rateRows[0];
+                                
+                                // Calculate net_total based on passengers and rates
+                                if (adult > 0) {
+                                    netTotal += (rate.net_adult * adult);
+                                    if (rate.fee_type === 'per_person' && rate.fee_adult) {
+                                        netTotal += (rate.fee_adult * adult);
+                                    }
+                                }
+                                
+                                if (child > 0) {
+                                    netTotal += (rate.net_child * child);
+                                    if (rate.fee_type === 'per_person' && rate.fee_child) {
+                                        netTotal += (rate.fee_child * child);
+                                    }
+                                }
+                                
+                                if (rate.fee_type === 'total' && rate.fee_adult) {
+                                    netTotal += rate.fee_adult;
+                                }
+                                
+                                console.log(`[NET-TOTAL] Calculated net_total: ${netTotal} for SKU ${extractedInfo.sku}, rate ${finalRate}`);
+                            } else {
+                                console.log(`[NET-TOTAL] No rate found for SKU ${extractedInfo.sku} and rate ${finalRate}`);
+                            }
+                        } catch (error) {
+                            console.error(`[NET-TOTAL] Error calculating net_total:`, error);
+                        }
+                    }
+
                     await sql`
-                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate})
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
@@ -1850,7 +1893,8 @@ async function handler(req, res) {
                           paid = EXCLUDED.paid,
                           book_date = EXCLUDED.book_date,
                           channel = EXCLUDED.channel,
-                          rate = EXCLUDED.rate;
+                          rate = EXCLUDED.rate,
+                          net_total = EXCLUDED.net_total;
                     `;
 
                     // Send Telegram notification for ALL new bookings regardless of date

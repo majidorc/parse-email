@@ -4964,6 +4964,43 @@ async function updateSupplier(id, name) {
   }
 }
 
+async function fixBookingNets() {
+  if (!confirm('This will fix all booking NET amounts from the rates table. Continue?')) {
+    return;
+  }
+
+  const fixBtn = document.getElementById('fix-nets-btn');
+  const originalText = fixBtn.textContent;
+  fixBtn.textContent = '🔧 Fixing...';
+  fixBtn.disabled = true;
+
+  try {
+    const response = await fetch('/api/fix-booking-nets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      showToast(`Successfully fixed ${result.summary.fixed_count} bookings!`, 'success');
+      
+      // Refresh suppliers data to show updated amounts
+      await fetchSuppliers();
+    } else {
+      const error = await response.json();
+      showToast(`Failed to fix bookings: ${error.error}`, 'error');
+    }
+  } catch (error) {
+    console.error('Error fixing booking nets:', error);
+    showToast('Failed to fix booking nets', 'error');
+  } finally {
+    fixBtn.textContent = originalText;
+    fixBtn.disabled = false;
+  }
+}
+
 
 
 async function showSupplierPrograms(supplierId, supplierName) {
@@ -5110,6 +5147,12 @@ function initializeSuppliers() {
       document.getElementById('suppliers-section').style.display = 'none';
       document.getElementById('add-supplier-section').style.display = 'block';
     };
+  }
+
+  // Fix nets button
+  const fixNetsBtn = document.getElementById('fix-nets-btn');
+  if (fixNetsBtn) {
+    fixNetsBtn.onclick = fixBookingNets;
   }
   
   // Cancel add supplier button

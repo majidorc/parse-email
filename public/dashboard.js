@@ -483,15 +483,21 @@ function renderTable() {
     tbody.innerHTML = bookingsData.map(b => {
         const updated = b.updated_fields || {};
         // Helper to check if highlight should be shown
+        // Only show yellow highlighting for today and future bookings
+        // Past bookings should never show yellow highlighting, even if they have updated fields
         function shouldHighlight(field) {
           if (!updated[field]) return false;
           if (!b.tour_date) return false;
+          
           const today = new Date();
           today.setHours(0,0,0,0);
           const tourDate = new Date(b.tour_date.substring(0,10));
-          const dayAfterTour = new Date(tourDate);
-          dayAfterTour.setDate(tourDate.getDate() + 1);
-          return today <= dayAfterTour;
+          
+          // If tour date is in the past, never highlight (return false)
+          if (tourDate < today) return false;
+          
+          // Only highlight for today and future bookings
+          return true;
         }
         return `
           <tr class="${getRowClass(b.tour_date)}" style="background-color: ${getRowClass(b.tour_date) === 'row-past' ? '#F58573' : getRowClass(b.tour_date) === 'row-today' ? '#8CFA97' : getRowClass(b.tour_date) === 'row-tomorrow' ? '#BAFCE5' : getRowClass(b.tour_date) === 'row-future' ? 'white' : ''} !important;">
@@ -527,29 +533,46 @@ function renderTable() {
       if (rowClass === 'row-past') cardClass = 'card-row-past';
       else if (rowClass === 'row-today') cardClass = 'card-row-today';
       else if (rowClass === 'row-tomorrow') cardClass = 'card-row-tomorrow';
+      
+      // Helper to check if highlight should be shown (same logic as table)
+      function shouldHighlightCard(field) {
+        if (!b.updated_fields || !b.updated_fields[field]) return false;
+        if (!b.tour_date) return false;
+        
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const tourDate = new Date(b.tour_date.substring(0,10));
+        
+        // If tour date is in the past, never highlight (return false)
+        if (tourDate < today) return false;
+        
+        // Only highlight for today and future bookings
+        return true;
+      }
+      
       return `
       <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)} ${cardClass}">
         <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
-          <span class="font-bold">🆔 Booking #:</span> <span>${b.booking_number || ''}</span>
-          <span class="font-bold ml-4">📅 Tour Date:</span> <span>${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
+          <span class="font-bold">🆔 Booking #:</span> <span class="${shouldHighlightCard('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.booking_number || ''}</span>
+          <span class="font-bold ml-4">📅 Tour Date:</span> <span class="${shouldHighlightCard('tour_date') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
         </div>
         <hr class="my-2">
-        <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span> <span>${b.customer_name || ''}</span></div>
-        <div class="mb-1 flex items-center"><span class="font-bold">📝Program:</span> <span style="margin-left:4px;">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '').trim()}</span></div>
-        <div class="mb-1 flex items-center"><span class="font-bold">🏨Hotel:</span> <span>${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</span></div>
+        <div class="mb-1 flex items-center"><span class="font-bold">👤 Customer:</span> <span class="${shouldHighlightCard('customer_name') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.customer_name || ''}</span></div>
+        <div class="mb-1 flex items-center"><span class="font-bold">📝Program:</span> <span class="${shouldHighlightCard('program') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}" style="margin-left:4px;">${b.program && b.program.length > 18 ? b.program.slice(0, 18) + '...' : (b.program || '').trim()}</span></div>
+        <div class="mb-1 flex items-center"><span class="font-bold">🏨Hotel:</span> <span class="${shouldHighlightCard('hotel') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.hotel && b.hotel.length > 28 ? b.hotel.slice(0, 28) + '...' : (b.hotel || '')}</span></div>
         <hr class="my-2">
         <div class="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
-          <span class="font-bold">OP:</span> ${iconButton('op', b.booking_number, b.op)}
-          <span class="font-bold">RI:</span> ${iconButton('ri', b.booking_number, b.ri)}
-          <span class="font-bold">Customer:</span> ${iconButton('customer', b.booking_number, b.customer)}
+          <span class="font-bold">OP:</span> <span class="${shouldHighlightCard('op') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${iconButton('op', b.booking_number, b.op)}</span>
+          <span class="font-bold">RI:</span> <span class="${shouldHighlightCard('ri') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${iconButton('ri', b.booking_number, b.ri)}</span>
+          <span class="font-bold">Customer:</span> <span class="${shouldHighlightCard('customer') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${iconButton('customer', b.booking_number, b.customer)}</span>
         </div>
         <hr class="my-2">
         <div class="flex flex-wrap gap-x-4 gap-y-1 items-center">
-          <span class="font-bold">🧑 Adult:</span> ${b.adult || ''}
-          ${showChild ? `<span class='font-bold'>🧒 Child:</span> ${b.child}` : ''}
-          ${showInfant ? `<span class='font-bold'>👶 Infant:</span> ${b.infant}` : ''}
+          <span class="font-bold">🧑 Adult:</span> <span class="${shouldHighlightCard('adult') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.adult || ''}</span>
+          ${showChild ? `<span class='font-bold'>🧒 Child:</span> <span class="${shouldHighlightCard('child') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.child}</span>` : ''}
+          ${showInfant ? `<span class='font-bold'>👶 Infant:</span> <span class="${shouldHighlightCard('infant') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.infant}</span>` : ''}
         </div>
-        <div class="mb-1 flex items-center"><span class="font-bold">🏷️Rate:</span> <span>${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</span></div>
+        <div class="mb-1 flex items-center"><span class="font-bold">🏷️Rate:</span> <span class="${shouldHighlightCard('rate') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.rate && b.rate.length > 12 ? b.rate.slice(0, 12) + '...' : (b.rate || '')}</span></div>
         <div class="mt-2 text-right">
           <button class="copy-btn" data-booking='${JSON.stringify(b).replace(/'/g, "&#39;")}' title="Copy notification text" onclick="handleCopy(this)">📋</button>
           ${b.customer_email ? `<button class="email-btn ml-1" title="Send email to customer" onclick="sendCustomerEmail('${b.booking_number}', this)">✉️</button>` : ''}

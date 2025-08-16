@@ -42,23 +42,14 @@
     <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-indigo-600">TourDash</h2>
-                <p class="text-gray-600 mt-2">Login to access your dashboard</p>
+                <div class="bg-indigo-100 rounded-full p-4 mb-4 mx-auto w-20 h-20 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.21 0-4 1.79-4 4v1h8v-1c0-2.21-1.79-4-4-4z"/></svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-2 text-gray-800">Login Required</h2>
+                <p class="text-gray-500 mb-6">Please sign in with your Google account to access the dashboard.</p>
+                <div id="google-login-btn" class="mb-2 w-full flex justify-center"></div>
+                <div id="login-error" class="text-red-600 font-semibold mt-2"></div>
             </div>
-            <form id="login-form" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="login-email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <input type="password" id="login-password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
-                    Login
-                </button>
-            </form>
-            <div id="login-error" class="mt-4 text-red-600 text-center hidden"></div>
         </div>
     </div>
 
@@ -464,6 +455,8 @@
 
     <!-- Import your original dashboard.js -->
     <script src="dashboard.js"></script>
+    <!-- Google Identity Services for login -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <script>
         // --- PAGE NAVIGATION ---

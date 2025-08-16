@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TourDash - Booking Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple class to hide elements */
+        .hidden-page {
+            display: none;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white shadow-md flex flex-col">
+            <div class="p-6 text-2xl font-bold text-indigo-600 border-b">
+                TourDash
+            </div>
+            <nav id="sidebar-nav" class="flex-1 px-4 py-6 space-y-2">
+                <a href="#dashboard" data-page="dashboard" class="flex items-center px-4 py-2 text-gray-700 bg-indigo-50 rounded-lg">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="#bookings" data-page="bookings" class="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50 rounded-lg">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Bookings
+                </a>
+                <a href="#programs" data-page="programs" class="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50 rounded-lg">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Programs
+                </a>
+                 <a href="#accounting" data-page="accounting" class="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50 rounded-lg">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Accounting
+                </a>
+                <a href="#analytics" data-page="analytics" class="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50 rounded-lg">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    Analytics
+                </a>
+                <a href="#suppliers" data-page="suppliers" class="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50 rounded-lg">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.273-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.273.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Suppliers
+                </a>
+            </nav>
+            <div class="p-4 border-t mt-auto">
+                 <a href="#" class="flex items-center px-4 py-2 text-gray-700 hover:bg-red-50 rounded-lg text-red-500">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-y-auto">
+            
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page">
+                <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Dashboard</h1>
+                        <p class="text-gray-500" id="current-time"></p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <select id="period-select" class="bg-white border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="this-month">This Month</option>
+                            <option value="last-month">Last Month</option>
+                            <option value="this-year">This Year</option>
+                        </select>
+                        <button onclick="refreshDashboard()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0114.13-5.13M20 15a9 9 0 01-14.13 5.13"></path></svg>
+                            Refresh
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Total Bookings</p>
+                        <p class="text-3xl font-bold text-gray-800" id="total-bookings">-</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">New Bookings</p>
+                        <p class="text-3xl font-bold text-gray-800" id="new-bookings">-</p>
+                        <p class="text-sm text-red-500" id="new-bookings-change">-</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Sale</p>
+                        <p class="text-3xl font-bold text-gray-800" id="total-sale">-</p>
+                        <p class="text-sm text-red-500" id="sale-change">-</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Passengers</p>
+                        <p class="text-3xl font-bold text-gray-800" id="total-passengers">-</p>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-semibold mb-4">Revenue</h2>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-semibold mb-4">Booking Channels</h2>
+                        <canvas id="bookingChannelsChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Top Destinations -->
+                <div class="bg-white p-6 rounded-xl shadow-sm mt-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4">Top Destinations</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-sm text-gray-500 border-b">
+                                    <th class="py-2 px-4 font-normal">Destination</th>
+                                    <th class="py-2 px-4 font-normal text-center">Bookings</th>
+                                    <th class="py-2 px-4 font-normal text-center">Passengers</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-destinations">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings Page -->
+            <div id="bookings" class="page hidden-page">
+                <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Bookings</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <input type="text" id="search-input" placeholder="Search bookings..." class="bg-white border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button onclick="addNewBooking()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            Add Booking
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Today</p>
+                        <p class="text-2xl font-bold" id="today-bookings">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Tomorrow</p>
+                        <p class="text-2xl font-bold" id="tomorrow-bookings">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Day After Tomorrow</p>
+                        <p class="text-2xl font-bold" id="day-after-tomorrow-bookings">-</p>
+                    </div>
+                </div>
+                
+                <!-- Bookings Table -->
+                <div class="bg-white p-6 rounded-xl shadow-sm mt-6 border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs text-gray-500 border-b bg-gray-50">
+                                    <th class="py-2 px-4 font-medium">BOOKING #</th>
+                                    <th class="py-2 px-4 font-medium">TOUR DATE</th>
+                                    <th class="py-2 px-4 font-medium">CUSTOMER</th>
+                                    <th class="py-2 px-4 font-medium">PROGRAM</th>
+                                    <th class="py-2 px-4 font-medium text-center">PAX</th>
+                                    <th class="py-2 px-4 font-medium">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookings-table-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="flex justify-between items-center mt-6 pt-6 border-t">
+                        <div class="text-sm text-gray-500">
+                            Showing <span id="showing-start">1</span> to <span id="showing-end">10</span> of <span id="total-entries">0</span> entries
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="prev-page" onclick="changePage(-1)" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                            <span id="page-info" class="px-3 py-2 text-sm text-gray-700">Page 1</span>
+                            <button id="next-page" onclick="changePage(1)" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Programs Page -->
+            <div id="programs" class="page hidden-page">
+                 <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Programs</h1>
+                    </div>
+                     <div class="flex items-center space-x-4">
+                        <input type="text" id="program-search" placeholder="Search programs..." class="bg-white border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button onclick="addNewProgram()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            Add Program
+                        </button>
+                    </div>
+                </header>
+                <div class="bg-white p-6 rounded-xl shadow-sm mt-6 border border-gray-100">
+                     <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs text-gray-500 border-b bg-gray-50">
+                                    <th class="py-2 px-4 font-medium">SKU</th>
+                                    <th class="py-2 px-4 font-medium">PROGRAM</th>
+                                    <th class="py-2 px-4 font-medium">SUPPLIER</th>
+                                    <th class="py-2 px-4 font-medium">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="programs-table-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accounting Page -->
+            <div id="accounting" class="page hidden-page">
+                <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Accounting</h1>
+                    </div>
+                     <div class="flex items-center space-x-4">
+                        <button onclick="exportToExcel()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export to Excel
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Accounting Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Total Booking</p>
+                        <p class="text-2xl font-bold" id="accounting-total-bookings">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Sale</p>
+                        <p class="text-2xl font-bold" id="accounting-total-sale">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Benefit</p>
+                        <p class="text-2xl font-bold" id="accounting-total-benefit">-</p>
+                    </div>
+                </div>
+                
+                <!-- Accounting Table -->
+                 <div class="bg-white p-6 rounded-xl shadow-sm mt-6 border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs text-gray-500 border-b bg-gray-50">
+                                    <th class="py-2 px-4 font-medium">BOOKING #</th>
+                                    <th class="py-2 px-4 font-medium">TOUR DATE</th>
+                                    <th class="py-2 px-4 font-medium">PROGRAM</th>
+                                    <th class="py-2 px-4 font-medium text-right">PAID</th>
+                                    <th class="py-2 px-4 font-medium text-right">NET</th>
+                                    <th class="py-2 px-4 font-medium text-right">BENEFIT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accounting-table-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Accounting Pagination -->
+                    <div class="flex justify-between items-center mt-6 pt-6 border-t">
+                        <div class="text-sm text-gray-500">
+                            Showing <span id="accounting-showing-start">1</span> to <span id="accounting-showing-end">10</span> of <span id="accounting-total-entries">0</span> entries
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="accounting-prev-page" onclick="changeAccountingPage(-1)" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                            <span id="accounting-page-info" class="px-3 py-2 text-sm text-gray-700">Page 1</span>
+                            <button id="accounting-next-page" onclick="changeAccountingPage(1)" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div id="analytics" class="page hidden-page">
+                 <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Analytics</h1>
+                    </div>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Total Sale</p>
+                        <p class="text-3xl font-bold" id="analytics-total-sale">-</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Viator Sale</p>
+                        <p class="text-3xl font-bold" id="analytics-viator-sale">-</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Website Sale</p>
+                        <p class="text-3xl font-bold" id="analytics-website-sale">-</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500">Total Benefit</p>
+                        <p class="text-3xl font-bold" id="analytics-total-benefit">-</p>
+                    </div>
+                </div>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-semibold mb-4">Sales by Channel</h2>
+                        <canvas id="salesByChannelChart"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h2 class="text-xl font-semibold mb-4">Channel Breakdown</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr class="text-xs text-gray-500 border-b bg-gray-50">
+                                        <th class="py-2 px-4 font-medium">CHANNEL</th>
+                                        <th class="py-2 px-4 font-medium text-center">BOOKINGS</th>
+                                        <th class="py-2 px-4 font-medium text-right">SALES</th>
+                                        <th class="py-2 px-4 font-medium text-right">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="channel-breakdown">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suppliers Page -->
+            <div id="suppliers" class="page hidden-page">
+                <header class="flex justify-between items-center pb-6 border-b">
+                    <div>
+                        <h1 class="text-3xl font-bold">Suppliers</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="addNewSupplier()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            Add Supplier
+                        </button>
+                    </div>
+                </header>
+                
+                <!-- Supplier Stats -->
+                <div class="grid grid-cols-4 gap-6 mt-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">How Many Suppliers</p>
+                        <p class="text-2xl font-bold" id="total-suppliers">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">How Many Programs</p>
+                        <p class="text-2xl font-bold" id="total-programs">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">Total Net to Suppliers</p>
+                        <p class="text-2xl font-bold" id="total-supplier-net">-</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm text-center border border-gray-100">
+                        <p class="text-gray-500">This Month Net</p>
+                        <p class="text-2xl font-bold" id="this-month-supplier-net">-</p>
+                    </div>
+                </div>
+                
+                <!-- Suppliers Table -->
+                <div class="bg-white p-6 rounded-xl shadow-sm mt-6 border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs text-gray-500 border-b bg-gray-50">
+                                    <th class="py-2 px-4 font-medium">NAME</th>
+                                    <th class="py-2 px-4 font-medium text-center">PROGRAMS</th>
+                                    <th class="py-2 px-4 font-medium text-center">BOOKINGS</th>
+                                    <th class="py-2 px-4 font-medium text-right">NET AMOUNT</th>
+                                    <th class="py-2 px-4 font-medium">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suppliers-table-body">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Mobile Menu Button (Hidden on desktop) -->
+    <div class="lg:hidden fixed top-4 right-4 z-50">
+        <button id="mobile-menu-btn" class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-overlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+    <script src="dashboard.js"></script>
+    <script>
+        // --- PAGE NAVIGATION ---
+        const navLinks = document.querySelectorAll('#sidebar-nav a');
+        const pages = document.querySelectorAll('.page');
+
+        function showPage(pageId) {
+            pages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.remove('hidden-page');
+                } else {
+                    page.classList.add('hidden-page');
+                }
+            });
+            navLinks.forEach(link => {
+                if (link.dataset.page === pageId) {
+                    link.classList.add('bg-indigo-50');
+                } else {
+                    link.classList.remove('bg-indigo-50');
+                }
+            });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = e.currentTarget.dataset.page;
+                window.location.hash = pageId;
+                showPage(pageId);
+            });
+        });
+        
+        const initialPage = window.location.hash.substring(1) || 'dashboard';
+        showPage(initialPage);
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        const sidebar = document.querySelector('aside');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            mobileOverlay.classList.toggle('hidden');
+        });
+
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            mobileOverlay.classList.add('hidden');
+        });
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: '2-digit' 
+            }) + ', ' + now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart');
+            if (revenueCtx) {
+                new Chart(revenueCtx.getContext('2d'), { 
+                    type: 'line', 
+                    data: { 
+                        labels: ['Aug 01', 'Aug 04', 'Aug 07', 'Aug 10', 'Aug 13', 'Aug 16'], 
+                        datasets: [{ 
+                            label: 'Daily Revenue', 
+                            data: [50000, 75000, 60000, 120000, 100000, 180000], 
+                            borderColor: 'rgb(79, 70, 229)', 
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        }, { 
+                            label: 'Cumulative Revenue', 
+                            data: [50000, 125000, 185000, 305000, 405000, 585000], 
+                            borderColor: 'rgb(34, 197, 94)', 
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    } 
+                });
+            }
+
+            // Booking Channels Chart
+            const bookingChannelsCtx = document.getElementById('bookingChannelsChart');
+            if (bookingChannelsCtx) {
+                new Chart(bookingChannelsCtx.getContext('2d'), { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: ['Website', 'Viator'], 
+                        datasets: [{ 
+                            data: [110, 59], 
+                            backgroundColor: ['rgb(79, 70, 229)', 'rgb(236, 72, 153)'], 
+                            hoverOffset: 4 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    } 
+                });
+            }
+
+            // Sales by Channel Chart
+            const salesByChannelCtx = document.getElementById('salesByChannelChart');
+            if (salesByChannelCtx) {
+                new Chart(salesByChannelCtx.getContext('2d'), { 
+                    type: 'doughnut', 
+                    data: { 
+                        labels: ['Website', 'Viator'], 
+                        datasets: [{ 
+                            data: [148031, 68469.94], 
+                            backgroundColor: ['rgb(79, 70, 229)', 'rgb(34, 197, 94)'], 
+                            hoverOffset: 4 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    } 
+                });
+            }
+        });
+    </script>
+</body>
+</html>

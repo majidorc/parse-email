@@ -192,17 +192,16 @@ export default async function handler(req, res) {
           // Check if this is a SKU-specific request for rates
           const sku = req.query.sku;
           if (sku) {
-            // Fetch rates for a specific SKU
-            const ratesQuery = `
-              SELECT r.* 
-              FROM rates r 
-              JOIN products p ON r.product_id = p.id 
-              WHERE p.sku = $1 
-              ORDER BY r.name
-            `;
-            const ratesResult = await client.query(ratesQuery, [sku]);
-            res.status(200).json({ rates: ratesResult.rows });
-            return;
+                      // Fetch rates for a specific SKU
+          const { rows: rates } = await sql`
+            SELECT r.* 
+            FROM rates r 
+            JOIN products p ON r.product_id = p.id 
+            WHERE p.sku = ${sku}
+            ORDER BY r.name
+          `;
+          res.status(200).json({ rates: rates });
+          return;
           }
     
           
@@ -221,9 +220,14 @@ export default async function handler(req, res) {
           }
           
           // Get total count for pagination
-          const countQuery = `SELECT COUNT(*) FROM products p ${whereClause}`;
-          const countResult = await client.query(countQuery, params);
-          const totalCount = parseInt(countResult.rows[0].count);
+          let totalCount;
+          if (search) {
+            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products p WHERE sku ILIKE ${`%${search}%`} OR program ILIKE ${`%${search}%`} OR remark ILIKE ${`%${search}%`}`;
+            totalCount = parseInt(countRows[0].count);
+          } else {
+            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products p`;
+            totalCount = parseInt(countRows[0].count);
+          }
           
           // Handle sorting
           const { sort = 'sku', dir = 'asc' } = req.query;
@@ -238,28 +242,38 @@ export default async function handler(req, res) {
           }
           
           // Get paginated products with supplier info
-          const productsQuery = `
-            SELECT p.*, s.name as supplier_name 
-            FROM products p 
-            LEFT JOIN suppliers s ON p.supplier_id = s.id 
-            ${whereClause} 
-            ORDER BY ${orderBy}
-            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
-          `;
-          const productsResult = await client.query(productsQuery, [...params, limit, offset]);
-          const products = productsResult.rows;
+          let products;
+          if (search) {
+            const { rows: productsRows } = await sql`
+              SELECT p.*, s.name as supplier_name 
+              FROM products p 
+              LEFT JOIN suppliers s ON p.supplier_id = s.id 
+              WHERE p.sku ILIKE ${`%${search}%`} OR p.program ILIKE ${`%${search}%`} OR p.remark ILIKE ${`%${search}%`}
+              ORDER BY ${orderBy === 'p.sku ASC' ? sql`p.sku ASC` : orderBy === 'p.sku DESC' ? sql`p.sku DESC` : orderBy === 'p.program DESC' ? sql`p.program DESC` : orderBy === 'p.program ASC' ? sql`p.program ASC` : orderBy === 's.name DESC, p.sku ASC' ? sql`s.name DESC, p.sku ASC` : sql`s.name ASC, p.sku ASC`}
+              LIMIT ${limit} OFFSET ${offset}
+            `;
+            products = productsRows;
+          } else {
+            const { rows: productsRows } = await sql`
+              SELECT p.*, s.name as supplier_name 
+              FROM products p 
+              LEFT JOIN suppliers s ON p.supplier_id = s.id 
+              ORDER BY ${orderBy === 'p.sku ASC' ? sql`p.sku ASC` : orderBy === 'p.sku DESC' ? sql`p.sku DESC` : orderBy === 'p.program DESC' ? sql`p.program DESC` : orderBy === 'p.program ASC' ? sql`p.program ASC` : orderBy === 's.name DESC, p.sku ASC' ? sql`s.name DESC, p.sku ASC` : sql`s.name ASC, p.sku ASC`}
+              LIMIT ${limit} OFFSET ${offset}
+            `;
+            products = productsRows;
+          }
     
           
           // Get rates - ALWAYS use fallback query to avoid rate_order issues
-          let ratesResult;
+          let rates;
           try {
-      
-            ratesResult = await client.query('SELECT * FROM rates ORDER BY name');
+            const { rows: ratesRows } = await sql`SELECT * FROM rates ORDER BY name`;
+            rates = ratesRows;
           } catch (err) {
             console.error('[PRODUCTS-RATES] Error fetching rates:', err);
             throw err;
           }
-          const rates = ratesResult.rows;
     
           
           const ratesByProduct = {};

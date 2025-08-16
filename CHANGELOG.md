@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2025-01-16
+
+### Added
+- **Automatic Net Price Recalculation**: When rates change in accounting tab, net prices automatically recalculate based on new rates
+- **Enhanced Debug Logging**: Comprehensive logging throughout the system for troubleshooting data loading issues
+- **Database Connection Consistency**: Unified database connection approach using @vercel/postgres
+
+### Changed
+- **Database Connection Pattern**: Fixed mixed database connection methods causing rate update failures
+- **API Response Enhancement**: Rate update API now returns updated net_total value for verification
+- **Error Handling**: Improved error handling with specific database connection error detection
+
+### Fixed
+- **Rate Change Net Price Updates**: Resolved issue where changing rates didn't update net prices in accounting tab
+- **Database Connection Conflicts**: Fixed mixed usage of pg Pool and @vercel/postgres causing 500 errors
+- **Products-Rates API**: Fixed tour endpoint and rate update functionality using consistent database connections
+- **Data Loading Failures**: Resolved "Failed to load data. in accounting" errors with proper connection handling
+
+### Technical
+- **Connection Unification**: Migrated all database operations to use @vercel/postgres consistently
+- **Transaction Handling**: Improved atomic updates for rate and net price changes
+- **Debug Infrastructure**: Added comprehensive logging for database operations and API responses
+- **Error Diagnostics**: Enhanced error logging with specific error codes and database connection status
+
 ## [3.1.0] - 2025-01-09
 
 ### Added

@@ -133,14 +133,16 @@ parse-email/
 
 ## 📊 Recent Updates
 
-### Version 3.0.0 (Latest - January 2025)
+### Version 3.1.0 (Latest - January 2025)
+- **Rate Change Net Price Updates**: Automatic net price recalculation when rates change in accounting tab
+- **Database Connection Fixes**: Resolved connection conflicts in products-rates API
+- **Enhanced Debug Logging**: Comprehensive logging for troubleshooting data loading issues
 - **Interactive SKU Editing**: Click-to-edit SKU fields in accounting tab
 - **Automatic Program Updates**: SKU changes automatically lookup and update program names
 - **Enhanced Email Parsing**: Pickup time extraction and SKU priority matching
 - **UI Improvements**: Wider program name columns, better styling
 - **Adult/Child Columns**: Added separate adult and child tracking in accounting
 - **Benefit Percentage Fix**: Real-time benefit comparison with proper caching
-- **Debug Cleanup**: Removed all debug console logs for cleaner production logs
 
 ### Key Features
 - **Program Management**: Full CRUD operations with supplier support
@@ -151,6 +153,12 @@ parse-email/
 - **Email Integration**: Customer communication and booking confirmations
 
 ## 🎯 Latest Improvements
+
+### Rate Management & Net Price Updates
+- **Automatic Net Price Recalculation**: When you change a rate in the accounting tab, the net price automatically recalculates based on the new rate
+- **Real-time Updates**: Rate changes immediately update both the rate and net total in the database
+- **Database Consistency**: Uses atomic transactions to ensure rate and net price updates happen together
+- **Debug Logging**: Comprehensive logging to troubleshoot any data loading issues
 
 ### SKU Management
 - **Click-to-Edit**: Click any SKU cell in accounting tab to edit inline

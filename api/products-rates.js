@@ -543,10 +543,7 @@ export default async function handler(req, res) {
 
         const booking = rows[0];
         
-        // Update the rate
-        await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-        
-        // Recalculate net price based on the new rate
+        // Update the rate and recalculate net price in a single transaction
         if (booking.sku && rate) {
           try {
             // Get the new rate information
@@ -582,20 +579,38 @@ export default async function handler(req, res) {
                 netTotal += Number(rateInfo.fee_adult);
               }
               
-              // Update the booking with the new net_total
-              await sql`
+              // Update both rate and net_total in a single query
+              const updateResult = await sql`
                 UPDATE bookings 
-                SET net_total = ${netTotal}, 
+                SET rate = ${rate},
+                    net_total = ${netTotal}, 
                     updated_fields = COALESCE(updated_fields, '{}'::jsonb) || '{"net_total_recalculated": true, "recalculated_at": ${new Date().toISOString()}}'::jsonb
                 WHERE booking_number = ${booking_number}
               `;
               
+              console.log(`Rate and net price update result:`, updateResult);
               console.log(`Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
+              
+              // Verify the update by reading back the data
+              const { rows: verifyRows } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
+              if (verifyRows.length > 0) {
+                console.log(`Verification - booking ${booking_number}: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
+              }
+            } else {
+              // If no rate info found, just update the rate
+              await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+              console.log(`Rate updated for booking ${booking_number}: rate=${rate} (no net price calculation possible)`);
             }
           } catch (netPriceErr) {
             console.error(`Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
-            // Don't fail the entire operation if net price calculation fails
+            // Fallback: just update the rate if net price calculation fails
+            await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+            console.log(`Rate updated for booking ${booking_number}: rate=${rate} (net price calculation failed)`);
           }
+        } else {
+          // No SKU or rate, just update the rate
+          await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+          console.log(`Rate updated for booking ${booking_number}: rate=${rate} (no SKU for net price calculation)`);
         }
         
         return res.status(200).json({ 

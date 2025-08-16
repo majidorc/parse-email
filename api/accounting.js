@@ -208,6 +208,17 @@ module.exports = async (req, res) => {
        `;
 
       const { rows: bookings } = await sql.query(query, params);
+      
+      // Debug: Log a sample booking to see what data is returned
+      if (bookings.length > 0) {
+        console.log('Sample booking data:', {
+          booking_number: bookings[0].booking_number,
+          rate: bookings[0].rate,
+          net_total: bookings[0].net_total,
+          calculated_net_total: bookings[0].calculated_net_total,
+          hasNetTotalColumn
+        });
+      }
 
       // Debug: Log booking numbers for channel filtering
 

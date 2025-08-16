@@ -434,9 +434,15 @@ async function handleRateChange(dropdown) {
   const newRate = dropdown.value;
   const oldRate = dropdown.getAttribute('data-current-rate');
   
-  if (newRate === oldRate) return;
+  console.log('handleRateChange called:', { bookingNumber, newRate, oldRate });
+  
+  if (newRate === oldRate) {
+    console.log('Rate unchanged, skipping update');
+    return;
+  }
   
   try {
+    console.log('Sending rate update request...');
     // Update the rate and recalculate net price in one API call
     const response = await fetch('/api/products-rates', {
       method: 'POST',
@@ -449,15 +455,20 @@ async function handleRateChange(dropdown) {
       })
     });
     
+    console.log('Response status:', response.status);
+    
     if (response.ok) {
       // Update the data-current-rate attribute
       dropdown.setAttribute('data-current-rate', newRate);
       
       const data = await response.json();
+      console.log('Response data:', data);
+      
       if (data.success) {
         showToast('Rate and net price updated successfully', 'success');
-        // Refresh the table to update calculations
-        await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false);
+        console.log('Refreshing accounting table...');
+        // Refresh the table to update calculations with cache buster
+        await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
       } else {
         showToast(`Failed to update rate: ${data.error || 'Unknown error'}`, 'error');
         // Revert the dropdown to the old value
@@ -465,6 +476,7 @@ async function handleRateChange(dropdown) {
       }
     } else {
       const errorData = await response.json();
+      console.error('API error response:', errorData);
       showToast(`Failed to update rate: ${errorData.error || 'Unknown error'}`, 'error');
       // Revert the dropdown to the old value
       dropdown.value = oldRate;
@@ -1501,6 +1513,10 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       }
     }
     
+    // Add cache buster to ensure fresh data
+    const cacheBuster = Date.now();
+    params.append('_ts', cacheBuster);
+    
     const res = await fetch(`/api/accounting?${params.toString()}`);
     const data = await res.json();
     if (!data.bookings || !data.bookings.length) {
@@ -1532,6 +1548,15 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     } else {
       await renderAccountingSummary(accountingSummaryData);
     }
+    console.log('Accounting data refreshed:', accountingData.length, 'bookings');
+    if (accountingData.length > 0) {
+      console.log('Sample booking after refresh:', {
+        booking_number: accountingData[0].booking_number,
+        rate: accountingData[0].rate,
+        net_total: accountingData[0].net_total
+      });
+    }
+    
     renderAccountingTable();
     renderAccountingPagination();
     
@@ -1839,14 +1864,19 @@ function renderAccountingTable() {
             <select class="rate-dropdown bg-white border border-gray-300 rounded px-2 py-1 text-sm w-full" 
                     data-booking-number="${bookingNumber}" 
                     data-sku="${sku}" 
-                    data-current-rate="${currentRate}"
-                    onchange="handleRateChange(this)">
+                    data-current-rate="${currentRate}">
               <option value="${currentRate || ''}" selected>${currentRate && currentRate.length > 12 ? currentRate.slice(0, 12) + '...' : (currentRate || '')}</option>
             </select>
           `;
           
           const dropdown = cell.querySelector('select');
           dropdown.focus();
+          
+          // Add change event listener
+          dropdown.addEventListener('change', function() {
+            console.log('Dropdown change event fired');
+            handleRateChange(this);
+          });
           
           // Populate dropdown with available rates for this SKU
           populateRateDropdownForCell(dropdown, sku, currentRate);
@@ -1855,6 +1885,15 @@ function renderAccountingTable() {
           dropdown.onblur = function() {
             setTimeout(() => {
               const newRate = dropdown.value;
+              const oldRate = cell.getAttribute('data-current-rate');
+              
+              // Only update if rate actually changed
+              if (newRate !== oldRate) {
+                // Call handleRateChange to update the database
+                handleRateChange(dropdown);
+              }
+              
+              // Convert back to text display
               cell.setAttribute('data-current-rate', newRate);
               cell.innerHTML = `${newRate && newRate.length > 12 ? newRate.slice(0, 12) + '...' : (newRate || '')}`;
             }, 150); // Small delay to allow for dropdown interaction

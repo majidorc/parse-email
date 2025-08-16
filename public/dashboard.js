@@ -1514,11 +1514,27 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     }
     
     // Add cache buster to ensure fresh data
-    const cacheBuster = Date.now();
-    params.append('_ts', cacheBuster);
+    const timestamp = cacheBuster || Date.now();
+    params.append('_ts', timestamp);
     
-    const res = await fetch(`/api/accounting?${params.toString()}`);
-    const data = await res.json();
+    const requestUrl = `/api/accounting?${params.toString()}`;
+    console.log('Accounting API request URL:', requestUrl);
+    console.log('Accounting API request params:', Object.fromEntries(params.entries()));
+    
+    const res = await fetch(requestUrl);
+    console.log('Accounting API response status:', res.status);
+    console.log('Accounting API response headers:', Object.fromEntries(res.headers.entries()));
+    
+    let data;
+    try {
+      data = await res.json();
+      console.log('Accounting API response data:', data);
+    } catch (jsonError) {
+      console.error('Failed to parse API response as JSON:', jsonError);
+      console.log('Raw response text:', await res.text());
+      throw new Error('Invalid JSON response from API');
+    }
+    
     if (!data.bookings || !data.bookings.length) {
       tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No results found.</td></tr>';
       accountingData = [];
@@ -1562,6 +1578,13 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     
 
   } catch (err) {
+    console.error('fetchAccounting error:', err);
+    console.error('Error details:', {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+    
     tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Failed to load data.</td></tr>';
     if (accountingSummaryData) {
       document.getElementById('accounting-summary').style.display = '';

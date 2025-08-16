@@ -1,14 +1,22 @@
 const { sql } = require('@vercel/postgres');
 const { getSession } = require('./auth.js');
 
+console.log('Accounting API module loaded, sql object:', !!sql);
+
 const ALLOWED_SORT_COLUMNS = [
   'booking_number', 'tour_date', 'book_date', 'sku', 'program', 'rate', 'hotel', 'paid'
 ];
 
 module.exports = async (req, res) => {
+  console.log('Accounting API called with method:', req.method);
+  console.log('Accounting API query params:', req.query);
+  
   const session = getSession(req);
+  console.log('Session retrieved:', !!session);
   if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  
   const userRole = session.role;
+  console.log('User role:', userRole);
   if (userRole !== 'admin' && userRole !== 'accounting') return res.status(403).json({ error: 'Forbidden: Admins or Accounting only' });
   
   // Handle Excel export
@@ -548,6 +556,8 @@ module.exports = async (req, res) => {
   const period = req.query.period || 'all';
   const startDate = req.query.startDate || null;
   const endDate = req.query.endDate || null;
+  
+  console.log('Request parameters - search:', search, 'period:', period, 'startDate:', startDate, 'endDate:', endDate);
 
   // Period filtering function (same as dashboard-settings.js)
   function getBangkokDateRange(period) {
@@ -651,8 +661,20 @@ module.exports = async (req, res) => {
 
   // Get date range for period filtering
   const [periodStart, periodEnd] = getBangkokDateRange(period);
+  console.log('Period:', period, 'Date range:', periodStart, 'to', periodEnd);
 
   try {
+    console.log('Starting database operations...');
+    
+    // Test database connection first
+    try {
+      const testResult = await sql`SELECT 1 as test`;
+      console.log('Database connection test successful:', testResult.rows[0]);
+    } catch (testError) {
+      console.error('Database connection test failed:', testError);
+      throw new Error(`Database connection failed: ${testError.message}`);
+    }
+    
     // Build WHERE clause for both aliased and unaliased queries
     let whereClause = '';
     let whereClauseUnaliased = '';
@@ -665,21 +687,27 @@ module.exports = async (req, res) => {
     
   // Date range has priority over period
   if (startDate && endDate) {
+    console.log('Using startDate/endDate for filtering:', startDate, endDate);
     conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
     conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
     params.push(startDate, endDate);
     paramIndex += 2;
   } else if (period !== 'all') {
+    console.log('Using period for filtering:', period, periodStart, periodEnd);
     conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
     conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
     params.push(periodStart, periodEnd);
     paramIndex += 2;
+  } else {
+    console.log('No date filtering applied');
   }
     
     // Search filtering
+    console.log('Processing search:', search);
     const dateRangeMatch = search.match(/^date:(\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})$/);
     if (dateRangeMatch) {
       // Date range search overrides period filtering
+      console.log('Date range search detected:', dateRangeMatch[1], 'to', dateRangeMatch[2]);
       conditions.push(`b.tour_date >= $${paramIndex} AND b.tour_date < $${paramIndex + 1}`);
       conditionsUnaliased.push(`tour_date >= $${paramIndex} AND tour_date < $${paramIndex + 1}`);
       params = [dateRangeMatch[1], dateRangeMatch[2]];
@@ -688,11 +716,13 @@ module.exports = async (req, res) => {
       const dateSearchMatch = search.match(/^\d{4}-\d{2}-\d{2}$/);
       if (dateSearchMatch) {
         // Date-only search overrides period filtering
+        console.log('Date-only search detected:', search);
         conditions.push(`b.tour_date::date = $${paramIndex}`);
         conditionsUnaliased.push(`tour_date::date = $${paramIndex}`);
         params = [search];
         paramIndex = 2;
       } else if (search) {
+        console.log('Text search detected:', search);
         conditions.push(`(b.booking_number ILIKE $${paramIndex} OR b.customer_name ILIKE $${paramIndex} OR b.sku ILIKE $${paramIndex} OR b.program ILIKE $${paramIndex} OR b.hotel ILIKE $${paramIndex})`);
         conditionsUnaliased.push(`(booking_number ILIKE $${paramIndex} OR customer_name ILIKE $${paramIndex} OR sku ILIKE $${paramIndex} OR program ILIKE $${paramIndex} OR hotel ILIKE $${paramIndex})`);
         params.push(`%${search}%`);
@@ -704,10 +734,30 @@ module.exports = async (req, res) => {
       whereClause = `WHERE ${conditions.join(' AND ')}`;
       whereClauseUnaliased = `WHERE ${conditionsUnaliased.join(' AND ')}`;
     }
+    
+    console.log('Conditions array:', conditions);
+    console.log('Conditions unaliased array:', conditionsUnaliased);
+    console.log('Final WHERE clause:', whereClause);
+    console.log('Final WHERE clause (unaliased):', whereClauseUnaliased);
+    console.log('Final params array:', params);
 
     // Get total count
     const countQuery = `SELECT COUNT(*) AS count FROM bookings ${whereClauseUnaliased}`;
-    const { rows: countRows } = await sql.query(countQuery, params);
+    console.log('Executing count query:', countQuery);
+    console.log('Count query params:', params);
+    
+    let countRows;
+    try {
+      const countResult = await sql.query(countQuery, params);
+      countRows = countResult.rows;
+      console.log('Count query executed successfully, result:', countRows[0]);
+    } catch (countError) {
+      console.error('Count query failed:', countError);
+      console.error('Count query that failed:', countQuery);
+      console.error('Count params that failed:', params);
+      throw countError;
+    }
+    
     const total = parseInt(countRows[0].count, 10);
 
     // Calculate date ranges for last month and this month
@@ -718,6 +768,13 @@ module.exports = async (req, res) => {
     const thisMonthStartStr = thisMonthStart.toISOString().slice(0, 10);
     const nextMonthStartStr = nextMonthStart.toISOString().slice(0, 10);
     const lastMonthStartStr = lastMonthStart.toISOString().slice(0, 10);
+    
+    console.log('Date ranges calculated:', {
+      now: now.toISOString(),
+      thisMonthStart: thisMonthStartStr,
+      nextMonthStart: nextMonthStartStr,
+      lastMonthStart: lastMonthStartStr
+    });
 
     // Summary queries for all matching bookings (not just current page)
     // Last Month
@@ -726,27 +783,42 @@ module.exports = async (req, res) => {
     const lastMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${lastMonthWhereClause}`;
     const lastMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${lastMonthWhereClause}`;
     
+    console.log('Last month queries:', { count: lastMonthCountQuery, paid: lastMonthPaidQuery, params: lastMonthParams });
+    
     // This Month
     const thisMonthParams = [...params, thisMonthStartStr, nextMonthStartStr];
     const thisMonthWhereClause = whereClauseUnaliased ? `${whereClauseUnaliased} AND tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}` : `WHERE tour_date >= $${params.length + 1} AND tour_date < $${params.length + 2}`;
     const thisMonthCountQuery = `SELECT COUNT(*) AS count FROM bookings ${thisMonthWhereClause}`;
     const thisMonthPaidQuery = `SELECT COALESCE(SUM(paid),0) AS sum FROM bookings ${thisMonthWhereClause}`;
-    const [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
-      sql.query(lastMonthCountQuery, lastMonthParams),
-      sql.query(lastMonthPaidQuery, lastMonthParams),
-      sql.query(thisMonthCountQuery, thisMonthParams),
-      sql.query(thisMonthPaidQuery, thisMonthParams)
-    ]);
+    
+    console.log('This month queries:', { count: thisMonthCountQuery, paid: thisMonthPaidQuery, params: thisMonthParams });
+    console.log('Executing summary queries...');
+    let lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes;
+    
+    try {
+      [lastMonthCountRes, lastMonthPaidRes, thisMonthCountRes, thisMonthPaidRes] = await Promise.all([
+        sql.query(lastMonthCountQuery, lastMonthParams),
+        sql.query(lastMonthPaidQuery, lastMonthParams),
+        sql.query(thisMonthCountQuery, thisMonthParams),
+        sql.query(thisMonthPaidQuery, thisMonthParams)
+      ]);
+      console.log('Summary queries executed successfully');
+    } catch (summaryError) {
+      console.error('Summary queries failed:', summaryError);
+      throw summaryError;
+    }
 
     // Check if net_total column exists
     let hasNetTotalColumn = false;
     try {
+      console.log('Checking if net_total column exists...');
       const { rows: columnCheck } = await sql.query(`
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'bookings' AND column_name = 'net_total'
       `);
       hasNetTotalColumn = columnCheck.length > 0;
+      console.log('net_total column check result:', hasNetTotalColumn, 'rows found:', columnCheck.length);
     } catch (err) {
       console.log('Column check failed, assuming net_total does not exist:', err.message);
       hasNetTotalColumn = false;
@@ -766,7 +838,22 @@ module.exports = async (req, res) => {
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     const dataParams = [...params, limit, offset];
-    const { rows: bookingsRaw } = await sql.query(dataQuery, dataParams);
+    console.log('Final query params (with limit/offset):', dataParams);
+    console.log('Limit:', limit, 'Offset:', offset);
+    console.log('Executing main data query with params:', dataParams);
+    console.log('Query:', dataQuery);
+    
+    let bookingsRaw;
+    try {
+      const result = await sql.query(dataQuery, dataParams);
+      bookingsRaw = result.rows;
+      console.log('Main query executed successfully, rows returned:', bookingsRaw.length);
+    } catch (queryError) {
+      console.error('Main query failed:', queryError);
+      console.error('Query that failed:', dataQuery);
+      console.error('Params that failed:', dataParams);
+      throw queryError;
+    }
     
     // Store the original params (without LIMIT and OFFSET) for the totals calculation
     const originalParams = params;
@@ -903,6 +990,15 @@ module.exports = async (req, res) => {
 
     
     res.setHeader('Cache-Control', 'no-store');
+    
+    console.log('Preparing response data...');
+    console.log('Summary query results:', {
+      lastMonthCount: lastMonthCountRes?.rows?.[0]?.count,
+      lastMonthPaid: lastMonthPaidRes?.rows?.[0]?.sum,
+      thisMonthCount: thisMonthCountRes?.rows?.[0]?.count,
+      thisMonthPaid: thisMonthCountRes?.rows?.[0]?.sum
+    });
+    
     const responseData = {
       bookings,
       total,
@@ -917,12 +1013,44 @@ module.exports = async (req, res) => {
       prevPeriodBenefit
     };
 
+    console.log('Sending successful response with', bookings.length, 'bookings');
+    console.log('Response data summary:', {
+      total: responseData.total,
+      page: responseData.page,
+      limit: responseData.limit,
+      lastMonthCount: responseData.lastMonthCount,
+      thisMonthCount: responseData.thisMonthCount
+    });
+    console.log('Full response data structure:', Object.keys(responseData));
+    console.log('Sample booking data:', bookings.length > 0 ? {
+      booking_number: bookings[0].booking_number,
+      sku: bookings[0].sku,
+      rate: bookings[0].rate,
+      net_total: bookings[0].net_total
+    } : 'No bookings');
+
     return res.status(200).json(responseData);
   } catch (err) {
     console.error('Accounting API error:', err);
     console.error('Accounting API error stack:', err.stack);
+    console.error('Accounting API error message:', err.message);
+    console.error('Accounting API error code:', err.code);
+    console.error('Accounting API error detail:', err.detail);
+    
+    // Check if it's a database connection issue
+    if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || err.code === 'ETIMEDOUT') {
+      console.error('Database connection error detected');
+    }
+    
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'Failed to fetch accounting data', details: err.message, stack: err.stack });
+      const errorResponse = { 
+        error: 'Failed to fetch accounting data', 
+        details: err.message, 
+        code: err.code,
+        stack: err.stack 
+      };
+      console.log('Sending error response:', errorResponse);
+      return res.status(500).json(errorResponse);
     }
   }
 }; 

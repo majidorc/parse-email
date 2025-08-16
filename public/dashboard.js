@@ -437,9 +437,9 @@ async function handleRateChange(dropdown) {
   if (newRate === oldRate) return;
   
   try {
-    // First, update the rate
-    const response = await fetch('/api/bookings', {
-      method: 'PATCH',
+    // Update the rate and recalculate net price in one API call
+    const response = await fetch('/api/products-rates', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -453,30 +453,16 @@ async function handleRateChange(dropdown) {
       // Update the data-current-rate attribute
       dropdown.setAttribute('data-current-rate', newRate);
       
-      // Now recalculate and update the net price based on the new rate
-      const netPriceResponse = await fetch('/api/recalculate-net-price', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          booking_number: bookingNumber
-        })
-      });
-      
-      if (netPriceResponse.ok) {
-        const netPriceData = await netPriceResponse.json();
-        if (netPriceData.success) {
-          showToast('Rate and net price updated successfully', 'success');
-        } else {
-          showToast('Rate updated but net price calculation failed', 'warning');
-        }
+      const data = await response.json();
+      if (data.success) {
+        showToast('Rate and net price updated successfully', 'success');
+        // Refresh the table to update calculations
+        await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false);
       } else {
-        showToast('Rate updated but net price calculation failed', 'warning');
+        showToast(`Failed to update rate: ${data.error || 'Unknown error'}`, 'error');
+        // Revert the dropdown to the old value
+        dropdown.value = oldRate;
       }
-      
-      // Refresh the table to update calculations
-      await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false);
     } else {
       const errorData = await response.json();
       showToast(`Failed to update rate: ${errorData.error || 'Unknown error'}`, 'error');
@@ -1444,47 +1430,7 @@ async function renderAccountingSummary(data) {
   `;
       // Add click handlers for filtering (only filter table, not summary)
     setTimeout(() => {
-      // Add event handler for recalculate net prices button
-      const recalculateNetPricesBtn = document.getElementById('recalculate-net-prices-btn');
-      if (recalculateNetPricesBtn) {
-        recalculateNetPricesBtn.addEventListener('click', async function() {
-          if (!confirm('This will recalculate net prices for all bookings based on current rates. Continue?')) {
-            return;
-          }
-          this.disabled = true;
-          this.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 animate-spin" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-            </svg>
-            Recalculating...
-          `;
-          
-          try {
-            const response = await fetch('/api/products-rates?type=recalculate-net-prices', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await response.json();
-            if (data.success) {
-              showToast(`Recalculated net prices for ${data.summary.updated_count} bookings`, 'success');
-              // Refresh the table
-              await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
-            } else {
-              showToast(`Failed: ${data.error}`, 'error');
-            }
-          } catch (err) {
-            showToast('Failed to recalculate net prices', 'error');
-          } finally {
-            this.disabled = false;
-            this.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-              </svg>
-              Recalculate Net Prices
-            `;
-          }
-        });
-      }
+
 
       const lastMonthCard = document.getElementById('last-month-card');
       const thisMonthCard = document.getElementById('this-month-card');

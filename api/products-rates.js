@@ -599,6 +599,13 @@ export default async function handler(req, res) {
               const { rows: verifyRows } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
               if (verifyRows.length > 0) {
                 console.log(`[DEBUG] Verification - booking ${booking_number}: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
+                
+                // Additional verification: check if the update actually persisted
+                if (verifyRows[0].rate === rate && verifyRows[0].net_total === netTotal) {
+                  console.log(`[DEBUG] ✅ Database update verified successfully!`);
+                } else {
+                  console.log(`[DEBUG] ❌ Database update verification failed! Expected: rate=${rate}, net_total=${netTotal}, Got: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
+                }
               }
             } else {
               console.log(`[DEBUG] No rate info found for SKU=${booking.sku} and rate=${rate}`);

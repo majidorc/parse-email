@@ -468,7 +468,10 @@ async function handleRateChange(dropdown) {
         showToast('Rate and net price updated successfully', 'success');
         console.log('Refreshing accounting table...');
         // Refresh the table to update calculations with cache buster
-        await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now());
+        // Add debug parameter to track the specific booking that was updated
+        const debugParams = new URLSearchParams();
+        debugParams.append('debug_booking', bookingNumber);
+        await fetchAccounting(accountingCurrentPage, accountingSort, accountingDir, accountingSearch, false, Date.now(), debugParams);
       } else {
         showToast(`Failed to update rate: ${data.error || 'Unknown error'}`, 'error');
         // Revert the dropdown to the old value
@@ -1480,7 +1483,7 @@ async function renderAccountingSummary(data) {
   }, 0);
 }
 
-async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false, cacheBuster = null) {
+async function fetchAccounting(page = 1, sort = accountingSort, dir = accountingDir, search = accountingSearch, keepSummary = false, cacheBuster = null, debugParams = null) {
   const tbody = document.getElementById('accounting-body');
   try {
     const params = new URLSearchParams({
@@ -1501,6 +1504,13 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       const globalPeriod = document.getElementById('global-period-selector');
       const period = globalPeriod ? globalPeriod.value : 'thisMonth';
       params.append('period', period);
+    }
+    
+    // Add debug parameters if provided
+    if (debugParams) {
+      for (const [key, value] of debugParams.entries()) {
+        params.append(key, value);
+      }
     }
     
     // Try to fix missing NET prices first if this is the first load

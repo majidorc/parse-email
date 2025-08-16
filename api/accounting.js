@@ -848,6 +848,17 @@ module.exports = async (req, res) => {
       const result = await sql.query(dataQuery, dataParams);
       bookingsRaw = result.rows;
       console.log('Main query executed successfully, rows returned:', bookingsRaw.length);
+      console.log('Sample booking data:', bookingsRaw[0]);
+      
+      // Debug: Check if the specific booking that was updated is in the results
+      if (req.query.debug_booking) {
+        const debugBooking = bookingsRaw.find(b => b.booking_number === req.query.debug_booking);
+        if (debugBooking) {
+          console.log(`[DEBUG] Found debug booking ${req.query.debug_booking}:`, debugBooking);
+        } else {
+          console.log(`[DEBUG] Debug booking ${req.query.debug_booking} not found in results`);
+        }
+      }
     } catch (queryError) {
       console.error('Main query failed:', queryError);
       console.error('Query that failed:', dataQuery);

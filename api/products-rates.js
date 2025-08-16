@@ -541,18 +541,186 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: 'Booking not found' });
         }
 
+        const booking = rows[0];
+        
         // Update the rate
         await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+        
+        // Recalculate net price based on the new rate
+        if (booking.sku && rate) {
+          try {
+            // Get the new rate information
+            const { rows: rateRows } = await sql`
+              SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
+              FROM rates r
+              JOIN products p ON r.product_id = p.id
+              WHERE p.sku = ${booking.sku} AND LOWER(TRIM(r.name)) = LOWER(TRIM(${rate}))
+              LIMIT 1
+            `;
+            
+            if (rateRows.length > 0) {
+              const rateInfo = rateRows[0];
+              
+              // Calculate new net_total based on passengers and new rates
+              let netTotal = 0;
+              
+              if (booking.adult > 0) {
+                netTotal += (Number(rateInfo.net_adult) * Number(booking.adult));
+                if (rateInfo.fee_type === 'per_person' && rateInfo.fee_adult) {
+                  netTotal += (Number(rateInfo.fee_adult) * Number(booking.adult));
+                }
+              }
+              
+              if (booking.child > 0) {
+                netTotal += (Number(rateInfo.net_child) * Number(booking.child));
+                if (rateInfo.fee_type === 'per_person' && rateInfo.fee_child) {
+                  netTotal += (Number(rateInfo.fee_child) * Number(booking.child));
+                }
+              }
+              
+              if (rateInfo.fee_type === 'total' && rateInfo.fee_adult) {
+                netTotal += Number(rateInfo.fee_adult);
+              }
+              
+              // Update the booking with the new net_total
+              await sql`
+                UPDATE bookings 
+                SET net_total = ${netTotal}, 
+                    updated_fields = COALESCE(updated_fields, '{}'::jsonb) || '{"net_total_recalculated": true, "recalculated_at": ${new Date().toISOString()}}'::jsonb
+                WHERE booking_number = ${booking_number}
+              `;
+              
+              console.log(`Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
+            }
+          } catch (netPriceErr) {
+            console.error(`Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
+            // Don't fail the entire operation if net price calculation fails
+          }
+        }
         
         return res.status(200).json({ 
           success: true, 
           message: `Rate updated for booking ${booking_number}`,
-          rate: rate
+          rate: rate,
+          net_price_recalculated: true
         });
       } catch (err) {
         console.error('Failed to update rate:', err);
         return res.status(500).json({ error: 'Failed to update rate', details: err.message });
       }
+    }
+
+    // --- BULK NET PRICE RECALCULATION LOGIC ---
+    if (type === 'recalculate-net-prices') {
+      if (req.method === 'POST') {
+        if (userRole !== 'admin' && userRole !== 'programs_manager') {
+          return res.status(403).json({ error: 'Forbidden: Admins or Programs Manager only' });
+        }
+        
+        try {
+          // Get all bookings that need net price recalculation
+          const { rows: bookingsToUpdate } = await sql`
+            SELECT b.booking_number, b.sku, b.rate, b.adult, b.child, b.infant
+            FROM bookings b
+            WHERE b.sku IS NOT NULL AND b.rate IS NOT NULL
+            ORDER BY b.booking_number
+          `;
+          
+          let updatedCount = 0;
+          let errorCount = 0;
+          const results = [];
+          
+          for (const booking of bookingsToUpdate) {
+            try {
+              // Get the current rate information
+              const { rows: rateRows } = await sql`
+                SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
+                FROM rates r
+                JOIN products p ON r.product_id = p.id
+                WHERE p.sku = ${booking.sku} AND LOWER(TRIM(r.name)) = LOWER(TRIM(${booking.rate}))
+                LIMIT 1
+              `;
+              
+              if (rateRows.length > 0) {
+                const rate = rateRows[0];
+                
+                // Calculate new net_total based on passengers and current rates
+                let netTotal = 0;
+                
+                if (booking.adult > 0) {
+                  netTotal += (Number(rate.net_adult) * Number(booking.adult));
+                  if (rate.fee_type === 'per_person' && rate.fee_adult) {
+                    netTotal += (Number(rate.fee_adult) * Number(booking.adult));
+                  }
+                }
+                
+                if (booking.child > 0) {
+                  netTotal += (Number(rate.net_child) * Number(booking.child));
+                  if (rate.fee_type === 'per_person' && rate.fee_child) {
+                    netTotal += (Number(rate.fee_child) * Number(booking.child));
+                  }
+                }
+                
+                if (rate.fee_type === 'total' && rate.fee_adult) {
+                  netTotal += Number(rate.fee_adult);
+                }
+                
+                // Update the booking with the new net_total
+                await sql`
+                  UPDATE bookings 
+                  SET net_total = ${netTotal}, 
+                      updated_fields = COALESCE(updated_fields, '{}'::jsonb) || '{"net_total_recalculated": true, "recalculated_at": ${new Date().toISOString()}}'::jsonb
+                  WHERE booking_number = ${booking.booking_number}
+                `;
+                
+                updatedCount++;
+                results.push({
+                  booking_number: booking.booking_number,
+                  success: true,
+                  old_net_total: booking.net_total || 0,
+                  new_net_total: netTotal,
+                  sku: booking.sku,
+                  rate: booking.rate
+                });
+              } else {
+                errorCount++;
+                results.push({
+                  booking_number: booking.booking_number,
+                  success: false,
+                  error: 'Rate not found',
+                  sku: booking.sku,
+                  rate: booking.rate
+                });
+              }
+            } catch (error) {
+              errorCount++;
+              results.push({
+                booking_number: booking.booking_number,
+                success: false,
+                error: error.message,
+                sku: booking.sku,
+                rate: booking.rate
+              });
+            }
+          }
+          
+          return res.status(200).json({
+            success: true,
+            message: `Bulk net price recalculation completed`,
+            summary: {
+              total_bookings: bookingsToUpdate.length,
+              updated_count: updatedCount,
+              error_count: errorCount
+            },
+            results: results
+          });
+          
+        } catch (err) {
+          console.error('Bulk net price recalculation failed:', err);
+          return res.status(500).json({ error: 'Bulk net price recalculation failed', details: err.message });
+        }
+      }
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
     // If no type matched

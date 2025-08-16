@@ -742,13 +742,14 @@ module.exports = async (req, res) => {
     }
 
     // Use string interpolation for ORDER BY direction
+    // Improved JOIN logic to handle cases where products.sku might be empty
     let dataQuery = `
       SELECT b.booking_number, b.book_date, b.tour_date, b.sku, b.program, b.rate, b.hotel, b.paid,
              b.adult, b.child${hasNetTotalColumn ? ', b.net_total' : ''},
              r.net_adult, r.net_child
       FROM bookings b
-      LEFT JOIN products p ON b.sku = p.sku
-      LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+      LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+      LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
       ${whereClause}
       ORDER BY b.${sort} ${dirStr}
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
@@ -765,8 +766,19 @@ module.exports = async (req, res) => {
       const adult = Number(b.adult) || 0;
       const child = Number(b.child) || 0;
       const paid = Number(b.paid) || 0;
+      
       // Use stored net_total if available and column exists, otherwise calculate from rates
-      const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+      let netTotal = 0;
+      if (hasNetTotalColumn && b.net_total !== null && b.net_total > 0) {
+        netTotal = Number(b.net_total);
+      } else if (netAdult > 0 || netChild > 0) {
+        // Calculate from rates if available
+        netTotal = (netAdult * adult) + (netChild * child);
+      } else {
+        // Fallback: try to get rates from products table directly
+        console.log(`[DEBUG] No rates found for booking ${b.booking_number}, SKU: ${b.sku}, Rate: ${b.rate}`);
+      }
+      
       const benefit = paid - netTotal;
       return {
         booking_number: b.booking_number,
@@ -795,8 +807,8 @@ module.exports = async (req, res) => {
       let allDataQuery = `
         SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
         FROM bookings b
-        LEFT JOIN products p ON b.sku = p.sku
-        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+        LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+        LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
         ${whereClause}
         ORDER BY b.${sort} ${dirStr}
       `;
@@ -849,8 +861,8 @@ module.exports = async (req, res) => {
             let prevDataQuery = `
               SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
               FROM bookings b
-              LEFT JOIN products p ON b.sku = p.sku
-              LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+              LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+              LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
               ${prevWhereClause}
             `;
             

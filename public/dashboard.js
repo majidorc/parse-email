@@ -1481,6 +1481,16 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       params.append('period', period);
     }
     
+    // Try to fix missing NET prices first if this is the first load
+    if (page === 1 && !cacheBuster) {
+      try {
+        await fetch('/api/fix-booking-nets', { method: 'POST' });
+        console.log('Attempted to fix missing NET prices');
+      } catch (err) {
+        console.log('Could not run NET price fix script:', err.message);
+      }
+    }
+    
     const res = await fetch(`/api/accounting?${params.toString()}`);
     const data = await res.json();
     if (!data.bookings || !data.bookings.length) {

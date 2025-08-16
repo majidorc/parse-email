@@ -1,32 +1,15 @@
-import { Pool } from 'pg';
 import { sql } from '@vercel/postgres';
 import { getSession } from './auth.js';
 
-// For Vercel serverless functions, we need to create a new connection each time
-const createPool = () => {
-  return new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 1, // Limit connections for serverless
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-};
-
 export default async function handler(req, res) {
-  let client;
-  let pool;
-  
   try {
-    pool = createPool();
-    client = await pool.connect();
     
     const type = req.query.type;
     
     // Add basic health check for debugging
     if (type === 'health') {
       try {
-        const testResult = await client.query('SELECT 1 as test');
+        const testResult = await sql`SELECT 1 as test`;
         return res.status(200).json({ 
           status: 'ok', 
           database: 'connected',
@@ -61,16 +44,16 @@ export default async function handler(req, res) {
 
     // Test database connection and table existence
     try {
-      const testResult = await client.query('SELECT 1 as test');
+      const testResult = await sql`SELECT 1 as test`;
 
       
       // Check if tables exist
-      const tablesResult = await client.query(`
+      const tablesResult = await sql`
         SELECT table_name 
         FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_name IN ('products', 'rates')
-      `);
+      `;
 
       
     } catch (dbErr) {
@@ -545,6 +528,9 @@ export default async function handler(req, res) {
         
         // Update the rate and recalculate net price in a single transaction
         if (booking.sku && rate) {
+          console.log(`[DEBUG] Processing rate update for booking ${booking_number}: SKU=${booking.sku}, newRate=${rate}, currentRate=${booking.rate}`);
+          console.log(`[DEBUG] Booking details: adult=${booking.adult}, child=${booking.child}`);
+          
           try {
             // Get the new rate information
             const { rows: rateRows } = await sql`
@@ -555,8 +541,10 @@ export default async function handler(req, res) {
               LIMIT 1
             `;
             
+            console.log(`[DEBUG] Rate query result: ${rateRows.length} rows found`);
             if (rateRows.length > 0) {
               const rateInfo = rateRows[0];
+              console.log(`[DEBUG] Rate info:`, rateInfo);
               
               // Calculate new net_total based on passengers and new rates
               let netTotal = 0;
@@ -579,6 +567,8 @@ export default async function handler(req, res) {
                 netTotal += Number(rateInfo.fee_adult);
               }
               
+              console.log(`[DEBUG] Calculated net total: ${netTotal}`);
+              
               // Update both rate and net_total in a single query
               const updateResult = await sql`
                 UPDATE bookings 
@@ -588,35 +578,42 @@ export default async function handler(req, res) {
                 WHERE booking_number = ${booking_number}
               `;
               
-              console.log(`Rate and net price update result:`, updateResult);
-              console.log(`Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
+              console.log(`[DEBUG] Update result:`, updateResult);
+              console.log(`[DEBUG] Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
               
               // Verify the update by reading back the data
               const { rows: verifyRows } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
               if (verifyRows.length > 0) {
-                console.log(`Verification - booking ${booking_number}: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
+                console.log(`[DEBUG] Verification - booking ${booking_number}: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
               }
             } else {
+              console.log(`[DEBUG] No rate info found for SKU=${booking.sku} and rate=${rate}`);
               // If no rate info found, just update the rate
               await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-              console.log(`Rate updated for booking ${booking_number}: rate=${rate} (no net price calculation possible)`);
+              console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (no net price calculation possible)`);
             }
           } catch (netPriceErr) {
-            console.error(`Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
+            console.error(`[DEBUG] Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
             // Fallback: just update the rate if net price calculation fails
             await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-            console.log(`Rate updated for booking ${booking_number}: rate=${rate} (net price calculation failed)`);
+            console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (net price calculation failed)`);
           }
         } else {
+          console.log(`[DEBUG] No SKU (${booking.sku}) or rate (${rate}) for net price calculation`);
           // No SKU or rate, just update the rate
           await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-          console.log(`Rate updated for booking ${booking_number}: rate=${rate} (no SKU for net price calculation)`);
+          console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (no SKU for net price calculation)`);
         }
+        
+        // Get the final updated data to return in response
+        const { rows: finalData } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
+        console.log(`[DEBUG] Final data to return:`, finalData[0]);
         
         return res.status(200).json({ 
           success: true, 
           message: `Rate updated for booking ${booking_number}`,
           rate: rate,
+          net_total: finalData[0]?.net_total,
           net_price_recalculated: true
         });
       } catch (err) {
@@ -632,12 +629,5 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('[PRODUCTS-RATES] Unhandled error:', error);
     res.status(500).json({ error: 'Internal server error', details: error.message });
-  } finally {
-    if (client) {
-      client.release();
-    }
-    if (pool) {
-      await pool.end();
-    }
   }
 } 

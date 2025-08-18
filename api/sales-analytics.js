@@ -1,6 +1,6 @@
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     const { startDate, endDate, period, updateChannels } = req.query;
     
@@ -173,11 +173,11 @@ export default async function handler(req, res) {
     // FIXED: Only 2 channels - Viator (bokun emails except GYG) and Website (info@tours.co.th + GYG)
     let salesByChannelResult;
     if (dateFilter) {
-      const { rows: salesByChannelResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
-            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN b.booking_number LIKE '1%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
@@ -192,18 +192,19 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
-            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN b.booking_number LIKE '1%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `, [startDateParam, endDateParam]);
+      salesByChannelResult = result;
     } else {
-      const { rows: salesByChannelResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
-            WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
+            WHEN b.booking_number LIKE '1%' THEN 'Viator'
             WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END AS channel,
@@ -217,18 +218,19 @@ export default async function handler(req, res) {
         GROUP BY 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
+            WHEN b.booking_number LIKE '1%' THEN 'Viator'
             WHEN p.sender ILIKE '%bokun.io%' THEN 'Viator'
-            WHEN p.sender ILIKE '%info@tours.co.th%' THEN 'Website'
             ELSE 'Website'
           END
         ORDER BY total_sales DESC
       `);
+      salesByChannelResult = result;
     }
     
     // Total summary for the period - ADDED CANCELLED FILTER
     let totalSummaryResult;
     if (dateFilter) {
-      const { rows: totalSummaryResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           COUNT(*) AS total_bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -236,10 +238,11 @@ export default async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE tour_date >= $1 AND tour_date < $2
+        WHERE tour_date >= $1 AND b.tour_date < $2
       `, [startDateParam, endDateParam]);
+      totalSummaryResult = result;
     } else {
-      const { rows: totalSummaryResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           COUNT(*) AS total_bookings,
           COALESCE(SUM(paid), 0) AS total_sales,
@@ -248,23 +251,25 @@ export default async function handler(req, res) {
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
       `);
+      totalSummaryResult = result;
     }
     
     // Sales by month (for chart) - ADDED CANCELLED FILTER
     let salesByMonthResult;
     if (dateFilter) {
-      const { rows: salesByMonthResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           DATE_TRUNC('month', tour_date) AS month,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= $1 AND tour_date < $2
+        WHERE tour_date >= $1 AND b.tour_date < $2
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `, [startDateParam, endDateParam]);
+      salesByMonthResult = result;
     } else {
-      const { rows: salesByMonthResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           DATE_TRUNC('month', tour_date) AS month,
           COUNT(*) AS bookings,
@@ -273,6 +278,7 @@ export default async function handler(req, res) {
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `);
+      salesByMonthResult = result;
     }
     
     // Top programs by sales - ADDED CANCELLED FILTER
@@ -280,20 +286,21 @@ export default async function handler(req, res) {
     // Will hold comparison for top programs when a date filter is active
     let topProgramsComparison = null;
     if (dateFilter) {
-      const { rows: topProgramsResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           program,
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= $1 AND tour_date < $2
+        WHERE tour_date >= $1 AND b.tour_date < $2
           AND program IS NOT NULL AND program != ''
         GROUP BY program
         ORDER BY sales DESC
         LIMIT 10
       `, [startDateParam, endDateParam]);
+      topProgramsResult = result;
     } else {
-      const { rows: topProgramsResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           program,
           COUNT(*) AS bookings,
@@ -304,12 +311,13 @@ export default async function handler(req, res) {
         ORDER BY sales DESC
         LIMIT 10
       `);
+      topProgramsResult = result;
     }
     
     // FIXED: Only 2 channels - Viator vs Website breakdown
     let viatorWebsiteResult;
     if (dateFilter) {
-      const { rows: viatorWebsiteResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
@@ -330,8 +338,9 @@ export default async function handler(req, res) {
             ELSE 'Website'
           END
       `, [startDateParam, endDateParam]);
+      viatorWebsiteResult = result;
     } else {
-      const { rows: viatorWebsiteResult } = await sql.query(`
+      const { rows: result } = await sql.query(`
         SELECT 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
@@ -351,6 +360,7 @@ export default async function handler(req, res) {
             ELSE 'Website'
           END
       `);
+      viatorWebsiteResult = result;
     }
     
     // Calculate benefit using the same logic as accounting.js
@@ -379,7 +389,7 @@ export default async function handler(req, res) {
     // Calculate total benefit for the period
     let totalBenefitResult;
     if (dateFilter) {
-      const { rows: totalBenefitResult } = await sql.query(
+      const { rows: result } = await sql.query(
         `SELECT 
           b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
          FROM bookings b
@@ -388,14 +398,16 @@ export default async function handler(req, res) {
          WHERE b.tour_date >= $1 AND b.tour_date < $2`,
         [startDateParam, endDateParam]
       );
+      totalBenefitResult = result;
     } else {
-      const { rows: totalBenefitResult } = await sql.query(
+      const { rows: result } = await sql.query(
         `SELECT 
           b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
          FROM bookings b
          LEFT JOIN products p ON b.sku = p.sku
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))`
       );
+      totalBenefitResult = result;
     }
     
          const totalBenefit = totalBenefitResult.reduce((sum, b) => {
@@ -460,7 +472,7 @@ export default async function handler(req, res) {
     let websiteBenefitResult;
     
     if (dateFilter) {
-             const { rows: viatorBenefitResult } = await sql.query(
+             const { rows: result } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -472,8 +484,9 @@ export default async function handler(req, res) {
           AND b.booking_number NOT LIKE 'GYG%'`,
          [startDateParam, endDateParam]
        );
+       viatorBenefitResult = result;
        
-       const { rows: websiteBenefitResult } = await sql.query(
+       const { rows: result2 } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -488,8 +501,9 @@ export default async function handler(req, res) {
           )`,
          [startDateParam, endDateParam]
        );
+       websiteBenefitResult = result2;
      } else {
-       const { rows: viatorBenefitResult } = await sql.query(
+       const { rows: result } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -499,8 +513,9 @@ export default async function handler(req, res) {
           WHERE pe.sender ILIKE '%bokun.io%'
           AND b.booking_number NOT LIKE 'GYG%'`
        );
+       viatorBenefitResult = result;
        
-       const { rows: websiteBenefitResult } = await sql.query(
+       const { rows: result2 } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -513,6 +528,7 @@ export default async function handler(req, res) {
             (pe.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
           )`
        );
+       websiteBenefitResult = result2;
     }
     
          const viatorBenefit = viatorBenefitResult.reduce((sum, b) => {
@@ -565,7 +581,13 @@ export default async function handler(req, res) {
       const prevEndDateParam = prevEndDate.toISOString().split('T')[0];
       
       // Get previous period data for comparison
-             const { rows: prevTotalSummaryResult } = await sql.query(`
+      let prevTotalSummaryResult;
+      let prevViatorWebsiteResult;
+      let prevTotalBenefitResult;
+      let prevViatorBenefitResult;
+      let prevWebsiteBenefitResult;
+      
+      const { rows: result } = await sql.query(`
          SELECT 
            COUNT(*) AS total_bookings,
            COALESCE(SUM(paid), 0) AS total_sales,
@@ -575,8 +597,9 @@ export default async function handler(req, res) {
          FROM bookings
          WHERE tour_date >= $1 AND tour_date < $2
        `, [prevStartDateParam, prevEndDateParam]);
+       prevTotalSummaryResult = result;
        
-       const { rows: prevViatorWebsiteResult } = await sql.query(`
+       const { rows: result2 } = await sql.query(`
          SELECT 
            CASE
              WHEN b.booking_number LIKE 'GYG%' THEN 'Website'
@@ -597,8 +620,9 @@ export default async function handler(req, res) {
              ELSE 'Website'
            END
        `, [prevStartDateParam, prevEndDateParam]);
+       prevViatorWebsiteResult = result2;
        
-       const { rows: prevTotalBenefitResult } = await sql.query(
+       const { rows: result3 } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -607,8 +631,9 @@ export default async function handler(req, res) {
           WHERE b.tour_date >= $1 AND b.tour_date < $2`,
          [prevStartDateParam, prevEndDateParam]
        );
+       prevTotalBenefitResult = result3;
        
-       const { rows: prevViatorBenefitResult } = await sql.query(
+       const { rows: result4 } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -620,8 +645,9 @@ export default async function handler(req, res) {
           AND b.booking_number NOT LIKE 'GYG%'`,
          [prevStartDateParam, prevEndDateParam]
        );
+       prevViatorBenefitResult = result4;
        
-       const { rows: prevWebsiteBenefitResult } = await sql.query(
+       const { rows: result5 } = await sql.query(
          `SELECT 
            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
           FROM bookings b
@@ -636,6 +662,7 @@ export default async function handler(req, res) {
           )`,
          [prevStartDateParam, prevEndDateParam]
        );
+       prevWebsiteBenefitResult = result5;
       
       // Calculate previous period values
              const prevTotalSale = parseFloat(prevTotalSummaryResult[0].total_sales);
@@ -682,7 +709,8 @@ export default async function handler(req, res) {
 
       // Top programs comparison: previous period vs current
       // Fetch previous period top programs (not limited by current top 10, but we'll merge and display current top 10 with deltas)
-             const { rows: prevTopProgramsResult } = await sql.query(`
+      let prevTopProgramsResult;
+      const { rows: result6 } = await sql.query(`
          SELECT 
            program,
            COUNT(*) AS bookings,
@@ -694,6 +722,7 @@ export default async function handler(req, res) {
          ORDER BY sales DESC
          LIMIT 50
        `, [prevStartDateParam, prevEndDateParam]);
+       prevTopProgramsResult = result6;
 
       // Build map for quick lookup of previous metrics
              const prevMap = new Map(prevTopProgramsResult.map(r => [r.program, r]));
@@ -755,7 +784,7 @@ export default async function handler(req, res) {
     // Find bookings that aren't captured by either Viator or Website categories
     let uncategorizedBenefitResult;
     if (dateFilter) {
-             const { rows: uncategorizedBenefitResult } = await sql.query(
+             const { rows: result } = await sql.query(
          `SELECT 
            b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, pe.sender
           FROM bookings b
@@ -770,8 +799,9 @@ export default async function handler(req, res) {
           )`,
          [startDateParam, endDateParam]
        );
+       uncategorizedBenefitResult = result;
      } else {
-       const { rows: uncategorizedBenefitResult } = await sql.query(
+       const { rows: result } = await sql.query(
          `SELECT 
            b.booking_number, b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, pe.sender
           FROM bookings b
@@ -784,6 +814,7 @@ export default async function handler(req, res) {
             pe.sender ILIKE '%info@tours.co.th%'
           )`
        );
+       uncategorizedBenefitResult = result;
     }
     
          const uncategorizedBenefit = uncategorizedBenefitResult.reduce((sum, b) => {

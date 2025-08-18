@@ -109,5 +109,5 @@ module.exports = async function handler(req, res) {
       error: 'Failed to fix booking nets',
       details: err.message 
     });
-
-};
+  }
+}

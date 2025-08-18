@@ -1,19 +1,13 @@
-import { Pool } from 'pg';
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+import { sql } from '@vercel/postgres';
 
 export default async function handler(req, res) {
-  const client = await pool.connect();
   try {
     // Bookings grouped by sender
-    const bySenderResult = await client.query(
+    const { rows: bySenderResult } = await sql.query(
       `SELECT sender, COUNT(*) AS count FROM parsed_emails GROUP BY sender ORDER BY count DESC`
     );
     // Bookings grouped by seller (parsed from body and sender)
-    const bySellerResult = await client.query(
+    const { rows: bySellerResult } = await sql.query(
       `SELECT
         CASE
           WHEN sender ILIKE '%info@tours.co.th%' THEN 'Website'
@@ -26,11 +20,11 @@ export default async function handler(req, res) {
       ORDER BY count DESC`
     );
     // Bookings grouped by source_email (inbox)
-    const bySourceResult = await client.query(
+    const { rows: bySourceResult } = await sql.query(
       `SELECT COALESCE(source_email, 'Unknown') AS source_email, COUNT(*) AS count FROM parsed_emails GROUP BY source_email ORDER BY count DESC`
     );
     // Bookings grouped by channel (OTA, WebSite, etc)
-    const byChannelResult = await client.query(
+    const { rows: byChannelResult } = await sql.query(
       `SELECT
         CASE
           WHEN sender ILIKE '%info@tours.co.th%' THEN 'Website'
@@ -43,33 +37,33 @@ export default async function handler(req, res) {
       ORDER BY count DESC`
     );
     // Total sale (sum of paid) and total bookings (count) from bookings table
-    const totalResult = await client.query('SELECT COALESCE(SUM(paid),0) AS total_sale, COUNT(*) AS total_bookings FROM bookings');
-    const totalSale = parseFloat(totalResult.rows[0].total_sale);
-    const totalBookings = parseInt(totalResult.rows[0].total_bookings, 10);
+    const { rows: totalResult } = await sql.query('SELECT COALESCE(SUM(paid),0) AS total_sale, COUNT(*) AS total_bookings FROM bookings');
+    const totalSale = parseFloat(totalResult[0].total_sale);
+    const totalBookings = parseInt(totalResult[0].total_bookings, 10);
     // Viator Sale (bokun emails except GYG)
-    const viatorResult = await client.query(`
+    const { rows: viatorResult } = await sql.query(`
       SELECT COALESCE(SUM(b.paid),0) AS viator_sale, COUNT(*) AS viator_count 
       FROM bookings b
       LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
       WHERE p.sender ILIKE '%bokun.io%' AND b.booking_number NOT LIKE 'GYG%'
     `);
-    const viatorSale = parseFloat(viatorResult.rows[0].viator_sale);
-    const viatorCount = parseInt(viatorResult.rows[0].viator_count, 10);
+    const viatorSale = parseFloat(viatorResult[0].viator_sale);
+    const viatorCount = parseInt(viatorResult[0].viator_count, 10);
     
     // Website Sale (info@tours.co.th + GYG bookings)
-    const websiteResult = await client.query(`
+    const { rows: websiteResult } = await sql.query(`
       SELECT COALESCE(SUM(b.paid),0) AS website_sale, COUNT(*) AS website_count 
       FROM bookings b
       LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
       WHERE (p.sender ILIKE '%info@tours.co.th%' OR b.booking_number LIKE 'GYG%')
     `);
-    const websiteSale = parseFloat(websiteResult.rows[0].website_sale);
-    const websiteCount = parseInt(websiteResult.rows[0].website_count, 10);
+    const websiteSale = parseFloat(websiteResult[0].website_sale);
+    const websiteCount = parseInt(websiteResult[0].website_count, 10);
     
 
     
     // NEW: Detailed breakdown by source_email (inbox) showing Viator vs Website
-    const bySourceChannelResult = await client.query(
+    const { rows: bySourceChannelResult } = await sql.query(
       `SELECT 
         COALESCE(source_email, 'Unknown') AS source_email,
         CASE
@@ -84,11 +78,11 @@ export default async function handler(req, res) {
     );
     
     res.status(200).json({
-      bySender: bySenderResult.rows,
-      bySupplier: bySellerResult.rows,
-      bySource: bySourceResult.rows,
-      byChannel: byChannelResult.rows,
-      bySourceChannel: bySourceChannelResult.rows, // NEW: detailed breakdown
+      bySender: bySenderResult,
+      bySupplier: bySellerResult,
+      bySource: bySourceResult,
+      byChannel: byChannelResult,
+      bySourceChannel: bySourceChannelResult, // NEW: detailed breakdown
       totalSale,
       totalBookings,
       viatorSale,
@@ -98,7 +92,5 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
   }
 } 

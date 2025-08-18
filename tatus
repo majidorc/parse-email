@@ -1,0 +1,5 @@
+[33mbbc3086[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix incorrect dates in CHANGELOG - all older versions should be 2024, not 2025
+[33m9811f9e[m Add comprehensive debugging for rate change net price updates
+[33m1563fd6[m Update README and CHANGELOG for version 3.2.0 - Rate change net price updates and database fixes
+[33mb45a24f[m Fix tour endpoint in products-rates API to use @vercel/postgres consistently
+[33me924f5a[m Fix products-rates API: use consistent @vercel/postgres connection and add debug logging

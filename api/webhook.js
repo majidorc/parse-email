@@ -125,11 +125,22 @@ async function handleTelegramCallback(callbackQuery, res) {
             return res.status(200).send('Error checking column');
         }
     }
-        // Build the update query
-        const setClauses = Object.keys(update).map((col, i) => `${col} = $${i + 2}`);
-        const values = [bookingId, ...Object.values(update)];
-        if (setClauses.length > 0) {
-    
+        // Build the update query with proper validation
+        const validUpdates = {};
+        for (const [key, value] of Object.entries(update)) {
+            if (value !== undefined && value !== null && key.trim() !== '') {
+                validUpdates[key] = value;
+            }
+        }
+        
+        if (Object.keys(validUpdates).length > 0) {
+            const setClauses = Object.keys(validUpdates).map((col, i) => `${col} = $${i + 2}`);
+            const values = [bookingId, ...Object.values(validUpdates)];
+            
+            // Log the query for debugging
+            console.log('Update query:', `UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`);
+            console.log('Values:', values);
+            
             await sql.query(`UPDATE bookings SET ${setClauses.join(', ')} WHERE booking_number = $1`, values);
         }
         // Fetch the updated booking

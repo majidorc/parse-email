@@ -1,32 +1,15 @@
-const { Pool } = require('pg');
-
-// For Vercel serverless functions, we need to create a new connection each time
-const createPool = () => {
-  return new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 1,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-};
+const { sql } = require('@vercel/postgres');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let client;
-  let pool;
-  
   try {
-    pool = createPool();
-    client = await pool.connect();
-    
     console.log('Starting to fix booking net totals...');
     
     // Step 1: Get all bookings that need fixing (net_total is NULL or 0)
-    const bookingsToFix = await client.query(`
+    const { rows: bookingsToFix } = await sql.query(`
       SELECT DISTINCT b.booking_number, b.sku, b.adult, b.child, b.infant
       FROM bookings b
       WHERE b.net_total IS NULL OR b.net_total = 0
@@ -42,7 +25,7 @@ module.exports = async function handler(req, res) {
     for (const booking of bookingsToFix.rows) {
       try {
         // Get the rate for this SKU
-        const rateResult = await client.query(`
+        const { rows: rateResult } = await sql.query(`
           SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
           FROM rates r
           JOIN products p ON r.product_id = p.id
@@ -50,8 +33,8 @@ module.exports = async function handler(req, res) {
           LIMIT 1
         `, [booking.sku]);
         
-        if (rateResult.rows.length > 0) {
-          const rate = rateResult.rows[0];
+        if (rateResult.length > 0) {
+          const rate = rateResult[0];
           
           // Calculate net_total based on passengers and rates
           let netTotal = 0;
@@ -75,7 +58,7 @@ module.exports = async function handler(req, res) {
           }
           
           // Update the booking with calculated net_total
-          await client.query(`
+          await sql.query(`
             UPDATE bookings 
             SET net_total = $1, updated_fields = COALESCE(updated_fields, '{}'::jsonb) || '{"net_total_fixed": true}'::jsonb
             WHERE booking_number = $2
@@ -94,7 +77,7 @@ module.exports = async function handler(req, res) {
     }
     
     // Step 3: Get summary of what was fixed
-    const summaryResult = await client.query(`
+    const { rows: summaryResult } = await sql.query(`
       SELECT 
         COUNT(*) as total_bookings,
         COUNT(CASE WHEN net_total > 0 THEN 1 END) as bookings_with_net,
@@ -103,7 +86,7 @@ module.exports = async function handler(req, res) {
       FROM bookings
     `);
     
-    const summary = summaryResult.rows[0];
+            const summary = summaryResult[0];
     
     console.log(`Fix completed! Fixed: ${fixedCount}, Errors: ${errorCount}`);
     
@@ -126,12 +109,5 @@ module.exports = async function handler(req, res) {
       error: 'Failed to fix booking nets',
       details: err.message 
     });
-  } finally {
-    if (client) {
-      client.release();
-    }
-    if (pool) {
-      await pool.end();
-    }
-  }
+
 };

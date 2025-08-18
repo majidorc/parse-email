@@ -1,36 +1,18 @@
-const { Pool } = require('pg');
-
-// For Vercel serverless functions, we need to create a new connection each time
-// This is the recommended pattern for Neon + Vercel
-const createPool = () => {
-  return new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 1, // Limit connections for serverless
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-};
+const { sql } = require('@vercel/postgres');
 
 module.exports = async function handler(req, res) {
-  let client;
-  let pool;
-  
   try {
-    pool = createPool();
-    client = await pool.connect();
-    
     const { method } = req;
     
     switch (method) {
       case 'GET':
-        await handleGet(req, res, client);
+        await handleGet(req, res);
         break;
       case 'POST':
-        await handlePost(req, res, client);
+        await handlePost(req, res);
         break;
       case 'PUT':
-        await handlePut(req, res, client);
+        await handlePut(req, res);
         break;
       default:
         res.setHeader('Allow', ['GET', 'POST', 'PUT']);
@@ -71,17 +53,10 @@ module.exports = async function handler(req, res) {
         code: err.code
       });
     }
-  } finally {
-    if (client) {
-      client.release();
-    }
-    if (pool) {
-      await pool.end();
-    }
   }
 }
 
-async function handleGet(req, res, client) {
+async function handleGet(req, res) {
   const { id, analytics, programs, bookings } = req.query;
   
   if (id && bookings === 'true') {
@@ -92,7 +67,7 @@ async function handleGet(req, res, client) {
       const offset = (page - 1) * pageSize;
 
       // Count total
-      const countResult = await client.query(`
+      const { rows: countResult } = await sql.query(`
         SELECT COUNT(*)::int AS total
         FROM bookings b
         WHERE b.sku IN (
@@ -102,11 +77,11 @@ async function handleGet(req, res, client) {
         )
       `, [id]);
 
-      const total = countResult.rows[0]?.total || 0;
+      const total = countResult[0]?.total || 0;
       const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
       // Get paged bookings for specific supplier
-      const bookingsResult = await client.query(`
+      const { rows: bookingsResult } = await sql.query(`
         SELECT 
           b.booking_number,
           b.sku,
@@ -128,7 +103,7 @@ async function handleGet(req, res, client) {
       `, [id, pageSize, offset]);
       
       return res.status(200).json({
-        bookings: bookingsResult.rows,
+        bookings: bookingsResult,
         total,
         page,
         pageSize,
@@ -143,7 +118,7 @@ async function handleGet(req, res, client) {
   if (id && programs === 'true') {
     try {
       // Get programs for specific supplier
-      const programsResult = await client.query(`
+      const { rows: programsResult } = await sql.query(`
         SELECT 
           p.sku,
           p.program as name,
@@ -157,7 +132,7 @@ async function handleGet(req, res, client) {
       `, [id]);
       
       // Get summary totals
-      const summaryResult = await client.query(`
+      const { rows: summaryResult } = await sql.query(`
         SELECT 
           COUNT(DISTINCT p.sku) as total_programs,
           COUNT(DISTINCT b.booking_number) as total_bookings,
@@ -168,7 +143,7 @@ async function handleGet(req, res, client) {
       `, [id]);
       
       // DEBUG: Get raw data to investigate
-      const debugResult = await client.query(`
+      const { rows: debugResult } = await sql.query(`
         SELECT 
           'products' as table_name,
           p.id as product_id,
@@ -194,11 +169,11 @@ async function handleGet(req, res, client) {
       `, [id]);
       
       return res.status(200).json({
-        programs: programsResult.rows,
-        total_programs: summaryResult.rows[0]?.total_programs || 0,
-        total_bookings: summaryResult.rows[0]?.total_bookings || 0,
-        total_net: summaryResult.rows[0]?.total_net || 0,
-        debug: debugResult.rows
+        programs: programsResult,
+                  total_programs: summaryResult[0]?.total_programs || 0,
+          total_bookings: summaryResult[0]?.total_bookings || 0,
+          total_net: summaryResult[0]?.total_net || 0,
+                  debug: debugResult
       });
     } catch (error) {
       console.error('Error fetching supplier programs:', error);
@@ -208,21 +183,21 @@ async function handleGet(req, res, client) {
   
   if (id) {
     // Get specific supplier
-    const result = await client.query(
-      'SELECT * FROM suppliers WHERE id = $1',
-      [id]
-    );
+          const { rows: result } = await sql.query(
+        'SELECT * FROM suppliers WHERE id = $1',
+        [id]
+      );
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Supplier not found' });
-    }
-    
-    return res.status(200).json(result.rows[0]);
+          if (result.length === 0) {
+        return res.status(404).json({ error: 'Supplier not found' });
+      }
+      
+      return res.status(200).json(result[0]);
   }
   
   if (analytics === 'true') {
     // Get suppliers analytics
-    const analyticsResult = await client.query(`
+          const { rows: analyticsResult } = await sql.query(`
       SELECT 
         COUNT(DISTINCT s.id) as suppliers_count,
         COUNT(DISTINCT p.sku) as programs_count,
@@ -239,11 +214,11 @@ async function handleGet(req, res, client) {
       LEFT JOIN bookings b ON p.sku = b.sku
     `);
     
-    return res.status(200).json(analyticsResult.rows[0]);
+            return res.status(200).json(analyticsResult[0]);
   }
   
   // Get all suppliers with their stats - SIMPLE VERSION
-  const result = await client.query(`
+  const { rows: result } = await sql.query(`
     SELECT 
       s.id,
       s.name,
@@ -273,10 +248,10 @@ async function handleGet(req, res, client) {
     ORDER BY s.name
   `);
   
-  res.status(200).json(result.rows);
+  res.status(200).json(result);
 }
 
-async function handlePost(req, res, client) {
+async function handlePost(req, res) {
   const { name } = req.body;
   
   if (!name) {
@@ -284,12 +259,12 @@ async function handlePost(req, res, client) {
   }
   
   try {
-    const result = await client.query(
+    const { rows: result } = await sql.query(
       'INSERT INTO suppliers (name) VALUES ($1) RETURNING *',
       [name]
     );
     
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (err) {
     if (err.code === '23505') { // Unique violation
       return res.status(409).json({ error: 'Supplier with this name already exists' });
@@ -298,7 +273,7 @@ async function handlePost(req, res, client) {
   }
 }
 
-async function handlePut(req, res, client) {
+async function handlePut(req, res) {
   const { id } = req.query;
   const { name } = req.body;
   
@@ -307,16 +282,16 @@ async function handlePut(req, res, client) {
   }
   
   try {
-    const result = await client.query(
+    const { rows: result } = await sql.query(
       'UPDATE suppliers SET name = $1 WHERE id = $2 RETURNING *',
       [name, id]
     );
     
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ error: 'Supplier not found' });
     }
     
-    res.status(200).json(result.rows[0]);
+    res.status(200).json(result[0]);
   } catch (err) {
     if (err.code === '23505') { // Unique violation
       return res.status(409).json({ error: 'Supplier with this name already exists' });

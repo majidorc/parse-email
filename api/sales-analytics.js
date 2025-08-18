@@ -238,7 +238,7 @@ module.exports = async function handler(req, res) {
           COALESCE(SUM(child), 0) AS total_children,
           COALESCE(SUM(infant), 0) AS total_infants
         FROM bookings
-        WHERE tour_date >= $1 AND b.tour_date < $2
+        WHERE tour_date >= $1 AND tour_date < $2
       `, [startDateParam, endDateParam]);
       totalSummaryResult = result;
     } else {
@@ -263,7 +263,7 @@ module.exports = async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= $1 AND b.tour_date < $2
+        WHERE tour_date >= $1 AND tour_date < $2
         GROUP BY DATE_TRUNC('month', tour_date)
         ORDER BY month
       `, [startDateParam, endDateParam]);
@@ -292,7 +292,7 @@ module.exports = async function handler(req, res) {
           COUNT(*) AS bookings,
           COALESCE(SUM(paid), 0) AS sales
         FROM bookings
-        WHERE tour_date >= $1 AND b.tour_date < $2
+        WHERE tour_date >= $1 AND tour_date < $2
           AND program IS NOT NULL AND program != ''
         GROUP BY program
         ORDER BY sales DESC
@@ -329,7 +329,7 @@ module.exports = async function handler(req, res) {
           COALESCE(SUM(b.paid), 0) AS sales
         FROM bookings b
         LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
-        WHERE b.tour_date >= $1 AND tour_date < $2
+        WHERE b.tour_date >= $1 AND b.tour_date < $2
         GROUP BY 
           CASE
             WHEN b.booking_number LIKE 'GYG%' THEN 'Website'

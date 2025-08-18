@@ -16,13 +16,13 @@ module.exports = async function handler(req, res) {
       AND b.sku IS NOT NULL
     `);
     
-    console.log(`Found ${bookingsToFix.rows.length} bookings to fix`);
+    console.log(`Found ${bookingsToFix.length} bookings to fix`);
     
     let fixedCount = 0;
     let errorCount = 0;
     
     // Step 2: Fix each booking
-    for (const booking of bookingsToFix.rows) {
+    for (const booking of bookingsToFix) {
       try {
         // Get the rate for this SKU
         const { rows: rateResult } = await sql.query(`

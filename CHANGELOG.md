@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2025-01-16
+
+### Added
+- **API Consolidation**: Combined multiple API endpoints to reduce Vercel function count for Hobby plan compliance
+- **Unified Email Management**: Combined email-logs and track-email APIs into single email-management endpoint
+- **Consolidated Analytics**: Merged parsed-emails-analytics and sales-analytics into unified analytics API
+- **Booking Utilities**: Combined fix-booking-nets and update-old-bookings-rates into single booking-utilities endpoint
+
+### Changed
+- **API Structure**: Reduced from 14 to 11 serverless functions to fit Vercel Hobby plan 12-function limit
+- **Endpoint Routing**: New consolidated APIs use query parameters to route to specific functionality
+- **Backward Compatibility**: All existing functionality preserved through consolidated endpoints
+
+### Technical
+- **Function Consolidation**: 
+  - `/api/email-management` handles both email logs and tracking
+  - `/api/analytics` handles both parsed emails and sales analytics
+  - `/api/booking-utilities` handles both booking fixes and rate updates
+- **Query Parameter Routing**: Uses `type` parameter to determine which analytics function to execute
+- **Action-Based Routing**: Uses `action` parameter for booking utilities to select specific operation
+
 ## [3.3.0] - 2025-01-16
 
 ### Added

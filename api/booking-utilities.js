@@ -1,10 +1,37 @@
 const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
 module.exports = async function handler(req, res) {
+  const session = getSession(req);
+  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const userRole = session.role;
+  if (userRole !== 'admin') return res.status(403).json({ error: 'Forbidden: Admins only' });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  try {
+    const { action } = req.body;
+    
+    if (action === 'fix-booking-nets') {
+      return await handleFixBookingNets(req, res);
+    } else if (action === 'update-old-bookings-rates') {
+      return await handleUpdateOldBookingsRates(req, res);
+    } else {
+      return res.status(400).json({ error: 'Invalid action. Use "fix-booking-nets" or "update-old-bookings-rates"' });
+    }
+  } catch (err) {
+    console.error('Booking utilities error:', err);
+    res.status(500).json({ 
+      error: 'Failed to process booking utilities request',
+      details: err.message 
+    });
+  }
+};
+
+// Handle fixing booking net totals
+async function handleFixBookingNets(req, res) {
   try {
     console.log('Starting to fix booking net totals...');
     
@@ -86,12 +113,13 @@ module.exports = async function handler(req, res) {
       FROM bookings
     `);
     
-            const summary = summaryResult[0];
+    const summary = summaryResult[0];
     
     console.log(`Fix completed! Fixed: ${fixedCount}, Errors: ${errorCount}`);
     
     res.status(200).json({
       success: true,
+      action: 'fix-booking-nets',
       message: `Fixed ${fixedCount} bookings`,
       summary: {
         total_bookings: summary.total_bookings,
@@ -107,6 +135,67 @@ module.exports = async function handler(req, res) {
     console.error('Error fixing booking nets:', err);
     res.status(500).json({ 
       error: 'Failed to fix booking nets',
+      details: err.message 
+    });
+  }
+}
+
+// Handle updating old bookings rates
+async function handleUpdateOldBookingsRates(req, res) {
+  try {
+    // Find bookings that have SKU but no rate
+    const { rows: oldBookings } = await sql`
+      SELECT booking_number, sku, program 
+      FROM bookings 
+      WHERE sku IS NOT NULL AND sku != '' 
+      AND (rate IS NULL OR rate = '')
+      ORDER BY tour_date DESC
+    `;
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const booking of oldBookings) {
+      try {
+        // Find the best matching rate for this SKU
+        const { rows: rates } = await sql`
+          SELECT r.name, r.net_adult, r.net_child
+          FROM rates r
+          JOIN products p ON r.product_id = p.id
+          WHERE p.sku = ${booking.sku}
+          ORDER BY r.id ASC
+          LIMIT 1
+        `;
+
+        if (rates.length > 0) {
+          // Update the booking with the first available rate
+          await sql`
+            UPDATE bookings 
+            SET rate = ${rates[0].name}
+            WHERE booking_number = ${booking.booking_number}
+          `;
+          updated++;
+        } else {
+          skipped++;
+        }
+      } catch (err) {
+        console.error(`Error updating booking ${booking.booking_number}:`, err);
+        skipped++;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      action: 'update-old-bookings-rates',
+      updated,
+      skipped,
+      total: oldBookings.length
+    });
+
+  } catch (err) {
+    console.error('Error updating old bookings rates:', err);
+    return res.status(500).json({ 
+      error: 'Failed to update old bookings rates', 
       details: err.message 
     });
   }

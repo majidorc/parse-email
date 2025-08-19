@@ -635,6 +635,133 @@ async function handleSalesAnalytics(req, res) {
       (parseInt(websiteChannelData.total_children) || 0) + 
       (parseInt(websiteChannelData.total_infants) || 0) : 0;
 
+    // Generate comparison data with previous period
+    let comparison = null;
+    if (dateFilter && (period === 'thisMonth' || period === 'lastMonth' || period === 'thisWeek' || period === 'lastWeek')) {
+      try {
+        // Calculate previous period dates
+        let prevStart, prevEnd;
+        if (period === 'thisMonth') {
+          prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          prevEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else if (period === 'lastMonth') {
+          prevStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+          prevEnd = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        } else if (period === 'thisWeek') {
+          prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+          prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+        } else if (period === 'lastWeek') {
+          prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 14);
+          prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+        }
+
+        // Get previous period data
+        const { rows: prevViatorResult } = await sql.query(`
+          SELECT 
+            COUNT(*) AS bookings,
+            COALESCE(SUM(b.paid), 0) AS sales
+          FROM bookings b
+          LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+          WHERE b.tour_date >= $1 AND b.tour_date < $2
+          AND p.sender ILIKE '%bokun.io%'
+          AND b.booking_number NOT LIKE 'GYG%'
+        `, [prevStart.toISOString().split('T')[0], prevEnd.toISOString().split('T')[0]]);
+
+        const { rows: prevWebsiteResult } = await sql.query(`
+          SELECT 
+            COUNT(*) AS bookings,
+            COALESCE(SUM(b.paid), 0) AS sales
+          FROM bookings b
+          LEFT JOIN parsed_emails p ON b.booking_number = p.booking_number
+          WHERE b.tour_date >= $1 AND b.tour_date < $2
+          AND (
+            b.booking_number LIKE 'GYG%' OR
+            p.sender ILIKE '%info@tours.co.th%' OR
+            (p.sender IS NULL AND b.booking_number NOT LIKE 'GYG%')
+          )
+        `, [prevStart.toISOString().split('T')[0], prevEnd.toISOString().split('T')[0]]);
+
+        const { rows: prevTotalResult } = await sql.query(`
+          SELECT 
+            COUNT(*) AS bookings,
+            COALESCE(SUM(paid), 0) AS sales
+          FROM bookings
+          WHERE tour_date >= $1 AND tour_date < $2
+        `, [prevStart.toISOString().split('T')[0], prevEnd.toISOString().split('T')[0]]);
+
+        // Calculate previous period benefit
+        const { rows: prevBenefitResult } = await sql.query(`
+          SELECT 
+            b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
+          FROM bookings b
+          LEFT JOIN products p ON b.sku = p.sku
+          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
+          WHERE b.tour_date >= $1 AND b.tour_date < $2
+        `, [prevStart.toISOString().split('T')[0], prevEnd.toISOString().split('T')[0]]);
+
+        const prevTotalBenefit = prevBenefitResult.reduce((sum, b) => {
+          const netAdult = Number(b.net_adult) || 0;
+          const netChild = Number(b.net_child) || 0;
+          const adult = Number(b.adult) || 0;
+          const child = Number(b.child) || 0;
+          const paid = Number(b.paid) || 0;
+          const netTotal = hasNetTotalColumn && b.net_total !== null ? Number(b.net_total) : (netAdult * adult + netChild * child);
+          return sum + (paid - netTotal);
+        }, 0);
+
+        // Calculate percentage changes
+        const prevViatorSale = parseFloat(prevViatorResult[0]?.sales || 0);
+        const prevWebsiteSale = parseFloat(prevWebsiteResult[0]?.sales || 0);
+        const prevTotalSale = parseFloat(prevTotalResult[0]?.sales || 0);
+        const prevTotalBenefitValue = prevTotalBenefit;
+
+        const calculatePercentChange = (current, previous) => {
+          if (previous === 0) return current > 0 ? 100 : 0;
+          return ((current - previous) / previous) * 100;
+        };
+
+        comparison = {
+          totalSale: {
+            percentChange: calculatePercentChange(viatorSale + websiteSale, prevTotalSale),
+            currentValue: viatorSale + websiteSale,
+            previousValue: prevTotalSale
+          },
+          viatorSale: {
+            percentChange: calculatePercentChange(viatorSale, prevViatorSale),
+            currentValue: viatorSale,
+            previousValue: prevViatorSale
+          },
+          websiteSale: {
+            percentChange: calculatePercentChange(websiteSale, prevWebsiteSale),
+            currentValue: websiteSale,
+            previousValue: prevWebsiteSale
+          },
+          totalBenefit: {
+            percentChange: calculatePercentChange(totalBenefit, prevTotalBenefitValue),
+            currentValue: totalBenefit,
+            previousValue: prevTotalBenefitValue
+          },
+          viatorBenefit: {
+            percentChange: calculatePercentChange(viatorBenefit, 0), // Assuming no previous viator benefit data
+            currentValue: viatorBenefit,
+            previousValue: 0
+          },
+          websiteBenefit: {
+            percentChange: calculatePercentChange(websiteBenefit, 0), // Assuming no previous website benefit data
+            currentValue: websiteBenefit,
+            previousValue: 0
+          },
+          previousPeriod: {
+            startDate: prevStart.toISOString().split('T')[0],
+            endDate: prevEnd.toISOString().split('T')[0]
+          }
+        };
+      } catch (err) {
+        console.error('Error generating comparison data:', err);
+        // Continue without comparison data
+      }
+    }
+
     res.status(200).json({
       salesByChannel: salesByChannelResult,
       totalSummary: totalSummaryResult[0],
@@ -650,6 +777,7 @@ async function handleSalesAnalytics(req, res) {
       viatorBenefit,
       websiteBenefit,
       periodDays,
+      comparison,
       debug: {
         availableChannels: debugChannels,
         nullChannelsCount: nullChannels[0].null_count,

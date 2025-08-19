@@ -5232,15 +5232,10 @@ async function fixBookingNets() {
   fixBtn.disabled = true;
 
   try {
-            const response = await fetch('/api/booking-utilities', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'fix-booking-nets' })
-        });
+    const response = await fetch('/api/booking-utilities', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'fix-booking-nets' })
     });
     
     if (response.ok) {

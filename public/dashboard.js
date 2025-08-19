@@ -2394,146 +2394,254 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-    
-    // Update new average summary cards
-    const avgSaleViator = document.getElementById('analytics-avg-sale-viator');
-    const avgSaleWebsite = document.getElementById('analytics-avg-sale-website');
-    const avgBenefitViator = document.getElementById('analytics-avg-benefit-viator');
-    const avgBenefitWebsite = document.getElementById('analytics-avg-benefit-website');
-    
-    // Get data for calculations
-    const viatorCount = data.viatorCount || 0;
-    const websiteCount = data.websiteCount || 0;
-    const viatorSale = data.viatorSale || 0;
-    const websiteSale = data.websiteSale || 0;
-    
-    // Calculate average sale per day for each channel
-    const periodDays = data.periodDays || 1; // Default to 1 day if not provided
-    const avgViatorSale = periodDays > 0 ? viatorSale / periodDays : 0;
-    const avgWebsiteSale = periodDays > 0 ? websiteSale / periodDays : 0;
-    
-    if (avgSaleViator) avgSaleViator.textContent = Number(avgViatorSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (avgSaleWebsite) avgSaleWebsite.textContent = Number(avgWebsiteSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    
-    // Update the missing analytics metrics (Total Sale, OTA Sale, Website Sale, OTA vs Website)
-    const analyticsTotalBookings = document.getElementById('analytics-total-bookings');
-    const analyticsNewBookings = document.getElementById('analytics-new-bookings');
-    const analyticsTotalEarnings = document.getElementById('analytics-total-earnings');
-    const analyticsDone = document.getElementById('analytics-done');
-    const analyticsBooked = document.getElementById('analytics-booked');
-    const analyticsOtaCount = document.getElementById('analytics-ota-count');
-    const analyticsWebsiteCount = document.getElementById('analytics-website-count');
-    const analyticsViatorWebsiteTotal = document.getElementById('analytics-viator-website-total');
-    
-    if (analyticsTotalBookings) analyticsTotalBookings.textContent = Number(data.totalSummary.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            if (analyticsNewBookings) analyticsNewBookings.textContent = Number(data.viatorSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsTotalEarnings) analyticsTotalEarnings.textContent = Number(data.websiteSale || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-          if (analyticsDone) analyticsDone.textContent = data.viatorCount || 0;
-    if (analyticsBooked) analyticsBooked.textContent = data.websiteCount || 0;
-          if (analyticsOtaCount) analyticsOtaCount.textContent = data.viatorCount || 0;
-    if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = data.websiteCount || 0;
-    
-    // Update Viator vs Website total
-    if (analyticsViatorWebsiteTotal) {
+      
+      // Update average summary cards
+      const avgSaleViator = document.getElementById('analytics-avg-sale-viator');
+      const avgSaleWebsite = document.getElementById('analytics-avg-sale-website');
+      const avgBenefitViator = document.getElementById('analytics-avg-benefit-viator');
+      const avgBenefitWebsite = document.getElementById('analytics-avg-benefit-website');
+      
+      // Get data for calculations
       const viatorCount = data.viatorCount || 0;
       const websiteCount = data.websiteCount || 0;
-      const totalCount = viatorCount + websiteCount;
-      analyticsViatorWebsiteTotal.textContent = `Total: ${totalCount}`;
-    }
-    
-    // Update the new benefit fields
-    const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');
-    const analyticsViatorBenefit = document.getElementById('analytics-viator-benefit');
-    const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
-    const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
-    const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
-    const analyticsBenefitBreakdown = document.getElementById('analytics-benefit-breakdown');
-    const analyticsBenefitPercentages = document.getElementById('analytics-benefit-percentages');
-    
-    // Use actual benefit data from API
-    const totalBenefit = data.totalBenefit || 0;
-    const viatorBenefit = data.viatorBenefit || 0;
-    const websiteBenefit = data.websiteBenefit || 0;
-    const totalPassengersCount = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
-    
-    // Calculate average benefit per day for each channel
-    const avgViatorBenefit = periodDays > 0 ? viatorBenefit / periodDays : 0;
-    const avgWebsiteBenefit = periodDays > 0 ? websiteBenefit / periodDays : 0;
-    
-    // Calculate benefit percentages of sales
-    const viatorBenefitPercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
-    const websiteBenefitPercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
-    
-    // Update average benefit cards
-    if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    
-    if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    
-    // Update individual benefit percentages
-    const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
-    const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');
-    
-    if (analyticsViatorBenefitPercentage) {
-      analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitPercent.toFixed(2)}%`;
-    }
-    if (analyticsWebsiteBenefitPercentage) {
-      analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitPercent.toFixed(2)}%`;
-    }
-    
-    // NEW: Update comparison indicators for key metrics
-    if (data.comparison) {
-      // Helper function to format comparison text with color
-      const formatComparison = (percentChange, metricName) => {
-        if (percentChange === null || percentChange === undefined) {
-          return `<span class="text-gray-500">No data</span>`;
+      const viatorSale = data.viatorSale || 0;
+      const websiteSale = data.websiteSale || 0;
+      
+      // Calculate average sale per day for each channel
+      const periodDays = data.periodDays || 1;
+      const avgViatorSale = periodDays > 0 ? viatorSale / periodDays : 0;
+      const avgWebsiteSale = periodDays > 0 ? websiteSale / periodDays : 0;
+      
+      if (avgSaleViator) avgSaleViator.textContent = Number(avgViatorSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (avgSaleWebsite) avgSaleWebsite.textContent = Number(avgWebsiteSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      // Update analytics metrics
+      const analyticsTotalBookings = document.getElementById('analytics-total-bookings');
+      const analyticsNewBookings = document.getElementById('analytics-new-bookings');
+      const analyticsTotalEarnings = document.getElementById('analytics-total-earnings');
+      const analyticsDone = document.getElementById('analytics-done');
+      const analyticsBooked = document.getElementById('analytics-booked');
+      const analyticsOtaCount = document.getElementById('analytics-ota-count');
+      const analyticsWebsiteCount = document.getElementById('analytics-website-count');
+      const analyticsViatorWebsiteTotal = document.getElementById('analytics-viator-website-total');
+      
+      if (analyticsTotalBookings) analyticsTotalBookings.textContent = Number(data.totalSummary?.total_sales || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (analyticsNewBookings) analyticsNewBookings.textContent = Number(viatorSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (analyticsTotalEarnings) analyticsTotalEarnings.textContent = Number(websiteSale).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (analyticsDone) analyticsDone.textContent = viatorCount;
+      if (analyticsBooked) analyticsBooked.textContent = websiteCount;
+      if (analyticsOtaCount) analyticsOtaCount.textContent = viatorCount;
+      if (analyticsWebsiteCount) analyticsWebsiteCount.textContent = websiteCount;
+      
+      // Update Viator vs Website total
+      if (analyticsViatorWebsiteTotal) {
+        const totalCount = viatorCount + websiteCount;
+        analyticsViatorWebsiteTotal.textContent = `Total: ${totalCount}`;
+      }
+      
+      // Update benefit fields
+      const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');
+      const analyticsViatorBenefit = document.getElementById('analytics-viator-benefit');
+      const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
+      const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
+      const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
+      
+      const totalBenefit = data.totalBenefit || 0;
+      const viatorBenefit = data.viatorBenefit || 0;
+      const websiteBenefit = data.websiteBenefit || 0;
+      const totalPassengersCount = (data.viatorPassengers || 0) + (data.websitePassengers || 0);
+      
+      // Calculate average benefit per day
+      const avgViatorBenefit = periodDays > 0 ? viatorBenefit / periodDays : 0;
+      const avgWebsiteBenefit = periodDays > 0 ? websiteBenefit / periodDays : 0;
+      
+      // Calculate benefit percentages
+      const viatorBenefitPercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
+      const websiteBenefitPercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
+      
+      if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      // Update benefit percentages
+      const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
+      const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');
+      
+      if (analyticsViatorBenefitPercentage) {
+        analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitPercent.toFixed(2)}%`;
+      }
+      if (analyticsWebsiteBenefitPercentage) {
+        analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitPercent.toFixed(2)}%`;
+      }
+      
+      // Handle comparison data
+      if (data.comparison) {
+        // Helper function to format comparison text with color
+        const formatComparison = (percentChange, metricName) => {
+          if (percentChange === null || percentChange === undefined) {
+            return `<span class="text-gray-500">No data</span>`;
+          }
+          const isPositive = percentChange >= 0;
+          const color = isPositive ? 'text-green-600' : 'text-red-600';
+          const arrow = isPositive ? '↗' : '↘';
+          const sign = isPositive ? '+' : '';
+          return `<span class="${color}">${arrow} ${sign}${percentChange.toFixed(1)}%</span>`;
+        };
+        
+        // Update all comparison elements
+        const comparisonElements = [
+          { id: 'analytics-total-sale-comparison', data: data.comparison.totalSale?.percentChange },
+          { id: 'analytics-viator-sale-comparison', data: data.comparison.viatorSale?.percentChange },
+          { id: 'analytics-website-sale-comparison', data: data.comparison.websiteSale?.percentChange },
+          { id: 'analytics-total-benefit-comparison', data: data.comparison.totalBenefit?.percentChange },
+          { id: 'analytics-viator-benefit-comparison', data: data.comparison.viatorBenefit?.percentChange },
+          { id: 'analytics-website-benefit-comparison', data: data.comparison.websiteBenefit?.percentChange }
+        ];
+        
+        comparisonElements.forEach(({ id, data: percentChange }) => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.innerHTML = formatComparison(percentChange, 'Metric');
+          }
+        });
+        
+        // Show comparison summary
+        const comparisonSummary = document.getElementById('comparison-summary');
+        if (comparisonSummary) {
+          comparisonSummary.style.display = 'block';
         }
-        const isPositive = percentChange >= 0;
-        const color = isPositive ? 'text-green-600' : 'text-red-600';
-        const arrow = isPositive ? '↗' : '↘';
-        const sign = isPositive ? '+' : '';
-        return `<span class="${color}">${arrow} ${sign}${percentChange.toFixed(1)}%</span>`;
-      };
-      
-      // Update Total Sale comparison
-      const analyticsTotalSaleComparison = document.getElementById('analytics-total-sale-comparison');
-      if (analyticsTotalSaleComparison) {
-        analyticsTotalSaleComparison.innerHTML = formatComparison(data.comparison.totalSale.percentChange, 'Total Sale');
+      } else {
+        // No comparison data - show "No comparison" for all elements
+        const comparisonElements = [
+          'analytics-total-sale-comparison',
+          'analytics-viator-sale-comparison',
+          'analytics-website-sale-comparison',
+          'analytics-total-benefit-comparison',
+          'analytics-viator-benefit-comparison',
+          'analytics-website-benefit-comparison'
+        ];
+        
+        comparisonElements.forEach(id => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.innerHTML = '<span class="text-gray-500">No comparison</span>';
+          }
+        });
+        
+        // Hide comparison summary
+        const comparisonSummary = document.getElementById('comparison-summary');
+        if (comparisonSummary) {
+          comparisonSummary.style.display = 'none';
+        }
       }
       
-      // Update Viator Sale comparison
-      const analyticsViatorSaleComparison = document.getElementById('analytics-viator-sale-comparison');
-      if (analyticsViatorSaleComparison) {
-        analyticsViatorSaleComparison.innerHTML = formatComparison(data.comparison.viatorSale.percentChange, 'Viator Sale');
+      // Update passengers
+      if (analyticsTotalPassengers) {
+        const viatorPassengers = data.viatorPassengers || 0;
+        const websitePassengers = data.websitePassengers || 0;
+        analyticsTotalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
+      }
+      if (analyticsPassengersBreakdown) {
+        analyticsPassengersBreakdown.textContent = `Total: ${totalPassengersCount}`;
       }
       
-      // Update Website Sale comparison
-      const analyticsWebsiteSaleComparison = document.getElementById('analytics-website-sale-comparison');
-      if (analyticsWebsiteSaleComparison) {
-        analyticsWebsiteSaleComparison.innerHTML = formatComparison(data.comparison.websiteSale.percentChange, 'Website Sale');
+      // Update channel table
+      const tableBody = document.getElementById('sales-channel-table-body');
+      if (tableBody && data.salesByChannel) {
+        let tableHtml = '';
+        const totalSales = data.totalSummary?.total_sales || 0;
+        
+        if (data.salesByChannel.length > 0) {
+          data.salesByChannel.forEach(channel => {
+            const percentage = totalSales > 0 ? (channel.total_sales / totalSales * 100) : 0;
+            const channelColor = channel.channel === 'WebSite' ? 'text-green-600' :
+                               channel.channel === 'VIATOR' ? 'text-purple-600' :
+                               channel.channel === 'GYG' ? 'text-blue-600' :
+                               'text-gray-600';
+            
+            tableHtml += `
+              <tr class="border-b">
+                <td class="py-2 ${channelColor} font-medium">${channel.channel}</td>
+                <td class="py-2 text-right">${channel.bookings}</td>
+                <td class="py-2 text-right font-medium">${Number(channel.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="py-2 text-right text-gray-600">${percentage.toFixed(1)}%</td>
+              </tr>
+            `;
+          });
+        } else {
+          tableHtml = '<tr><td colspan="4" class="text-center text-gray-400">No data available</td></tr>';
+        }
+        
+        tableBody.innerHTML = tableHtml;
       }
       
-      // Update Total Benefit comparison
-      const analyticsTotalBenefitComparison = document.getElementById('analytics-total-benefit-comparison');
-      if (analyticsTotalBenefitComparison) {
-        analyticsTotalBenefitComparison.innerHTML = formatComparison(data.comparison.totalBenefit.percentChange, 'Total Benefit');
+      // Update chart
+      if (data.salesByChannel) {
+        updateSalesChannelChart(data.salesByChannel);
       }
       
-      // Update Viator Benefit comparison
-      const analyticsViatorBenefitComparison = document.getElementById('analytics-viator-benefit-comparison');
-      if (analyticsViatorBenefitComparison) {
-        analyticsViatorBenefitComparison.innerHTML = formatComparison(data.comparison.viatorBenefit.percentChange, 'Viator Benefit');
+      // Update top programs
+      const topProgramsDiv = document.getElementById('sales-top-programs');
+      if (topProgramsDiv) {
+        let programsHtml = '';
+        
+        if (data.topPrograms && data.topPrograms.length > 0) {
+          programsHtml = '<div class="space-y-2">';
+          data.topPrograms.forEach((program, index) => {
+            const sales = Number(program.sales) || 0;
+            programsHtml += `
+              <div class="flex justify-between items-center p-2 bg-white rounded">
+                <div class="flex-1">
+                  <div class="font-medium text-gray-800">${index + 1}. ${program.program}</div>
+                  <div class="text-sm text-gray-500">${program.bookings} bookings</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-semibold text-green-600">${sales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                </div>
+              </div>
+            `;
+          });
+          programsHtml += '</div>';
+        } else {
+          programsHtml = '<div class="text-center text-gray-400">No programs data available</div>';
+        }
+        
+        topProgramsDiv.innerHTML = programsHtml;
       }
       
-      // Update Website Benefit comparison
-      const analyticsWebsiteBenefitComparison = document.getElementById('analytics-website-benefit-comparison');
-      if (analyticsWebsiteBenefitComparison) {
-        analyticsWebsiteBenefitComparison.innerHTML = formatComparison(data.comparison.websiteBenefit.percentChange, 'Website Benefit');
+    } catch (error) {
+      console.error('Error fetching sales analytics:', error);
+      
+      // Show error state
+      const elements = ['analytics-avg-sale-viator', 'analytics-avg-sale-website', 'analytics-avg-benefit-viator', 'analytics-avg-benefit-website'];
+      elements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '-';
+      });
+      
+      // Reset analytics metrics
+      const analyticsElements = ['analytics-total-bookings', 'analytics-new-bookings', 'analytics-total-earnings', 'analytics-done', 'analytics-booked', 'analytics-ota-count', 'analytics-website-count'];
+      analyticsElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = '-';
+      });
+      
+      // Show error in table
+      const tableBody = document.getElementById('sales-channel-table-body');
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Error loading data</td></tr>';
       }
-    } else {
-      // If no comparison data, show "No comparison" for all comparison elements
+      
+      // Show error in programs
+      const topProgramsDiv = document.getElementById('sales-top-programs');
+      if (topProgramsDiv) {
+        topProgramsDiv.innerHTML = '<div class="text-center text-red-500">Error loading data</div>';
+      }
+      
+      // Show "No comparison" for all comparison elements
       const comparisonElements = [
         'analytics-total-sale-comparison',
         'analytics-viator-sale-comparison',
@@ -2550,169 +2658,6 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         }
       });
     }
-    
-    // Update Total Passengers with Viator/Website breakdown
-    if (analyticsTotalPassengers) {
-      const viatorPassengers = data.viatorPassengers || 0;
-      const websitePassengers = data.websitePassengers || 0;
-      analyticsTotalPassengers.textContent = `${viatorPassengers}/${websitePassengers}`;
-    }
-    if (analyticsPassengersBreakdown) {
-      analyticsPassengersBreakdown.textContent = `Total: ${totalPassengersCount}`;
-    }
-    
-    // NEW: Update comparison summary section
-    const comparisonSummary = document.getElementById('comparison-summary');
-    if (comparisonSummary && data.comparison) {
-      comparisonSummary.style.display = 'block';
-      
-      // Update period dates
-      const comparisonCurrentPeriod = document.getElementById('comparison-current-period');
-      const comparisonPreviousPeriod = document.getElementById('comparison-previous-period');
-      
-      if (comparisonCurrentPeriod) {
-        const startDate = new Date(data.comparison.previousPeriod.endDate);
-        const endDate = new Date(startDate.getTime() + (periodDays * 24 * 60 * 60 * 1000));
-        comparisonCurrentPeriod.textContent = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
-      }
-      
-      if (comparisonPreviousPeriod) {
-        const prevStartDate = new Date(data.comparison.previousPeriod.startDate);
-        const prevEndDate = new Date(data.comparison.previousPeriod.endDate);
-        comparisonPreviousPeriod.textContent = `${prevStartDate.toLocaleDateString()} - ${prevEndDate.toLocaleDateString()}`;
-      }
-      
-      // Calculate and display overall performance indicator
-      const comparisonOverallIndicator = document.getElementById('comparison-overall-indicator');
-      if (comparisonOverallIndicator) {
-        // Calculate average percentage change across all key metrics
-        const metrics = [
-          data.comparison.totalSale.percentChange,
-          data.comparison.viatorSale.percentChange,
-          data.comparison.websiteSale.percentChange,
-          data.comparison.totalBenefit.percentChange
-        ];
-        
-        const avgChange = metrics.reduce((sum, val) => sum + val, 0) / metrics.length;
-        const isPositive = avgChange >= 0;
-        const color = isPositive ? 'text-green-600' : 'text-red-600';
-        const arrow = isPositive ? '↗' : '↘';
-        const sign = isPositive ? '+' : '';
-        
-        comparisonOverallIndicator.innerHTML = `<span class="${color}">${arrow} ${sign}${avgChange.toFixed(1)}%</span>`;
-      }
-    } else if (comparisonSummary) {
-      comparisonSummary.style.display = 'none';
-    }
-    
-    // Update channel table
-    const tableBody = document.getElementById('sales-channel-table-body');
-    if (tableBody) {
-      let tableHtml = '';
-      const totalSales = data.totalSummary.total_sales;
-      
-      data.salesByChannel.forEach(channel => {
-        const percentage = totalSales > 0 ? (channel.total_sales / totalSales * 100) : 0;
-                            const channelColor = channel.channel === 'WebSite' ? 'text-green-600' :
-                                         channel.channel === 'VIATOR' ? 'text-purple-600' :
-                                         channel.channel === 'GYG' ? 'text-blue-600' :
-                                         'text-gray-600';
-        
-        tableHtml += `
-          <tr class="border-b">
-            <td class="py-2 ${channelColor} font-medium">${channel.channel}</td>
-            <td class="py-2 text-right">${channel.bookings}</td>
-            <td class="py-2 text-right font-medium">${Number(channel.total_sales).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="py-2 text-right text-gray-600">${percentage.toFixed(1)}%</td>
-          </tr>
-        `;
-      });
-      
-      if (data.salesByChannel.length === 0) {
-        tableHtml = '<tr><td colspan="4" class="text-center text-gray-400">No data available</td></tr>';
-      }
-      
-      tableBody.innerHTML = tableHtml;
-    }
-    
-    // Update chart
-    updateSalesChannelChart(data.salesByChannel);
-    
-    // Show debug data if available
-    if (data.debug) {
-      
-    }
-    
-    // Update top programs (with optional comparison)
-    const topProgramsDiv = document.getElementById('sales-top-programs');
-    if (topProgramsDiv) {
-      let programsHtml = '';
-      
-      if (data.topPrograms.length > 0) {
-        const comparisonMap = new Map((data.topProgramsComparison || []).map(p => [p.program, p]));
-        programsHtml = '<div class="space-y-2">';
-        data.topPrograms.forEach((program, index) => {
-          const comp = comparisonMap.get(program.program);
-          const sales = Number(program.sales) || 0;
-          let compareHtml = '';
-          if (comp) {
-            const pct = comp.salesPercentChange || 0;
-            const arrow = pct >= 0 ? '↗' : '↘';
-            const color = pct >= 0 ? 'text-green-600' : 'text-red-600';
-            const prev = Number(comp.previousSales) || 0;
-            compareHtml = `
-              <div class="text-xs text-gray-500">Prev: ${prev.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-              <div class="${color} text-xs">${arrow} ${pct.toFixed(1)}%</div>
-            `;
-          }
-          programsHtml += `
-            <div class="flex justify-between items-center p-2 bg-white rounded">
-              <div class="flex-1">
-                <div class="font-medium text-gray-800">${index + 1}. ${program.program}</div>
-                <div class="text-sm text-gray-500">${program.bookings} bookings</div>
-              </div>
-              <div class="text-right">
-                <div class="font-semibold text-green-600">${sales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                ${compareHtml}
-              </div>
-            </div>
-          `;
-        });
-        programsHtml += '</div>';
-      } else {
-        programsHtml = '<div class="text-center text-gray-400">No programs data available</div>';
-      }
-      
-          topProgramsDiv.innerHTML = programsHtml;
-  }
-  
-  } catch (error) {
-    console.error('Error fetching sales analytics:', error);
-    
-    // Show error state
-    const elements = ['analytics-avg-sale-viator', 'analytics-avg-sale-website', 'analytics-avg-benefit-viator', 'analytics-avg-benefit-website'];
-    elements.forEach(id => {
-      const element = document.getElementById(id);
-      if (element) element.textContent = '-';
-    });
-    
-    // Reset the missing analytics metrics
-    const analyticsElements = ['analytics-total-bookings', 'analytics-new-bookings', 'analytics-total-earnings', 'analytics-done', 'analytics-booked', 'analytics-ota-count', 'analytics-website-count'];
-    analyticsElements.forEach(id => {
-      const element = document.getElementById(id);
-      if (element) element.textContent = '-';
-    });
-    
-    const tableBody = document.getElementById('sales-channel-table-body');
-    if (tableBody) {
-      tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500">Error loading data</td></tr>';
-    }
-    
-    const topProgramsDiv = document.getElementById('sales-top-programs');
-    if (topProgramsDiv) {
-      topProgramsDiv.innerHTML = '<div class="text-center text-red-500">Error loading data</div>';
-    }
-  }
   }, 300); // 300ms debounce delay
 }
 

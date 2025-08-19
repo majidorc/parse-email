@@ -79,6 +79,36 @@ CREATE TABLE IF NOT EXISTS rates (
   fee_child NUMERIC(12,2)
 );
 
+-- EMAIL LOGS TABLE - NEW: Track all system emails sent to customers
+CREATE TABLE IF NOT EXISTS email_logs (
+  id SERIAL PRIMARY KEY,
+  booking_number TEXT REFERENCES bookings(booking_number) ON DELETE CASCADE,
+  customer_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message_id TEXT UNIQUE, -- Unique message ID from email provider
+  email_type TEXT NOT NULL, -- 'booking_confirmation', 'pickup_reminder', 'cancellation', etc.
+  status TEXT NOT NULL DEFAULT 'sent', -- 'sent', 'delivered', 'bounced', 'failed'
+  sent_at TIMESTAMP DEFAULT NOW(),
+  delivered_at TIMESTAMP NULL,
+  opened_at TIMESTAMP NULL,
+  opened_count INTEGER DEFAULT 0,
+  bounce_reason TEXT NULL,
+  error_message TEXT NULL,
+  smtp_response TEXT NULL,
+  ip_address TEXT NULL, -- IP address of recipient server
+  user_agent TEXT NULL, -- Email client used to open
+  tracking_pixel_id TEXT UNIQUE, -- Unique ID for tracking pixel
+  metadata JSONB -- Additional data like pickup time, transfer options, etc.
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_email_logs_booking_number ON email_logs(booking_number);
+CREATE INDEX IF NOT EXISTS idx_email_logs_customer_email ON email_logs(customer_email);
+CREATE INDEX IF NOT EXISTS idx_email_logs_status ON email_logs(status);
+CREATE INDEX IF NOT EXISTS idx_email_logs_sent_at ON email_logs(sent_at);
+CREATE INDEX IF NOT EXISTS idx_email_logs_message_id ON email_logs(message_id);
+CREATE INDEX IF NOT EXISTS idx_email_logs_tracking_pixel_id ON email_logs(tracking_pixel_id);
+
 -- PARSED EMAILS TABLE
 CREATE TABLE IF NOT EXISTS parsed_emails (
   booking_number TEXT PRIMARY KEY,

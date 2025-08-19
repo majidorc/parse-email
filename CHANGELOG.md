@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2025-01-16
+
+### Added
+- **Comprehensive Email Logging System**: Track all system emails sent to customers through the bookings tab
+- **Email Delivery Tracking**: Monitor email delivery status (sent, delivered, bounced, failed)
+- **Email Open Tracking**: Track when customers open emails using invisible tracking pixels
+- **Email Analytics Dashboard**: New "Email Logs" tab with detailed statistics and filtering
+- **Email Performance Metrics**: Track open rates, delivery rates, and average open times
+- **Email Export Functionality**: Export email logs to CSV for analysis and reporting
+- **Detailed Email Metadata**: Store pickup times, transfer options, and other booking details with emails
+
+### Changed
+- **Enhanced Email Sending**: All customer emails now include tracking pixels and comprehensive logging
+- **NotificationManager Updates**: Added email logging methods while maintaining backward compatibility
+- **Database Schema**: New email_logs table with comprehensive tracking fields
+
+### Technical
+- **Tracking Pixel System**: Invisible 1x1 GIF images for email open tracking
+- **Email Status Updates**: Real-time status updates for delivery and open events
+- **Performance Optimization**: Efficient database queries with proper indexing for email logs
+- **API Endpoints**: New /api/email-logs and /api/track-email endpoints for logging and tracking
+
 ## [3.2.0] - 2025-01-16
 
 ### Added

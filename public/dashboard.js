@@ -6042,9 +6042,489 @@ function changeSupplierBookingsPage(supplierId, newPage, pageSize = 10) {
   loadSupplierBookings(supplierId, bookingsList, newPage, pageSize);
 }
 
+// --- EMAIL LOGS FUNCTIONALITY ---
 
+// Global variables for email logs
+let emailLogsCurrentPage = 1;
+let emailLogsPageSize = 50;
+let emailLogsTotalPages = 1;
+let emailLogsTotalCount = 0;
+let emailLogsData = [];
 
+// Initialize email logs when the page is shown
+async function initializeEmailLogs() {
+    if (document.getElementById('email-logs').classList.contains('hidden-page')) {
+        return; // Page not visible
+    }
+    
+    await loadEmailLogs();
+    updateEmailLogsStatistics();
+}
 
+// Load email logs with current filters
+async function loadEmailLogs(page = 1) {
+    try {
+        const filters = getEmailLogsFilters();
+        const queryParams = new URLSearchParams({
+            page: page,
+            limit: emailLogsPageSize,
+            ...filters
+        });
 
+        const response = await fetch(`/api/email-logs?${queryParams}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
+        const data = await response.json();
+        
+        if (data.success) {
+            emailLogsData = data.data.logs;
+            emailLogsCurrentPage = data.data.pagination.page;
+            emailLogsTotalPages = data.data.pagination.total_pages;
+            emailLogsTotalCount = data.data.pagination.total_count;
+            
+            displayEmailLogs();
+            updateEmailLogsPagination();
+            updateEmailLogsStatistics(data.data.statistics);
+        }
+    } catch (error) {
+        console.error('Error loading email logs:', error);
+        showNotification('Error loading email logs', 'error');
+    }
+}
 
+// Get current filter values
+function getEmailLogsFilters() {
+    const filters = {};
+    
+    const statusFilter = document.getElementById('status-filter').value;
+    if (statusFilter) filters.status = statusFilter;
+    
+    const emailTypeFilter = document.getElementById('email-type-filter').value;
+    if (emailTypeFilter) filters.email_type = emailTypeFilter;
+    
+    const emailFilter = document.getElementById('email-filter').value;
+    if (emailFilter) filters.customer_email = emailFilter;
+    
+    const bookingFilter = document.getElementById('booking-filter').value;
+    if (bookingFilter) filters.booking_number = bookingFilter;
+    
+    const dateFromFilter = document.getElementById('date-from-filter').value;
+    if (dateFromFilter) filters.date_from = dateFromFilter;
+    
+    const dateToFilter = document.getElementById('date-to-filter').value;
+    if (dateToFilter) filters.date_to = dateToFilter;
+    
+    return filters;
+}
+
+// Display email logs in the table
+function displayEmailLogs() {
+    const tbody = document.getElementById('email-logs-table-body');
+    
+    if (!emailLogsData || emailLogsData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="py-8 text-center text-gray-500">
+                    No email logs found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const rows = emailLogsData.map(log => `
+        <tr class="border-b hover:bg-gray-50">
+            <td class="py-3 px-4">
+                <div class="text-sm text-gray-900">
+                    ${new Date(log.sent_at).toLocaleDateString()}
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${new Date(log.sent_at).toLocaleTimeString()}
+                </div>
+            </td>
+            <td class="py-3 px-4">
+                <div class="text-sm font-medium text-gray-900">
+                    ${log.customer_email}
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${log.customer_name || 'N/A'}
+                </div>
+            </td>
+            <td class="py-3 px-4">
+                <div class="text-sm text-gray-900 max-w-xs truncate" title="${log.subject}">
+                    ${log.subject}
+                </div>
+                <div class="text-xs text-gray-500">
+                    ${log.booking_number || 'N/A'}
+                </div>
+            </td>
+            <td class="py-3 px-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    ${formatEmailType(log.email_type)}
+                </span>
+            </td>
+            <td class="py-3 px-4">
+                ${getStatusBadge(log.status)}
+            </td>
+            <td class="py-3 px-4">
+                ${log.opened_at ? `
+                    <div class="text-sm text-gray-900">
+                        ${new Date(log.opened_at).toLocaleDateString()}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        ${new Date(log.opened_at).toLocaleTimeString()}
+                    </div>
+                ` : '<span class="text-gray-400">-</span>'}
+            </td>
+            <td class="py-3 px-4 text-center">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.opened_count > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                    ${log.opened_count || 0}
+                </span>
+            </td>
+            <td class="py-3 px-4">
+                <div class="flex space-x-2">
+                    <button onclick="viewEmailLogDetails('${log.id}')" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                        View
+                    </button>
+                    <button onclick="deleteEmailLog('${log.id}')" class="text-red-600 hover:text-red-900 text-sm font-medium">
+                        Delete
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    tbody.innerHTML = rows;
+}
+
+// Format email type for display
+function formatEmailType(type) {
+    const typeMap = {
+        'booking_confirmation': 'Booking Confirmation',
+        'pickup_reminder': 'Pickup Reminder',
+        'cancellation': 'Cancellation',
+        'general': 'General'
+    };
+    return typeMap[type] || type;
+}
+
+// Get status badge HTML
+function getStatusBadge(status) {
+    const statusConfig = {
+        'sent': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Sent' },
+        'delivered': { bg: 'bg-green-100', text: 'text-green-800', label: 'Delivered' },
+        'opened': { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Opened' },
+        'bounced': { bg: 'bg-red-100', text: 'text-red-800', label: 'Bounced' },
+        'failed': { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Failed' }
+    };
+    
+    const config = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: status };
+    
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}">
+        ${config.label}
+    </span>`;
+}
+
+// Update email logs pagination
+function updateEmailLogsPagination() {
+    const start = (emailLogsCurrentPage - 1) * emailLogsPageSize + 1;
+    const end = Math.min(emailLogsCurrentPage * emailLogsPageSize, emailLogsTotalCount);
+    
+    document.getElementById('email-logs-start').textContent = start;
+    document.getElementById('email-logs-end').textContent = end;
+    document.getElementById('email-logs-total').textContent = emailLogsTotalCount;
+    document.getElementById('email-logs-page-info').textContent = `Page ${emailLogsCurrentPage} of ${emailLogsTotalPages}`;
+    
+    // Update button states
+    document.getElementById('email-logs-prev').disabled = emailLogsCurrentPage <= 1;
+    document.getElementById('email-logs-next').disabled = emailLogsCurrentPage >= emailLogsTotalPages;
+}
+
+// Change email logs page
+function changeEmailLogsPage(direction) {
+    const newPage = emailLogsCurrentPage + direction;
+    if (newPage >= 1 && newPage <= emailLogsTotalPages) {
+        loadEmailLogs(newPage);
+    }
+}
+
+// Update email logs statistics
+function updateEmailLogsStatistics(stats = null) {
+    if (stats) {
+        document.getElementById('total-emails').textContent = stats.total_emails || 0;
+        document.getElementById('sent-emails').textContent = stats.sent_count || 0;
+        document.getElementById('delivered-emails').textContent = stats.delivered_count || 0;
+        document.getElementById('opened-emails').textContent = stats.opened_count || 0;
+        document.getElementById('bounced-emails').textContent = stats.bounced_count || 0;
+        document.getElementById('failed-emails').textContent = stats.failed_count || 0;
+        
+        const avgOpenTime = stats.avg_open_time_minutes;
+        if (avgOpenTime && !isNaN(avgOpenTime)) {
+            const hours = Math.floor(avgOpenTime / 60);
+            const minutes = Math.round(avgOpenTime % 60);
+            document.getElementById('avg-open-time').textContent = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+        } else {
+            document.getElementById('avg-open-time').textContent = '-';
+        }
+    }
+}
+
+// Apply email logs filters
+async function applyEmailFilters() {
+    emailLogsCurrentPage = 1; // Reset to first page
+    await loadEmailLogs(1);
+}
+
+// Refresh email logs
+async function refreshEmailLogs() {
+    await loadEmailLogs(emailLogsCurrentPage);
+}
+
+// View email log details
+function viewEmailLogDetails(logId) {
+    const log = emailLogsData.find(l => l.id === parseInt(logId));
+    if (!log) return;
+    
+    // Create modal content
+    const modalContent = `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">Email Log Details</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">ID:</span> ${log.id}</div>
+                            <div><span class="font-medium">Message ID:</span> ${log.message_id || 'N/A'}</div>
+                            <div><span class="font-medium">Tracking Pixel ID:</span> ${log.tracking_pixel_id || 'N/A'}</div>
+                            <div><span class="font-medium">Email Type:</span> ${formatEmailType(log.email_type)}</div>
+                            <div><span class="font-medium">Status:</span> ${getStatusBadge(log.status)}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Timing</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><span class="font-medium">Sent At:</span> ${new Date(log.sent_at).toLocaleString()}</div>
+                            <div><span class="font-medium">Delivered At:</span> ${log.delivered_at ? new Date(log.delivered_at).toLocaleString() : 'N/A'}</div>
+                            <div><span class="font-medium">Opened At:</span> ${log.opened_at ? new Date(log.opened_at).toLocaleString() : 'N/A'}</div>
+                            <div><span class="font-medium">Open Count:</span> ${log.opened_count || 0}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-900 mb-2">Email Details</h4>
+                    <div class="space-y-2 text-sm">
+                        <div><span class="font-medium">Subject:</span> ${log.subject}</div>
+                        <div><span class="font-medium">Customer Email:</span> ${log.customer_email}</div>
+                        <div><span class="font-medium">Customer Name:</span> ${log.customer_name || 'N/A'}</div>
+                        <div><span class="font-medium">Booking Number:</span> ${log.booking_number || 'N/A'}</div>
+                        <div><span class="font-medium">Program:</span> ${log.program || 'N/A'}</div>
+                    </div>
+                </div>
+                
+                ${log.metadata ? `
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-900 mb-2">Additional Data</h4>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-700 whitespace-pre-wrap">${JSON.stringify(log.metadata, null, 2)}</pre>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${log.bounce_reason ? `
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-900 mb-2">Bounce Information</h4>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-sm text-red-700">${log.bounce_reason}</div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${log.error_message ? `
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-900 mb-2">Error Information</h4>
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <div class="text-sm text-red-700">${log.error_message}</div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="mt-6 flex justify-end">
+                    <button onclick="closeModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalContent);
+}
+
+// Close modal
+function closeModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Delete email log
+async function deleteEmailLog(logId) {
+    if (!confirm('Are you sure you want to delete this email log? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/email-logs', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: logId })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Email log deleted successfully', 'success');
+            await loadEmailLogs(emailLogsCurrentPage);
+        }
+    } catch (error) {
+        console.error('Error deleting email log:', error);
+        showNotification('Error deleting email log', 'error');
+    }
+}
+
+// Export email logs
+async function exportEmailLogs() {
+    try {
+        const filters = getEmailLogsFilters();
+        const queryParams = new URLSearchParams({
+            page: 1,
+            limit: 10000, // Export all
+            ...filters
+        });
+
+        const response = await fetch(`/api/email-logs?${queryParams}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.data.logs.length > 0) {
+            // Create CSV content
+            const csvContent = createEmailLogsCSV(data.data.logs);
+            
+            // Download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `email_logs_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Email logs exported successfully', 'success');
+        } else {
+            showNotification('No email logs to export', 'info');
+        }
+    } catch (error) {
+        console.error('Error exporting email logs:', error);
+        showNotification('Error exporting email logs', 'error');
+    }
+}
+
+// Create CSV content for email logs
+function createEmailLogsCSV(logs) {
+    const headers = [
+        'ID', 'Sent At', 'Customer Email', 'Customer Name', 'Subject', 'Email Type', 
+        'Status', 'Delivered At', 'Opened At', 'Open Count', 'Booking Number', 
+        'Program', 'Bounce Reason', 'Error Message', 'IP Address', 'User Agent'
+    ];
+    
+    const rows = logs.map(log => [
+        log.id,
+        new Date(log.sent_at).toISOString(),
+        log.customer_email,
+        log.customer_name || '',
+        log.subject,
+        log.email_type,
+        log.status,
+        log.delivered_at ? new Date(log.delivered_at).toISOString() : '',
+        log.opened_at ? new Date(log.opened_at).toISOString() : '',
+        log.opened_count || 0,
+        log.booking_number || '',
+        log.program || '',
+        log.bounce_reason || '',
+        log.error_message || '',
+        log.ip_address || '',
+        log.user_agent || ''
+    ]);
+    
+    return [headers, ...rows]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n');
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        type === 'warning' ? 'bg-yellow-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Initialize email logs when page is shown
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for page navigation
+    const navLinks = document.querySelectorAll('#sidebar-nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const pageId = this.getAttribute('data-page');
+            if (pageId === 'email-logs') {
+                // Initialize email logs when the tab is clicked
+                setTimeout(initializeEmailLogs, 100);
+            }
+        });
+    });
+    
+    // Initialize email logs if starting on that page
+    if (window.location.hash === '#email-logs') {
+        setTimeout(initializeEmailLogs, 100);
+    }
+});

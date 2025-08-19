@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 const config = require('./config.json');
+const { v4: uuidv4 } = require('crypto');
 
 class NotificationManager {
     constructor() {
@@ -20,6 +21,193 @@ class NotificationManager {
         this.telegramBotToken = null;
         this.telegramChatId = null;
         this.notificationEmailTo = null;
+    }
+
+    // Generate unique tracking pixel ID
+    generateTrackingPixelId() {
+        return `pixel_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    // Create tracking pixel HTML
+    createTrackingPixel(trackingPixelId) {
+        const trackingUrl = `${process.env.VERCEL_URL || 'https://your-domain.vercel.app'}/api/track-email/${trackingPixelId}`;
+        return `<img src="${trackingUrl}" alt="" width="1" height="1" style="display:none;" />`;
+    }
+
+    // Log email to database
+    async logEmail(bookingNumber, customerEmail, subject, emailType, messageId, metadata = {}) {
+        try {
+            const { sql } = require('@vercel/postgres');
+            const trackingPixelId = this.generateTrackingPixelId();
+            
+            const { rows } = await sql`
+                INSERT INTO email_logs (
+                    booking_number, customer_email, subject, message_id, email_type, 
+                    tracking_pixel_id, metadata
+                ) VALUES (
+                    ${bookingNumber}, ${customerEmail}, ${subject}, ${messageId}, 
+                    ${emailType}, ${trackingPixelId}, ${JSON.stringify(metadata)}
+                ) RETURNING id
+            `;
+            
+            return { logId: rows[0].id, trackingPixelId };
+        } catch (error) {
+            console.error('Error logging email:', error);
+            return { logId: null, trackingPixelId: null };
+        }
+    }
+
+    // Update email status (delivered, opened, bounced, etc.)
+    async updateEmailStatus(messageId, status, additionalData = {}) {
+        try {
+            const { sql } = require('@vercel/postgres');
+            
+            let updateQuery = `UPDATE email_logs SET status = ${status}`;
+            const params = [status];
+            let paramCount = 1;
+            
+            if (status === 'delivered' && additionalData.delivered_at) {
+                updateQuery += `, delivered_at = $${++paramCount}`;
+                params.push(additionalData.delivered_at);
+            }
+            
+            if (status === 'opened' && additionalData.opened_at) {
+                updateQuery += `, opened_at = $${++paramCount}, opened_count = opened_count + 1`;
+                params.push(additionalData.opened_at);
+            }
+            
+            if (status === 'bounced' && additionalData.bounce_reason) {
+                updateQuery += `, bounce_reason = $${++paramCount}`;
+                params.push(additionalData.bounce_reason);
+            }
+            
+            if (additionalData.error_message) {
+                updateQuery += `, error_message = $${++paramCount}`;
+                params.push(additionalData.error_message);
+            }
+            
+            if (additionalData.smtp_response) {
+                updateQuery += `, smtp_response = $${++paramCount}`;
+                params.push(additionalData.smtp_response);
+            }
+            
+            if (additionalData.ip_address) {
+                updateQuery += `, ip_address = $${++paramCount}`;
+                params.push(additionalData.ip_address);
+            }
+            
+            if (additionalData.user_agent) {
+                updateQuery += `, user_agent = $${++paramCount}`;
+                params.push(additionalData.user_agent);
+            }
+            
+            updateQuery += ` WHERE message_id = $${++paramCount}`;
+            params.push(messageId);
+            
+            await sql.query(updateQuery, params);
+            
+        } catch (error) {
+            console.error('Error updating email status:', error);
+        }
+    }
+
+    // Enhanced sendEmail method with logging
+    async sendEmailWithLogging(booking, subject, htmlContent, textContent, emailType = 'booking_confirmation', metadata = {}) {
+        try {
+            const customerEmail = booking.customer_email;
+            if (!customerEmail) {
+                throw new Error('No customer email available for this booking');
+            }
+
+            // Add tracking pixel to HTML content
+            const trackingPixelId = this.generateTrackingPixelId();
+            const trackingPixel = this.createTrackingPixel(trackingPixelId);
+            const htmlWithTracking = htmlContent + trackingPixel;
+
+            const mailOptions = {
+                from: process.env.SMTP_FROM || process.env.SMTP_USER,
+                to: customerEmail,
+                subject: subject,
+                text: textContent,
+                html: htmlWithTracking,
+                headers: {
+                    'X-Booking-Number': booking.booking_number,
+                    'X-Email-Type': emailType,
+                    'X-Tracking-ID': trackingPixelId
+                }
+            };
+
+            // Send email
+            const info = await this.transporter.sendMail(mailOptions);
+            
+            // Log email to database
+            const logResult = await this.logEmail(
+                booking.booking_number,
+                customerEmail,
+                subject,
+                emailType,
+                info.messageId,
+                metadata
+            );
+
+            // Update tracking pixel ID if logging was successful
+            if (logResult.logId) {
+                await this.updateEmailStatus(info.messageId, 'sent');
+            }
+
+            return {
+                success: true,
+                messageId: info.messageId,
+                logId: logResult.logId,
+                trackingPixelId: logResult.trackingPixelId
+            };
+
+        } catch (error) {
+            console.error('Error sending email with logging:', error);
+            
+            // Try to log the failed attempt
+            try {
+                await this.logEmail(
+                    booking.booking_number,
+                    booking.customer_email,
+                    subject,
+                    emailType,
+                    `failed_${Date.now()}`,
+                    { ...metadata, error: error.message }
+                );
+            } catch (logError) {
+                console.error('Error logging failed email:', logError);
+            }
+            
+            throw error;
+        }
+    }
+
+    // Legacy sendEmail method (kept for backward compatibility)
+    async sendEmail(booking, message) {
+        const to = await this.getNotificationEmailTo();
+        if (!to) throw new Error('No notification email address set');
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: to,
+            subject: `Booking Notification: ${booking.booking_number}`,
+            text: message
+        };
+        await this.transporter.sendMail(mailOptions);
+    }
+
+    // Legacy sendEmailNotification method (kept for backward compatibility)
+    async sendEmailNotification(subject, text, html) {
+        const to = await this.getNotificationEmailTo();
+        if (!to) throw new Error('No notification email address set');
+        const mailOptions = {
+            from: process.env.SMTP_FROM || process.env.SMTP_USER,
+            to: to,
+            subject: subject,
+            text: text,
+            html: html
+        };
+        await this.transporter.sendMail(mailOptions);
     }
 
     async getTelegramBotToken() {
@@ -225,31 +413,6 @@ class NotificationManager {
         //     } catch (e) { console.error('LINE notification failed:', e); }
         // }
         return results;
-    }
-
-    async sendEmail(booking, message) {
-        const to = await this.getNotificationEmailTo();
-        if (!to) throw new Error('No notification email address set');
-        const mailOptions = {
-            from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to: to,
-            subject: `Booking Notification: ${booking.booking_number}`,
-            text: message
-        };
-        await this.transporter.sendMail(mailOptions);
-    }
-
-    async sendEmailNotification(subject, text, html) {
-        const to = await this.getNotificationEmailTo();
-        if (!to) throw new Error('No notification email address set');
-        const mailOptions = {
-            from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to: to,
-            subject: subject,
-            text: text,
-            html: html
-        };
-        await this.transporter.sendMail(mailOptions);
     }
 
     async sendTelegram(message, booking = null) {

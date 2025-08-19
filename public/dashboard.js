@@ -15,7 +15,6 @@ async function initializeServiceWorker() {
 
     // Register service worker
     serviceWorkerRegistration = await navigator.serviceWorker.register('/service-worker.js');
-    console.log('Service Worker registered:', serviceWorkerRegistration);
 
   } catch (error) {
     console.error('Failed to initialize service worker:', error);
@@ -1521,7 +1520,6 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'fix-booking-nets' })
         });
-        console.log('Attempted to fix missing NET prices');
       } catch (err) {
         console.log('Could not run NET price fix script:', err.message);
       }
@@ -1532,17 +1530,12 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     params.append('_ts', timestamp);
     
     const requestUrl = `/api/accounting?${params.toString()}`;
-    console.log('Accounting API request URL:', requestUrl);
-    console.log('Accounting API request params:', Object.fromEntries(params.entries()));
     
     const res = await fetch(requestUrl);
-    console.log('Accounting API response status:', res.status);
-    console.log('Accounting API response headers:', Object.fromEntries(res.headers.entries()));
     
     let data;
     try {
       data = await res.json();
-      console.log('Accounting API response data:', data);
     } catch (jsonError) {
       console.error('Failed to parse API response as JSON:', jsonError);
       console.log('Raw response text:', await res.text());
@@ -1577,14 +1570,6 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       });
     } else {
       await renderAccountingSummary(accountingSummaryData);
-    }
-    console.log('Accounting data refreshed:', accountingData.length, 'bookings');
-    if (accountingData.length > 0) {
-      console.log('Sample booking after refresh:', {
-        booking_number: accountingData[0].booking_number,
-        rate: accountingData[0].rate,
-        net_total: accountingData[0].net_total
-      });
     }
     
     renderAccountingTable();

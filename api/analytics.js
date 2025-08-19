@@ -637,6 +637,8 @@ async function handleSalesAnalytics(req, res) {
 
     // Generate comparison data with previous period
     let comparison = null;
+    console.log('Debug: dateFilter:', dateFilter, 'period:', period, 'startDateParam:', startDateParam, 'endDateParam:', endDateParam);
+    
     if (dateFilter && (period === 'thisMonth' || period === 'lastMonth' || period === 'thisWeek' || period === 'lastWeek')) {
       try {
         // Calculate previous period dates
@@ -720,6 +722,11 @@ async function handleSalesAnalytics(req, res) {
           return ((current - previous) / previous) * 100;
         };
 
+        console.log('Debug: Generated comparison data:', {
+          viatorSale, websiteSale, prevTotalSale,
+          totalBenefit, prevTotalBenefitValue
+        });
+        
         comparison = {
           totalSale: {
             percentChange: calculatePercentChange(viatorSale + websiteSale, prevTotalSale),
@@ -762,6 +769,8 @@ async function handleSalesAnalytics(req, res) {
       }
     }
 
+    console.log('Debug: Final response comparison:', comparison);
+    
     res.status(200).json({
       salesByChannel: salesByChannelResult,
       totalSummary: totalSummaryResult[0],

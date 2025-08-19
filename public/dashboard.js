@@ -2380,10 +2380,6 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       }
       const data = await response.json();
       
-      // Debug: Check what data we're getting
-      console.log('Analytics API response:', data);
-      console.log('Comparison data:', data.comparison);
-      
       // Update average summary cards
       const avgSaleViator = document.getElementById('analytics-avg-sale-viator');
       const avgSaleWebsite = document.getElementById('analytics-avg-sale-website');
@@ -2513,10 +2509,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
           'analytics-website-benefit-comparison'
         ];
         
-        console.log('No comparison data - updating elements:', comparisonElements);
         comparisonElements.forEach(id => {
           const element = document.getElementById(id);
-          console.log(`Element ${id}:`, element);
           if (element) {
             element.innerHTML = '<span class="text-gray-500">No comparison</span>';
           }

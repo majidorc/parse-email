@@ -7,17 +7,17 @@
     "api/daily-scheduler.js": {
       "maxDuration": 30
     },
-    "api/sales-analytics.js": {
+    "api/analytics.js": {
       "maxDuration": 30
     },
-    "api/update-old-bookings-rates.js": {
+    "api/email-management.js": {
       "maxDuration": 30
+    },
+    "api/booking-utilities.js": {
+      "maxDuration": 60
     },
     "api/suppliers.js": {
       "maxDuration": 30
-    },
-    "api/fix-booking-nets.js": {
-      "maxDuration": 60
     }
   },
   "routes": [

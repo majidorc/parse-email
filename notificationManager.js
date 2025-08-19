@@ -30,7 +30,7 @@ class NotificationManager {
 
     // Create tracking pixel HTML
     createTrackingPixel(trackingPixelId) {
-        const trackingUrl = `${process.env.VERCEL_URL || 'https://your-domain.vercel.app'}/api/track-email/${trackingPixelId}`;
+        const trackingUrl = `${process.env.VERCEL_URL || 'https://your-domain.vercel.app'}/api/email-management?trackingPixelId=${trackingPixelId}`;
         return `<img src="${trackingUrl}" alt="" width="1" height="1" style="display:none;" />`;
     }
 

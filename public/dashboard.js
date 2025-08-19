@@ -1410,7 +1410,7 @@ async function renderAccountingSummary(data) {
   let totalBenefit = 0;
   
   try {
-    const analyticsResponse = await fetch(`/api/sales-analytics?period=${period}`);
+            const analyticsResponse = await fetch(`/api/analytics?type=sales&period=${period}`);
     if (analyticsResponse.ok) {
       const analyticsData = await analyticsResponse.json();
       
@@ -1516,7 +1516,11 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     // Try to fix missing NET prices first if this is the first load
     if (page === 1 && !cacheBuster) {
       try {
-        await fetch('/api/fix-booking-nets', { method: 'POST' });
+        await fetch('/api/booking-utilities', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'fix-booking-nets' })
+        });
         console.log('Attempted to fix missing NET prices');
       } catch (err) {
         console.log('Could not run NET price fix script:', err.message);
@@ -2380,9 +2384,9 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       // Check for custom date range first
       let url;
       if (window.customStartDate && window.customEndDate) {
-        url = `/api/sales-analytics?startDate=${window.customStartDate}&endDate=${window.customEndDate}`;
+        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}`;
       } else {
-        url = `/api/sales-analytics?period=${period}`;
+        url = `/api/analytics?type=sales&period=${period}`;
       }
       
       const response = await fetch(url);
@@ -3622,7 +3626,11 @@ document.addEventListener('DOMContentLoaded', function () {
     this.textContent = 'Updating...';
     
     try {
-      const response = await fetch('/api/update-old-bookings-rates', {
+              const response = await fetch('/api/booking-utilities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update-old-bookings-rates' })
+        });
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -5227,7 +5235,11 @@ async function fixBookingNets() {
   fixBtn.disabled = true;
 
   try {
-    const response = await fetch('/api/fix-booking-nets', {
+            const response = await fetch('/api/booking-utilities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'fix-booking-nets' })
+        });
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -6071,7 +6083,7 @@ async function loadEmailLogs(page = 1) {
             ...filters
         });
 
-        const response = await fetch(`/api/email-logs?${queryParams}`);
+        const response = await fetch(`/api/email-management?${queryParams}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -6389,7 +6401,7 @@ async function deleteEmailLog(logId) {
     }
     
     try {
-        const response = await fetch('/api/email-logs', {
+        const response = await fetch('/api/email-management', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -6422,7 +6434,7 @@ async function exportEmailLogs() {
             ...filters
         });
 
-        const response = await fetch(`/api/email-logs?${queryParams}`);
+        const response = await fetch(`/api/email-management?${queryParams}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

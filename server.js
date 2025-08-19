@@ -55,8 +55,9 @@ app.get('/booking/:booking_number', async (req, res) => {
   }
 });
 
-app.get('/api/parsed-emails-analytics', require('./api/parsed-emails-analytics.js'));
-app.get('/api/sales-analytics', require('./api/sales-analytics.js'));
+app.get('/api/analytics', require('./api/analytics.js'));
+app.get('/api/email-management', require('./api/email-management.js'));
+app.post('/api/booking-utilities', require('./api/booking-utilities.js'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

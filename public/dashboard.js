@@ -3626,13 +3626,10 @@ document.addEventListener('DOMContentLoaded', function () {
     this.textContent = 'Updating...';
     
     try {
-              const response = await fetch('/api/booking-utilities', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update-old-bookings-rates' })
-        });
+      const response = await fetch('/api/booking-utilities', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update-old-bookings-rates' })
       });
       
       const result = await response.json();

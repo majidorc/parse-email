@@ -2384,7 +2384,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       // Check for custom date range first
       let url;
       if (window.customStartDate && window.customEndDate) {
-        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}`;
+        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}&period=${period}`;
       } else {
         url = `/api/analytics?type=sales&period=${period}`;
       }

@@ -1,3 +1,6 @@
+## [Unreleased]
+- Remove driver prep note when booking is without transfer (frontend + API)
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

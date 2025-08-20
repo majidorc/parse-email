@@ -1121,13 +1121,13 @@ ${pierLocation} ( ${pierLocationUrl} )`;
     // With transfer - show pickup info
     emailContent += `
 ${pickupInfo}
-Pickup time: ${pickupTime}`;
-  }
-
-  emailContent += `
+Pickup time: ${pickupTime}
 
 ** Please be prepared and ready at the reception a few minutes before, and please note that the driver could be late by 15-30 minutes due to traffic and unwanted clauses.
-We will try to be on time as possible , please just call us if driver be later more than 10 mins**${nationalParkFeeText}
+We will try to be on time as possible , please just call us if driver be later more than 10 mins**`;
+  }
+
+  emailContent += `${nationalParkFeeText}
 
 Should you require any other assistance, please do not hesitate to contact us at anytime by replying to this email.
 

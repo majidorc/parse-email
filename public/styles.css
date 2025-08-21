@@ -2,9 +2,9 @@
 
 /* Base Layout Improvements */
 body {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  min-height: 100vh !important;
 }
 
 #dashboard-root {
@@ -34,6 +34,12 @@ div.w-full.bg-white.p-6.md\\:p-8.rounded-xl.shadow-lg {
   border-radius: 24px !important;
 }
 
+/* TEST STYLE - This should be VERY visible! */
+#dashboard-root > div:first-of-type {
+  border: 5px solid #ff0000 !important;
+  background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%) !important;
+}
+
 /* Modern Date Display */
 #bangkok-datetime {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -47,6 +53,18 @@ div.w-full.bg-white.p-6.md\\:p-8.rounded-xl.shadow-lg {
 
 /* Enhanced Tab Buttons */
 .tab-btn-container {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 20px !important;
+  padding: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* SUPER SPECIFIC OVERRIDE - Force all tab buttons to be visible */
+body .tab-btn-container,
+html .tab-btn-container,
+#dashboard-root .tab-btn-container {
   background: rgba(255, 255, 255, 0.8) !important;
   backdrop-filter: blur(16px) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;

@@ -887,8 +887,15 @@
 
 
     </div>
-    <!-- Move Logout Button into Settings Modal -->
-    <button id="logout-btn" style="width:100%;margin-top:24px;background:#f87171;color:white;font-weight:bold;padding:12px 0;border:none;border-radius:8px;display:none;">Logout</button>
+    <!-- Enhanced Logout Button -->
+    <div class="flex justify-center mt-6">
+      <button id="logout-btn" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 text-base w-full max-w-xs transform hover:scale-105">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
   </div>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
               <script src="dashboard.js?v=2.7"></script>

@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Programs</title>
+  <title>Dashboard</title>
   <!-- Tailwind CSS for styling -->
-  <link rel="stylesheet" href="styles.css?v=1.1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom styles from styles.css -->
+  <link rel="stylesheet" href="styles.css">
   <!-- Chart.js for dashboard charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Google Fonts: Inter -->
@@ -18,9 +20,10 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 </head>
-<body class="antialiased">
+<body class="antialiased font-sans text-gray-800 bg-gray-50">
+  <!-- Login Section -->
   <div id="login-section" style="display:none; text-align:center; margin-top: 80px;">
-    <div class="flex items-center justify-center min-h-screen bg-gray-50">
+    <div class="flex items-center justify-center min-h-screen">
       <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto border border-indigo-100">
         <div class="flex flex-col items-center">
           <div class="bg-indigo-100 rounded-full p-4 mb-4">
@@ -34,6 +37,8 @@
       </div>
     </div>
   </div>
+  
+  <!-- Dashboard Root -->
   <div id="dashboard-root">
     <!-- Settings Gear Icon -->
     <button id="settings-gear-btn" title="Settings" class="fixed top-4 right-6 z-50 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
@@ -43,854 +48,228 @@
       </svg>
     </button>
     <!-- Settings Modal -->
-    <div id="settings-modal" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); z-index: 1000; align-items: center; justify-content: center;">
-      <div class="w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl p-4 md:p-10 relative overflow-y-auto" style="max-height: 95vh; min-width: 0;">
-        <button id="settings-modal-close" class="absolute top-2 right-2 md:top-4 md:right-4 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200">
-          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-        <h2 class="text-lg md:text-xl font-bold mb-4 text-gray-800 pr-12">Settings</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 min-w-0">
-          <div id="whitelist-section" class="mb-0 md:mb-0 min-w-0">
-            <div class="bg-white border border-indigo-200 rounded-xl shadow-md p-3 md:p-4 min-w-0">
-              <button id="whitelist-toggle" class="w-full flex items-center justify-between text-left mb-3">
-                <h3 class="text-base md:text-lg font-semibold text-indigo-700">Whitelist Management</h3>
-                <svg id="whitelist-arrow" class="w-5 h-5 text-indigo-600 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-              <div id="whitelist-content" class="transition-all duration-300 ease-in-out overflow-hidden">
-                <div id="whitelist-table-container" class="mb-3 overflow-x-auto"></div>
-                <form id="whitelist-form" class="flex flex-col sm:flex-row flex-wrap gap-2 items-start sm:items-end mb-2">
-                  <input type="email" id="whitelist-email" placeholder="Email" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-40 text-sm" required />
-                  <input type="text" id="whitelist-phone" placeholder="Phone (optional)" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-32 text-sm" />
-                  <input type="text" id="whitelist-telegram-id" placeholder="Telegram User ID (optional)" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-40 text-sm" />
-                  <select id="whitelist-role" class="form-input px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-36 text-sm" required>
-                    <option value="admin">Admin</option>
-                    <option value="accounting">Accounting</option>
-                    <option value="programs_manager">Programs Manager</option>
-                    <option value="reservation">Reservation</option>
-                  </select>
-                  <label class="flex items-center gap-2 text-sm text-gray-600"><input type="checkbox" id="whitelist-active" checked class="rounded" /> Active</label>
-                  <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center gap-2 text-sm w-full sm:w-auto justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Add/Update
-                  </button>
-                </form>
-                <div id="whitelist-message" class="text-xs font-semibold mb-1" style="display:none;"></div>
-              </div>
+    <div id="settings-modal" class="modal-form-container hidden">
+      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl max-w-4xl mx-auto border border-gray-200">
+        <div class="flex justify-between items-start mb-4">
+          <h2 class="text-2xl font-bold text-gray-900">Settings</h2>
+          <button id="settings-modal-close" class="bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-lg font-semibold mb-2">Account</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-sm text-gray-700">Logged in as: <span id="user-email" class="font-medium text-indigo-600">loading...</span></p>
+              <p class="text-sm text-gray-700">Your User ID: <span id="user-id" class="font-medium text-gray-500 text-xs">loading...</span></p>
             </div>
           </div>
-
-          <div class="min-w-0">
-            <form id="settings-form" class="space-y-3 md:space-y-4 min-w-0">
-              <div>
-                <label for="telegram-bot-token" class="block text-sm font-medium text-gray-700 mb-1">Telegram Bot Token</label>
-                <input type="password" id="telegram-bot-token" name="telegram_bot_token" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis text-sm" placeholder="Enter Telegram Bot Token" style="min-width:0;">
-              </div>
-              <div>
-                <label for="telegram-chat-id" class="block text-sm font-medium text-gray-700 mb-1">Telegram Chat ID</label>
-                <input type="text" id="telegram-chat-id" name="telegram_chat_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis text-sm" placeholder="Enter Telegram Chat ID" style="min-width:0;">
-              </div>
-              <div>
-                <label for="notification-email-to" class="block text-sm font-medium text-gray-700 mb-1">Notification Email To</label>
-                <input type="email" id="notification-email-to" name="notification_email_to" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis text-sm" placeholder="Enter notification email address(es)" style="min-width:0;">
-              </div>
-              <div>
-                <label for="google-analytics-id" class="block text-sm font-medium text-gray-700 mb-1">Google Analytics Measurement ID</label>
-                <input type="text" id="google-analytics-id" name="google_analytics_id" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg overflow-hidden text-ellipsis text-sm" placeholder="Enter GA Measurement ID (e.g., G-XXXXXXXXXX)" style="min-width:0;">
-                <p class="text-xs text-gray-500 mt-1">Optional: For tracking dashboard usage and user interactions</p>
-              </div>
-              
-
-              
-              <div class="flex flex-col sm:flex-row justify-end mt-6 gap-2 sm:gap-3">
-                <button type="button" id="clear-cache-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-3 sm:px-4 rounded-lg shadow-sm border border-gray-200 transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                  </svg>
-                  <span class="hidden sm:inline">Clear Cache</span>
-                  <span class="sm:hidden">Cache</span>
-                </button>
-                <button type="button" id="import-excel-settings-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-3 sm:px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                  </svg>
-                  <span class="hidden sm:inline">Import Excel</span>
-                  <span class="sm:hidden">Import</span>
-                </button>
-                <input type="file" id="excel-file-input-settings" accept=".xlsx,.csv" style="display:none;" />
-                <button type="button" id="download-sample-excel-settings-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2.5 px-3 sm:px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  <span class="hidden sm:inline">Download Sample</span>
-                  <span class="sm:hidden">Sample</span>
-                </button>
-                <button type="button" id="export-programs-settings-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2.5 px-3 sm:px-4 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
-                  </svg>
-                  <span class="hidden sm:inline">Export Programs</span>
-                  <span class="sm:hidden">Export</span>
-                </button>
-                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2.5 px-4 sm:px-6 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-sm">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  <span class="hidden sm:inline">Save Settings</span>
-                  <span class="sm:hidden">Save</span>
-                </button>
-              </div>
-            </form>
+          <div>
+            <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors">Logout</button>
           </div>
         </div>
       </div>
     </div>
-    <div class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg">
-      <!-- Today's Date and Time (Bangkok) -->
-      <div class="flex justify-center mb-2">
-        <span id="bangkok-datetime" class="text-xs md:text-sm font-medium text-gray-500 px-2"></span>
-      </div>
-      <!-- Table Toggle Section -->
-      <div class="mb-4 tab-btn-container flex flex-wrap justify-center gap-2 sm:gap-4">
-        <button id="toggle-dashboard" class="rounded font-semibold bg-indigo-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Dashboard</button>
-        <button id="toggle-bookings" class="rounded font-semibold bg-blue-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Bookings</button>
-        <button id="toggle-programs" class="rounded font-semibold bg-green-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Programs</button>
-        <button id="toggle-accounting" class="rounded font-semibold bg-pink-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Accounting</button>
-        <button id="toggle-analytics" class="rounded font-semibold bg-yellow-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Analytics</button>
-        <button id="toggle-suppliers" class="rounded font-semibold bg-orange-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Suppliers</button>
-      </div>
-      
-      <!-- Period Selector and Custom Range Section -->
-      <div class="mb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <div class="flex items-center gap-2">
-          <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-xs sm:text-sm">
-            <option value="thisMonth" selected>This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="thisYear">This Year</option>
-            <option value="lastYear">Last Year</option>
-            <option value="custom">Custom Range…</option>
-          </select>
-          <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 px-3 py-2 text-xs sm:text-sm" title="Refresh all data">
-            <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>Refresh</span>
-          </button>
-        </div>
-        
-        <!-- Custom date range controls -->
-        <div id="custom-range-controls" class="flex flex-col sm:flex-row items-center gap-2" style="display:none;">
-          <div class="flex flex-col sm:flex-row items-center gap-2">
-            <div class="flex items-center gap-1">
-              <label for="custom-start-date" class="text-gray-600 text-xs sm:text-sm whitespace-nowrap">From:</label>
-              <input id="custom-start-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm w-32 sm:w-auto" value="" />
-            </div>
-            <div class="flex items-center gap-1">
-              <label for="custom-end-date" class="text-gray-600 text-xs sm:text-sm whitespace-nowrap">To:</label>
-              <input id="custom-end-date" type="date" class="rounded border border-gray-300 px-2 py-1 text-xs sm:text-sm w-32 sm:w-auto" value="" />
-            </div>
-          </div>
-          <div class="flex gap-1">
-            <button id="apply-custom-range" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Apply</button>
-            <button id="clear-custom-range" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Clear</button>
-          </div>
-        </div>
-      </div>
-      <!-- Programs Section (pixel-perfect match) -->
-      <div id="programs-section" style="display:none;">
-        <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-          <div class="mb-6 flex justify-between items-center">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Programs</h2>
-            <div class="flex gap-2">
-              <button id="add-program-btn" class="px-3 py-1 rounded bg-green-600 text-white font-semibold">+ Add Program</button>
-            </div>
-          </div>
-          <!-- Search bar for Programs -->
-          <div class="mb-4 flex justify-end">
-            <input
-              id="programs-search-bar"
-              type="text"
-              placeholder="Search programs..."
-              class="px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style="max-width: 300px;"
-            />
-          </div>
-          <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('sku')">SKU <span id="sku-sort-icon"></span></th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider program-name-header" onclick="sortPrograms('program')">Program <span id="program-sort-icon"></span></th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortPrograms('supplier')">Supplier <span id="supplier-sort-icon"></span></th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
-        </tr>
-      </thead>
-                  <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
-                    <tr><td colspan="6" class="text-center text-gray-400">Loading...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <!-- Programs Pagination -->
-            <div id="programs-pagination"></div>
-          </div>
-        </div>
-      </div>
-      <!-- Add Program Form Section (hidden by default) -->
-      <div id="add-program-section" style="display:none;">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto mt-8">
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Product Rate Configuration</h1>
-          <p class="text-gray-500 mb-8">Fill in the details below to configure the product rates.</p>
-          <form id="productForm" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">SKU <span class="text-red-500">*</span></label>
-                <input type="text" id="sku" name="sku" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., TOUR-PHUKET-001">
-              </div>
-              <input type="hidden" id="dbRowId" name="id">
-              <div>
-                <label for="productIdOptional" class="block text-sm font-medium text-gray-700 mb-1">Product ID (Optional)</label>
-                <input type="text" id="productIdOptional" name="product_id_optional" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 12345ABC">
-              </div>
-            </div>
-            <div>
-              <label for="program" class="block text-sm font-medium text-gray-700 mb-1">Program <span class="text-red-500">*</span></label>
-              <input type="text" id="program" name="program" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Full Day James Bond Island Tour">
-            </div>
-            <div>
-              <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-              <select id="supplier" name="supplier_id" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-                <option value="">Select a supplier...</option>
-              </select>
-            </div>
-            <div class="border-t border-gray-200 pt-6">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Rates</h2>
-                <button type="button" id="addRateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                  </svg>
-                  Add Rate Item
-                </button>
-              </div>
-              <div id="ratesContainer" class="space-y-4"></div>
-            </div>
-            <div>
-              <label for="remark" class="block text-sm font-medium text-gray-700 mb-1">Remark</label>
-              <textarea id="remark" name="remark" rows="4" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="Add any additional notes here..."></textarea>
-            </div>
-            <div class="border-t border-gray-200 pt-6 flex justify-between">
-              <button type="button" id="cancel-add-program" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
-              <button type="button" id="delete-program-btn" style="display:none;" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Delete</button>
-              <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Save Configuration</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <!-- Add Booking Form Section (hidden by default) -->
-      <div id="add-booking-section" style="display:none;">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto mt-8">
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Add New Booking</h1>
-          <p class="text-gray-500 mb-8">Fill in the details below to add a new booking manually.</p>
-          <form id="bookingForm" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="booking_number" class="block text-sm font-medium text-gray-700 mb-1">Booking Number <span class="text-red-500">*</span></label>
-                <input type="text" id="booking_number" name="booking_number" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 1234567890">
-              </div>
-              <div>
-                <label for="tour_date" class="block text-sm font-medium text-gray-700 mb-1">Tour Date <span class="text-red-500">*</span></label>
-                <input type="date" id="tour_date" name="tour_date" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-1">Customer Name <span class="text-red-500">*</span></label>
-                <input type="text" id="customer_name" name="customer_name" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., John Smith">
-              </div>
-              <div>
-                <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" id="phone_number" name="phone_number" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., +1234567890">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="booking_sku" class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                <input type="text" id="booking_sku" name="sku" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., HKT0041">
-              </div>
-              <div>
-                <label for="booking_program" class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                <input type="text" id="booking_program" name="program" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Chiang Mai Tour">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="rate" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
-                <input type="text" id="rate" name="rate" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Standard">
-              </div>
-              <div>
-                <label for="hotel" class="block text-sm font-medium text-gray-700 mb-1">Hotel</label>
-                <input type="text" id="hotel" name="hotel" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., Hilton Bangkok">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label for="adult" class="block text-sm font-medium text-gray-700 mb-1">Adults <span class="text-red-500">*</span></label>
-                <input type="number" id="adult" name="adult" required min="0" value="1" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-              </div>
-              <div>
-                <label for="child" class="block text-sm font-medium text-gray-700 mb-1">Children</label>
-                <input type="number" id="child" name="child" min="0" value="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-              </div>
-              <div>
-                <label for="infant" class="block text-sm font-medium text-gray-700 mb-1">Infants</label>
-                <input type="number" id="infant" name="infant" min="0" value="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label for="paid" class="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
-                <input type="number" id="paid" name="paid" step="0.01" min="0" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 5000">
-              </div>
-              <div>
-                <label for="channel" class="block text-sm font-medium text-gray-700 mb-1">Channel</label>
-                <select id="channel" name="channel" class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out">
-                  <option value="Website">Website</option>
-                  <option value="Viator">Viator</option>
-                </select>
-              </div>
-            </div>
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center">
-                <input type="checkbox" id="national_park_fee" name="national_park_fee" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                <span class="ml-2 text-sm text-gray-700">National Park Fee</span>
-              </label>
-              <label class="flex items-center">
-                <input type="checkbox" id="no_transfer" name="no_transfer" class="form-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                <span class="ml-2 text-sm text-gray-700">No Transfer</span>
-              </label>
-            </div>
-            <div class="border-t border-gray-200 pt-6 flex justify-between">
-              <button type="button" id="cancel-add-booking" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
-              <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Add Booking</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <!-- Email Modal Section (hidden by default) -->
-      <div id="email-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display:none;">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-          <div class="mt-3">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Send Customer Email</h3>
-            <form id="emailForm" class="space-y-4">
-              <div>
-                <label for="email-pickup-time" class="block text-sm font-medium text-gray-700 mb-1">Pickup Time <span class="text-red-500">*</span></label>
-                <input type="text" id="email-pickup-time" name="pickup_time" required class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., 08:00 ~ 09:00" value="08:00 ~ 09:00">
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Option</label>
-                <div class="space-y-2">
-                  <label class="flex items-center">
-                    <input type="radio" id="transfer-no" name="has_transfer" value="no" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
-                    <span class="ml-2 text-sm text-gray-700">Without Transfer</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" id="transfer-free" name="has_transfer" value="free" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
-                    <span class="ml-2 text-sm text-gray-700">Free transfer</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" id="transfer-extra" name="has_transfer" value="extra" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
-                    <span class="ml-2 text-sm text-gray-700">Extra charge transfer</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div id="pier-location-section" style="display:none;">
-                <label for="pier-location" class="block text-sm font-medium text-gray-700 mb-1">Pier Location</label>
-                <input type="text" id="pier-location" name="pier_location" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., SEA ANGEL PIER PHUKET" value="SEA ANGEL PIER PHUKET">
-                <label for="pier-location-url" class="block text-sm font-medium text-gray-700 mb-1 mt-2">Pier Location URL</label>
-                <input type="url" id="pier-location-url" name="pier_location_url" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., https://goo.gl/maps/V6pHgA5XZWq" value="https://goo.gl/maps/V6pHgA5XZWq">
-              </div>
-              
-              <div id="extra-charge-section" style="display:none;">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Transfer Type</label>
-                <div class="space-y-2">
-                  <label class="flex items-center">
-                    <input type="radio" id="private-no" name="is_private" value="false" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
-                    <span class="ml-2 text-sm text-gray-700">Regular transfer</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" id="private-yes" name="is_private" value="true" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
-                    <span class="ml-2 text-sm text-gray-700">Private transfer</span>
-                  </label>
-                </div>
-                <div class="mt-3 space-y-2">
-                  <div>
-                    <label for="regular-transfer-amount" class="block text-sm font-medium text-gray-700 mb-1">Regular Transfer Amount (THB per person)</label>
-                    <input type="number" id="regular-transfer-amount" name="regular_transfer_amount" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="1000" value="1000">
-                  </div>
-                  <div>
-                    <label for="private-transfer-amount" class="block text-sm font-medium text-gray-700 mb-1">Private Transfer Amount (THB total)</label>
-                    <input type="number" id="private-transfer-amount" name="private_transfer_amount" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="1000" value="1000">
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">National Park Fee</label>
-                <div class="space-y-2">
-                  <label class="flex items-center">
-                    <input type="radio" id="park-fee-no" name="has_national_park_fee" value="false" class="form-radio h-4 w-4 text-indigo-600 border-gray-300" checked>
-                    <span class="ml-2 text-sm text-gray-700">No National Park Fee</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" id="park-fee-yes" name="has_national_park_fee" value="true" class="form-radio h-4 w-4 text-indigo-600 border-gray-300">
-                    <span class="ml-2 text-sm text-gray-700">Yes, has National Park Fee</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div id="park-fee-details" style="display:none;">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label for="adult-fee" class="block text-sm font-medium text-gray-700 mb-1">Adult Fee (THB)</label>
-                    <input type="number" id="adult-fee" name="adult_fee" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="400" value="400">
-                  </div>
-                  <div>
-                    <label for="child-fee" class="block text-sm font-medium text-gray-700 mb-1">Child Fee (THB)</label>
-                    <input type="number" id="child-fee" name="child_fee" min="0" class="form-input w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="200" value="200">
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Email Preview Section -->
-              <div class="border-t border-gray-200 pt-4">
-                <div class="flex items-center justify-between mb-3">
-                  <label class="block text-sm font-medium text-gray-700">Email Preview</label>
-                  <button type="button" id="preview-email-btn" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-lg transition duration-200 flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                    Preview Email
-                  </button>
-                </div>
-                <div id="email-preview" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-64 overflow-y-auto transition-all duration-300 ease-in-out">
-                  <div class="text-xs text-gray-600 mb-2">Subject: <span id="preview-subject" class="font-medium"></span></div>
-                  <div class="text-xs text-gray-600 mb-2">To: <span id="preview-to" class="font-medium"></span></div>
-                  <div class="border-t border-gray-200 pt-2">
-                    <div id="preview-content" class="text-sm text-gray-800 whitespace-pre-wrap"></div>
-                  </div>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">Click "Preview Email" to see how your email will look before sending.</div>
-              </div>
-              
-              <div class="border-t border-gray-200 pt-4 flex justify-between">
-                <button type="button" id="cancel-email-modal" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
-                <button type="submit" id="send-email-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Send Email</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      <!-- Search Bar Section -->
-      <div class="mb-6" id="search-bar-section">
-        <label for="search-bar" class="sr-only">Search bookings</label>
-        <div class="relative flex gap-2">
-          <div class="flex-1 relative">
-            <button id="clear-search-btn" type="button" style="display:none;" class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 hover:text-red-500 focus:outline-none z-10" title="Clear search">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <input
-              id="search-bar"
-              type="text"
-              placeholder="Search bookings..."
-              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </div>
 
-
-        </div>
+    <!-- Main Content Area -->
+    <main class="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+      <!-- Tab Navigation -->
+      <div class="mb-6 tab-btn-container flex flex-wrap justify-center sm:justify-start gap-2 overflow-x-auto whitespace-nowrap">
+        <button id="toggle-dashboard" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-dashboard active" type="button">Dashboard</button>
+        <button id="toggle-bookings" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-bookings" type="button">Bookings</button>
+        <button id="toggle-programs" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-programs" type="button">Programs</button>
+        <button id="toggle-accounting" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-accounting" type="button">Accounting</button>
+        <button id="toggle-analytics" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-analytics" type="button">Analytics</button>
+        <button id="toggle-suppliers" class="rounded-full font-semibold text-white px-5 py-2 text-sm sm:text-base tab-btn-base tab-suppliers" type="button">Suppliers</button>
       </div>
-      <!-- Add Booking Button Section -->
-      <div class="mb-4 flex justify-end">
-        <button id="add-booking-btn" class="px-4 py-2 rounded font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200" type="button">+ Add Booking</button>
-      </div>
-      <!-- Results Summary Section -->
-      <div id="table-summary" class="text-center mb-6"></div>
-      <div id="booking-cards-container" class="booking-cards"></div>
-      
-      <div class="bookings-table-container overflow-x-auto rounded-lg shadow-md border border-gray-200">
-        <hr class="border-gray-200 mb-6">
-        <table id="bookings-table" class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
-              <th data-col="book_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Date</th>
-              <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
-              <th data-col="customer_name" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
-              <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-              <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Program</th>
-              <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Rate</th>
-              <th class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-700">Hotel</th>
-              <th data-col="op" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OP</th>
-              <th data-col="ri" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">RI</th>
-              <th data-col="customer" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
 
-              <th data-col="adult" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
-              <th data-col="child" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
-              <th data-col="infant" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Infant</th>
-              <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-          </tr>
-        </thead>
-          <tbody id="bookings-body" class="bg-white divide-y divide-gray-200">
-        <tr><td colspan="14" style="text-align:center;">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
-      <hr class="border-gray-200 mt-6 mb-6">
-      <div id="pagination-controls" class="flex justify-center items-center space-x-2 text-base"></div>
-      <div id="accounting-table-container" style="display:none;">
-        <div id="accounting-summary" class="text-center mb-6" style="display:none;"></div>
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-gray-800">Accounting Data</h2>
-          <div class="flex gap-2">
-            <button id="export-accounting-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-              Export to Excel
-            </button>
+      <!-- Dashboard Section -->
+      <div id="dashboard-section" class="tab-content">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+          <div class="bg-indigo-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-indigo-700 mb-1">Total Bookings</div>
+            <div id="dashboard-total-bookings" class="text-2xl font-bold text-indigo-900">-</div>
+          </div>
+          <div class="bg-pink-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-pink-700 mb-1">New Bookings</div>
+            <div id="dashboard-new-bookings" class="text-2xl font-bold text-pink-900">-</div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-green-700 mb-1">Total Sales</div>
+            <div id="dashboard-total-earnings" class="text-2xl font-bold text-green-900">-</div>
+          </div>
+          <div class="bg-yellow-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-yellow-700 mb-1">Total Benefit</div>
+            <div id="dashboard-benefit" class="text-2xl font-bold text-yellow-900">-</div>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-blue-700 mb-1">Passengers</div>
+            <div id="dashboard-total-passengers" class="text-2xl font-bold text-blue-900">-</div>
+          </div>
+          <div class="bg-purple-50 rounded-lg p-4 text-center shadow">
+            <div class="text-sm font-semibold text-purple-700 mb-1">Programs Booked</div>
+            <div id="dashboard-programs-booked" class="text-2xl font-bold text-purple-900">-</div>
           </div>
         </div>
-        <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-          <table id="accounting-table" class="accounting-table min-w-full divide-y divide-gray-200">
+        <!-- Charts and Breakdown -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-gray-50 rounded-lg p-6 shadow-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenue by Source</h3>
+            <canvas id="revenueChart"></canvas>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-6 shadow-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top Programs</h3>
+            <div id="top-programs-list" class="space-y-2">
+              <p class="text-gray-500">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings Section -->
+      <div id="bookings-section" class="tab-content hidden">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <h2 class="text-2xl font-bold text-gray-900">Bookings</h2>
+          <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <div class="relative flex-1 w-full">
+              <input type="text" id="bookings-search-bar" placeholder="Search bookings..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              <button id="clear-search-btn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 focus:outline-none hidden" title="Clear search">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <button id="add-booking-btn" class="px-5 py-2 w-full sm:w-auto rounded-lg font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors duration-200" type="button">+ Add Booking</button>
+          </div>
+        </div>
+
+        <!-- Bookings Table (Desktop View) -->
+        <div id="bookings-table-desktop" class="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
+          <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th data-col="booking_number" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking #</th>
-                <th data-col="book_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Date</th>
-                <th data-col="tour_date" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour Date</th>
-                <th data-col="sku" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                <th data-col="program" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-                <th data-col="rate" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                <th data-col="adult" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adult</th>
-                <th data-col="child" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Child</th>
-                <th data-col="paid" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">NET</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-yellow-700 uppercase tracking-wider">Benefit</th>
-                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cancel</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Booking #</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Customer Name</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tour Date</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Program</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rate</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Paid</th>
+                <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody id="accounting-body" class="bg-white divide-y divide-gray-200">
-              <tr><td colspan="12" style="text-align:center;">Loading...</td></tr>
+            <tbody id="bookings-table-body" class="bg-white divide-y divide-gray-200">
+              <tr><td colspan="7" class="text-center py-4 text-gray-500">Loading bookings...</td></tr>
             </tbody>
           </table>
         </div>
-        <div id="accounting-pagination-controls" class="flex justify-center items-center space-x-2 text-base mt-4"></div>
+
+        <!-- Booking Cards (Mobile View) -->
+        <div id="booking-cards-mobile" class="space-y-4">
+          <p class="text-center text-gray-500 py-4">Loading bookings...</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="bookings-pagination" class="flex justify-center items-center space-x-2 mt-6"></div>
       </div>
-      <!-- Dashboard Section (hidden by default) -->
-      <div id="dashboard-section" style="display:none;">
-        <!-- Dashboard Cards - 2 Rows × 3 Columns (Small size like analytics) -->
-        <div class="flex justify-center">
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-          <!-- Row 1: Total Bookings | New Bookings | Sale -->
-          <div class="bg-indigo-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-indigo-700 font-semibold mb-1">Total Bookings</div>
-            <div id="dashboard-total-bookings" class="text-lg sm:text-2xl font-bold text-indigo-900">-</div>
-            <div id="dashboard-total-bookings-change" class="text-xs mt-1"></div>
-          </div>
-          <div class="bg-pink-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-pink-700 font-semibold mb-1">New Bookings</div>
-            <div id="dashboard-new-bookings" class="text-lg sm:text-2xl font-bold text-pink-900">-</div>
-            <div id="dashboard-new-bookings-change" class="text-xs mt-1"></div>
-          </div>
-          <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-green-700 font-semibold mb-1">Sale</div>
-            <div id="dashboard-total-earnings" class="text-lg sm:text-2xl font-bold text-green-900">-</div>
-            <div id="dashboard-total-earnings-change" class="text-xs mt-1"></div>
-          </div>
-          
-          <!-- Row 2: Benefit | Done vs Booked | Passengers -->
-          <div class="bg-yellow-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-yellow-700 font-semibold mb-1">Benefit</div>
-            <div id="dashboard-benefit" class="text-lg sm:text-2xl font-bold text-yellow-900">-</div>
-            <div id="dashboard-benefit-change" class="text-xs mt-1">-- %</div>
-          </div>
-          <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-blue-700 font-semibold mb-1">Done vs Booked</div>
-            <div class="flex items-center justify-center gap-2 mt-2">
-              <div id="dashboard-done" class="font-bold text-blue-900">-</div>
-              <span class="text-xs text-gray-500">/</span>
-              <div id="dashboard-booked" class="font-bold text-blue-700">-</div>
-            </div>
-            <div class="w-full bg-gray-200 rounded h-2 mt-2">
-              <div id="dashboard-progress" class="bg-blue-500 h-2 rounded" style="width:0%"></div>
-            </div>
-          </div>
-          <div class="bg-purple-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-purple-700 font-semibold mb-1">Passengers</div>
-            <div class="text-lg sm:text-2xl font-bold text-purple-900">
-              <span id="dashboard-total-passengers">-</span>
-            </div>
-          </div>
-        </div>
-        </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-8 justify-center mb-6 mx-auto max-w-5xl overflow-x-auto">
-          <div class="bg-white rounded-lg p-4 shadow min-w-[320px]">
-            <div class="flex justify-between items-center mb-2">
-              <div class="text-base font-semibold text-indigo-800">Revenue by</div>
-            </div>
-            <canvas id="revenueChart" height="220"></canvas>
-          </div>
-          <div class="bg-white rounded-lg p-4 shadow min-w-[220px]">
-            <div class="text-base font-semibold text-indigo-800 mb-2">Top Destinations</div>
-            <div id="dashboard-top-destinations" class="text-sm"></div>
-          </div>
-          <!-- Booking Channels Pie Chart -->
-          <div class="bg-white rounded-lg p-4 shadow min-w-[220px] flex flex-col items-center">
-            <div class="text-base font-semibold text-indigo-800 mb-2">Booking Channels</div>
-            <canvas id="channelsPieChart" width="180" height="180"></canvas>
-            <div id="channels-booking-counts" class="mt-2 text-sm text-gray-700"></div>
-            <!-- Booking Channels Table -->
-            <div id="channels-booking-table" class="w-full mt-4"></div>
-          </div>
-        </div>
-      </div>
-      <!-- Analytics Section (hidden by default) -->
-      <div id="analytics-section" style="display:none;">
-        <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
-          <div class="bg-yellow-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-yellow-700 font-semibold mb-1">Total Sale</div>
-            <div id="analytics-total-bookings" class="text-lg sm:text-2xl font-bold text-yellow-900">-</div>
-            <div id="analytics-total-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-pink-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-                            <div class="text-sm text-pink-700 font-semibold mb-1">Viator Sale</div>
-            <div id="analytics-new-bookings" class="text-lg sm:text-2xl font-bold text-pink-900">-</div>
-            <div id="analytics-viator-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-green-700 font-semibold mb-1">Website Sale</div>
-            <div id="analytics-total-earnings" class="text-lg sm:text-2xl font-bold text-green-900">-</div>
-            <div id="analytics-website-sale-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-blue-700 font-semibold mb-1">Viator vs Website</div>
-            <div class="flex items-center justify-center gap-2 mt-2">
-              <div id="analytics-ota-count" class="font-bold text-blue-900">-</div>
-              <span class="text-xs text-gray-500">/</span>
-              <div id="analytics-website-count" class="font-bold text-blue-700">-</div>
-            </div>
-            <div id="analytics-viator-website-total" class="text-xs text-blue-600 mt-1">Total: -</div>
-          </div>
-        </div>
 
-        <!-- New Benefit and Passenger Row -->
-        <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
-          <div class="bg-indigo-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-indigo-700 font-semibold mb-1">Total Benefit</div>
-            <div id="analytics-total-benefit" class="text-lg sm:text-2xl font-bold text-indigo-900">-</div>
-            <div id="analytics-total-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-purple-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-purple-700 font-semibold mb-1">Viator Benefit</div>
-            <div id="analytics-viator-benefit" class="text-lg sm:text-2xl font-bold text-purple-900">-</div>
-            <div id="analytics-viator-benefit-percentage" class="text-xs text-purple-500 mt-1">~25.70%</div>
-            <div id="analytics-viator-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-teal-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-teal-700 font-semibold mb-1">Website Benefit</div>
-            <div id="analytics-website-benefit" class="text-lg sm:text-2xl font-bold text-teal-900">-</div>
-            <div id="analytics-website-benefit-percentage" class="text-xs text-purple-500 mt-1">~46.82%</div>
-            <div id="analytics-website-benefit-comparison" class="text-xs text-gray-600 mt-1">vs prev period</div>
-          </div>
-          <div class="bg-amber-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-amber-700 font-semibold mb-1">Total Passengers</div>
-            <div id="analytics-total-passengers" class="text-lg sm:text-2xl font-bold text-amber-900">-</div>
-            <div id="analytics-passengers-breakdown" class="text-xs text-amber-600 mt-1">Viator/Website</div>
-          </div>
+      <!-- Programs Section -->
+      <div id="programs-section" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Programs</h2>
+          <button id="add-program-btn" class="px-5 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors duration-200">+ Add Program</button>
         </div>
-
-        <!-- New Average Metrics Row -->
-        <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
-          <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-blue-700 font-semibold mb-1">Avg. Sale Viator/Day</div>
-            <div id="analytics-avg-sale-viator" class="text-lg sm:text-2xl font-bold text-blue-900">-</div>
-          </div>
-          <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-green-700 font-semibold mb-1">Avg. Sale Website/Day</div>
-            <div id="analytics-avg-sale-website" class="text-lg sm:text-2xl font-bold text-green-900">-</div>
-          </div>
-          <div class="bg-purple-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-purple-700 font-semibold mb-1">Avg. Ben. Viator/Day</div>
-            <div id="analytics-avg-benefit-viator" class="text-lg sm:text-2xl font-bold text-purple-900">-</div>
-          </div>
-          <div class="bg-teal-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-            <div class="text-sm text-teal-700 font-semibold mb-1">Avg. Ben. Website/Day</div>
-            <div id="analytics-avg-benefit-website" class="text-lg sm:text-2xl font-bold text-teal-900">-</div>
-          </div>
-        </div>
-
-        
-        <!-- Sales Analytics Section -->
-        <div class="bg-white rounded-lg p-6 shadow-lg mb-6">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">Sales Analytics by Channel</h3>
-          </div>
-          
-          <!-- NEW: Comparison Summary Section -->
-          <div id="comparison-summary" class="bg-blue-50 rounded-lg p-4 mb-6" style="display:none;">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="text-base font-semibold text-blue-800 mb-2">Period Comparison</h4>
-                <div class="text-sm text-blue-700">
-                  <span id="comparison-current-period">Current Period</span> vs 
-                  <span id="comparison-previous-period">Previous Period</span>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs text-blue-600 mb-1">Overall Performance</div>
-                <div id="comparison-overall-indicator" class="text-lg font-bold text-blue-800">-</div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Sales Charts and Tables -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Sales by Channel Chart -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-base font-semibold text-gray-800 mb-3">Sales by Channel</h4>
-              <div class="relative" style="height: 300px; width: 100%;">
-                <canvas id="sales-channel-chart" width="400" height="300"></canvas>
-              </div>
-            </div>
-            
-            <!-- Sales by Channel Table -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <h4 class="text-base font-semibold text-gray-800 mb-3">Channel Breakdown</h4>
-              <div id="sales-channel-table" class="overflow-x-auto">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="border-b">
-                      <th class="text-left py-2">Channel</th>
-                      <th class="text-right py-2">Bookings</th>
-                      <th class="text-right py-2">Sales</th>
-                      <th class="text-right py-2">%</th>
-                    </tr>
-                  </thead>
-                  <tbody id="sales-channel-table-body">
-                    <tr><td colspan="4" class="text-center text-gray-400">Loading...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Top Programs -->
-          <div class="mt-6">
-            <h4 class="text-base font-semibold text-gray-800 mb-3">Top Programs by Sales</h4>
-            <div id="sales-top-programs" class="bg-gray-50 rounded-lg p-4">
-              <div class="text-center text-gray-400">Loading...</div>
-            </div>
-          </div>
+        <div class="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">SKU</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Program</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Supplier</th>
+                <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Rates</th>
+                <th class="px-6 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody id="programs-table-body" class="bg-white divide-y divide-gray-200">
+              <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading programs...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
       
+      <!-- Accounting Section -->
+      <div id="accounting-section" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Accounting</h2>
+        <p class="text-gray-500 text-center py-10">Accounting data will be displayed here.</p>
+      </div>
+      <!-- Analytics Section -->
+      <div id="analytics-section" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Analytics</h2>
+        <p class="text-gray-500 text-center py-10">Analytics and reports will be displayed here.</p>
+      </div>
       <!-- Suppliers Section -->
-      <div id="suppliers-section" style="display:none;">
-        <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-          <div class="mb-6 flex justify-between items-center">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Suppliers</h2>
-            <div class="flex gap-2">
-              <button id="add-supplier-btn" class="px-3 py-1 rounded bg-orange-600 text-white font-semibold">+ Add Supplier</button>
-              <button id="fix-nets-btn" class="px-3 py-1 rounded bg-red-600 text-white font-semibold">🔧 Fix NET Amounts</button>
-            </div>
-          </div>
-          
-          <!-- Suppliers Summary Cards -->
-          <div class="grid grid-cols-2 gap-3 mb-6 sm:flex sm:flex-wrap sm:gap-4 sm:justify-center">
-            <div class="bg-orange-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-              <div class="text-sm text-orange-700 font-semibold mb-1">How Many Suppliers</div>
-              <div id="suppliers-count" class="text-2xl font-bold text-orange-900">-</div>
-            </div>
-            <div class="bg-blue-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-              <div class="text-sm text-blue-700 font-semibold mb-1">How Many Programs</div>
-              <div id="suppliers-programs-count" class="text-2xl font-bold text-blue-900">-</div>
-            </div>
-            <div class="bg-green-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-              <div class="text-sm text-green-700 font-semibold mb-1">Total Net to Suppliers</div>
-              <div id="suppliers-total-paid" class="text-2xl font-bold text-green-900">-</div>
-            </div>
-                          <div class="bg-red-50 rounded-lg p-2 sm:p-4 min-w-[140px] sm:min-w-[220px] text-center shadow">
-                <div class="text-sm text-red-700 font-semibold mb-1">This Month Net</div>
-                <div id="suppliers-total-due" class="text-2xl font-bold text-red-900">-</div>
-              </div>
-          </div>
-          
-          <!-- Suppliers Table -->
-          <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Programs</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Bookings</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Net Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Last Month Net</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">This Month Net</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="suppliers-table-body" class="bg-white divide-y divide-gray-200">
-                  <tr><td colspan="7" class="text-center text-gray-400">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+      <div id="suppliers-section" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Suppliers</h2>
+        <p class="text-gray-500 text-center py-10">Suppliers management will be displayed here.</p>
       </div>
-      
-      <!-- Add Supplier Form Section (hidden by default) -->
-      <div id="add-supplier-section" style="display:none;">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-2xl mx-auto mt-8">
-          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Add New Supplier</h1>
-          <p class="text-gray-500 mb-8">Fill in the details below to add a new supplier.</p>
-          <form id="supplierForm" class="space-y-6">
-            <div>
-              <label for="supplier_name" class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-              <input type="text" id="supplier_name" name="name" required class="form-input w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg transition duration-150 ease-in-out" placeholder="e.g., ABC Tours">
-            </div>
-            <div class="border-t border-gray-200 pt-6 flex justify-between">
-              <button type="button" id="cancel-add-supplier" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Cancel</button>
-              <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Add Supplier</button>
-            </div>
-          </form>
-        </div>
+    </main>
+
+    <!-- Dynamic Form Sections (hidden by default) -->
+    <div id="add-booking-section" class="modal-form-container hidden">
+      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl max-w-2xl mx-auto border border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Add New Booking</h2>
+        <p class="text-gray-500 mb-6">Enter the details to add a new booking.</p>
+        <form id="bookingForm" class="space-y-4">
+          <div>
+            <label for="booking-number" class="block text-sm font-medium text-gray-700">Booking Number</label>
+            <input type="text" id="booking-number" name="booking_number" required class="mt-1 w-full p-2 border border-gray-300 rounded-lg">
+          </div>
+          <div>
+            <label for="tour-date" class="block text-sm font-medium text-gray-700">Tour Date</label>
+            <input type="date" id="tour-date" name="tour_date" required class="mt-1 w-full p-2 border border-gray-300 rounded-lg">
+          </div>
+          <div>
+            <label for="customer-name" class="block text-sm font-medium text-gray-700">Customer Name</label>
+            <input type="text" id="customer-name" name="customer_name" required class="mt-1 w-full p-2 border border-gray-300 rounded-lg">
+          </div>
+          <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
+            <button type="button" id="cancel-add-booking" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors">Cancel</button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Add Booking</button>
+          </div>
+        </form>
       </div>
-
-
     </div>
-    <!-- Move Logout Button into Settings Modal -->
-    <button id="logout-btn" style="width:100%;margin-top:24px;background:#f87171;color:white;font-weight:bold;padding:12px 0;border:none;border-radius:8px;display:none;">Logout</button>
+    
+    <!-- Settings Modal (hidden by default) -->
+    <div id="settings-modal" class="modal-form-container hidden">
+      <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl max-w-4xl mx-auto border border-gray-200">
+        <div class="flex justify-between items-start mb-4">
+          <h2 class="text-2xl font-bold text-gray-900">Settings</h2>
+          <button id="settings-modal-close" class="bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-lg font-semibold mb-2">Account</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-sm text-gray-700">Logged in as: <span id="user-email" class="font-medium text-indigo-600">loading...</span></p>
+              <p class="text-sm text-gray-700">Your User ID: <span id="user-id" class="font-medium text-gray-500 text-xs">loading...</span></p>
+            </div>
+          </div>
+          <div>
+            <button id="logout-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
+  
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-              <script src="dashboard.js?v=2.7"></script>
+  <!-- Your original dashboard.js file is referenced here and remains untouched -->
+  <script src="dashboard.js?v=2.7"></script>
 </body>
 </html>

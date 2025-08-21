@@ -752,24 +752,13 @@
         <div class="bg-white rounded-lg p-6 shadow-lg mb-6">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-semibold text-gray-800">Sales Analytics by Channel</h3>
-            <div class="flex items-center gap-3">
-              <label for="comparison-period-selector" class="text-sm font-medium text-gray-700">Compare with:</label>
-              <select id="comparison-period-selector" class="rounded border border-gray-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50">
-                <option value="previous">Previous Period</option>
-                <option value="samePeriodLastYear">Same Period Last Year</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="lastWeek">Last Week</option>
-                <option value="none">No Comparison</option>
-              </select>
-              <div class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                📊 Comparison data
-              </div>
-            </div>
-            <div class="text-xs text-gray-600 mt-2">
-              <strong>Previous Period:</strong> Same duration, shifted back in time | 
-              <strong>Same Period Last Year:</strong> Exact same dates, previous year | 
-              <strong>Last Month/Week:</strong> Previous month/week with same duration
-            </div>
+
+          </div>
+          
+          <!-- Help text for comparison -->
+          <div class="text-xs text-gray-600 mb-4 bg-gray-50 p-3 rounded">
+            <strong>Comparison:</strong> Shows data compared to the previous period of the same duration. 
+            Use the global period selector above to change the time period.
           </div>
           
           <!-- NEW: Comparison Summary Section -->

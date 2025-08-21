@@ -2309,13 +2309,7 @@ analyticsBtn.onclick = () => {
       const period = globalPeriod ? globalPeriod.value : 'thisMonth';
       fetchSalesAnalytics(period);
       
-      // Add event listener for comparison period selector
-      const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
-      if (comparisonPeriodSelector) {
-        comparisonPeriodSelector.addEventListener('change', () => {
-          fetchSalesAnalytics(period);
-        });
-      }
+
 };
 
 // Suppliers button handler
@@ -2374,9 +2368,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
   // Set a new timeout to prevent rapid calls
   salesAnalyticsTimeout = setTimeout(async () => {
     try {
-      // Get comparison period from selector
-      const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
-      const comparisonPeriod = comparisonPeriodSelector ? comparisonPeriodSelector.value : 'previous';
+      // Use default comparison period (previous period)
+      const comparisonPeriod = 'previous';
       
       // Check for custom date range first
       let url;
@@ -2476,7 +2469,9 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       
       // Handle comparison data
       console.log('Debug: Received comparison data:', data.comparison);
-      if (data.comparison && data.comparison.totalSale) {
+      console.log('Debug: Comparison type:', data.comparison?.type);
+      console.log('Debug: Comparison totalSale:', data.comparison?.totalSale);
+      if (data.comparison && data.comparison.type) {
         // Helper function to format comparison text with color
         const formatComparison = (percentChange, metricName) => {
           if (percentChange === null || percentChange === undefined) {
@@ -2583,71 +2578,42 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
           }
         }
       } else {
-        // No comparison data - check if user selected "No Comparison"
-        const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
-        const selectedComparison = comparisonPeriodSelector ? comparisonPeriodSelector.value : 'previous';
+        // No comparison data available - show "No data available" for all elements
+        const comparisonElements = [
+          'analytics-total-sale-comparison',
+          'analytics-viator-sale-comparison',
+          'analytics-website-sale-comparison',
+          'analytics-total-benefit-comparison',
+          'analytics-viator-benefit-comparison',
+          'analytics-website-benefit-comparison'
+        ];
         
-        if (selectedComparison === 'none') {
-          // User chose no comparison - show "No comparison" for all elements
-          const comparisonElements = [
-            'analytics-total-sale-comparison',
-            'analytics-viator-sale-comparison',
-            'analytics-website-sale-comparison',
-            'analytics-total-benefit-comparison',
-            'analytics-viator-benefit-comparison',
-            'analytics-website-benefit-comparison'
-          ];
-          
-          comparisonElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-              element.innerHTML = '<span class="text-gray-500">No comparison</span>';
-            }
-          });
-          
-          // Clear comparison metrics
-          const comparisonMetrics = [
-            'comparison-total-sales-change',
-            'comparison-viator-change',
-            'comparison-website-change',
-            'comparison-benefit-change'
-          ];
-          
-          comparisonMetrics.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-              element.innerHTML = '-';
-            }
-          });
-          
-          // Hide comparison summary
-          const comparisonSummary = document.getElementById('comparison-summary');
-          if (comparisonSummary) {
-            comparisonSummary.style.display = 'none';
+        comparisonElements.forEach(id => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.innerHTML = '<span class="text-gray-500">No data available</span>';
           }
-        } else {
-          // Comparison data should exist but doesn't - show "No data available"
-          const comparisonElements = [
-            'analytics-total-sale-comparison',
-            'analytics-viator-sale-comparison',
-            'analytics-website-sale-comparison',
-            'analytics-total-benefit-comparison',
-            'analytics-viator-benefit-comparison',
-            'analytics-website-benefit-comparison'
-          ];
-          
-          comparisonElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-              element.innerHTML = '<span class="text-gray-500">No data available</span>';
-            }
-          });
-          
-          // Hide comparison summary
-          const comparisonSummary = document.getElementById('comparison-summary');
-          if (comparisonSummary) {
-            comparisonSummary.style.display = 'none';
+        });
+        
+        // Clear comparison metrics
+        const comparisonMetrics = [
+          'comparison-total-sales-change',
+          'comparison-viator-change',
+          'comparison-website-change',
+          'comparison-benefit-change'
+        ];
+        
+        comparisonMetrics.forEach(id => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.innerHTML = '-';
           }
+        });
+        
+        // Hide comparison summary
+        const comparisonSummary = document.getElementById('comparison-summary');
+        if (comparisonSummary) {
+          comparisonSummary.style.display = 'none';
         }
       }
       

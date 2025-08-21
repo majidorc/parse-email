@@ -273,12 +273,16 @@ async function handleSalesAnalytics(req, res) {
         dateFilter = 'WHERE tour_date >= $1 AND tour_date < $2';
         startDateParam = start.toISOString().split('T')[0];
         endDateParam = end.toISOString().split('T')[0];
+
       }
     } else if (startDate && endDate) {
       dateFilter = 'WHERE tour_date >= $1 AND tour_date <= $2';
       startDateParam = startDate;
       endDateParam = endDate;
+      
     }
+    
+
     
     // FIXED: Only 2 channels - Viator (bokun emails except GYG) and Website (info@tours.co.th + GYG)
     let salesByChannelResult;
@@ -637,9 +641,10 @@ async function handleSalesAnalytics(req, res) {
 
     // Generate comparison data with previous period
     let comparison = null;
-    console.log('Debug: dateFilter:', dateFilter, 'period:', period, 'startDateParam:', startDateParam, 'endDateParam:', endDateParam, 'comparisonPeriod:', comparisonPeriod);
+    const now = new Date(); // Define now variable for comparison calculations
+
     
-    if (dateFilter && (period === 'thisMonth' || period === 'lastMonth' || period === 'thisWeek' || period === 'lastWeek' || (startDate && endDate)) && comparisonPeriod !== 'none') {
+    if (dateFilter && comparisonPeriod !== 'none') {
       try {
         // Calculate previous period dates
         let prevStart, prevEnd;
@@ -765,10 +770,7 @@ async function handleSalesAnalytics(req, res) {
           return ((current - previous) / previous) * 100;
         };
 
-        console.log('Debug: Generated comparison data:', {
-          viatorSale, websiteSale, prevTotalSale,
-          totalBenefit, prevTotalBenefitValue
-        });
+
         
         comparison = {
           type: comparisonType,
@@ -813,7 +815,7 @@ async function handleSalesAnalytics(req, res) {
       }
     }
 
-    console.log('Debug: Final response comparison:', comparison);
+
     
     res.status(200).json({
       salesByChannel: salesByChannelResult,

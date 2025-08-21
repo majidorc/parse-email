@@ -2300,14 +2300,22 @@ analyticsBtn.onclick = () => {
     window.salesAnalyticsInitialized = true;
   }
   
-  // Show global period selector on Analytics
-  const globalPeriodSelector = document.getElementById('global-period-selector');
-  if (globalPeriodSelector) globalPeriodSelector.style.display = '';
-  
-  // Fetch sales analytics data with global period
-  const globalPeriod = document.getElementById('global-period-selector');
-  const period = globalPeriod ? globalPeriod.value : 'thisMonth';
-  fetchSalesAnalytics(period);
+        // Show global period selector on Analytics
+      const globalPeriodSelector = document.getElementById('global-period-selector');
+      if (globalPeriodSelector) globalPeriodSelector.style.display = '';
+      
+      // Fetch sales analytics data with global period
+      const globalPeriod = document.getElementById('global-period-selector');
+      const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+      fetchSalesAnalytics(period);
+      
+      // Add event listener for comparison period selector
+      const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
+      if (comparisonPeriodSelector) {
+        comparisonPeriodSelector.addEventListener('change', () => {
+          fetchSalesAnalytics(period);
+        });
+      }
 };
 
 // Suppliers button handler
@@ -2366,12 +2374,16 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
   // Set a new timeout to prevent rapid calls
   salesAnalyticsTimeout = setTimeout(async () => {
     try {
+      // Get comparison period from selector
+      const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
+      const comparisonPeriod = comparisonPeriodSelector ? comparisonPeriodSelector.value : 'previous';
+      
       // Check for custom date range first
       let url;
       if (window.customStartDate && window.customEndDate) {
-        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}&period=${period}`;
+        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}&period=${period}&comparisonPeriod=${comparisonPeriod}`;
       } else {
-        url = `/api/analytics?type=sales&period=${period}`;
+        url = `/api/analytics?type=sales&period=${period}&comparisonPeriod=${comparisonPeriod}`;
       }
       
       const response = await fetch(url);
@@ -2463,7 +2475,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       }
       
       // Handle comparison data
-      if (data.comparison) {
+      console.log('Debug: Received comparison data:', data.comparison);
+      if (data.comparison && data.comparison.totalSale) {
         // Helper function to format comparison text with color
         const formatComparison = (percentChange, metricName) => {
           if (percentChange === null || percentChange === undefined) {
@@ -2497,29 +2510,144 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
         const comparisonSummary = document.getElementById('comparison-summary');
         if (comparisonSummary) {
           comparisonSummary.style.display = 'block';
+          
+          // Update comparison summary details
+          const currentPeriodElement = document.getElementById('comparison-current-period');
+          const previousPeriodElement = document.getElementById('comparison-previous-period');
+          const periodDetailsElement = document.getElementById('comparison-period-details');
+          const changeAmountElement = document.getElementById('comparison-change-amount');
+          
+          if (currentPeriodElement && previousPeriodElement) {
+            if (window.customStartDate && window.customEndDate) {
+              currentPeriodElement.textContent = `${window.customStartDate} to ${window.customEndDate}`;
+              previousPeriodElement.textContent = `${data.comparison.previousPeriod?.startDate || 'N/A'} to ${data.comparison.previousPeriod?.endDate || 'N/A'}`;
+            } else {
+              currentPeriodElement.textContent = 'Current Period';
+              previousPeriodElement.textContent = 'Previous Period';
+            }
+          }
+          
+          if (periodDetailsElement) {
+            const comparisonType = data.comparison.type || 'previous';
+            const typeLabels = {
+              'previous': 'Previous Period',
+              'samePeriodLastYear': 'Same Period Last Year',
+              'lastMonth': 'Last Month',
+              'lastWeek': 'Last Week',
+              'twoMonthsAgo': 'Two Months Ago',
+              'twoWeeksAgo': 'Two Weeks Ago'
+            };
+            periodDetailsElement.textContent = `Comparison: ${typeLabels[comparisonType] || comparisonType}`;
+          }
+          
+          if (changeAmountElement) {
+            const totalChange = (data.comparison.totalSale?.currentValue || 0) - (data.comparison.totalSale?.previousValue || 0);
+            const changeText = totalChange >= 0 ? `+${totalChange.toLocaleString()}` : totalChange.toLocaleString();
+            const currentValue = (data.comparison.totalSale?.currentValue || 0).toLocaleString();
+            const previousValue = (data.comparison.totalSale?.previousValue || 0).toLocaleString();
+            changeAmountElement.textContent = `Current: ${currentValue} | Previous: ${previousValue}`;
+          }
+          
+          // Update additional comparison metrics
+          const totalSalesChangeElement = document.getElementById('comparison-total-sales-change');
+          const viatorChangeElement = document.getElementById('comparison-viator-change');
+          const websiteChangeElement = document.getElementById('comparison-website-change');
+          const benefitChangeElement = document.getElementById('comparison-benefit-change');
+          
+          if (totalSalesChangeElement) {
+            const change = (data.comparison.totalSale?.currentValue || 0) - (data.comparison.totalSale?.previousValue || 0);
+            const percentChange = data.comparison.totalSale?.percentChange || 0;
+            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
+            totalSalesChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
+          }
+          
+          if (viatorChangeElement) {
+            const change = (data.comparison.viatorSale?.currentValue || 0) - (data.comparison.viatorSale?.previousValue || 0);
+            const percentChange = data.comparison.viatorSale?.percentChange || 0;
+            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
+            viatorChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
+          }
+          
+          if (websiteChangeElement) {
+            const change = (data.comparison.websiteSale?.currentValue || 0) - (data.comparison.websiteSale?.previousValue || 0);
+            const percentChange = data.comparison.websiteSale?.percentChange || 0;
+            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
+            websiteChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
+          }
+          
+          if (benefitChangeElement) {
+            const change = (data.comparison.totalBenefit?.currentValue || 0) - (data.comparison.totalBenefit?.previousValue || 0);
+            const percentChange = data.comparison.totalBenefit?.percentChange || 0;
+            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
+            benefitChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
+          }
         }
       } else {
-        // No comparison data - show "No comparison" for all elements
-        const comparisonElements = [
-          'analytics-total-sale-comparison',
-          'analytics-viator-sale-comparison',
-          'analytics-website-sale-comparison',
-          'analytics-total-benefit-comparison',
-          'analytics-viator-benefit-comparison',
-          'analytics-website-benefit-comparison'
-        ];
+        // No comparison data - check if user selected "No Comparison"
+        const comparisonPeriodSelector = document.getElementById('comparison-period-selector');
+        const selectedComparison = comparisonPeriodSelector ? comparisonPeriodSelector.value : 'previous';
         
-        comparisonElements.forEach(id => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.innerHTML = '<span class="text-gray-500">No comparison</span>';
+        if (selectedComparison === 'none') {
+          // User chose no comparison - show "No comparison" for all elements
+          const comparisonElements = [
+            'analytics-total-sale-comparison',
+            'analytics-viator-sale-comparison',
+            'analytics-website-sale-comparison',
+            'analytics-total-benefit-comparison',
+            'analytics-viator-benefit-comparison',
+            'analytics-website-benefit-comparison'
+          ];
+          
+          comparisonElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.innerHTML = '<span class="text-gray-500">No comparison</span>';
+            }
+          });
+          
+          // Clear comparison metrics
+          const comparisonMetrics = [
+            'comparison-total-sales-change',
+            'comparison-viator-change',
+            'comparison-website-change',
+            'comparison-benefit-change'
+          ];
+          
+          comparisonMetrics.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.innerHTML = '-';
+            }
+          });
+          
+          // Hide comparison summary
+          const comparisonSummary = document.getElementById('comparison-summary');
+          if (comparisonSummary) {
+            comparisonSummary.style.display = 'none';
           }
-        });
-        
-        // Hide comparison summary
-        const comparisonSummary = document.getElementById('comparison-summary');
-        if (comparisonSummary) {
-          comparisonSummary.style.display = 'none';
+        } else {
+          // Comparison data should exist but doesn't - show "No data available"
+          const comparisonElements = [
+            'analytics-total-sale-comparison',
+            'analytics-viator-sale-comparison',
+            'analytics-website-sale-comparison',
+            'analytics-total-benefit-comparison',
+            'analytics-viator-benefit-comparison',
+            'analytics-website-benefit-comparison'
+          ];
+          
+          comparisonElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+              element.innerHTML = '<span class="text-gray-500">No data available</span>';
+            }
+          });
+          
+          // Hide comparison summary
+          const comparisonSummary = document.getElementById('comparison-summary');
+          if (comparisonSummary) {
+            comparisonSummary.style.display = 'none';
+          }
         }
       }
       

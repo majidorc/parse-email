@@ -117,7 +117,7 @@ async function handleParsedEmailsAnalytics(req, res) {
 // Handle sales analytics
 async function handleSalesAnalytics(req, res) {
   try {
-    const { startDate, endDate, period, updateChannels } = req.query;
+    const { startDate, endDate, period, updateChannels, comparisonPeriod = 'previous' } = req.query;
     
     // Handle channel consolidation if requested
     if (updateChannels === 'true') {
@@ -637,24 +637,67 @@ async function handleSalesAnalytics(req, res) {
 
     // Generate comparison data with previous period
     let comparison = null;
-    console.log('Debug: dateFilter:', dateFilter, 'period:', period, 'startDateParam:', startDateParam, 'endDateParam:', endDateParam);
+    console.log('Debug: dateFilter:', dateFilter, 'period:', period, 'startDateParam:', startDateParam, 'endDateParam:', endDateParam, 'comparisonPeriod:', comparisonPeriod);
     
-    if (dateFilter && (period === 'thisMonth' || period === 'lastMonth' || period === 'thisWeek' || period === 'lastWeek')) {
+    if (dateFilter && (period === 'thisMonth' || period === 'lastMonth' || period === 'thisWeek' || period === 'lastWeek' || (startDate && endDate)) && comparisonPeriod !== 'none') {
       try {
         // Calculate previous period dates
         let prevStart, prevEnd;
-        if (period === 'thisMonth') {
+        let comparisonType = 'previous';
+        
+        if (startDate && endDate && comparisonPeriod) {
+          // Custom date range with comparison
+          const currentStart = new Date(startDate);
+          const currentEnd = new Date(endDate);
+          const duration = currentEnd.getTime() - currentStart.getTime();
+          
+          switch (comparisonPeriod) {
+            case 'previous':
+              // Same duration, shifted back in time
+              prevStart = new Date(currentStart.getTime() - duration);
+              prevEnd = new Date(currentStart.getTime());
+              comparisonType = 'previous';
+              break;
+            case 'samePeriodLastYear':
+              // Same dates, previous year
+              prevStart = new Date(currentStart.getFullYear() - 1, currentStart.getMonth(), currentStart.getDate());
+              prevEnd = new Date(currentEnd.getFullYear() - 1, currentEnd.getMonth(), currentEnd.getDate());
+              comparisonType = 'samePeriodLastYear';
+              break;
+            case 'lastMonth':
+              // Previous month with same duration
+              prevStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - 1, currentStart.getDate());
+              prevEnd = new Date(currentEnd.getFullYear(), currentEnd.getMonth() - 1, currentEnd.getDate());
+              comparisonType = 'lastMonth';
+              break;
+            case 'lastWeek':
+              // Previous week with same duration
+              prevStart = new Date(currentStart.getTime() - (7 * 24 * 60 * 60 * 1000));
+              prevEnd = new Date(currentEnd.getTime() - (7 * 24 * 60 * 60 * 1000));
+              comparisonType = 'lastWeek';
+              break;
+            default:
+              // Default to previous period
+              prevStart = new Date(currentStart.getTime() - duration);
+              prevEnd = new Date(currentStart.getTime());
+              comparisonType = 'previous';
+          }
+        } else if (period === 'thisMonth') {
           prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
           prevEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+          comparisonType = 'lastMonth';
         } else if (period === 'lastMonth') {
           prevStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
           prevEnd = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          comparisonType = 'twoMonthsAgo';
         } else if (period === 'thisWeek') {
           prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
           prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+          comparisonType = 'lastWeek';
         } else if (period === 'lastWeek') {
           prevStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 14);
           prevEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - 7);
+          comparisonType = 'twoWeeksAgo';
         }
 
         // Get previous period data
@@ -728,6 +771,7 @@ async function handleSalesAnalytics(req, res) {
         });
         
         comparison = {
+          type: comparisonType,
           totalSale: {
             percentChange: calculatePercentChange(viatorSale + websiteSale, prevTotalSale),
             currentValue: viatorSale + websiteSale,

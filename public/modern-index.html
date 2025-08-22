@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Dashboard</title>
+  <link rel="stylesheet" href="modern-styles.css">
+</head>
+<body>
+  
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <h1>My Dashboard</h1>
+    </div>
+    <input type="text" class="search-bar" placeholder="Search...">
+    <div class="actions">
+      <button class="btn btn-secondary">Settings</button>
+      <button class="btn btn-primary">New Item</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active">Overview</button>
+    <button class="tab-btn">Reports</button>
+    <button class="tab-btn">Analytics</button>
+    <button class="tab-btn">Settings</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="content">
+    <section class="card">
+      <h2>Data Table</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Item One</td>
+            <td><span class="badge success">Active</span></td>
+            <td>2025-08-22</td>
+            <td>
+              <button class="btn btn-secondary">Edit</button>
+              <button class="btn btn-primary">View</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Item Two</td>
+            <td><span class="badge warning">Pending</span></td>
+            <td>2025-08-20</td>
+            <td>
+              <button class="btn btn-secondary">Edit</button>
+              <button class="btn btn-primary">View</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Item Three</td>
+            <td><span class="badge danger">Inactive</span></td>
+            <td>2025-08-18</td>
+            <td>
+              <button class="btn btn-secondary">Edit</button>
+              <button class="btn btn-primary">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+</body>
+</html>

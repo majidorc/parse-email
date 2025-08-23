@@ -1013,8 +1013,8 @@ async function parseOrderLinkFromEmail(bookingNumber) {
 
 // Function to create booking number display with optional hyperlink
 function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
-  if (orderLink) {
-    return `<a href="${orderLink}" target="_blank" class="text-blue-600 hover:text-blue-800 underline ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order">${bookingNumber || ''}</a>`;
+  if (orderLink && orderLink.trim() !== '') {
+    return `<a href="${orderLink}" target="_blank" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order">${bookingNumber || ''}</a>`;
   } else {
     return `<span class="${shouldHighlight ? 'bg-yellow-100' : ''}">${bookingNumber || ''}</span>`;
   }

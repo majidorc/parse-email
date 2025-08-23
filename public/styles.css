@@ -178,3 +178,37 @@ input:focus, select:focus {
     padding: 0.5rem 1rem;
   }
 }
+
+/* Link Styles */
+a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+a:visited {
+  color: #7c3aed;
+}
+
+/* Booking number link specific styles */
+.booking-number-link {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  font-weight: 500;
+}
+
+.booking-number-link:hover {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+}
+
+.booking-number-link:visited {
+  color: #7c3aed !important;
+}

@@ -1227,13 +1227,28 @@ function extractQuery(text, botUsername) {
 function extractOrderLinkFromEmail(emailContent) {
   console.log('[ORDER-LINK-DEBUG] Extracting order link from email content...');
   
+  // PRIORITY 1: Try to extract order ID and create a direct link first
+  const orderId = extractOrderIdFromContent(emailContent);
+  if (orderId) {
+    const directLink = createDirectOrderLink(orderId);
+    if (directLink) {
+      console.log('[ORDER-LINK-DEBUG] PRIORITY 1: Created direct order link from order ID:', directLink);
+      return directLink;
+    }
+  }
+  
   // Pattern 1: "Total: [amount]" followed by "View order → [URL]"
   const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
   const match = emailContent.match(totalPattern);
   
   if (match && match[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 1 (Total + View order):', match[1]);
-    return match[1].trim();
+    const url = match[1].trim();
+    if (isValidOrderEditUrl(url)) {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 1 (Total + View order):', url);
+      return url;
+    } else {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 1 URL but it\'s not a valid order edit link:', url);
+    }
   }
   
   // Pattern 2: "View order → [URL]"
@@ -1268,17 +1283,36 @@ function extractOrderLinkFromEmail(emailContent) {
   const orderUrlMatch = emailContent.match(orderUrlPattern);
   
   if (orderUrlMatch && orderUrlMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 5 (URL with order/booking):', orderUrlMatch[1]);
-    return orderUrlMatch[1].trim();
+    const url = orderUrlMatch[1].trim();
+    if (isValidOrderEditUrl(url)) {
+      console.log('[ORDER-LINK-DEBUG] Found valid order/booking URL:', url);
+      return url;
+    } else {
+      console.log('[ORDER-LINK-DEBUG] Found order/booking URL but it\'s not a valid order edit link:', url);
+    }
   }
   
-  // Pattern 6: Any tours.co.th URL that might be an order link
-  const toursUrlPattern = /(https?:\/\/[^\s\n]*?tours\.co\.th[^\s\n]*)/i;
+  // Pattern 6: Only specific WooCommerce order edit URLs (not homepage)
+  const wooCommerceOrderPattern = /(https?:\/\/[^\/]+\/wp-admin\/admin\.php\?page=wc-orders[^"\s\n]+)/i;
+  const wooCommerceMatch = emailContent.match(wooCommerceOrderPattern);
+  
+  if (wooCommerceMatch && wooCommerceMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found WooCommerce order URL:', wooCommerceMatch[1]);
+    return wooCommerceMatch[1].trim();
+  }
+  
+  // Pattern 6b: Any tours.co.th URL that might be an order link (but be more specific)
+  const toursUrlPattern = /(https?:\/\/[^\s\n]*?tours\.co\.th[^\s\n]*?(?:wc-orders|admin\.php|order|booking)[^\s\n]*)/i;
   const toursUrlMatch = emailContent.match(toursUrlPattern);
   
   if (toursUrlMatch && toursUrlMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 6 (tours.co.th URL):', toursUrlMatch[1]);
-    return toursUrlMatch[1].trim();
+    const url = toursUrlMatch[1].trim();
+    if (isValidOrderEditUrl(url)) {
+      console.log('[ORDER-LINK-DEBUG] Found valid tours.co.th order URL:', url);
+      return url;
+    } else {
+      console.log('[ORDER-LINK-DEBUG] Found tours.co.th URL but it\'s not a valid order edit link:', url);
+    }
   }
   
   // Pattern 7: Any URL that appears after common order-related keywords
@@ -1388,15 +1422,8 @@ function extractOrderLinkFromEmail(emailContent) {
     }
   }
   
-  // Pattern 12: WooCommerce order URLs that might be embedded in the email
-  const wooCommerceOrderPattern = /(https?:\/\/[^\/]+\/wp-admin\/admin\.php\?page=wc-orders[^"\s\n]+)/gi;
-  let wooCommerceMatch;
-  while ((wooCommerceMatch = wooCommerceOrderPattern.exec(emailContent)) !== null) {
-    if (wooCommerceMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found WooCommerce order URL:', wooCommerceMatch[1]);
-      return wooCommerceMatch[1].trim();
-    }
-  }
+  // Pattern 12: WooCommerce order URLs that might be embedded in the email (already handled in Pattern 6)
+  // Removed duplicate pattern to avoid variable redeclaration
   
   // Pattern 13: Any URL containing "wc-orders" or "admin.php" that might be an order link
   const adminOrderPattern = /(https?:\/\/[^"\s\n]*?(?:wc-orders|admin\.php)[^"\s\n]*)/gi;
@@ -1452,13 +1479,20 @@ function extractOrderLinkFromEmail(emailContent) {
     }
   }
   
-  // Fallback: Try to extract order ID and create a direct link
-  const orderId = extractOrderIdFromContent(emailContent);
-  if (orderId) {
-    const directLink = createDirectOrderLink(orderId);
-    if (directLink) {
-      console.log('[ORDER-LINK-DEBUG] Created fallback direct order link from order ID:', directLink);
-      return directLink;
+  // Final fallback: Look for any number that might be an order ID in the email (if we haven't found one yet)
+  const anyNumberPattern = /(\d{4,6})/g;
+  let numberMatch;
+  while ((numberMatch = anyNumberPattern.exec(emailContent)) !== null) {
+    if (numberMatch[1]) {
+      const potentialOrderId = numberMatch[1];
+      // Only create a link if it looks like a reasonable order ID (4-6 digits)
+      if (potentialOrderId.length >= 4 && potentialOrderId.length <= 6) {
+        const directLink = createDirectOrderLink(potentialOrderId);
+        if (directLink) {
+          console.log('[ORDER-LINK-DEBUG] Created final fallback direct order link from potential order ID:', potentialOrderId);
+          return directLink;
+        }
+      }
     }
   }
   
@@ -2301,14 +2335,35 @@ function createDirectOrderLink(orderId) {
   return directLink;
 }
 
+// Helper function to validate if a URL is actually an order edit link
+function isValidOrderEditUrl(url) {
+  if (!url) return false;
+  
+  // Must be a tours.co.th URL
+  if (!url.includes('tours.co.th')) return false;
+  
+  // Must contain order-related paths
+  const validPaths = [
+    '/wp-admin/admin.php?page=wc-orders',
+    '/wp-admin/admin.php?page=orders',
+    '/wp-admin/edit.php?post_type=shop_order',
+    '/my-account/orders/',
+    '/order/',
+    '/booking/'
+  ];
+  
+  return validPaths.some(path => url.includes(path));
+}
+
 // Helper function to extract order ID from various sources
 function extractOrderIdFromContent(emailContent) {
   // Look for order ID patterns in the email content
   const patterns = [
-    /order\s*#?\s*:?\s*(\d+)/i,
-    /order\s*id\s*:?\s*(\d+)/i,
-    /order\s*number\s*:?\s*(\d+)/i,
-    /id\s*:?\s*(\d+)/i,
+    /order\s*#?\s*:?\s*(\d{4,6})/i,
+    /order\s*id\s*:?\s*(\d{4,6})/i,
+    /order\s*number\s*:?\s*(\d{4,6})/i,
+    /booking\s*#?\s*:?\s*(\d{4,6})/i,
+    /id\s*:?\s*(\d{4,6})/i,
     /(\d{4,6})/ // Look for 4-6 digit numbers that might be order IDs
   ];
   
@@ -2316,8 +2371,11 @@ function extractOrderIdFromContent(emailContent) {
     const match = emailContent.match(pattern);
     if (match && match[1]) {
       const orderId = match[1];
-      console.log('[ORDER-LINK-DEBUG] Extracted order ID:', orderId);
-      return orderId;
+      // Validate that this looks like a reasonable order ID
+      if (orderId.length >= 4 && orderId.length <= 6 && !isNaN(parseInt(orderId))) {
+        console.log('[ORDER-LINK-DEBUG] Extracted valid order ID:', orderId);
+        return orderId;
+      }
     }
   }
   

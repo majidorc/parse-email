@@ -1311,6 +1311,29 @@ function initializeEmailModal() {
           button.disabled = false;
         }, 2000);
         showToast('Email sent successfully to customer', 'success');
+        
+        // Automatically update customer field to true when email is sent successfully
+        // This helps track which customers have been contacted
+        try {
+          // Check if customer field is already true to avoid unnecessary updates
+          const booking = bookingsData.find(b => b.booking_number === bookingNumber);
+          if (booking && (booking.customer === true || booking.customer === 1 || booking.customer === '1' || booking.customer === 'true')) {
+            console.log(`Customer field already true for booking ${bookingNumber}`);
+            return;
+          }
+          
+          const customerUpdated = await updateCustomerField(bookingNumber, true);
+          if (customerUpdated) {
+            showToast('Customer field updated to true', 'success');
+            // Refresh the table to show the updated customer field
+            fetchBookings(currentPage, currentSort, currentDir, searchTerm, false, Date.now());
+          } else {
+            console.log('Customer field not updated - business rule check failed');
+          }
+        } catch (error) {
+          console.error('Failed to update customer field:', error);
+          // Don't show error to user since email was sent successfully
+        }
       } else {
         button.textContent = '❌ Failed';
         setTimeout(() => {
@@ -1329,6 +1352,61 @@ function initializeEmailModal() {
       showToast('Error sending email', 'error');
     }
   });
+}
+
+// Function to update customer field when email is sent successfully
+// Business Rule: Customer can only be set to true if OP (Operator) is already true
+// This function is called automatically when an email is sent successfully to a customer
+async function updateCustomerField(bookingNumber, customerValue) {
+  try {
+    console.log(`Attempting to update customer field to ${customerValue} for booking ${bookingNumber}`);
+    
+    // Check business rule: Customer can only be set to true if OP is true
+    const booking = bookingsData.find(b => b.booking_number === bookingNumber);
+    if (!booking) {
+      console.log(`Booking ${bookingNumber} not found in local data`);
+      return false;
+    }
+    
+    console.log(`Found booking:`, { 
+      booking_number: booking.booking_number, 
+      op: booking.op, 
+      customer: booking.customer 
+    });
+    
+    if (customerValue === true && !(booking.op === true || booking.op === 1 || booking.op === '1' || booking.op === 'true')) {
+      console.log(`Cannot set Customer to true for booking ${bookingNumber} - OP is not true (OP value: ${booking.op})`);
+      return false; // Don't throw error, just return false
+    }
+    
+    console.log(`Business rule check passed, proceeding with update`);
+    
+    const response = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        type: 'toggle',
+        booking_number: bookingNumber,
+        column: 'customer' 
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update customer field');
+    }
+    
+    // Update local data if available
+    if (booking) {
+      booking.customer = customerValue;
+    }
+    
+    console.log(`Customer field updated to ${customerValue} for booking ${bookingNumber}`);
+    return true;
+  } catch (error) {
+    console.error('Error updating customer field:', error);
+    throw error;
+  }
 }
 
 async function sendLineMessage(bookingNumber, button) {

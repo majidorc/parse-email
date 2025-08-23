@@ -503,6 +503,16 @@ function renderTable() {
   } else {
     // Always show individual bookings
     tbody.innerHTML = bookingsData.map(b => {
+        // Debug: Log the first few bookings to see their data structure
+        if (bookingsData.indexOf(b) < 3) {
+          console.log('[DEBUG] Booking data:', { 
+            booking_number: b.booking_number, 
+            order_link: b.order_link,
+            has_order_link: !!b.order_link,
+            order_link_type: typeof b.order_link
+          });
+        }
+        
         const updated = b.updated_fields || {};
         // Helper to check if highlight should be shown
         // Only show yellow highlighting for today and future bookings
@@ -1014,9 +1024,24 @@ async function parseOrderLinkFromEmail(bookingNumber) {
 // Function to create booking number display with optional hyperlink
 function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
   if (orderLink && orderLink.trim() !== '') {
-    return `<a href="${orderLink}" target="_blank" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order">${bookingNumber || ''}</a>`;
+    console.log('[DEBUG] Creating clickable link for order:', orderLink);
+    const linkId = `order-link-${bookingNumber}`;
+    return `<a href="${orderLink}" target="_blank" rel="noopener noreferrer" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order in new tab" style="cursor: pointer; text-decoration: underline;" id="${linkId}" onclick="console.log('Link clicked:', '${orderLink}'); testOrderLink('${orderLink}')">${bookingNumber || ''}</a>`;
   } else {
+    console.log('[DEBUG] No order link, creating plain text');
     return `<span class="${shouldHighlight ? 'bg-yellow-100' : ''}">${bookingNumber || ''}</span>`;
+  }
+}
+
+// Test function to verify order links work
+function testOrderLink(url) {
+  console.log('[TEST] Testing order link:', url);
+  try {
+    // Try to open the link
+    window.open(url, '_blank', 'noopener,noreferrer');
+    console.log('[TEST] Link opened successfully');
+  } catch (error) {
+    console.error('[TEST] Error opening link:', error);
   }
 }
 

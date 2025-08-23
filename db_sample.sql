@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   channel TEXT,
   order_link TEXT, -- NEW: Order link from tours.co.th emails
   updated_fields JSONB,
+  updated_at TIMESTAMP DEFAULT NOW(),
   created_at TIMESTAMP DEFAULT NOW()
 );
 

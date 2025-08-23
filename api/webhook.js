@@ -1653,23 +1653,13 @@ async function handler(req, res) {
             `;
 
             // Extract order link from email content if it's from tours.co.th
+            let orderLink = null;
             if (parsedEmail.from?.value?.[0]?.address?.includes('tours.co.th')) {
               const emailContent = parsedEmail.html || parsedEmail.text || '';
-              const orderLink = extractOrderLinkFromEmail(emailContent);
+              orderLink = extractOrderLinkFromEmail(emailContent);
               
               if (orderLink && extractedInfo.bookingNumber) {
                 console.log(`[ORDER-LINK] Extracted order link for booking ${extractedInfo.bookingNumber}: ${orderLink}`);
-                
-                // Store order link in a separate table or update existing booking
-                try {
-                  await sql`
-                    UPDATE bookings 
-                    SET order_link = ${orderLink}, updated_at = NOW()
-                    WHERE booking_number = ${extractedInfo.bookingNumber}
-                  `;
-                } catch (error) {
-                  console.error(`[ORDER-LINK] Error storing order link for booking ${extractedInfo.bookingNumber}:`, error);
-                }
               }
             }
 
@@ -1789,7 +1779,7 @@ async function handler(req, res) {
                     }
                     if (anyFieldChanged || clearHighlight) {
                       await sql`
-                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
+                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, order_link=${orderLink}, updated_fields=${JSON.stringify(updatedFields)}
                         WHERE booking_number = ${extractedInfo.bookingNumber}
                       `;
                       
@@ -1927,8 +1917,8 @@ async function handler(req, res) {
                     }
 
                     await sql`
-                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal})
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total, order_link)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal}, ${orderLink})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
@@ -1947,7 +1937,8 @@ async function handler(req, res) {
                           book_date = EXCLUDED.book_date,
                           channel = EXCLUDED.channel,
                           rate = EXCLUDED.rate,
-                          net_total = EXCLUDED.net_total;
+                          net_total = EXCLUDED.net_total,
+                          order_link = EXCLUDED.order_link;
                     `;
 
                     // Send Telegram notification for ALL new bookings regardless of date

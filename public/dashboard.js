@@ -1009,33 +1009,7 @@ async function parseOrderLinkFromEmail(bookingNumber) {
   return null;
 }
 
-// Function to extract order link from email content
-function extractOrderLinkFromEmail(emailContent) {
-  // Look for pattern: "Total: [amount]" followed by "View order → [URL]"
-  const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
-  const match = emailContent.match(totalPattern);
-  
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  
-  // Alternative pattern: just look for "View order → [URL]"
-  const viewOrderPattern = /View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
-  const viewOrderMatch = emailContent.match(viewOrderPattern);
-  
-  if (viewOrderMatch && viewOrderMatch[1]) {
-    return viewOrderMatch[1].trim();
-  }
-  
-  return null;
-}
 
-// Function to store order link for a booking
-function storeOrderLink(bookingNumber, orderLink) {
-  const storedOrderLinks = JSON.parse(localStorage.getItem('orderLinks') || '{}');
-  storedOrderLinks[bookingNumber] = orderLink;
-  localStorage.setItem('orderLinks', JSON.stringify(storedOrderLinks));
-}
 
 // Function to create booking number display with optional hyperlink
 function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
@@ -1074,8 +1048,39 @@ async function sendCustomerEmail(bookingNumber, button) {
   document.getElementById('preview-to').textContent = '';
   document.getElementById('preview-content').textContent = '';
   
+  // Set up transfer option change listeners
+  setupTransferOptionListeners();
+  
   // Fetch booking details for preview and populate hotel field
   await fetchBookingDetailsForPreview(bookingNumber);
+}
+
+// Function to setup transfer option change listeners
+function setupTransferOptionListeners() {
+  const transferNo = document.getElementById('transfer-no');
+  const transferFree = document.getElementById('transfer-free');
+  const transferExtra = document.getElementById('transfer-extra');
+  const hotelFieldContainer = document.getElementById('email-hotel').closest('div');
+  
+  // Function to toggle hotel field visibility
+  function toggleHotelField() {
+    if (transferNo.checked) {
+      hotelFieldContainer.style.display = 'none';
+      document.getElementById('email-hotel').value = '';
+      document.getElementById('email-hotel').removeAttribute('required');
+    } else {
+      hotelFieldContainer.style.display = 'block';
+      document.getElementById('email-hotel').setAttribute('required', 'required');
+    }
+  }
+  
+  // Add event listeners
+  transferNo.addEventListener('change', toggleHotelField);
+  transferFree.addEventListener('change', toggleHotelField);
+  transferExtra.addEventListener('change', toggleHotelField);
+  
+  // Set initial state
+  toggleHotelField();
 }
 
 // Function to fetch booking details for preview

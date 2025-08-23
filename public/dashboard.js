@@ -1729,7 +1729,18 @@ function renderAccountingTable() {
         // Remove any existing click handlers to prevent duplicates
         cell.onclick = null;
         
+        // Add a flag to prevent multiple simultaneous edits
+        if (cell.dataset.isEditing === 'true') {
+          return;
+        }
+        
         cell.onclick = function(e) {
+          // Prevent multiple simultaneous edits
+          if (cell.dataset.isEditing === 'true') {
+            console.log('Already editing this cell, ignoring click');
+            return;
+          }
+          
           console.log('SKU cell clicked:', cell);
           if (cell.querySelector('input')) {
             console.log('Input already exists, returning');
@@ -1739,6 +1750,9 @@ function renderAccountingTable() {
           const bookingNumber = cell.getAttribute('data-booking');
           const currentValue = cell.getAttribute('data-current-sku') || '';
           console.log('Editing SKU for booking:', bookingNumber, 'current value:', currentValue);
+          
+          // Set editing flag
+          cell.dataset.isEditing = 'true';
           
           // Create input element
           cell.innerHTML = `<input type='text' class='border px-2 py-1 w-32' value='${currentValue}' />`;
@@ -1766,6 +1780,7 @@ function renderAccountingTable() {
             if (newValue === currentValue) {
               console.log('SKU value unchanged, reverting to display mode. Current:', currentValue, 'New:', newValue);
               cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+              cell.dataset.isEditing = 'false';
               return;
             }
             
@@ -1827,48 +1842,44 @@ function renderAccountingTable() {
                 console.log('SKU update completed, skipping table refresh');
               } else {
                 console.error('API returned error:', data);
-                cell.innerHTML = `<span class='text-red-500'>Error</span>`;
+                // Revert to original value on error
+                cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
                 showToast('Failed to update SKU: ' + (data.error || 'Unknown error'), 'error');
               }
+              
+              // Reset editing flag
+              cell.dataset.isEditing = 'false';
             })
             .catch(error => {
-              console.error('Fetch error:', error);
-              cell.innerHTML = `<span class='text-red-500'>Error</span>`;
-              showToast('Network error updating SKU', 'error');
-            })
-            .finally(() => {
-              savePromise = null;
+              console.error('Error saving SKU:', error);
+              // Revert to original value on error
+              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+              showToast('Failed to update SKU: ' + error.message, 'error');
+              
+              // Reset editing flag
+              cell.dataset.isEditing = 'false';
             });
           }
           
-          function cancelEdit() {
-            if (hasSaved || savePromise) return;
-            hasSaved = true;
-            cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
-            console.log('Edit cancelled');
-          }
+          // Handle Enter key and blur events
+          input.onkeydown = function(e) {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              saveSkuInput();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              // Cancel editing and revert to original value
+              cell.innerHTML = currentValue || '<span class="text-gray-400">Click to add</span>';
+              cell.dataset.isEditing = 'false';
+            }
+          };
           
-          // Event handlers
-          input.addEventListener('blur', saveSkuInput);
-          input.addEventListener('keydown', function(ev) {
-            if (ev.key === 'Enter') {
-              ev.preventDefault();
-              ev.stopPropagation();
+          input.onblur = function() {
+            // Save on blur if not already saved
+            if (!hasSaved && !savePromise) {
               saveSkuInput();
             }
-            if (ev.key === 'Escape') {
-              ev.preventDefault();
-              ev.stopPropagation();
-              cancelEdit();
-            }
-          });
-        };
-        
-        cell.onkeydown = function(e) { 
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            cell.click(); 
-          }
+          };
         };
       });
       
@@ -3630,7 +3641,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Clear the dbRowId field to ensure we're adding a new program, not editing
     document.getElementById('dbRowId').value = '';
     document.getElementById('ratesContainer').innerHTML = '';
-    let rateItemCounter = 0;
+    // Reset global rate item counter when clearing rates
+    rateItemCounter = 0;
     // Add one rate item by default
     document.getElementById('addRateBtn').click();
   });
@@ -3638,6 +3650,8 @@ document.addEventListener('DOMContentLoaded', function () {
   cancelAddProgramBtn.addEventListener('click', function () {
     addProgramSection.style.display = 'none';
     programsSection.style.display = '';
+    // Reset rate item counter when cancelling
+    rateItemCounter = 0;
   });
   // Add button to update old bookings with missing rates
   const updateOldBookingsBtn = document.createElement('button');
@@ -3713,6 +3727,9 @@ function handleProgramEditClick(e) {
   programsSection.style.display = 'none';
   addProgramSection.style.display = '';
   
+  // Reset rate item counter when showing form
+  rateItemCounter = 0;
+  
   // Fill form fields with null checks
   const skuElement = document.getElementById('sku');
   const dbRowIdElement = document.getElementById('dbRowId');
@@ -3738,11 +3755,23 @@ function handleProgramEditClick(e) {
   
   if (ratesContainer) {
     ratesContainer.innerHTML = '';
+    // Reset global rate item counter when clearing rates
+    rateItemCounter = 0;
   }
   // Reset counter for editing
-  rateItemCounter = 0;
+  // rateItemCounter = 0; // Removed duplicate declaration
+  
+  // If creating a new program (no existing rates), add a default rate item
+  if ((!program.rates || program.rates.length === 0) && addRateBtn) {
+    console.log('[PROGRAMS] Creating new program, adding default rate item');
+    // Reset counter for new program
+    rateItemCounter = 0;
+    addRateBtn.click();
+  }
   
   if (program.rates && program.rates.length && addRateBtn) {
+    // Reset counter for editing existing program
+    rateItemCounter = 0;
     // Use Promise to ensure rate items are created before filling
     const fillRates = async () => {
       for (const rate of program.rates) {
@@ -3782,11 +3811,14 @@ function handleProgramEditClick(e) {
 }
 
 // Add Rate Item functionality
+// Global rate item counter
 let rateItemCounter = 0;
 
 function addRateItem() {
   rateItemCounter++;
   const rateItemId = `rate-item-${rateItemCounter}`;
+  
+  console.log('[PROGRAMS] Adding rate item with ID:', rateItemId);
   
   const rateItemHTML = `
     <div id="${rateItemId}" class="rate-item p-4 border border-gray-200 rounded-lg bg-white shadow-sm fade-in" data-rate-id="${rateItemId}">
@@ -3828,20 +3860,20 @@ function addRateItem() {
       <div class="mt-4">
         <div>
           <label for="feeType_${rateItemCounter}" class="block text-sm font-medium text-gray-700">Additional Fee Type</label>
-          <select id="feeType_${rateItemCounter}" class="fee-type-select form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" data-controls-id="${rateItemCounter}">
+          <select id="feeType_${rateItemCounter}" class="fee-type-select form-select mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" data-controls-id="${rateItemId}">
             <option value="none" selected>No Additional Fee</option>
             <option value="np">National Park Fee</option>
             <option value="entrance">Entrance Fee</option>
           </select>
         </div>
-        <div id="feeFields_${rateItemCounter}" class="hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-dashed border-gray-300 pt-4">
+        <div id="feeFields_${rateItemId}" class="hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-dashed border-gray-300 pt-4">
           <div>
-            <label id="feeAdultLabel_${rateItemCounter}" for="feeAdult_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Adult <span class="text-red-500">*</span></label>
-            <input type="number" step="0.01" id="feeAdult_${rateItemCounter}" name="feeAdult" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 90.00">
+            <label id="feeAdultLabel_${rateItemId}" for="feeAdult_${rateItemId}" class="block text-sm font-medium text-gray-600">Fee Adult <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="feeAdult_${rateItemId}" name="feeAdult" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 90.00">
           </div>
           <div>
-            <label id="feeChildLabel_${rateItemCounter}" for="feeChild_${rateItemCounter}" class="block text-sm font-medium text-gray-600">Fee Child <span class="text-red-500">*</span></label>
-            <input type="number" step="0.01" id="feeChild_${rateItemCounter}" name="feeChild" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 45.00">
+            <label id="feeChildLabel_${rateItemId}" for="feeChild_${rateItemId}" class="block text-sm font-medium text-gray-600">Fee Child <span class="text-red-500">*</span></label>
+            <input type="number" step="0.01" id="feeChild_${rateItemId}" name="feeChild" class="form-input mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md" placeholder="e.g., 45.00">
           </div>
         </div>
       </div>
@@ -3856,7 +3888,15 @@ function addRateItem() {
     const newRateItem = document.getElementById(rateItemId);
     if (newRateItem) {
       initializeMoveButtons(newRateItem);
+      console.log('[PROGRAMS] Rate item added successfully:', newRateItem);
+      console.log('[PROGRAMS] Rate item HTML:', newRateItem.outerHTML);
+      console.log('[PROGRAMS] Rate item classList:', newRateItem.classList.toString());
+      console.log('[PROGRAMS] Rate item ID:', newRateItem.id);
+    } else {
+      console.error('[PROGRAMS] Failed to find rate item after adding:', rateItemId);
     }
+  } else {
+    console.error('[PROGRAMS] Rates container not found');
   }
 }
 
@@ -3924,6 +3964,8 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Program deleted successfully!');
         document.getElementById('add-program-section').style.display = 'none';
         document.getElementById('programs-section').style.display = '';
+        // Reset rate item counter
+        rateItemCounter = 0;
         if (typeof fetchRatesAndPrograms === 'function') fetchRatesAndPrograms();
       })
       .catch(err => {
@@ -3997,19 +4039,52 @@ document.addEventListener('DOMContentLoaded', function() {
         rates: []
       };
       
+      console.log('[PROGRAMS] Form data collected:', {
+        sku: data.sku,
+        program: data.program,
+        remark: data.remark,
+        product_id_optional: data.product_id_optional,
+        supplier_id: data.supplier_id
+      });
+      
       // Collect rate data
       const rateItems = document.querySelectorAll('.rate-item');
+      console.log('[PROGRAMS] Found rate items:', rateItems.length);
+      console.log('[PROGRAMS] Rate items HTML:', Array.from(rateItems).map(item => item.outerHTML));
+      
+      // Also check for rate items by ID pattern
+      const rateItemsById = document.querySelectorAll('[id^="rate-item-"]');
+      console.log('[PROGRAMS] Found rate items by ID pattern:', rateItemsById.length);
+      console.log('[PROGRAMS] Rate items by ID pattern:', Array.from(rateItemsById).map(item => item.outerHTML));
 
       
       rateItems.forEach((item, index) => {
-        const rateName = item.querySelector('[name="rateName"]').value;
-        const netAdult = parseFloat(item.querySelector('[name="netAdult"]').value);
-        const netChild = parseFloat(item.querySelector('[name="netChild"]').value);
-        const feeType = item.querySelector('.fee-type-select').value;
-        const feeAdult = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeAdult"]').value) : 0;
-        const feeChild = feeType !== 'none' ? parseFloat(item.querySelector('[name="feeChild"]').value) : 0;
+        console.log(`[PROGRAMS] Processing rate item ${index}:`, item);
         
+        const rateNameInput = item.querySelector('[name="rateName"]');
+        const netAdultInput = item.querySelector('[name="netAdult"]');
+        const netChildInput = item.querySelector('[name="netChild"]');
+        const feeTypeSelect = item.querySelector('.fee-type-select');
+        const feeAdultInput = item.querySelector('[name="feeAdult"]');
+        const feeChildInput = item.querySelector('[name="feeChild"]');
         
+        console.log(`[PROGRAMS] Rate ${index} inputs:`, {
+          rateNameInput: rateNameInput?.outerHTML,
+          netAdultInput: netAdultInput?.outerHTML,
+          netChildInput: netChildInput?.outerHTML,
+          feeTypeSelect: feeTypeSelect?.outerHTML,
+          feeAdultInput: feeAdultInput?.outerHTML,
+          feeChildInput: feeChildInput?.outerHTML
+        });
+        
+        const rateName = rateNameInput?.value || '';
+        const netAdult = parseFloat(netAdultInput?.value || '0');
+        const netChild = parseFloat(netChildInput?.value || '0');
+        const feeType = feeTypeSelect?.value || 'none';
+        const feeAdult = feeType !== 'none' ? parseFloat(feeAdultInput?.value || '0') : 0;
+        const feeChild = feeType !== 'none' ? parseFloat(feeChildInput?.value || '0') : 0;
+        
+        console.log(`[PROGRAMS] Rate ${index + 1} parsed values:`, { rateName, netAdult, netChild, feeType, feeAdult, feeChild });
         
         // Validate rate data
         if (!rateName || isNaN(netAdult) || isNaN(netChild)) {
@@ -4026,6 +4101,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
       
+      // If no rate items found by class, try by ID pattern
+      if (rateItems.length === 0 && rateItemsById.length > 0) {
+        console.log('[PROGRAMS] No rate items found by class, processing by ID pattern');
+        rateItemsById.forEach((item, index) => {
+          console.log(`[PROGRAMS] Processing rate item by ID ${index}:`, item);
+          
+          const rateNameInput = item.querySelector('[name="rateName"]');
+          const netAdultInput = item.querySelector('[name="netAdult"]');
+          const netChildInput = item.querySelector('[name="netChild"]');
+          const feeTypeSelect = item.querySelector('.fee-type-select');
+          const feeAdultInput = item.querySelector('[name="feeAdult"]');
+          const feeChildInput = item.querySelector('[name="feeChild"]');
+          
+          console.log(`[PROGRAMS] Rate by ID ${index} inputs:`, {
+            rateNameInput: rateNameInput?.outerHTML,
+            netAdultInput: netAdultInput?.outerHTML,
+            netChildInput: netChildInput?.outerHTML,
+            feeTypeSelect: feeTypeSelect?.outerHTML,
+            feeAdultInput: feeAdultInput?.outerHTML,
+            feeChildInput: feeChildInput?.outerHTML
+          });
+          
+          const rateName = rateNameInput?.value || '';
+          const netAdult = parseFloat(netAdultInput?.value || '0');
+          const netChild = parseFloat(netChildInput?.value || '0');
+          const feeType = feeTypeSelect?.value || 'none';
+          const feeAdult = feeType !== 'none' ? parseFloat(feeAdultInput?.value || '0') : 0;
+          const feeChild = feeType !== 'none' ? parseFloat(feeChildInput?.value || '0') : 0;
+          
+          console.log(`[PROGRAMS] Rate by ID ${index + 1} parsed values:`, { rateName, netAdult, netChild, feeType, feeAdult, feeChild });
+          
+          // Validate rate data
+          if (!rateName || isNaN(netAdult) || isNaN(netChild)) {
+            throw new Error(`Invalid rate data for rate ${index + 1}`);
+          }
+          
+          data.rates.push({
+            name: rateName,
+            netAdult,
+            netChild,
+            feeType,
+            feeAdult,
+            feeChild
+          });
+        });
+      }
+      
+      console.log('[PROGRAMS] Rates data collected:', data.rates);
+      console.log('[PROGRAMS] Final data to be sent:', JSON.stringify(data, null, 2));
+      
       // Add ID if editing
       const dbRowId = document.getElementById('dbRowId').value;
       if (dbRowId) {
@@ -4033,6 +4158,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       try {
+        console.log('[PROGRAMS] Sending data to API:', JSON.stringify(data, null, 2));
 
         const response = await fetch('/api/products-rates?type=tour', {
           method: 'POST',
@@ -4042,6 +4168,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
 
         
+        console.log('[PROGRAMS] Response status:', response.status);
+        console.log('[PROGRAMS] Response headers:', response.headers);
+        
         if (!response.ok) {
           const errorData = await response.json();
           console.error('[PROGRAMS] Server error:', errorData);
@@ -4049,11 +4178,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const result = await response.json();
+        console.log('[PROGRAMS] Success response:', result);
         
         alert('Program saved successfully!');
         
         // Reset form and show programs table
         productForm.reset();
+        // Reset rate item counter
+        rateItemCounter = 0;
         document.getElementById('add-program-section').style.display = 'none';
         document.getElementById('programs-section').style.display = '';
         
@@ -4063,6 +4195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       } catch (error) {
         console.error('[PROGRAMS] Error saving program:', error);
+        console.error('[PROGRAMS] Error stack:', error.stack);
         alert('Error saving program: ' + error.message);
       }
     });

@@ -1,8 +1,0 @@
-CHANGELOG.md
-api/daily-scheduler.js
-api/email-logs.js
-api/track-email.js
-db_sample.sql
-notificationManager.js
-public/dashboard.html
-public/dashboard.js

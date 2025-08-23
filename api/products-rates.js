@@ -34,6 +34,43 @@ export default async function handler(req, res) {
       });
     }
     
+    // Add test endpoint for debugging tour creation
+    if (type === 'test-tour') {
+      if (req.method === 'POST') {
+        try {
+          console.log('[PRODUCTS-RATES] Test tour endpoint called with body:', JSON.stringify(req.body, null, 2));
+          
+          // Test database connection
+          const testResult = await sql`SELECT 1 as test`;
+          console.log('[PRODUCTS-RATES] Database test result:', testResult.rows[0]);
+          
+          // Test table existence
+          const tablesResult = await sql`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name IN ('products', 'rates')
+          `;
+          console.log('[PRODUCTS-RATES] Tables found:', tablesResult.rows);
+          
+          return res.status(200).json({
+            status: 'ok',
+            database: 'connected',
+            tables: tablesResult.rows,
+            body: req.body
+          });
+        } catch (err) {
+          console.error('[PRODUCTS-RATES] Test tour endpoint error:', err);
+          return res.status(500).json({
+            status: 'error',
+            error: err.message,
+            stack: err.stack
+          });
+        }
+      }
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    
     const session = getSession(req);
 
     
@@ -55,6 +92,7 @@ export default async function handler(req, res) {
         AND table_name IN ('products', 'rates')
       `;
 
+      console.log('[PRODUCTS-RATES] Database connection test passed, tables found:', tablesResult.rows.length);
       
     } catch (dbErr) {
       console.error('[PRODUCTS-RATES] Database connection test failed:', dbErr);
@@ -156,11 +194,9 @@ export default async function handler(req, res) {
         return;
       }
       try {
-        await client.query('BEGIN');
-        const prodResult = await client.query(
-          `INSERT INTO products (sku, product_id_optional, program, remark) VALUES ($1, $2, $3, $4) RETURNING id`,
-          [sku, product_id_optional, program, remark || null]
-        );
+        const prodResult = await sql`
+          INSERT INTO products (sku, product_id_optional, program, remark) VALUES (${sku}, ${product_id_optional}, ${program}, ${remark || null}) RETURNING id
+        `;
         const productId = prodResult.rows[0].id;
         for (const rate of mappedRates) {
           const { name, net_adult, net_child, fee_type, fee_adult, fee_child } = rate;
@@ -170,15 +206,12 @@ export default async function handler(req, res) {
           ) {
             throw new Error('Invalid rate item');
           }
-          await client.query(
-            `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
-          );
+          await sql`
+            INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES (${productId}, ${name}, ${net_adult}, ${net_child}, ${fee_type}, ${fee_adult}, ${fee_child})
+          `;
         }
-        await client.query('COMMIT');
         res.status(201).json({ success: true, productId });
       } catch (err) {
-        await client.query('ROLLBACK');
         console.error('[PRODUCTS-RATES] Error in product logic:', err);
         res.status(500).json({ error: err.message });
       }
@@ -317,7 +350,7 @@ export default async function handler(req, res) {
           return;
         }
         
-
+        console.log('[PRODUCTS-RATES] Request body received:', JSON.stringify(req.body, null, 2));
         
         const product_id_optional = req.body.productId || req.body.product_id_optional || null;
         const { sku, program, remark, id, supplier_id } = req.body;
@@ -326,10 +359,15 @@ export default async function handler(req, res) {
 
         
         if (!sku || !program || !Array.isArray(rates)) {
-          console.error('[PRODUCTS-RATES] Missing required fields:', { sku, program, ratesLength: rates.length });
+          console.error('[PRODUCTS-RATES] Missing required fields:', { sku, program, ratesLength: rates.length, ratesType: typeof rates });
           res.status(400).json({ error: 'Missing required fields' });
           return;
         }
+        
+        console.log('[PRODUCTS-RATES] Validating rates array:', rates.length, 'items');
+        rates.forEach((rate, index) => {
+          console.log(`[PRODUCTS-RATES] Rate ${index}:`, JSON.stringify(rate, null, 2));
+        });
         
         // Allow programs without rates during import
         if (rates.length === 0) {
@@ -337,34 +375,33 @@ export default async function handler(req, res) {
         }
         
         try {
-          await client.query('BEGIN');
+          console.log('[PRODUCTS-RATES] Starting tour POST operation');
           
           let productId = id;
           if (id) {
 
             // Update all products with the same SKU to have the same supplier_id
-            await client.query(
-              `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4, supplier_id=$5 WHERE id=$6`,
-              [sku, product_id_optional, program, remark || null, supplier_id || null, id]
-            );
+            await sql`
+              UPDATE products 
+              SET sku=${sku}, product_id_optional=${product_id_optional}, program=${program}, remark=${remark || null}, supplier_id=${supplier_id || null} 
+              WHERE id=${id}
+            `;
             
             // Also update all other products with the same SKU to have the same supplier_id
             if (supplier_id) {
-              await client.query(
-                `UPDATE products SET supplier_id=$1 WHERE sku=$2 AND id!=$3`,
-                [supplier_id, sku, id]
-              );
+              await sql`
+                UPDATE products 
+                SET supplier_id=${supplier_id} 
+                WHERE sku=${sku} AND id!=${id}
+              `;
             }
             
-            await client.query(`DELETE FROM rates WHERE product_id = $1`, [id]);
+            await sql`DELETE FROM rates WHERE product_id = ${id}`;
           } else {
 
             
             // Check if SKU already exists
-            const existingProduct = await client.query(
-              `SELECT id FROM products WHERE sku = $1`,
-              [sku]
-            );
+            const existingProduct = await sql`SELECT id FROM products WHERE sku = ${sku}`;
             
             if (existingProduct.rows.length > 0) {
               // For import scenarios, update the existing program instead of failing
@@ -372,18 +409,20 @@ export default async function handler(req, res) {
               productId = existingProduct.rows[0].id;
               
               // Update the existing product
-              await client.query(
-                `UPDATE products SET sku=$1, product_id_optional=$2, program=$3, remark=$4, supplier_id=$5 WHERE id=$6`,
-                [sku, product_id_optional, program, remark || null, supplier_id || null, productId]
-              );
+              await sql`
+                UPDATE products 
+                SET sku=${sku}, product_id_optional=${product_id_optional}, program=${program}, remark=${remark || null}, supplier_id=${supplier_id || null} 
+                WHERE id=${productId}
+              `;
               
               // Delete existing rates for this product
-              await client.query(`DELETE FROM rates WHERE product_id = $1`, [productId]);
+              await sql`DELETE FROM rates WHERE product_id = ${productId}`;
             } else {
-              const prodResult = await client.query(
-                `INSERT INTO products (sku, product_id_optional, program, remark, supplier_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-                [sku, product_id_optional, program, remark || null, supplier_id || null]
-              );
+              const prodResult = await sql`
+                INSERT INTO products (sku, product_id_optional, program, remark, supplier_id) 
+                VALUES (${sku}, ${product_id_optional}, ${program}, ${remark || null}, ${supplier_id || null}) 
+                RETURNING id
+              `;
               productId = prodResult.rows[0].id;
             }
 
@@ -406,24 +445,36 @@ export default async function handler(req, res) {
             
 
             
-            if (
-              !name || net_adult === null || net_child === null || !fee_type ||
-              ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult === null || fee_child === null))
-            ) {
-              console.error('[PRODUCTS-RATES] Invalid rate data:', rate);
-              throw new Error(`Invalid rate item at index ${i}: ${JSON.stringify(rate)}`);
+            if (!name) {
+              throw new Error(`Rate ${i + 1}: Missing rate name`);
+            }
+            if (net_adult === null || net_adult === undefined) {
+              throw new Error(`Rate ${i + 1}: Missing or invalid net adult price`);
+            }
+            if (net_child === null || net_child === undefined) {
+              throw new Error(`Rate ${i + 1}: Missing or invalid net child price`);
+            }
+            if (!fee_type) {
+              throw new Error(`Rate ${i + 1}: Missing fee type`);
+            }
+            if ((fee_type === 'np' || fee_type === 'entrance') && (fee_adult === null || fee_adult === undefined)) {
+              throw new Error(`Rate ${i + 1}: Missing fee adult price for fee type '${fee_type}'`);
+            }
+            if ((fee_type === 'np' || fee_type === 'entrance') && (fee_child === null || fee_child === undefined)) {
+              throw new Error(`Rate ${i + 1}: Missing fee child price for fee type '${fee_type}'`);
             }
             
             // ALWAYS use the fallback query to avoid rate_order issues
+            console.log(`[PRODUCTS-RATES] Inserting rate ${i}:`, { productId, name, net_adult, net_child, fee_type, fee_adult, fee_child });
 
-            await client.query(
-              `INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-              [productId, name, net_adult, net_child, fee_type, fee_adult, fee_child]
-            );
+            await sql`
+              INSERT INTO rates (product_id, name, net_adult, net_child, fee_type, fee_adult, fee_child) 
+              VALUES (${productId}, ${name}, ${net_adult}, ${net_child}, ${fee_type}, ${fee_adult}, ${fee_child})
+            `;
           }
           
 
-          await client.query('COMMIT');
+          console.log('[PRODUCTS-RATES] Tour POST operation completed successfully, productId:', productId);
           res.status(201).json({ success: true, productId });
         } catch (err) {
           console.error('[PRODUCTS-RATES] Error in tour POST logic:', err);
@@ -432,13 +483,7 @@ export default async function handler(req, res) {
           console.error('[PRODUCTS-RATES] Error detail:', err.detail);
           console.error('[PRODUCTS-RATES] Error hint:', err.hint);
           
-          if (client) {
-            try {
-              await client.query('ROLLBACK');
-            } catch (rollbackErr) {
-              console.error('[PRODUCTS-RATES] Rollback error:', rollbackErr);
-            }
-          }
+          // No rollback needed since we're not using transactions
           
           // Check for specific database errors
           let errorMessage = 'Failed to create/update program';
@@ -471,13 +516,10 @@ export default async function handler(req, res) {
           return;
         }
         try {
-          await client.query('BEGIN');
-          await client.query('DELETE FROM rates WHERE product_id = $1', [id]);
-          await client.query('DELETE FROM products WHERE id = $1', [id]);
-          await client.query('COMMIT');
+          await sql`DELETE FROM rates WHERE product_id = ${id}`;
+          await sql`DELETE FROM products WHERE id = ${id}`;
           res.status(200).json({ success: true });
         } catch (err) {
-          await client.query('ROLLBACK');
           console.error('[PRODUCTS-RATES] Error in tour DELETE logic:', err);
           res.status(500).json({ error: err.message, stack: err.stack });
         }

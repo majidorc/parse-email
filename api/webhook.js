@@ -1323,6 +1323,145 @@ function extractOrderLinkFromEmail(emailContent) {
     }
   }
   
+  // Pattern 11: WP Mail SMTP tracking links - convert to direct order links
+  const wpMailTrackingPattern = /(https?:\/\/[^\/]+\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]+)/gi;
+  let wpMailMatch;
+  while ((wpMailMatch = wpMailTrackingPattern.exec(emailContent)) !== null) {
+    if (wpMailMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found WP Mail SMTP tracking link:', wpMailMatch[1]);
+      
+      try {
+        // Try to decode the base64 part to extract the actual URL
+        const urlParts = wpMailMatch[1].split('/e/');
+        if (urlParts.length === 2) {
+          let base64Data = urlParts[1];
+          
+          // Clean up malformed base64 data (remove line breaks, spaces, and invalid characters)
+          base64Data = base64Data
+            .replace(/\s+/g, '') // Remove all whitespace
+            .replace(/\n/g, '') // Remove newlines
+            .replace(/\r/g, '') // Remove carriage returns
+            .replace(/[^A-Za-z0-9+/=]/g, ''); // Remove invalid base64 characters
+          
+          console.log('[ORDER-LINK-DEBUG] Cleaned base64 data:', base64Data);
+          
+          // Try to decode the base64
+          const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
+          console.log('[ORDER-LINK-DEBUG] Decoded data:', decodedData);
+          
+          // Look for the actual URL in the decoded data
+          const urlMatch = decodedData.match(/data\[url\]=([^&]+)/);
+          if (urlMatch && urlMatch[1]) {
+            const actualUrl = decodeURIComponent(urlMatch[1]);
+            console.log('[ORDER-LINK-DEBUG] Extracted actual URL from tracking link:', actualUrl);
+            return actualUrl.trim();
+          }
+          
+          // Also look for order ID in the decoded data to create a direct link
+          const orderIdMatch = decodedData.match(/id%3D(\d+)/);
+          if (orderIdMatch && orderIdMatch[1]) {
+            const orderId = orderIdMatch[1];
+            const directLink = createDirectOrderLink(orderId);
+            if (directLink) {
+              console.log('[ORDER-LINK-DEBUG] Created direct link from decoded order ID:', directLink);
+              return directLink;
+            }
+          }
+        }
+      } catch (error) {
+        console.log('[ORDER-LINK-DEBUG] Error decoding tracking link:', error.message);
+        
+        // If decoding fails, try to extract order ID from the URL itself
+        const orderIdMatch = wpMailMatch[1].match(/id%3D(\d+)/);
+        if (orderIdMatch && orderIdMatch[1]) {
+          const orderId = orderIdMatch[1];
+          const directLink = createDirectOrderLink(orderId);
+          if (directLink) {
+            console.log('[ORDER-LINK-DEBUG] Created direct link from URL order ID:', directLink);
+            return directLink;
+          }
+        }
+        
+        // If all else fails, return the original tracking link as fallback
+        return wpMailMatch[1].trim();
+      }
+    }
+  }
+  
+  // Pattern 12: WooCommerce order URLs that might be embedded in the email
+  const wooCommerceOrderPattern = /(https?:\/\/[^\/]+\/wp-admin\/admin\.php\?page=wc-orders[^"\s\n]+)/gi;
+  let wooCommerceMatch;
+  while ((wooCommerceMatch = wooCommerceOrderPattern.exec(emailContent)) !== null) {
+    if (wooCommerceMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found WooCommerce order URL:', wooCommerceMatch[1]);
+      return wooCommerceMatch[1].trim();
+    }
+  }
+  
+  // Pattern 13: Any URL containing "wc-orders" or "admin.php" that might be an order link
+  const adminOrderPattern = /(https?:\/\/[^"\s\n]*?(?:wc-orders|admin\.php)[^"\s\n]*)/gi;
+  let adminOrderMatch;
+  while ((adminOrderMatch = adminOrderPattern.exec(emailContent)) !== null) {
+    if (adminOrderMatch[1] && adminOrderMatch[1].includes('tours.co.th')) {
+      console.log('[ORDER-LINK-DEBUG] Found admin order URL:', adminOrderMatch[1]);
+      return adminOrderMatch[1].trim();
+    }
+  }
+  
+  // Pattern 14: Handle URLs that might be split across multiple lines
+  const splitUrlPattern = /(https?:\/\/[^"\s]*?\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]*)/gi;
+  let splitUrlMatch;
+  while ((splitUrlMatch = splitUrlPattern.exec(emailContent)) !== null) {
+    if (splitUrlMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found potentially split tracking URL:', splitUrlMatch[1]);
+      
+      // Try to find the complete URL by looking for more content after this
+      const startIndex = splitUrlMatch.index;
+      const searchText = emailContent.substring(startIndex, startIndex + 1000); // Look ahead 1000 chars
+      
+      // Look for a complete base64 string
+      const completeUrlMatch = searchText.match(/(https?:\/\/[^"\s]*?\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]+)/);
+      if (completeUrlMatch && completeUrlMatch[1] !== splitUrlMatch[1]) {
+        console.log('[ORDER-LINK-DEBUG] Found complete tracking URL:', completeUrlMatch[1]);
+        
+        try {
+          // Process this complete URL using the same logic as Pattern 11
+          const urlParts = completeUrlMatch[1].split('/e/');
+          if (urlParts.length === 2) {
+            let base64Data = urlParts[1];
+            
+            // Clean up malformed base64 data
+            base64Data = base64Data
+              .replace(/\s+/g, '')
+              .replace(/\n/g, '')
+              .replace(/\r/g, '')
+              .replace(/[^A-Za-z0-9+/=]/g, '');
+            
+            const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
+            const urlMatch = decodedData.match(/data\[url\]=([^&]+)/);
+            if (urlMatch && urlMatch[1]) {
+              const actualUrl = decodeURIComponent(urlMatch[1]);
+              console.log('[ORDER-LINK-DEBUG] Extracted actual URL from complete tracking link:', actualUrl);
+              return actualUrl.trim();
+            }
+          }
+        } catch (error) {
+          console.log('[ORDER-LINK-DEBUG] Error processing complete tracking URL:', error.message);
+        }
+      }
+    }
+  }
+  
+  // Fallback: Try to extract order ID and create a direct link
+  const orderId = extractOrderIdFromContent(emailContent);
+  if (orderId) {
+    const directLink = createDirectOrderLink(orderId);
+    if (directLink) {
+      console.log('[ORDER-LINK-DEBUG] Created fallback direct order link from order ID:', directLink);
+      return directLink;
+    }
+  }
+  
   // Debug: Log what we're looking at
   console.log('[ORDER-LINK-DEBUG] Email content preview (first 500 chars):', emailContent.substring(0, 500));
   console.log('[ORDER-LINK-DEBUG] No order link patterns found');
@@ -2150,6 +2289,39 @@ async function triggerWebNotification(booking) {
     } catch (error) {
         console.error('Error storing web notification:', error);
     }
+}
+
+// Helper function to create direct order link from order ID
+function createDirectOrderLink(orderId) {
+  if (!orderId) return null;
+  
+  // Create a direct link to the WooCommerce order
+  const directLink = `https://tours.co.th/wp-admin/admin.php?page=wc-orders&action=edit&id=${orderId}`;
+  console.log('[ORDER-LINK-DEBUG] Created direct order link:', directLink);
+  return directLink;
+}
+
+// Helper function to extract order ID from various sources
+function extractOrderIdFromContent(emailContent) {
+  // Look for order ID patterns in the email content
+  const patterns = [
+    /order\s*#?\s*:?\s*(\d+)/i,
+    /order\s*id\s*:?\s*(\d+)/i,
+    /order\s*number\s*:?\s*(\d+)/i,
+    /id\s*:?\s*(\d+)/i,
+    /(\d{4,6})/ // Look for 4-6 digit numbers that might be order IDs
+  ];
+  
+  for (const pattern of patterns) {
+    const match = emailContent.match(pattern);
+    if (match && match[1]) {
+      const orderId = match[1];
+      console.log('[ORDER-LINK-DEBUG] Extracted order ID:', orderId);
+      return orderId;
+    }
+  }
+  
+  return null;
 }
 
 module.exports = handler;

@@ -1780,6 +1780,9 @@ async function handler(req, res) {
               } else {
                 console.log(`[ORDER-LINK] FAILED: No order link extracted for booking ${extractedInfo.bookingNumber}`);
               }
+              
+              // Store the order link in the extractedInfo object so it can be accessed later
+              extractedInfo.orderLink = orderLink;
             }
 
             if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
@@ -1898,7 +1901,7 @@ async function handler(req, res) {
                     }
                     if (anyFieldChanged || clearHighlight) {
                       await sql`
-                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, order_link=${orderLink}, updated_fields=${JSON.stringify(updatedFields)}
+                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, order_link=${extractedInfo.orderLink}, updated_fields=${JSON.stringify(updatedFields)}
                         WHERE booking_number = ${extractedInfo.bookingNumber}
                       `;
                       
@@ -2037,7 +2040,7 @@ async function handler(req, res) {
 
                     await sql`
                         INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total, order_link)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal}, ${orderLink})
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal}, ${extractedInfo.orderLink})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,

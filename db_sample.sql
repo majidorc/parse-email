@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   customer BOOLEAN DEFAULT FALSE,
   notification_sent BOOLEAN DEFAULT FALSE,
   channel TEXT,
+  order_link TEXT, -- NEW: Order link from tours.co.th emails
   updated_fields JSONB,
   created_at TIMESTAMP DEFAULT NOW()
 );

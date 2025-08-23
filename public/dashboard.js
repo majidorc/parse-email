@@ -523,7 +523,7 @@ function renderTable() {
         }
         return `
           <tr class="${getRowClass(b.tour_date)}" style="background-color: ${getRowClass(b.tour_date) === 'row-past' ? '#F58573' : getRowClass(b.tour_date) === 'row-today' ? '#8CFA97' : getRowClass(b.tour_date) === 'row-tomorrow' ? '#BAFCE5' : getRowClass(b.tour_date) === 'row-future' ? 'white' : ''} !important;">
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium${shouldHighlight('booking_number') ? ' bg-yellow-100' : ''}">${b.booking_number || ''}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${createBookingNumberDisplay(b.booking_number, shouldHighlight('booking_number'), b.order_link)}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
@@ -575,7 +575,7 @@ function renderTable() {
       return `
       <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)} ${cardClass}">
         <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
-          <span class="font-bold">🆔 Booking #:</span> <span class="${shouldHighlightCard('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.booking_number || ''}</span>
+          <span class="font-bold">🆔 Booking #:</span> <span class="${shouldHighlightCard('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${createBookingNumberDisplay(b.booking_number, shouldHighlightCard('booking_number'), b.order_link)}</span>
           <span class="font-bold ml-4">📅 Tour Date:</span> <span class="${shouldHighlightCard('tour_date') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
         </div>
         <hr class="my-2">
@@ -991,6 +991,61 @@ function generateNotificationText(b) {
   return lines.join('\n');
 }
 
+// Function to parse order link from email content
+async function parseOrderLinkFromEmail(bookingNumber) {
+  try {
+    // Fetch order link from database
+    const response = await fetch(`/api/bookings?search=${bookingNumber}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.bookings && data.bookings.length > 0) {
+        const booking = data.bookings[0];
+        return booking.order_link || null;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching order link:', error);
+  }
+  return null;
+}
+
+// Function to extract order link from email content
+function extractOrderLinkFromEmail(emailContent) {
+  // Look for pattern: "Total: [amount]" followed by "View order → [URL]"
+  const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
+  const match = emailContent.match(totalPattern);
+  
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  
+  // Alternative pattern: just look for "View order → [URL]"
+  const viewOrderPattern = /View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
+  const viewOrderMatch = emailContent.match(viewOrderPattern);
+  
+  if (viewOrderMatch && viewOrderMatch[1]) {
+    return viewOrderMatch[1].trim();
+  }
+  
+  return null;
+}
+
+// Function to store order link for a booking
+function storeOrderLink(bookingNumber, orderLink) {
+  const storedOrderLinks = JSON.parse(localStorage.getItem('orderLinks') || '{}');
+  storedOrderLinks[bookingNumber] = orderLink;
+  localStorage.setItem('orderLinks', JSON.stringify(storedOrderLinks));
+}
+
+// Function to create booking number display with optional hyperlink
+function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
+  if (orderLink) {
+    return `<a href="${orderLink}" target="_blank" class="text-blue-600 hover:text-blue-800 underline ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order">${bookingNumber || ''}</a>`;
+  } else {
+    return `<span class="${shouldHighlight ? 'bg-yellow-100' : ''}">${bookingNumber || ''}</span>`;
+  }
+}
+
 // Function to send email to customer
 async function sendCustomerEmail(bookingNumber, button) {
   // Store the booking number and button for use in the modal
@@ -1019,7 +1074,7 @@ async function sendCustomerEmail(bookingNumber, button) {
   document.getElementById('preview-to').textContent = '';
   document.getElementById('preview-content').textContent = '';
   
-  // Fetch booking details for preview
+  // Fetch booking details for preview and populate hotel field
   await fetchBookingDetailsForPreview(bookingNumber);
 }
 
@@ -1032,6 +1087,17 @@ async function fetchBookingDetailsForPreview(bookingNumber) {
       if (data.bookings && data.bookings.length > 0) {
         const booking = data.bookings[0];
         window.currentEmailPreviewData = booking;
+        
+        // Populate hotel field with default value from booking
+        const hotelField = document.getElementById('email-hotel');
+        if (hotelField && booking.hotel) {
+          // Clean hotel name - extract just the hotel name (first part before comma or address details)
+          const cleanHotel = booking.hotel
+            .split(',')[0] // Take only the part before the first comma
+            .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" if present
+            .trim();
+          hotelField.value = cleanHotel;
+        }
       }
     }
   } catch (error) {
@@ -1062,6 +1128,7 @@ function generateEmailPreview() {
   
   // Get form values
   const pickupTime = document.getElementById('email-pickup-time').value;
+  const hotel = document.getElementById('email-hotel').value;
   const transferOption = document.querySelector('input[name="has_transfer"]:checked').value;
   const isPrivate = document.getElementById('private-yes').checked;
   const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
@@ -1079,14 +1146,8 @@ function generateEmailPreview() {
     year: 'numeric' 
   }) : 'N/A';
   
-  // Clean hotel name
-  const cleanHotel = booking.hotel ? booking.hotel
-    .split(',')[0]
-    .replace(/\s*THAILAND\s*$/i, '')
-    .trim() : '';
-  
-  // Construct pickup info
-  let pickupInfo = `Pick up: ${cleanHotel}`;
+  // Construct pickup info using the hotel field value
+  let pickupInfo = `Pick up: ${hotel}`;
   if (transferOption === 'extra') {
     if (isPrivate) {
       pickupInfo += ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
@@ -1212,7 +1273,7 @@ function initializeEmailModal() {
   
   // Add real-time preview updates for form fields
   const previewFields = [
-    'email-pickup-time',
+    'email-pickup-time', 'email-hotel',
     'transfer-no', 'transfer-free', 'transfer-extra',
     'private-no', 'private-yes',
     'regular-transfer-amount', 'private-transfer-amount',
@@ -1248,6 +1309,7 @@ function initializeEmailModal() {
     
     // Get form values
     const pickupTime = document.getElementById('email-pickup-time').value;
+    const hotel = document.getElementById('email-hotel').value;
     const transferOption = document.querySelector('input[name="has_transfer"]:checked').value;
     const isPrivate = document.getElementById('private-yes').checked;
     const hasNationalParkFee = document.getElementById('park-fee-yes').checked;
@@ -1259,12 +1321,12 @@ function initializeEmailModal() {
     const pierLocationUrl = document.getElementById('pier-location-url').value;
     
     // Construct pickup line
-    let pickupLine = '';
+    let pickupLine = `Pick up: ${hotel}`;
     if (transferOption === 'extra') {
       if (isPrivate) {
-        pickupLine = ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
+        pickupLine += ` ( extra charge for Private Roundtrip transfer ${privateTransferAmount}THB )`;
       } else {
-        pickupLine = ` ( extra charge for roundtrip transfer ${regularTransferAmount}THB per person )`;
+        pickupLine += ` ( extra charge for roundtrip transfer ${regularTransferAmount}THB per person )`;
       }
     }
     
@@ -1290,6 +1352,7 @@ function initializeEmailModal() {
         body: JSON.stringify({
           booking_number: bookingNumber,
           pickup_time: pickupTime,
+          hotel: hotel,
           transfer_option: transferOption,
           is_private: isPrivate,
           pickup_line: pickupLine,

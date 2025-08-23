@@ -55,6 +55,12 @@ module.exports = async (req, res) => {
             // Get pickup time from request or use default
             const pickupTime = req.body.pickup_time || '08:00 ~ 09:00';
             
+            // Get hotel from request or use booking data as fallback
+            const hotel = req.body.hotel || (booking.hotel ? booking.hotel
+                .split(',')[0] // Take only the part before the first comma
+                .replace(/\s*THAILAND\s*$/i, '') // Remove "THAILAND" if present
+                .trim() : '');
+            
             // Get transfer option and related information
             const transferOption = req.body.transfer_option || 'free';
             const pickupLine = req.body.pickup_line || '';
@@ -73,7 +79,7 @@ module.exports = async (req, res) => {
 ${pierLocation} ( ${pierLocationUrl} )`;
             } else {
                 // With transfer - show pickup info
-                pickupInfo = `Pick up: ${cleanHotel}${pickupLine}
+                pickupInfo = `Pick up: ${hotel}${pickupLine}
 Pickup time: ${pickupTime}`;
             }
             

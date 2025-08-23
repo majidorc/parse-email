@@ -1223,6 +1223,27 @@ function extractQuery(text, botUsername) {
     return text;
 }
 
+// Function to extract order link from email content
+function extractOrderLinkFromEmail(emailContent) {
+  // Look for pattern: "Total: [amount]" followed by "View order → [URL]"
+  const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
+  const match = emailContent.match(totalPattern);
+  
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  
+  // Alternative pattern: just look for "View order → [URL]"
+  const viewOrderPattern = /View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
+  const viewOrderMatch = emailContent.match(viewOrderPattern);
+  
+  if (viewOrderMatch && viewOrderMatch[1]) {
+    return viewOrderMatch[1].trim();
+  }
+  
+  return null;
+}
+
 // Helper to send a message back to Telegram
 async function sendTelegram(chat_id, text, reply_to_message_id = null) {
     try {
@@ -1630,6 +1651,27 @@ async function handler(req, res) {
                     source_email = EXCLUDED.source_email,
                     parsed_at = EXCLUDED.parsed_at;
             `;
+
+            // Extract order link from email content if it's from tours.co.th
+            if (parsedEmail.from?.value?.[0]?.address?.includes('tours.co.th')) {
+              const emailContent = parsedEmail.html || parsedEmail.text || '';
+              const orderLink = extractOrderLinkFromEmail(emailContent);
+              
+              if (orderLink && extractedInfo.bookingNumber) {
+                console.log(`[ORDER-LINK] Extracted order link for booking ${extractedInfo.bookingNumber}: ${orderLink}`);
+                
+                // Store order link in a separate table or update existing booking
+                try {
+                  await sql`
+                    UPDATE bookings 
+                    SET order_link = ${orderLink}, updated_at = NOW()
+                    WHERE booking_number = ${extractedInfo.bookingNumber}
+                  `;
+                } catch (error) {
+                  console.error(`[ORDER-LINK] Error storing order link for booking ${extractedInfo.bookingNumber}:`, error);
+                }
+              }
+            }
 
             if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
                 console.warn('[SKIP] Skipped due to invalid date:', {

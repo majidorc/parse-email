@@ -1225,23 +1225,133 @@ function extractQuery(text, botUsername) {
 
 // Function to extract order link from email content
 function extractOrderLinkFromEmail(emailContent) {
-  // Look for pattern: "Total: [amount]" followed by "View order → [URL]"
+  console.log('[ORDER-LINK-DEBUG] Extracting order link from email content...');
+  
+  // Pattern 1: "Total: [amount]" followed by "View order → [URL]"
   const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
   const match = emailContent.match(totalPattern);
   
   if (match && match[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 1 (Total + View order):', match[1]);
     return match[1].trim();
   }
   
-  // Alternative pattern: just look for "View order → [URL]"
+  // Pattern 2: "View order → [URL]"
   const viewOrderPattern = /View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
   const viewOrderMatch = emailContent.match(viewOrderPattern);
   
   if (viewOrderMatch && viewOrderMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 2 (View order):', viewOrderMatch[1]);
     return viewOrderMatch[1].trim();
   }
   
+  // Pattern 3: "Order link:" or "Order:" followed by URL
+  const orderLinkPattern = /(?:Order\s*link|Order):\s*(https?:\/\/[^\s\n]+)/i;
+  const orderLinkMatch = emailContent.match(orderLinkPattern);
+  
+  if (orderLinkMatch && orderLinkMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 3 (Order link/Order):', orderLinkMatch[1]);
+    return orderLinkMatch[1].trim();
+  }
+  
+  // Pattern 4: "Click here" or "View" followed by URL
+  const clickHerePattern = /(?:Click\s*here|View|View\s*details?)\s*[:\-]?\s*(https?:\/\/[^\s\n]+)/i;
+  const clickHereMatch = emailContent.match(clickHerePattern);
+  
+  if (clickHereMatch && clickHereMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 4 (Click here/View):', clickHereMatch[1]);
+    return clickHereMatch[1].trim();
+  }
+  
+  // Pattern 5: Any URL that contains "order" or "booking" in the path
+  const orderUrlPattern = /(https?:\/\/[^\s\n]*?(?:order|booking|reservation)[^\s\n]*)/i;
+  const orderUrlMatch = emailContent.match(orderUrlPattern);
+  
+  if (orderUrlMatch && orderUrlMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 5 (URL with order/booking):', orderUrlMatch[1]);
+    return orderUrlMatch[1].trim();
+  }
+  
+  // Pattern 6: Any tours.co.th URL that might be an order link
+  const toursUrlPattern = /(https?:\/\/[^\s\n]*?tours\.co\.th[^\s\n]*)/i;
+  const toursUrlMatch = emailContent.match(toursUrlPattern);
+  
+  if (toursUrlMatch && toursUrlMatch[1]) {
+    console.log('[ORDER-LINK-DEBUG] Found pattern 6 (tours.co.th URL):', toursUrlMatch[1]);
+    return toursUrlMatch[1].trim();
+  }
+  
+  // Pattern 7: Any URL that appears after common order-related keywords
+  const orderKeywordsPattern = /(?:order|booking|reservation|confirm|details?)\s*[:\-]?\s*(https?:\/\/[^\s\n]+)/gi;
+  let orderKeywordsMatch;
+  while ((orderKeywordsMatch = orderKeywordsPattern.exec(emailContent)) !== null) {
+    if (orderKeywordsMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 7 (order keywords + URL):', orderKeywordsMatch[1]);
+      return orderKeywordsMatch[1].trim();
+    }
+  }
+  
+  // Pattern 8: Any URL that appears in the last few lines (often order links are at the bottom)
+  const lines = emailContent.split('\n');
+  const lastLines = lines.slice(-10); // Check last 10 lines
+  for (const line of lastLines) {
+    const urlMatch = line.match(/(https?:\/\/[^\s\n]+)/);
+    if (urlMatch && urlMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 8 (URL in last lines):', urlMatch[1]);
+      return urlMatch[1].trim();
+    }
+  }
+  
+  // Pattern 9: HTML anchor tags with order-related text
+  const htmlAnchorPattern = /<a[^>]*>(?:[^<]*?(?:order|booking|reservation|confirm|details?|view)[^<]*?)<\/a>/gi;
+  let htmlAnchorMatch;
+  while ((htmlAnchorMatch = htmlAnchorPattern.exec(emailContent)) !== null) {
+    const hrefMatch = htmlAnchorMatch[0].match(/href\s*=\s*["']([^"']+)["']/i);
+    if (hrefMatch && hrefMatch[1]) {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 9 (HTML anchor with order text):', hrefMatch[1]);
+      return hrefMatch[1].trim();
+    }
+  }
+  
+  // Pattern 10: Any URL in href attributes that might be an order link
+  const hrefUrlPattern = /href\s*=\s*["'](https?:\/\/[^"']+)["']/gi;
+  let hrefUrlMatch;
+  while ((hrefUrlMatch = hrefUrlPattern.exec(emailContent)) !== null) {
+    if (hrefUrlMatch[1] && (hrefUrlMatch[1].includes('order') || hrefUrlMatch[1].includes('booking') || hrefUrlMatch[1].includes('tours.co.th'))) {
+      console.log('[ORDER-LINK-DEBUG] Found pattern 10 (href with order-related URL):', hrefUrlMatch[1]);
+      return hrefUrlMatch[1].trim();
+    }
+  }
+  
+  // Debug: Log what we're looking at
+  console.log('[ORDER-LINK-DEBUG] Email content preview (first 500 chars):', emailContent.substring(0, 500));
+  console.log('[ORDER-LINK-DEBUG] No order link patterns found');
+  
   return null;
+}
+
+// Helper function to analyze email content structure for debugging
+function analyzeEmailContent(emailContent) {
+  console.log('[EMAIL-ANALYSIS] Analyzing email content structure...');
+  console.log('[EMAIL-ANALYSIS] Content length:', emailContent.length);
+  console.log('[EMAIL-ANALYSIS] Contains HTML tags:', /<[^>]+>/.test(emailContent));
+  console.log('[EMAIL-ANALYSIS] Contains URLs:', /https?:\/\/[^\s\n]+/.test(emailContent));
+  console.log('[EMAIL-ANALYSIS] Contains "order":', /order/i.test(emailContent));
+  console.log('[EMAIL-ANALYSIS] Contains "booking":', /booking/i.test(emailContent));
+  console.log('[EMAIL-ANALYSIS] Contains "tours.co.th":', /tours\.co\.th/i.test(emailContent));
+  
+  // Find all URLs in the content
+  const urlMatches = emailContent.match(/https?:\/\/[^\s\n]+/g);
+  if (urlMatches) {
+    console.log('[EMAIL-ANALYSIS] Found URLs:', urlMatches);
+  }
+  
+  // Find lines containing "order" or "booking"
+  const lines = emailContent.split('\n');
+  const orderLines = lines.filter(line => /order|booking/i.test(line));
+  if (orderLines.length > 0) {
+    console.log('[EMAIL-ANALYSIS] Lines containing order/booking:', orderLines);
+  }
 }
 
 // Helper to send a message back to Telegram
@@ -1655,11 +1765,20 @@ async function handler(req, res) {
             // Extract order link from email content if it's from tours.co.th
             let orderLink = null;
             if (parsedEmail.from?.value?.[0]?.address?.includes('tours.co.th')) {
+              console.log(`[ORDER-LINK] Processing tours.co.th email for booking ${extractedInfo.bookingNumber}`);
               const emailContent = parsedEmail.html || parsedEmail.text || '';
+              console.log(`[ORDER-LINK] Email content type: HTML=${!!parsedEmail.html}, Text=${!!parsedEmail.text}`);
+              console.log(`[ORDER-LINK] Email content length: ${emailContent.length} characters`);
+              
+              // Analyze the email content structure for debugging
+              analyzeEmailContent(emailContent);
+              
               orderLink = extractOrderLinkFromEmail(emailContent);
               
               if (orderLink && extractedInfo.bookingNumber) {
-                console.log(`[ORDER-LINK] Extracted order link for booking ${extractedInfo.bookingNumber}: ${orderLink}`);
+                console.log(`[ORDER-LINK] SUCCESS: Extracted order link for booking ${extractedInfo.bookingNumber}: ${orderLink}`);
+              } else {
+                console.log(`[ORDER-LINK] FAILED: No order link extracted for booking ${extractedInfo.bookingNumber}`);
               }
             }
 

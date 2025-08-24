@@ -214,6 +214,18 @@ body {
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
 }
 
+.tab-btn-container button[data-tab="programs"] {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.tab-btn-container button[data-tab="programs"]:not(.active) {
+  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%) !important;
+  color: #5B21B6 !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+}
+
 .tab-btn-container button[data-tab="suppliers"] {
   background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%) !important;
   color: white !important;
@@ -319,6 +331,11 @@ body {
 }
 
 .tab-btn-container button[data-tab="products"].active {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+}
+
+.tab-btn-container button[data-tab="programs"].active {
   background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
   box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
 }

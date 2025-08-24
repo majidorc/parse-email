@@ -116,16 +116,53 @@ body {
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(0);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  border: 2px solid transparent;
 }
 
 .tab-btn-container button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  filter: brightness(1.1);
 }
 
 .tab-btn-container button:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
   transition: transform 0.1s ease;
+}
+
+/* Enhanced tab colors with better contrast */
+.tab-btn-container button.bg-primary {
+  background: linear-gradient(135deg, var(--md-primary) 0%, #7C3AED 100%) !important;
+  box-shadow: 0 4px 15px rgba(103, 80, 164, 0.4);
+}
+
+.tab-btn-container button.bg-secondary {
+  background: linear-gradient(135deg, var(--md-secondary) 0%, #6B7280 100%) !important;
+  box-shadow: 0 4px 15px rgba(98, 91, 113, 0.4);
+}
+
+.tab-btn-container button.bg-tertiary {
+  background: linear-gradient(135deg, var(--md-tertiary) 0%, #9F7AEA 100%) !important;
+  box-shadow: 0 4px 15px rgba(125, 82, 96, 0.4);
+}
+
+.tab-btn-container button.bg-error {
+  background: linear-gradient(135deg, var(--md-error) 0%, #DC2626 100%) !important;
+  box-shadow: 0 4px 15px rgba(186, 26, 26, 0.4);
+}
+
+.tab-btn-container button.bg-surface-variant {
+  background: linear-gradient(135deg, var(--md-surface-variant) 0%, #D1D5DB 100%) !important;
+  color: var(--md-on-surface-variant) !important;
+  box-shadow: 0 4px 15px rgba(231, 224, 236, 0.4);
+}
+
+.tab-btn-container button.bg-outline {
+  background: linear-gradient(135deg, var(--md-outline) 0%, #9CA3AF 100%) !important;
+  box-shadow: 0 4px 15px rgba(121, 116, 126, 0.4);
 }
 
 /* Ripple effect for Material Design 3 */
@@ -145,6 +182,47 @@ body {
 .tab-btn-container button:active::before {
   width: 300px;
   height: 300px;
+}
+
+/* Additional tab enhancements */
+.tab-btn-container button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tab-btn-container button:hover::after {
+  opacity: 1;
+}
+
+/* Focus states for accessibility */
+.tab-btn-container button:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* Active tab state */
+.tab-btn-container button.active {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Tab container styling */
+.tab-btn-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* Legacy tab styles for backward compatibility */
@@ -360,6 +438,31 @@ th[data-col]:hover::after {
   }
   .tab-btn {
     padding: 0.5rem 1rem;
+  }
+  
+  /* Mobile tab adjustments */
+  .tab-btn-container {
+    padding: 6px;
+    gap: 1rem;
+  }
+  
+  .tab-btn-container button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .tab-btn-container {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 12px;
+  }
+  
+  .tab-btn-container button {
+    width: 100%;
+    max-width: 200px;
   }
 }
 

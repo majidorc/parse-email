@@ -2619,7 +2619,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       
       // Update benefit fields
       const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');
-      const analyticsViatorBenefit = document.getElementById('analytics-viator-benefit');
+      const analyticsViatorBenefitShare = document.getElementById('analytics-viator-benefit-share');
+      const analyticsViatorBenefitTotal = document.getElementById('analytics-viator-benefit-total');
       const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
       const analyticsTotalPassengers = document.getElementById('analytics-total-passengers');
       const analyticsPassengersBreakdown = document.getElementById('analytics-passengers-breakdown');
@@ -2647,7 +2648,16 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
       if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-      if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      
+      // Update Viator Benefit - show 50% share as big number, total as small text
+      if (analyticsViatorBenefitShare) {
+        const viatorBenefitShare = viatorBenefit * 0.5; // 50% of total
+        analyticsViatorBenefitShare.textContent = Number(viatorBenefitShare).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+      if (analyticsViatorBenefitTotal) {
+        analyticsViatorBenefitTotal.textContent = `Total: ${Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      }
+      
       if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
       // Calculate and display Total Benefit as percentage of Total Sale

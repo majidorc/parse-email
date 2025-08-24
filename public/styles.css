@@ -466,6 +466,13 @@ th[data-col]:hover::after {
   }
 }
 
+/* Analytics benefit display styling */
+#analytics-viator-benefit-total {
+  font-weight: 500;
+  opacity: 0.8;
+  font-size: 0.75rem;
+}
+
 /* Link Styles */
 a {
   color: #2563eb;

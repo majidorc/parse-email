@@ -503,15 +503,7 @@ function renderTable() {
   } else {
     // Always show individual bookings
     tbody.innerHTML = bookingsData.map(b => {
-        // Debug: Log the first few bookings to see their data structure
-        if (bookingsData.indexOf(b) < 3) {
-          console.log('[DEBUG] Booking data:', { 
-            booking_number: b.booking_number, 
-            order_link: b.order_link,
-            has_order_link: !!b.order_link,
-            order_link_type: typeof b.order_link
-          });
-        }
+
         
         const updated = b.updated_fields || {};
         // Helper to check if highlight should be shown
@@ -1024,24 +1016,22 @@ async function parseOrderLinkFromEmail(bookingNumber) {
 // Function to create booking number display with optional hyperlink
 function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
   if (orderLink && orderLink.trim() !== '') {
-    console.log('[DEBUG] Creating clickable link for order:', orderLink);
+
     const linkId = `order-link-${bookingNumber}`;
-    return `<a href="${orderLink}" target="_blank" rel="noopener noreferrer" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order in new tab" style="cursor: pointer; text-decoration: underline;" id="${linkId}" onclick="console.log('Link clicked:', '${orderLink}'); testOrderLink('${orderLink}')">${bookingNumber || ''}</a>`;
+    return `<a href="${orderLink}" target="_blank" rel="noopener noreferrer" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order in new tab" style="cursor: pointer; text-decoration: underline;" id="${linkId}" onclick="testOrderLink('${orderLink}')">${bookingNumber || ''}</a>`;
   } else {
-    console.log('[DEBUG] No order link, creating plain text');
+
     return `<span class="${shouldHighlight ? 'bg-yellow-100' : ''}">${bookingNumber || ''}</span>`;
   }
 }
 
 // Test function to verify order links work
 function testOrderLink(url) {
-  console.log('[TEST] Testing order link:', url);
   try {
     // Try to open the link
     window.open(url, '_blank', 'noopener,noreferrer');
-    console.log('[TEST] Link opened successfully');
   } catch (error) {
-    console.error('[TEST] Error opening link:', error);
+    console.error('[ERROR] Error opening link:', error);
   }
 }
 
@@ -2633,15 +2623,7 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       const viatorBenefitOfSalePercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
       const websiteBenefitOfSalePercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
       
-      // Debug: Log the percentages to ensure they total 100%
-      console.log('Benefit Percentages:', {
-        viatorBenefit,
-        websiteBenefit,
-        totalBenefit,
-        viatorBenefitOfTotalPercent: viatorBenefitOfTotalPercent.toFixed(2),
-        websiteBenefitOfTotalPercent: websiteBenefitOfTotalPercent.toFixed(2),
-        total: (viatorBenefitOfTotalPercent + websiteBenefitOfTotalPercent).toFixed(2)
-      });
+
       
       if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -4424,14 +4406,13 @@ document.getElementById('export-programs-settings-btn').onclick = async function
       return;
     }
     
-    console.log('Exporting programs:', data.tours); // Debug log
-    console.log('Total programs found:', data.tours.length); // Debug log
+    
     
     // Convert programs to CSV format
     let csv = 'SKU,Program Name,Supplier,Remark,Rate Name,Net Adult,Net Child,Fee Type,Fee Adult,Fee Child\n';
     
     data.tours.forEach(program => {
-      console.log('Processing program:', program.sku, 'with rates:', program.rates); // Debug log
+      
       
       if (program.rates && program.rates.length > 0) {
         // Export each rate as a separate row
@@ -4454,7 +4435,7 @@ document.getElementById('export-programs-settings-btn').onclick = async function
       }
     });
     
-    console.log('Generated CSV:', csv); // Debug log
+    
     
     // Create and download the CSV file
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -4501,7 +4482,7 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
       return;
     }
     
-    console.log('CSV headers:', headers); // Debug log
+    
     
     // Parse CSV data
     const programs = {};
@@ -4511,7 +4492,7 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
       
       try {
         const values = parseCSVLine(line);
-        console.log('Parsed line:', values); // Debug log
+
         
         if (values.length < 10) {
           console.warn('Skipping invalid line:', line);
@@ -4568,7 +4549,7 @@ document.getElementById('excel-file-input-settings').addEventListener('change', 
       }
     }
     
-    console.log('Parsed programs:', programs); // Debug log
+    
     
     // Import programs
     importProgramsFromSettings(programs);
@@ -5910,8 +5891,7 @@ async function importProgramsFromSettings(programs) {
   let successCount = 0;
   let errorCount = 0;
   
-  console.log('Importing programs:', programList); // Debug log
-  console.log('Total programs to import:', programList.length); // Debug log
+  
   
   if (programList.length === 0) {
     alert('No valid programs found in the CSV file.');
@@ -5962,7 +5942,7 @@ async function importProgramsFromSettings(programs) {
         }
       }
       
-      console.log('Sending to API:', apiData); // Debug log
+      
       
       const response = await fetch('/api/products-rates?type=tour', {
         method: 'POST',
@@ -5971,7 +5951,7 @@ async function importProgramsFromSettings(programs) {
       });
       
       const responseData = await response.json();
-      console.log('API response:', responseData); // Debug log
+      
       
       if (response.ok) {
         successCount++;

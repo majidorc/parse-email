@@ -53,7 +53,7 @@
 .text-on-secondary-container { color: var(--md-on-secondary-container) !important; }
 
 .bg-tertiary { background-color: var(--md-tertiary) !important; }
-.text-on-tertiary { color: var(--md-tertiary) !important; }
+.text-on-tertiary { color: var(--md-on-tertiary) !important; }
 .bg-tertiary-container { background-color: var(--md-tertiary-container) !important; }
 .text-on-tertiary-container { color: var(--md-tertiary-container) !important; }
 
@@ -108,7 +108,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Material Design 3 Tabs */
+/* Material Design 3 Tabs - Beautiful Colors */
 .tab-btn-container button {
   position: relative;
   overflow: hidden;
@@ -133,7 +133,7 @@ body {
   transition: transform 0.1s ease;
 }
 
-/* Enhanced tab colors with better contrast */
+/* Enhanced tab colors with beautiful gradients */
 .tab-btn-container button.bg-primary {
   background: linear-gradient(135deg, var(--md-primary) 0%, #7C3AED 100%) !important;
   box-shadow: 0 4px 15px rgba(103, 80, 164, 0.4);
@@ -163,6 +163,91 @@ body {
 .tab-btn-container button.bg-outline {
   background: linear-gradient(135deg, var(--md-outline) 0%, #9CA3AF 100%) !important;
   box-shadow: 0 4px 15px rgba(121, 116, 126, 0.4);
+}
+
+/* Individual tab colors with active/inactive states */
+.tab-btn-container button[data-tab="dashboard"] {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.tab-btn-container button[data-tab="dashboard"]:not(.active) {
+  background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%) !important;
+  color: #3730A3 !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.tab-btn-container button[data-tab="bookings"] {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.tab-btn-container button[data-tab="bookings"]:not(.active) {
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%) !important;
+  color: #065F46 !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.tab-btn-container button[data-tab="analytics"] {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+.tab-btn-container button[data-tab="analytics"]:not(.active) {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%) !important;
+  color: #92400E !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.tab-btn-container button[data-tab="products"] {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.tab-btn-container button[data-tab="products"]:not(.active) {
+  background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%) !important;
+  color: #5B21B6 !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+}
+
+.tab-btn-container button[data-tab="suppliers"] {
+  background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+}
+
+.tab-btn-container button[data-tab="suppliers"]:not(.active) {
+  background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%) !important;
+  color: #9D174D !important;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.2);
+}
+
+.tab-btn-container button[data-tab="accounting"] {
+  background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+}
+
+.tab-btn-container button[data-tab="accounting"]:not(.active) {
+  background: linear-gradient(135deg, #CFFAFE 0%, #A5F3FC 100%) !important;
+  color: #0E7490 !important;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+}
+
+.tab-btn-container button[data-tab="settings"] {
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+}
+
+.tab-btn-container button[data-tab="settings"]:not(.active) {
+  background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
+  color: #374151 !important;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
 }
 
 /* Ripple effect for Material Design 3 */
@@ -213,9 +298,47 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
+  filter: brightness(1.1);
+  border-width: 3px;
 }
 
-/* Tab container styling */
+/* Enhanced active states for each tab type */
+.tab-btn-container button[data-tab="dashboard"].active {
+  background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%) !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+}
+
+.tab-btn-container button[data-tab="bookings"].active {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+}
+
+.tab-btn-container button[data-tab="analytics"].active {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%) !important;
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
+}
+
+.tab-btn-container button[data-tab="products"].active {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+}
+
+.tab-btn-container button[data-tab="suppliers"].active {
+  background: linear-gradient(135deg, #DB2777 0%, #BE185D 100%) !important;
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.6);
+}
+
+.tab-btn-container button[data-tab="accounting"].active {
+  background: linear-gradient(135deg, #0891B2 0%, #0E7490 100%) !important;
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.6);
+}
+
+.tab-btn-container button[data-tab="settings"].active {
+  background: linear-gradient(135deg, #4B5563 0%, #374151 100%) !important;
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.6);
+}
+
+/* Tab container styling with glassmorphism */
 .tab-btn-container {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);

@@ -2650,6 +2650,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
+      // Calculate and display Total Benefit as percentage of Total Sale
+      const totalSale = viatorSale + websiteSale;
+      const totalBenefitOfSalePercent = totalSale > 0 ? (totalBenefit / totalSale) * 100 : 0;
+      const analyticsTotalBenefitPercentage = document.getElementById('analytics-total-benefit-percentage');
+      if (analyticsTotalBenefitPercentage) {
+        analyticsTotalBenefitPercentage.textContent = `~${totalBenefitOfSalePercent.toFixed(2)}% of Total Sale`;
+      }
+      
       // Update benefit percentages - show both types
       const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
       const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');

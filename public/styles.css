@@ -166,16 +166,24 @@ body {
 }
 
 /* Individual tab colors with active/inactive states */
+/* TEST STYLE - This should make all tabs bright red if CSS is loading */
+.tab-btn-container button {
+  background: red !important;
+  color: white !important;
+}
+
 .tab-btn-container button#toggle-dashboard {
   background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%) !important;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
+  border: none !important;
 }
 
 .tab-btn-container button#toggle-dashboard:not(.active) {
   background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%) !important;
   color: #3730A3 !important;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+  border: none !important;
 }
 
 .tab-btn-container button#toggle-bookings {

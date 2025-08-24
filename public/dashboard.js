@@ -2618,7 +2618,8 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       }
       
       // Update benefit fields
-      const analyticsTotalBenefit = document.getElementById('analytics-total-benefit');
+      const analyticsYourTotalBenefit = document.getElementById('analytics-your-total-benefit');
+      const analyticsTotalBenefitTotal = document.getElementById('analytics-total-benefit-total');
       const analyticsViatorBenefitShare = document.getElementById('analytics-viator-benefit-share');
       const analyticsViatorBenefitTotal = document.getElementById('analytics-viator-benefit-total');
       const analyticsWebsiteBenefit = document.getElementById('analytics-website-benefit');
@@ -2647,7 +2648,14 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
-      if (analyticsTotalBenefit) analyticsTotalBenefit.textContent = Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      // Update Total Benefit - show your actual benefit as big number, total as small text
+      if (analyticsYourTotalBenefit) {
+        const yourTotalBenefit = websiteBenefit + (viatorBenefit * 0.5); // Website + 50% of Viator
+        analyticsYourTotalBenefit.textContent = Number(yourTotalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      }
+      if (analyticsTotalBenefitTotal) {
+        analyticsTotalBenefitTotal.textContent = `Total: ${Number(totalBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      }
       
       // Update Viator Benefit - show 50% share as big number, total as small text
       if (analyticsViatorBenefitShare) {

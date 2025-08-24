@@ -467,7 +467,8 @@ th[data-col]:hover::after {
 }
 
 /* Analytics benefit display styling */
-#analytics-viator-benefit-total {
+#analytics-viator-benefit-total,
+#analytics-total-benefit-total {
   font-weight: 500;
   opacity: 0.8;
   font-size: 0.75rem;

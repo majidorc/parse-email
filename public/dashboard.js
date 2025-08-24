@@ -1718,6 +1718,21 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
       return;
     }
     accountingData = data.bookings;
+    
+    // Handle sorting for calculated columns (net_total, benefit) in JavaScript
+    if (sort === 'net_total' || sort === 'benefit') {
+      accountingData.sort((a, b) => {
+        const aVal = sort === 'net_total' ? (a.net_total || 0) : (a.benefit || 0);
+        const bVal = sort === 'net_total' ? (b.net_total || 0) : (b.benefit || 0);
+        
+        if (dir === 'asc') {
+          return aVal - bVal;
+        } else {
+          return bVal - aVal;
+        }
+      });
+    }
+    
     accountingTotalRows = data.total || accountingData.length;
     accountingCurrentPage = data.page || 1;
     // Always show the original summary, not filtered
@@ -2123,6 +2138,9 @@ function renderAccountingTable() {
         };
       });
     }, 0);
+    
+    // Update sort indicators after rendering the table
+    updateAccountingSortIndicators();
   }
 }
 function renderAccountingPagination() {
@@ -3047,6 +3065,23 @@ document.querySelectorAll('#accounting-table th[data-col]').forEach(th => {
     fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
   });
 });
+
+// Function to update sort indicators in table headers
+function updateAccountingSortIndicators() {
+  document.querySelectorAll('#accounting-table th[data-col]').forEach(th => {
+    const col = th.getAttribute('data-col');
+    const currentText = th.textContent.replace(/[↑↓]/, '').trim(); // Remove existing arrows
+    
+    if (col === accountingSort) {
+      const arrow = accountingDir === 'asc' ? ' ↑' : ' ↓';
+      th.textContent = currentText + arrow;
+      th.classList.add('bg-blue-50', 'text-blue-700');
+    } else {
+      th.textContent = currentText;
+      th.classList.remove('bg-blue-50', 'text-blue-700');
+    }
+  });
+}
 function updateBangkokDateTime() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);

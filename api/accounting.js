@@ -4,7 +4,7 @@ const { getSession } = require('./auth.js');
 console.log('Accounting API module loaded, sql object:', !!sql);
 
 const ALLOWED_SORT_COLUMNS = [
-  'booking_number', 'tour_date', 'book_date', 'sku', 'program', 'rate', 'hotel', 'paid'
+  'booking_number', 'tour_date', 'book_date', 'sku', 'program', 'rate', 'hotel', 'paid', 'net_total', 'benefit'
 ];
 
 module.exports = async (req, res) => {

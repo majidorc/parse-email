@@ -247,6 +247,41 @@ input:focus-visible, select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Material Design 3 Table Sorting Styles */
+th[data-col] {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+th[data-col]:hover {
+  background-color: var(--md-surface-variant) !important;
+  color: var(--md-on-surface-variant) !important;
+}
+
+th[data-col].bg-blue-50 {
+  background-color: var(--md-primary-container) !important;
+  color: var(--md-on-primary-container) !important;
+  font-weight: 600;
+}
+
+/* Sort arrow styling */
+th[data-col]::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  opacity: 0.5;
+}
+
+th[data-col]:hover::after {
+  opacity: 1;
+}
+
 /* Table */
 .table {
   width: 100%;

@@ -2550,15 +2550,13 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
   // Set a new timeout to prevent rapid calls
   salesAnalyticsTimeout = setTimeout(async () => {
     try {
-      // Use default comparison period (previous period)
-      const comparisonPeriod = 'previous';
       
       // Check for custom date range first
       let url;
       if (window.customStartDate && window.customEndDate) {
-        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}&period=${period}&comparisonPeriod=${comparisonPeriod}`;
+        url = `/api/analytics?type=sales&startDate=${window.customStartDate}&endDate=${window.customEndDate}&period=${period}`;
       } else {
-        url = `/api/analytics?type=sales&period=${period}&comparisonPeriod=${comparisonPeriod}`;
+        url = `/api/analytics?type=sales&period=${period}`;
       }
       
       const response = await fetch(url);
@@ -2627,9 +2625,23 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       const avgViatorBenefit = periodDays > 0 ? viatorBenefit / periodDays : 0;
       const avgWebsiteBenefit = periodDays > 0 ? websiteBenefit / periodDays : 0;
       
-      // Calculate benefit percentages
-      const viatorBenefitPercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
-      const websiteBenefitPercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
+      // Calculate benefit percentages - two types:
+      // 1. Each benefit as percentage of total benefit (should total 100%)
+      // 2. Each benefit as percentage of their respective sales
+      const viatorBenefitOfTotalPercent = totalBenefit > 0 ? (viatorBenefit / totalBenefit) * 100 : 0;
+      const websiteBenefitOfTotalPercent = totalBenefit > 0 ? (websiteBenefit / totalBenefit) * 100 : 0;
+      const viatorBenefitOfSalePercent = viatorSale > 0 ? (viatorBenefit / viatorSale) * 100 : 0;
+      const websiteBenefitOfSalePercent = websiteSale > 0 ? (websiteBenefit / websiteSale) * 100 : 0;
+      
+      // Debug: Log the percentages to ensure they total 100%
+      console.log('Benefit Percentages:', {
+        viatorBenefit,
+        websiteBenefit,
+        totalBenefit,
+        viatorBenefitOfTotalPercent: viatorBenefitOfTotalPercent.toFixed(2),
+        websiteBenefitOfTotalPercent: websiteBenefitOfTotalPercent.toFixed(2),
+        total: (viatorBenefitOfTotalPercent + websiteBenefitOfTotalPercent).toFixed(2)
+      });
       
       if (avgBenefitViator) avgBenefitViator.textContent = Number(avgViatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (avgBenefitWebsite) avgBenefitWebsite.textContent = Number(avgWebsiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -2638,166 +2650,31 @@ async function fetchSalesAnalytics(period = 'thisMonth') {
       if (analyticsViatorBenefit) analyticsViatorBenefit.textContent = Number(viatorBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       if (analyticsWebsiteBenefit) analyticsWebsiteBenefit.textContent = Number(websiteBenefit).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
       
-      // Update benefit percentages
+      // Update benefit percentages - show both types
       const analyticsViatorBenefitPercentage = document.getElementById('analytics-viator-benefit-percentage');
       const analyticsWebsiteBenefitPercentage = document.getElementById('analytics-website-benefit-percentage');
       
       if (analyticsViatorBenefitPercentage) {
-        analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitPercent.toFixed(2)}%`;
+        analyticsViatorBenefitPercentage.textContent = `~${viatorBenefitOfTotalPercent.toFixed(2)}% of Total`;
       }
       if (analyticsWebsiteBenefitPercentage) {
-        analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitPercent.toFixed(2)}%`;
+        analyticsWebsiteBenefitPercentage.textContent = `~${websiteBenefitOfTotalPercent.toFixed(2)}% of Total`;
       }
       
-      // Handle comparison data
-      console.log('Debug: Received comparison data:', data.comparison);
-      console.log('Debug: Comparison type:', data.comparison?.type);
-      console.log('Debug: Comparison totalSale:', data.comparison?.totalSale);
-      if (data.comparison && data.comparison.type) {
-        // Helper function to format comparison text with color
-        const formatComparison = (percentChange, metricName) => {
-          if (percentChange === null || percentChange === undefined) {
-            return `<span class="text-gray-500">No data</span>`;
-          }
-          const isPositive = percentChange >= 0;
-          const color = isPositive ? 'text-green-600' : 'text-red-600';
-          const arrow = isPositive ? '↗' : '↘';
-          const sign = isPositive ? '+' : '';
-          return `<span class="${color}">${arrow} ${sign}${percentChange.toFixed(1)}%</span>`;
-        };
-        
-        // Update all comparison elements
-        const comparisonElements = [
-          { id: 'analytics-total-sale-comparison', data: data.comparison.totalSale?.percentChange },
-          { id: 'analytics-viator-sale-comparison', data: data.comparison.viatorSale?.percentChange },
-          { id: 'analytics-website-sale-comparison', data: data.comparison.websiteSale?.percentChange },
-          { id: 'analytics-total-benefit-comparison', data: data.comparison.totalBenefit?.percentChange },
-          { id: 'analytics-viator-benefit-comparison', data: data.comparison.viatorBenefit?.percentChange },
-          { id: 'analytics-website-benefit-comparison', data: data.comparison.websiteBenefit?.percentChange }
-        ];
-        
-        comparisonElements.forEach(({ id, data: percentChange }) => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.innerHTML = formatComparison(percentChange, 'Metric');
-          }
-        });
-        
-        // Show comparison summary
-        const comparisonSummary = document.getElementById('comparison-summary');
-        if (comparisonSummary) {
-          comparisonSummary.style.display = 'block';
-          
-          // Update comparison summary details
-          const currentPeriodElement = document.getElementById('comparison-current-period');
-          const previousPeriodElement = document.getElementById('comparison-previous-period');
-          const periodDetailsElement = document.getElementById('comparison-period-details');
-          const changeAmountElement = document.getElementById('comparison-change-amount');
-          
-          if (currentPeriodElement && previousPeriodElement) {
-            if (window.customStartDate && window.customEndDate) {
-              currentPeriodElement.textContent = `${window.customStartDate} to ${window.customEndDate}`;
-              previousPeriodElement.textContent = `${data.comparison.previousPeriod?.startDate || 'N/A'} to ${data.comparison.previousPeriod?.endDate || 'N/A'}`;
-            } else {
-              currentPeriodElement.textContent = 'Current Period';
-              previousPeriodElement.textContent = 'Previous Period';
-            }
-          }
-          
-          if (periodDetailsElement) {
-            const comparisonType = data.comparison.type || 'previous';
-            const typeLabels = {
-              'previous': 'Previous Period',
-              'samePeriodLastYear': 'Same Period Last Year',
-              'lastMonth': 'Last Month',
-              'lastWeek': 'Last Week',
-              'twoMonthsAgo': 'Two Months Ago',
-              'twoWeeksAgo': 'Two Weeks Ago'
-            };
-            periodDetailsElement.textContent = `Comparison: ${typeLabels[comparisonType] || comparisonType}`;
-          }
-          
-          if (changeAmountElement) {
-            const totalChange = (data.comparison.totalSale?.currentValue || 0) - (data.comparison.totalSale?.previousValue || 0);
-            const changeText = totalChange >= 0 ? `+${totalChange.toLocaleString()}` : totalChange.toLocaleString();
-            const currentValue = (data.comparison.totalSale?.currentValue || 0).toLocaleString();
-            const previousValue = (data.comparison.totalSale?.previousValue || 0).toLocaleString();
-            changeAmountElement.textContent = `Current: ${currentValue} | Previous: ${previousValue}`;
-          }
-          
-          // Update additional comparison metrics
-          const totalSalesChangeElement = document.getElementById('comparison-total-sales-change');
-          const viatorChangeElement = document.getElementById('comparison-viator-change');
-          const websiteChangeElement = document.getElementById('comparison-website-change');
-          const benefitChangeElement = document.getElementById('comparison-benefit-change');
-          
-          if (totalSalesChangeElement) {
-            const change = (data.comparison.totalSale?.currentValue || 0) - (data.comparison.totalSale?.previousValue || 0);
-            const percentChange = data.comparison.totalSale?.percentChange || 0;
-            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
-            totalSalesChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
-          }
-          
-          if (viatorChangeElement) {
-            const change = (data.comparison.viatorSale?.currentValue || 0) - (data.comparison.viatorSale?.previousValue || 0);
-            const percentChange = data.comparison.viatorSale?.percentChange || 0;
-            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
-            viatorChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
-          }
-          
-          if (websiteChangeElement) {
-            const change = (data.comparison.websiteSale?.currentValue || 0) - (data.comparison.websiteSale?.previousValue || 0);
-            const percentChange = data.comparison.websiteSale?.percentChange || 0;
-            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
-            websiteChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
-          }
-          
-          if (benefitChangeElement) {
-            const change = (data.comparison.totalBenefit?.currentValue || 0) - (data.comparison.totalBenefit?.previousValue || 0);
-            const percentChange = data.comparison.totalBenefit?.percentChange || 0;
-            const changeText = change >= 0 ? `+${change.toLocaleString()}` : change.toLocaleString();
-            benefitChangeElement.innerHTML = `${changeText}<br><span class="text-xs">(${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%)</span>`;
-          }
-        }
-      } else {
-        // No comparison data available - show "No data available" for all elements
-        const comparisonElements = [
-          'analytics-total-sale-comparison',
-          'analytics-viator-sale-comparison',
-          'analytics-website-sale-comparison',
-          'analytics-total-benefit-comparison',
-          'analytics-viator-benefit-comparison',
-          'analytics-website-benefit-comparison'
-        ];
-        
-        comparisonElements.forEach(id => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.innerHTML = '<span class="text-gray-500">No data available</span>';
-          }
-        });
-        
-        // Clear comparison metrics
-        const comparisonMetrics = [
-          'comparison-total-sales-change',
-          'comparison-viator-change',
-          'comparison-website-change',
-          'comparison-benefit-change'
-        ];
-        
-        comparisonMetrics.forEach(id => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.innerHTML = '-';
-          }
-        });
-        
-        // Hide comparison summary
-        const comparisonSummary = document.getElementById('comparison-summary');
-        if (comparisonSummary) {
-          comparisonSummary.style.display = 'none';
-        }
+      // Update benefit as percentage of sales
+      const analyticsViatorBenefitSalePercentage = document.getElementById('analytics-viator-benefit-sale-percentage');
+      const analyticsWebsiteBenefitSalePercentage = document.getElementById('analytics-website-benefit-sale-percentage');
+      
+      if (analyticsViatorBenefitSalePercentage) {
+        analyticsViatorBenefitSalePercentage.textContent = `~${viatorBenefitOfSalePercent.toFixed(2)}% of Sales`;
       }
+      if (analyticsWebsiteBenefitSalePercentage) {
+        analyticsWebsiteBenefitSalePercentage.textContent = `~${websiteBenefitOfSalePercent.toFixed(2)}% of Sales`;
+      }
+      
+
+
+
       
       // Update passengers
       if (analyticsTotalPassengers) {

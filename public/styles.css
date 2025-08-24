@@ -1,5 +1,78 @@
 /* Modern Dashboard - Clean & Minimal Redesign */
 
+/* Material Design 3 Color System */
+:root {
+  /* Primary Colors */
+  --md-primary: #6750A4;
+  --md-on-primary: #FFFFFF;
+  --md-primary-container: #EADDFF;
+  --md-on-primary-container: #21005D;
+  
+  /* Secondary Colors */
+  --md-secondary: #625B71;
+  --md-on-secondary: #FFFFFF;
+  --md-secondary-container: #E8DEF8;
+  --md-on-secondary-container: #1D192B;
+  
+  /* Tertiary Colors */
+  --md-tertiary: #7D5260;
+  --md-on-tertiary: #FFFFFF;
+  --md-tertiary-container: #FFD8E4;
+  --md-on-tertiary-container: #31111D;
+  
+  /* Error Colors */
+  --md-error: #BA1A1A;
+  --md-on-error: #FFFFFF;
+  --md-error-container: #FFDAD6;
+  --md-on-error-container: #410002;
+  
+  /* Surface Colors */
+  --md-surface: #FFFBFE;
+  --md-on-surface: #1C1B1F;
+  --md-surface-variant: #E7E0EC;
+  --md-on-surface-variant: #49454F;
+  
+  /* Outline Colors */
+  --md-outline: #79747E;
+  --md-on-outline: #FFFFFF;
+  
+  /* Background Colors */
+  --md-background: #FFFBFE;
+  --md-on-background: #1C1B1F;
+}
+
+/* Material Design 3 Utility Classes */
+.bg-primary { background-color: var(--md-primary) !important; }
+.text-on-primary { color: var(--md-on-primary) !important; }
+.bg-primary-container { background-color: var(--md-primary-container) !important; }
+.text-on-primary-container { color: var(--md-on-primary-container) !important; }
+
+.bg-secondary { background-color: var(--md-secondary) !important; }
+.text-on-secondary { color: var(--md-on-secondary) !important; }
+.bg-secondary-container { background-color: var(--md-secondary-container) !important; }
+.text-on-secondary-container { color: var(--md-on-secondary-container) !important; }
+
+.bg-tertiary { background-color: var(--md-tertiary) !important; }
+.text-on-tertiary { color: var(--md-tertiary) !important; }
+.bg-tertiary-container { background-color: var(--md-tertiary-container) !important; }
+.text-on-tertiary-container { color: var(--md-tertiary-container) !important; }
+
+.bg-error { background-color: var(--md-error) !important; }
+.text-on-error { color: var(--md-on-error) !important; }
+.bg-error-container { background-color: var(--md-error-container) !important; }
+.text-on-error-container { color: var(--md-on-error-container) !important; }
+
+.bg-surface { background-color: var(--md-surface) !important; }
+.text-on-surface { color: var(--md-on-surface) !important; }
+.bg-surface-variant { background-color: var(--md-surface-variant) !important; }
+.text-on-surface-variant { color: var(--md-on-surface-variant) !important; }
+
+.bg-outline { background-color: var(--md-outline) !important; }
+.text-on-outline { color: var(--md-on-outline) !important; }
+
+.bg-background { background-color: var(--md-background) !important; }
+.text-on-background { color: var(--md-on-background) !important; }
+
 /* Base Layout */
 body {
   background: linear-gradient(120deg, #f9fafb 0%, #f1f5f9 100%);
@@ -35,7 +108,46 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Tabs */
+/* Material Design 3 Tabs */
+.tab-btn-container button {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.tab-btn-container button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tab-btn-container button:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* Ripple effect for Material Design 3 */
+.tab-btn-container button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.tab-btn-container button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Legacy tab styles for backward compatibility */
 .tab-btn {
   background: transparent;
   border: none;
@@ -55,47 +167,84 @@ body {
   color: #fff;
 }
 
-/* Buttons */
+/* Material Design 3 Buttons */
 .btn {
   border: none;
   border-radius: 12px;
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-}
-.btn-primary {
-  background: #2563eb;
-  color: #fff;
-}
-.btn-primary:hover {
-  background: #1d4ed8;
-  transform: translateY(-2px);
-}
-.btn-secondary {
-  background: #e2e8f0;
-  color: #334155;
-}
-.btn-secondary:hover {
-  background: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 }
 
-/* Inputs */
-input, select {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  transition: border-color 0.3s ease;
-  font-size: 0.95rem;
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
 }
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: transform 0.1s ease;
+}
+
+.btn-primary {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.btn-primary:hover {
+  background: var(--md-primary);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+.btn-secondary:hover {
+  background: var(--md-secondary-container);
+  filter: brightness(1.1);
+}
+
+/* Material Design 3 State Changes */
+.btn:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+}
+
+/* Material Design 3 Inputs */
+input, select {
+  background: var(--md-surface);
+  border: 1px solid var(--md-outline);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.95rem;
+  color: var(--md-on-surface);
+}
+
 input:focus, select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-  background: #fff;
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.12);
+  background: var(--md-surface);
+  transform: translateY(-1px);
+}
+
+input:hover, select:hover {
+  border-color: var(--md-primary);
+  background: var(--md-surface-variant);
+}
+
+/* Material Design 3 Focus Visible for accessibility */
+input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
 }
 
 /* Table */

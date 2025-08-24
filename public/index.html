@@ -36,8 +36,8 @@
   </div>
   <div id="dashboard-root">
     <!-- Settings Gear Icon -->
-    <button id="settings-gear-btn" title="Settings" class="fixed top-4 right-6 z-50 bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-      <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <button id="settings-gear-btn" title="Settings" class="fixed top-4 right-6 z-50 bg-surface hover:bg-surface-variant border border-outline hover:border-primary rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+      <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
       </svg>
@@ -157,25 +157,25 @@
       </div>
       <!-- Table Toggle Section -->
       <div class="mb-4 tab-btn-container flex flex-wrap justify-center gap-2 sm:gap-4">
-        <button id="toggle-dashboard" class="rounded font-semibold bg-indigo-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Dashboard</button>
-        <button id="toggle-bookings" class="rounded font-semibold bg-blue-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Bookings</button>
-        <button id="toggle-programs" class="rounded font-semibold bg-green-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Programs</button>
-        <button id="toggle-accounting" class="rounded font-semibold bg-pink-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Accounting</button>
-        <button id="toggle-analytics" class="rounded font-semibold bg-yellow-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Analytics</button>
-        <button id="toggle-suppliers" class="rounded font-semibold bg-orange-600 text-white transition-colors duration-200 px-3 py-2 text-xs sm:text-sm" type="button">Suppliers</button>
+        <button id="toggle-dashboard" class="rounded-lg font-semibold bg-primary text-on-primary shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Dashboard</button>
+        <button id="toggle-bookings" class="rounded-lg font-semibold bg-secondary text-on-secondary shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Bookings</button>
+        <button id="toggle-programs" class="rounded-lg font-semibold bg-tertiary text-on-tertiary shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Programs</button>
+        <button id="toggle-accounting" class="rounded-lg font-semibold bg-error text-on-error shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Accounting</button>
+        <button id="toggle-analytics" class="rounded-lg font-semibold bg-surface-variant text-on-surface-variant shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Analytics</button>
+        <button id="toggle-suppliers" class="rounded-lg font-semibold bg-outline text-on-outline shadow-sm hover:shadow-md transition-all duration-200 px-4 py-2.5 text-sm sm:text-base" type="button">Suppliers</button>
       </div>
       
       <!-- Period Selector and Custom Range Section -->
       <div class="mb-4 flex flex-col sm:flex-row items-center justify-center gap-3">
         <div class="flex items-center gap-2">
-          <select id="global-period-selector" class="rounded font-semibold bg-white text-gray-700 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-xs sm:text-sm">
+          <select id="global-period-selector" class="rounded-lg font-semibold bg-surface text-on-surface border border-outline focus:outline-none focus:ring-2 focus:ring-primary px-4 py-2.5 text-sm shadow-sm transition-all duration-200">
             <option value="thisMonth" selected>This Month</option>
             <option value="lastMonth">Last Month</option>
             <option value="thisYear">This Year</option>
             <option value="lastYear">Last Year</option>
             <option value="custom">Custom Range…</option>
           </select>
-          <button id="global-refresh-btn" type="button" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-1 px-3 py-2 text-xs sm:text-sm" title="Refresh all data">
+          <button id="global-refresh-btn" type="button" class="bg-tertiary hover:bg-tertiary/90 text-on-tertiary font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 px-4 py-2.5 text-sm" title="Refresh all data">
             <svg class="h-3 w-3 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -196,8 +196,8 @@
             </div>
           </div>
           <div class="flex gap-1">
-            <button id="apply-custom-range" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Apply</button>
-            <button id="clear-custom-range" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded px-2 py-1 text-xs sm:text-sm">Clear</button>
+            <button id="apply-custom-range" type="button" class="bg-primary hover:bg-primary/90 text-on-primary font-semibold rounded-lg px-3 py-2 text-sm shadow-sm hover:shadow-md transition-all duration-200">Apply</button>
+            <button id="clear-custom-range" type="button" class="bg-outline hover:bg-outline/90 text-on-outline font-semibold rounded-lg px-3 py-2 text-sm shadow-sm hover:shadow-md transition-all duration-200">Clear</button>
           </div>
         </div>
       </div>

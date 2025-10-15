@@ -593,7 +593,8 @@ module.exports = async function handler(req, res) {
               SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
               FROM rates r
               JOIN products p ON r.product_id = p.id
-              WHERE p.sku = ${booking.sku} AND LOWER(TRIM(r.name)) = LOWER(TRIM(${rate}))
+              WHERE (p.sku = ${booking.sku} OR p.product_id_optional = ${booking.sku})
+                AND LOWER(TRIM(r.name)) = LOWER(TRIM(${rate}))
               LIMIT 1
             `;
             

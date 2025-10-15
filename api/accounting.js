@@ -831,7 +831,7 @@ module.exports = async (req, res) => {
              b.adult, b.child${hasNetTotalColumn ? ', b.net_total' : ''},
              r.net_adult, r.net_child
       FROM bookings b
-      LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+      LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
       LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
       ${whereClause}
       ORDER BY b.${sort} ${dirStr}
@@ -916,7 +916,7 @@ module.exports = async (req, res) => {
       let allDataQuery = `
         SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
         FROM bookings b
-        LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+        LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
         LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
         ${whereClause}
         ORDER BY b.${sort} ${dirStr}
@@ -970,7 +970,7 @@ module.exports = async (req, res) => {
             let prevDataQuery = `
               SELECT b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}, b.tour_date
               FROM bookings b
-              LEFT JOIN products p ON (b.sku = p.sku OR (b.sku IS NOT NULL AND p.sku IS NOT NULL AND LOWER(TRIM(b.sku)) = LOWER(TRIM(p.sku))))
+              LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
               LEFT JOIN rates r ON (r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate)))
               ${prevWhereClause}
             `;

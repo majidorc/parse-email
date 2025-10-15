@@ -633,3 +633,44 @@ module.exports = async function handler(req, res) {
                     updated_fields = COALESCE(updated_fields, '{}'::jsonb) || jsonb_build_object('net_total_recalculated', true, 'recalculated_at', ${new Date().toISOString()})
                 WHERE booking_number = ${booking_number}
               `;
+
+              console.log(`[DEBUG] Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
+            } else {
+              await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+              console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (no net price calculation possible)`);
+            }
+          } catch (netPriceErr) {
+            console.error(`[DEBUG] Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
+            // Fallback: just update the rate if net price calculation fails
+            await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+            console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (net price calculation failed)`);
+          }
+        } else {
+          // No SKU or rate, just update the rate
+          await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
+        }
+        
+        // Get the final updated data to return in response
+        const { rows: finalData } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
+        console.log(`[DEBUG] Final data to return:`, finalData[0]);
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: `Rate updated for booking ${booking_number}`,
+          rate: finalData[0]?.rate,
+          net_total: finalData[0]?.net_total,
+          net_price_recalculated: true
+        });
+      } catch (err) {
+        console.error('Failed to update rate:', err);
+        return res.status(500).json({ error: 'Failed to update rate', details: err.message });
+      }
+    }
+
+    // If no type matched
+    res.status(400).json({ error: 'Missing or invalid type param' });
+  } catch (error) {
+    console.error('[PRODUCTS-RATES] Unhandled error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}

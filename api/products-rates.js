@@ -1,7 +1,7 @@
-import { sql } from '@vercel/postgres';
-import { getSession } from './auth.js';
+const { sql } = require('@vercel/postgres');
+const { getSession } = require('./auth.js');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     
     const type = req.query.type;

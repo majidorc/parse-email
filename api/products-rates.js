@@ -590,11 +590,13 @@ module.exports = async function handler(req, res) {
           try {
             // Get the new rate information
             const { rows: rateRows } = await sql`
+              WITH prod AS (
+                SELECT id FROM products WHERE sku = ${booking.sku} OR product_id_optional = ${booking.sku} LIMIT 1
+              )
               SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
               FROM rates r
-              JOIN products p ON r.product_id = p.id
-              WHERE (p.sku = ${booking.sku} OR p.product_id_optional = ${booking.sku})
-                AND LOWER(TRIM(r.name)) = LOWER(TRIM(${rate}))
+              JOIN prod ON r.product_id = prod.id
+              WHERE LOWER(TRIM(r.name)) = LOWER(TRIM(${rate}))
               LIMIT 1
             `;
             

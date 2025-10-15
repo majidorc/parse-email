@@ -2007,7 +2007,7 @@ async function handler(req, res) {
                                 SELECT p.program, r.name as rate_name
                                 FROM products p 
                                 LEFT JOIN rates r ON p.id = r.product_id 
-                                WHERE p.sku = ${extractedInfo.sku}
+                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku}
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;
@@ -2141,7 +2141,7 @@ async function handler(req, res) {
                                 SELECT p.program, r.name as rate_name
                                 FROM products p 
                                 LEFT JOIN rates r ON p.id = r.product_id 
-                                WHERE p.sku = ${extractedInfo.sku}
+                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku}
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;
@@ -2176,7 +2176,7 @@ async function handler(req, res) {
                                 SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
                                 FROM rates r
                                 JOIN products p ON r.product_id = p.id
-                                WHERE p.sku = ${extractedInfo.sku} AND r.name = ${finalRate}
+                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku} AND r.name = ${finalRate}
                                 LIMIT 1
                             `;
                             

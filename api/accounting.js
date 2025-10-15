@@ -209,7 +209,7 @@ module.exports = async (req, res) => {
              ELSE (COALESCE(r.net_adult, 0) * b.adult + COALESCE(r.net_child, 0) * b.child)
            END AS benefit
          FROM bookings b
-         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
          ${whereClause}
          ORDER BY b.tour_date DESC, b.booking_number

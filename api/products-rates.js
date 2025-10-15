@@ -632,4 +632,4 @@ module.exports = async function handler(req, res) {
                     net_total = ${netTotal}, 
                     updated_fields = COALESCE(updated_fields, '{}'::jsonb) || jsonb_build_object('net_total_recalculated', true, 'recalculated_at', ${new Date().toISOString()})
                 WHERE booking_number = ${booking_number}
-              `
+              `;

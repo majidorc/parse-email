@@ -159,7 +159,7 @@ export default async function handler(req, res) {
             SELECT r.id, r.name, r.net_adult, r.net_child, r.fee_type, r.fee_adult, r.fee_child
             FROM rates r
             JOIN products p ON r.product_id = p.id
-            WHERE p.sku = ${sku}
+            WHERE p.sku = ${sku} OR p.product_id_optional = ${sku}
             ORDER BY r.name
           `;
           res.status(200).json({ rates: rows });

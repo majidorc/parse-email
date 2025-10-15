@@ -156,10 +156,12 @@ module.exports = async function handler(req, res) {
         }
         try {
           const { rows } = await sql`
+            WITH prod AS (
+              SELECT id FROM products WHERE sku = ${sku} OR product_id_optional = ${sku}
+            )
             SELECT r.id, r.name, r.net_adult, r.net_child, r.fee_type, r.fee_adult, r.fee_child
             FROM rates r
-            JOIN products p ON r.product_id = p.id
-            WHERE p.sku = ${sku} OR p.product_id_optional = ${sku}
+            JOIN prod ON r.product_id = prod.id
             ORDER BY r.name
           `;
           res.status(200).json({ rates: rows });
@@ -227,10 +229,12 @@ module.exports = async function handler(req, res) {
           if (sku) {
                       // Fetch rates for a specific SKU
           const { rows: rates } = await sql`
+            WITH prod AS (
+              SELECT id FROM products WHERE sku = ${sku} OR product_id_optional = ${sku}
+            )
             SELECT r.* 
             FROM rates r 
-            JOIN products p ON r.product_id = p.id 
-            WHERE p.sku = ${sku}
+            JOIN prod ON r.product_id = prod.id 
             ORDER BY r.name
           `;
           res.status(200).json({ rates: rates });

@@ -56,7 +56,7 @@ async function handleFixBookingNets(req, res) {
           SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
           FROM rates r
           JOIN products p ON r.product_id = p.id
-          WHERE p.sku = $1
+          WHERE p.sku = $1 OR p.product_id_optional = $1
           LIMIT 1
         `, [booking.sku]);
         

@@ -488,7 +488,7 @@ module.exports = async (req, res) => {
           let programName = null;
           if (sku && sku.trim() !== '') {
             try {
-              const productResult = await sql.query('SELECT program FROM products WHERE sku = $1 LIMIT 1', [sku]);
+              const productResult = await sql.query('SELECT program FROM products WHERE sku = $1 OR product_id_optional = $1 LIMIT 1', [sku]);
               if (productResult.rows.length > 0 && productResult.rows[0].program) {
                 programName = productResult.rows[0].program;
                 console.log('Found program for SKU:', sku, '->', programName);

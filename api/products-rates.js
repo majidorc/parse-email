@@ -630,67 +630,6 @@ export default async function handler(req, res) {
                 UPDATE bookings 
                 SET rate = ${rate},
                     net_total = ${netTotal}, 
-                    updated_fields = COALESCE(updated_fields, '{}'::jsonb) || '{"net_total_recalculated": true, "recalculated_at": ${new Date().toISOString()}}'::jsonb
+                    updated_fields = COALESCE(updated_fields, '{}'::jsonb) || jsonb_build_object('net_total_recalculated', true, 'recalculated_at', ${new Date().toISOString()})
                 WHERE booking_number = ${booking_number}
-              `;
-              
-              console.log(`[DEBUG] Update result:`, updateResult);
-              console.log(`[DEBUG] Rate and net price updated for booking ${booking_number}: rate=${rate}, net_total=${netTotal}`);
-              
-              // Verify the update by reading back the data
-              const { rows: verifyRows } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
-              if (verifyRows.length > 0) {
-                console.log(`[DEBUG] Verification - booking ${booking_number}: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
-                
-                // Additional verification: check if the update actually persisted
-                if (verifyRows[0].rate === rate && verifyRows[0].net_total === netTotal) {
-                  console.log(`[DEBUG] ✅ Database update verified successfully!`);
-                } else {
-                  console.log(`[DEBUG] ❌ Database update verification failed! Expected: rate=${rate}, net_total=${netTotal}, Got: rate=${verifyRows[0].rate}, net_total=${verifyRows[0].net_total}`);
-                }
-              }
-            } else {
-              console.log(`[DEBUG] No rate info found for SKU=${booking.sku} and rate=${rate}`);
-              // If no rate info found, just update the rate
-              await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-              console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (no net price calculation possible)`);
-            }
-          } catch (netPriceErr) {
-            console.error(`[DEBUG] Failed to recalculate net price for booking ${booking_number}:`, netPriceErr);
-            // Fallback: just update the rate if net price calculation fails
-            await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-            console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (net price calculation failed)`);
-          }
-        } else {
-          console.log(`[DEBUG] No SKU (${booking.sku}) or rate (${rate}) for net price calculation`);
-          // No SKU or rate, just update the rate
-          await sql`UPDATE bookings SET rate = ${rate} WHERE booking_number = ${booking_number}`;
-          console.log(`[DEBUG] Rate updated for booking ${booking_number}: rate=${rate} (no SKU for net price calculation)`);
-        }
-        
-        // Get the final updated data to return in response
-        const { rows: finalData } = await sql`SELECT rate, net_total FROM bookings WHERE booking_number = ${booking_number}`;
-        console.log(`[DEBUG] Final data to return:`, finalData[0]);
-        
-        return res.status(200).json({ 
-          success: true, 
-          message: `Rate updated for booking ${booking_number}`,
-          rate: rate,
-          net_total: finalData[0]?.net_total,
-          net_price_recalculated: true
-        });
-      } catch (err) {
-        console.error('Failed to update rate:', err);
-        return res.status(500).json({ error: 'Failed to update rate', details: err.message });
-      }
-    }
-
-    
-
-    // If no type matched
-    res.status(400).json({ error: 'Missing or invalid type param' });
-  } catch (error) {
-    console.error('[PRODUCTS-RATES] Unhandled error:', error);
-    res.status(500).json({ error: 'Internal server error', details: error.message });
-  }
-} 
+              `

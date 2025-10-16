@@ -633,11 +633,12 @@ module.exports = async function handler(req, res) {
               console.log(`[DEBUG] Calculated net total: ${netTotal}`);
               
               // Update both rate and net_total in a single query
+              const recalculatedAt = new Date().toISOString();
               const updateResult = await sql`
                 UPDATE bookings 
                 SET rate = ${rate},
                     net_total = ${netTotal}, 
-                    updated_fields = COALESCE(updated_fields, '{}'::jsonb) || jsonb_build_object('net_total_recalculated', true, 'recalculated_at', ${new Date().toISOString()})
+                    updated_fields = COALESCE(updated_fields, '{}'::jsonb) || jsonb_build_object('net_total_recalculated', true, 'recalculated_at', ${recalculatedAt})
                 WHERE booking_number = ${booking_number}
               `;
 

@@ -211,7 +211,7 @@ async function handleGet(req, res) {
         ), 0) as total_due
       FROM suppliers s
       LEFT JOIN products p ON s.id = p.supplier_id
-      LEFT JOIN bookings b ON p.sku = b.sku
+      LEFT JOIN bookings b ON (p.sku = b.sku OR p.product_id_optional = b.sku)
     `);
     
             return res.status(200).json(analyticsResult[0]);
@@ -243,7 +243,7 @@ async function handleGet(req, res) {
       ), 0) as this_month_net
     FROM suppliers s
     LEFT JOIN products p ON s.id = p.supplier_id
-    LEFT JOIN bookings b ON p.sku = b.sku
+    LEFT JOIN bookings b ON (p.sku = b.sku OR p.product_id_optional = b.sku)
     GROUP BY s.id, s.name, s.created_at
     ORDER BY s.name
   `);

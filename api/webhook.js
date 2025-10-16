@@ -2173,10 +2173,13 @@ async function handler(req, res) {
                     if (extractedInfo.sku && finalRate) {
                         try {
                             const { rows: rateRows } = await sql`
+                                WITH prod AS (
+                                  SELECT id FROM products WHERE sku = ${extractedInfo.sku} OR product_id_optional = ${extractedInfo.sku}
+                                )
                                 SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
                                 FROM rates r
-                                JOIN products p ON r.product_id = p.id
-                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku} AND r.name = ${finalRate}
+                                JOIN prod ON r.product_id = prod.id
+                                WHERE r.name = ${finalRate}
                                 LIMIT 1
                             `;
                             

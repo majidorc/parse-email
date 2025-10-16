@@ -53,10 +53,12 @@ async function handleFixBookingNets(req, res) {
       try {
         // Get the rate for this SKU
         const { rows: rateResult } = await sql.query(`
+          WITH prod AS (
+            SELECT id FROM products WHERE sku = $1 OR product_id_optional = $1
+          )
           SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
           FROM rates r
-          JOIN products p ON r.product_id = p.id
-          WHERE p.sku = $1 OR p.product_id_optional = $1
+          JOIN prod ON r.product_id = prod.id
           LIMIT 1
         `, [booking.sku]);
         
@@ -159,10 +161,12 @@ async function handleUpdateOldBookingsRates(req, res) {
       try {
         // Find the best matching rate for this SKU
         const { rows: rates } = await sql`
+          WITH prod AS (
+            SELECT id FROM products WHERE sku = ${booking.sku} OR product_id_optional = ${booking.sku}
+          )
           SELECT r.name, r.net_adult, r.net_child
           FROM rates r
-          JOIN products p ON r.product_id = p.id
-          WHERE p.sku = ${booking.sku}
+          JOIN prod ON r.product_id = prod.id
           ORDER BY r.id ASC
           LIMIT 1
         `;

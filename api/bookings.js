@@ -106,10 +106,13 @@ module.exports = async (req, res) => {
       if (sku && rate) {
         try {
           const { rows: rateRows } = await sql`
+            WITH prod AS (
+              SELECT id FROM products WHERE sku = ${sku} OR product_id_optional = ${sku}
+            )
             SELECT r.net_adult, r.net_child, r.fee_adult, r.fee_child, r.fee_type
             FROM rates r
-            JOIN products p ON r.product_id = p.id
-            WHERE p.sku = ${sku} AND r.name = ${rate}
+            JOIN prod ON r.product_id = prod.id
+            WHERE r.name = ${rate}
             LIMIT 1
           `;
           

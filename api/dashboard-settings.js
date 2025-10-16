@@ -240,7 +240,7 @@ module.exports = async (req, res) => {
       `SELECT 
         b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
        FROM bookings b
-       LEFT JOIN products p ON b.sku = p.sku
+       LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
        LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
        WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql}`,
       [start, end, ...channelFilter.params]
@@ -335,7 +335,7 @@ module.exports = async (req, res) => {
         `SELECT 
           b.adult, b.child, b.paid, r.net_adult, r.net_child${hasNetTotalColumn ? ', b.net_total' : ''}
          FROM bookings b
-         LEFT JOIN products p ON b.sku = p.sku
+         LEFT JOIN products p ON (b.sku = p.sku OR b.sku = p.product_id_optional)
          LEFT JOIN rates r ON r.product_id = p.id AND LOWER(TRIM(r.name)) = LOWER(TRIM(b.rate))
          WHERE b.tour_date >= $1 AND b.tour_date < $2 ${channelFilter.sql}`,
         [prevStart, prevEnd, ...channelFilter.params]

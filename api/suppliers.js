@@ -74,6 +74,10 @@ async function handleGet(req, res) {
           SELECT DISTINCT p.sku
           FROM products p
           WHERE p.supplier_id = $1
+        ) OR b.sku IN (
+          SELECT DISTINCT p.product_id_optional
+          FROM products p
+          WHERE p.supplier_id = $1 AND p.product_id_optional IS NOT NULL
         )
       `, [id]);
 
@@ -97,6 +101,10 @@ async function handleGet(req, res) {
           SELECT DISTINCT p.sku 
           FROM products p 
           WHERE p.supplier_id = $1
+        ) OR b.sku IN (
+          SELECT DISTINCT p.product_id_optional
+          FROM products p
+          WHERE p.supplier_id = $1 AND p.product_id_optional IS NOT NULL
         )
         ORDER BY b.tour_date DESC, b.book_date DESC
         LIMIT $2 OFFSET $3
@@ -125,7 +133,7 @@ async function handleGet(req, res) {
           COUNT(DISTINCT b.booking_number) as bookings_count,
           COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_net
         FROM products p
-        LEFT JOIN bookings b ON p.sku = b.sku
+        LEFT JOIN bookings b ON (p.sku = b.sku OR p.product_id_optional = b.sku)
         WHERE p.supplier_id = $1
         GROUP BY p.sku, p.program
         ORDER BY p.program
@@ -138,7 +146,7 @@ async function handleGet(req, res) {
           COUNT(DISTINCT b.booking_number) as total_bookings,
           COALESCE(SUM(COALESCE(b.net_total, 0)), 0) as total_net
         FROM products p
-        LEFT JOIN bookings b ON p.sku = b.sku
+        LEFT JOIN bookings b ON (p.sku = b.sku OR p.product_id_optional = b.sku)
         WHERE p.supplier_id = $1
       `, [id]);
       
@@ -164,6 +172,10 @@ async function handleGet(req, res) {
           SELECT DISTINCT p.sku 
           FROM products p 
           WHERE p.supplier_id = $1
+        ) OR b.sku IN (
+          SELECT DISTINCT p.product_id_optional
+          FROM products p
+          WHERE p.supplier_id = $1 AND p.product_id_optional IS NOT NULL
         )
         ORDER BY table_name, sku
       `, [id]);

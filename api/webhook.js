@@ -2004,10 +2004,12 @@ async function handler(req, res) {
                         try {
                             // Look up the correct program name and rate for this SKU
                             const { rows: productRows } = await sql`
+                                WITH prod AS (
+                                  SELECT id, program FROM products WHERE sku = ${extractedInfo.sku} OR product_id_optional = ${extractedInfo.sku}
+                                )
                                 SELECT p.program, r.name as rate_name
-                                FROM products p 
-                                LEFT JOIN rates r ON p.id = r.product_id 
-                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku}
+                                FROM prod p 
+                                LEFT JOIN rates r ON p.id = r.product_id
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;
@@ -2138,10 +2140,12 @@ async function handler(req, res) {
                         try {
                             // Look up the correct program name and rate for this SKU
                             const { rows: productRows } = await sql`
+                                WITH prod AS (
+                                  SELECT id, program FROM products WHERE sku = ${extractedInfo.sku} OR product_id_optional = ${extractedInfo.sku}
+                                )
                                 SELECT p.program, r.name as rate_name
-                                FROM products p 
-                                LEFT JOIN rates r ON p.id = r.product_id 
-                                WHERE p.sku = ${extractedInfo.sku} OR p.product_id_optional = ${extractedInfo.sku}
+                                FROM prod p 
+                                LEFT JOIN rates r ON p.id = r.product_id
                                 ORDER BY r.id 
                                 LIMIT 1
                             `;

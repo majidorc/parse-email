@@ -259,10 +259,10 @@ module.exports = async function handler(req, res) {
           // Get total count for pagination
           let totalCount;
           if (search) {
-            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products p WHERE sku ILIKE ${`%${search}%`} OR program ILIKE ${`%${search}%`} OR remark ILIKE ${`%${search}%`}`;
+            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products WHERE sku ILIKE ${`%${search}%`} OR program ILIKE ${`%${search}%`} OR remark ILIKE ${`%${search}%`} OR product_id_optional ILIKE ${`%${search}%`}`;
             totalCount = parseInt(countRows[0].count);
           } else {
-            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products p`;
+            const { rows: countRows } = await sql`SELECT COUNT(*) as count FROM products`;
             totalCount = parseInt(countRows[0].count);
           }
           
@@ -285,7 +285,7 @@ module.exports = async function handler(req, res) {
               SELECT p.*, s.name as supplier_name 
               FROM products p 
               LEFT JOIN suppliers s ON p.supplier_id = s.id 
-              WHERE p.sku ILIKE ${`%${search}%`} OR p.program ILIKE ${`%${search}%`} OR p.remark ILIKE ${`%${search}%`}
+              WHERE p.sku ILIKE ${`%${search}%`} OR p.program ILIKE ${`%${search}%`} OR p.remark ILIKE ${`%${search}%`} OR p.product_id_optional ILIKE ${`%${search}%`}
               ORDER BY ${orderBy === 'p.sku ASC' ? sql`p.sku ASC` : orderBy === 'p.sku DESC' ? sql`p.sku DESC` : orderBy === 'p.program DESC' ? sql`p.program DESC` : orderBy === 'p.program ASC' ? sql`p.program ASC` : orderBy === 's.name DESC, p.sku ASC' ? sql`s.name DESC, p.sku ASC` : sql`s.name ASC, p.sku ASC`}
               LIMIT ${limit} OFFSET ${offset}
             `;

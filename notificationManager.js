@@ -40,6 +40,19 @@ class NotificationManager {
             const { sql } = require('@vercel/postgres');
             const trackingPixelId = this.generateTrackingPixelId();
             
+            // Check if email_logs table exists first
+            const tableCheck = await sql`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'email_logs'
+                )
+            `;
+            
+            if (!tableCheck[0].exists) {
+                console.log('email_logs table does not exist, skipping email logging');
+                return { logId: null, trackingPixelId };
+            }
+            
             const { rows } = await sql`
                 INSERT INTO email_logs (
                     booking_number, customer_email, subject, message_id, email_type, 
@@ -61,6 +74,19 @@ class NotificationManager {
     async updateEmailStatus(messageId, status, additionalData = {}) {
         try {
             const { sql } = require('@vercel/postgres');
+            
+            // Check if email_logs table exists first
+            const tableCheck = await sql`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'email_logs'
+                )
+            `;
+            
+            if (!tableCheck[0].exists) {
+                console.log('email_logs table does not exist, skipping email status update');
+                return;
+            }
             
             let updateQuery = `UPDATE email_logs SET status = ${status}`;
             const params = [status];

@@ -3000,6 +3000,12 @@ function initializeGlobalPeriodSelector() {
         if (document.getElementById('accounting-table-container') && document.getElementById('accounting-table-container').style.display !== 'none') {
           fetchAccounting(1, accountingSort, accountingDir, accountingSearch);
         }
+        // Analytics
+        if (document.getElementById('analytics-section') && document.getElementById('analytics-section').style.display !== 'none') {
+          const globalPeriod = document.getElementById('global-period-selector');
+          const period = globalPeriod ? globalPeriod.value : 'thisMonth';
+          fetchSalesAnalytics(period);
+        }
         // Dashboard refresh
         forceRefreshDashboard();
       };

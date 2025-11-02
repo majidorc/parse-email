@@ -121,6 +121,66 @@ module.exports = async (req, res) => {
             end = new Date(Date.UTC(now.getUTCFullYear() + 2, 0, 1));
             break;
           }
+          case 'jan': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 1, 1));
+            break;
+          }
+          case 'feb': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 1, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 2, 1));
+            break;
+          }
+          case 'mar': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 2, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 3, 1));
+            break;
+          }
+          case 'apr': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 3, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 4, 1));
+            break;
+          }
+          case 'may': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 4, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 5, 1));
+            break;
+          }
+          case 'jun': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 5, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 6, 1));
+            break;
+          }
+          case 'jul': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 6, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 7, 1));
+            break;
+          }
+          case 'aug': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 7, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 8, 1));
+            break;
+          }
+          case 'sep': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 8, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
+            break;
+          }
+          case 'oct': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 10, 1));
+            break;
+          }
+          case 'nov': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 10, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear(), 11, 1));
+            break;
+          }
+          case 'dec': {
+            start = new Date(Date.UTC(now.getUTCFullYear(), 11, 1));
+            end = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
+            break;
+          }
           case 'all':
           default:
             start = new Date(Date.UTC(2000, 0, 1));
@@ -648,6 +708,66 @@ module.exports = async (req, res) => {
       case 'nextYear': {
         start = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
         end = new Date(Date.UTC(now.getUTCFullYear() + 2, 0, 1));
+        break;
+      }
+      case 'jan': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 1, 1));
+        break;
+      }
+      case 'feb': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 1, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 2, 1));
+        break;
+      }
+      case 'mar': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 2, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 3, 1));
+        break;
+      }
+      case 'apr': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 3, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 4, 1));
+        break;
+      }
+      case 'may': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 4, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 5, 1));
+        break;
+      }
+      case 'jun': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 5, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 6, 1));
+        break;
+      }
+      case 'jul': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 6, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 7, 1));
+        break;
+      }
+      case 'aug': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 7, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 8, 1));
+        break;
+      }
+      case 'sep': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 8, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
+        break;
+      }
+      case 'oct': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 10, 1));
+        break;
+      }
+      case 'nov': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 10, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear(), 11, 1));
+        break;
+      }
+      case 'dec': {
+        start = new Date(Date.UTC(now.getUTCFullYear(), 11, 1));
+        end = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
         break;
       }
       case 'all':

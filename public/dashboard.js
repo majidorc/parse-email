@@ -5048,6 +5048,42 @@ function getDashboardPeriodRange() {
   } else if (period === 'lastYear') {
     startDate = new Date(now.getFullYear() - 1, 0, 1);
     endDate = new Date(now.getFullYear(), 0, 1);
+  } else if (period === 'jan') {
+    startDate = new Date(now.getFullYear(), 0, 1);
+    endDate = new Date(now.getFullYear(), 1, 1);
+  } else if (period === 'feb') {
+    startDate = new Date(now.getFullYear(), 1, 1);
+    endDate = new Date(now.getFullYear(), 2, 1);
+  } else if (period === 'mar') {
+    startDate = new Date(now.getFullYear(), 2, 1);
+    endDate = new Date(now.getFullYear(), 3, 1);
+  } else if (period === 'apr') {
+    startDate = new Date(now.getFullYear(), 3, 1);
+    endDate = new Date(now.getFullYear(), 4, 1);
+  } else if (period === 'may') {
+    startDate = new Date(now.getFullYear(), 4, 1);
+    endDate = new Date(now.getFullYear(), 5, 1);
+  } else if (period === 'jun') {
+    startDate = new Date(now.getFullYear(), 5, 1);
+    endDate = new Date(now.getFullYear(), 6, 1);
+  } else if (period === 'jul') {
+    startDate = new Date(now.getFullYear(), 6, 1);
+    endDate = new Date(now.getFullYear(), 7, 1);
+  } else if (period === 'aug') {
+    startDate = new Date(now.getFullYear(), 7, 1);
+    endDate = new Date(now.getFullYear(), 8, 1);
+  } else if (period === 'sep') {
+    startDate = new Date(now.getFullYear(), 8, 1);
+    endDate = new Date(now.getFullYear(), 9, 1);
+  } else if (period === 'oct') {
+    startDate = new Date(now.getFullYear(), 9, 1);
+    endDate = new Date(now.getFullYear(), 10, 1);
+  } else if (period === 'nov') {
+    startDate = new Date(now.getFullYear(), 10, 1);
+    endDate = new Date(now.getFullYear(), 11, 1);
+  } else if (period === 'dec') {
+    startDate = new Date(now.getFullYear(), 11, 1);
+    endDate = new Date(now.getFullYear() + 1, 0, 1);
   } else {
     startDate = null;
     endDate = null;

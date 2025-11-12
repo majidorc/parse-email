@@ -519,3 +519,80 @@ a:visited {
 .booking-number-link:visited {
   color: #7c3aed !important;
 }
+
+/* Individual tab color themes */
+.tab-btn-container button#toggle-dashboard {
+  background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-dashboard.active {
+  background: linear-gradient(135deg, #818CF8 0%, #4F46E5 100%) !important;
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.45) !important;
+}
+
+.tab-btn-container button#toggle-bookings {
+  background: linear-gradient(135deg, #2DD4BF 0%, #0F766E 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(45, 212, 191, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-bookings.active {
+  background: linear-gradient(135deg, #5EEAD4 0%, #0D9488 100%) !important;
+  box-shadow: 0 12px 28px rgba(13, 148, 136, 0.45) !important;
+}
+
+.tab-btn-container button#toggle-programs {
+  background: linear-gradient(135deg, #F97316 0%, #C2410C 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-programs.active {
+  background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%) !important;
+  box-shadow: 0 12px 28px rgba(234, 88, 12, 0.45) !important;
+}
+
+.tab-btn-container button#toggle-accounting {
+  background: linear-gradient(135deg, #34D399 0%, #047857 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(52, 211, 153, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-accounting.active {
+  background: linear-gradient(135deg, #6EE7B7 0%, #059669 100%) !important;
+  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.45) !important;
+}
+
+.tab-btn-container button#toggle-analytics {
+  background: linear-gradient(135deg, #F472B6 0%, #BE185D 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(244, 114, 182, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-analytics.active {
+  background: linear-gradient(135deg, #FDA4AF 0%, #DB2777 100%) !important;
+  box-shadow: 0 12px 28px rgba(219, 39, 119, 0.45) !important;
+}
+
+.tab-btn-container button#toggle-suppliers {
+  background: linear-gradient(135deg, #C084FC 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 18px rgba(192, 132, 252, 0.35) !important;
+}
+
+.tab-btn-container button#toggle-suppliers.active {
+  background: linear-gradient(135deg, #D8B4FE 0%, #8B5CF6 100%) !important;
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.45) !important;
+}
+
+.tab-btn-container button:not(.active) {
+  opacity: 0.92;
+  filter: saturate(0.9);
+}
+
+.tab-btn-container button.active {
+  opacity: 1;
+  filter: saturate(1.05);
+}

@@ -490,7 +490,6 @@ async function handleRateChange(dropdown) {
     dropdown.value = oldRate;
   }
 }
-
 function renderTable() {
   const tbody = document.getElementById('bookings-body');
   const summaryDiv = document.getElementById('table-summary');
@@ -1124,7 +1123,6 @@ async function fetchBookingDetailsForPreview(bookingNumber) {
     console.error('Error fetching booking details for preview:', error);
   }
 }
-
 // Function to generate email preview
 function generateEmailPreview() {
   const { bookingNumber } = window.currentEmailBooking;
@@ -2194,10 +2192,14 @@ if (exportAccountingBtn) {
       // Get current filters
       const currentPeriod = document.getElementById('global-period-selector')?.value || 'all';
       const currentSearch = document.getElementById('search-bar')?.value || '';
+      const customStart = window.customStartDate;
+      const customEnd = window.customEndDate;
       
       // Build export URL with current filters
       let exportUrl = '/api/accounting?export=excel&';
-      if (currentPeriod !== 'all') {
+      if (customStart && customEnd) {
+        exportUrl += `startDate=${customStart}&endDate=${customEnd}&`;
+      } else if (currentPeriod && currentPeriod !== 'all' && currentPeriod !== 'custom') {
         exportUrl += `period=${currentPeriod}&`;
       }
       if (currentSearch.trim()) {
@@ -2219,49 +2221,57 @@ if (exportAccountingBtn) {
       const today = new Date().toISOString().split('T')[0];
       let fileName = 'accounting_export_all.xlsx';
       
-      // Get the actual month/year for the selected period
-      const now = new Date();
-      const monthNames = [
-        'january', 'february', 'march', 'april', 'may', 'june',
-        'july', 'august', 'september', 'october', 'november', 'december'
-      ];
-      
-      if (currentPeriod === 'thisMonth') {
-        const monthName = monthNames[now.getMonth()];
-        const year = now.getFullYear();
-        fileName = `accounting_${monthName}_${year}.xlsx`;
-      } else if (currentPeriod === 'lastMonth') {
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const monthName = monthNames[lastMonth.getMonth()];
-        const year = lastMonth.getFullYear();
-        fileName = `accounting_${monthName}_${year}.xlsx`;
-      } else if (currentPeriod === 'twoMonthsAgo') {
-        const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        const monthName = monthNames[twoMonthsAgo.getMonth()];
-        const year = twoMonthsAgo.getFullYear();
-        fileName = `accounting_${monthName}_${year}.xlsx`;
-      } else if (currentPeriod === 'threeMonthsAgo') {
-        const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        const monthName = monthNames[threeMonthsAgo.getMonth()];
-        const year = threeMonthsAgo.getFullYear();
-        fileName = `accounting_${monthName}_${year}.xlsx`;
-      } else if (currentPeriod === 'sixMonthsAgo') {
-        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        const monthName = monthNames[sixMonthsAgo.getMonth()];
-        const year = sixMonthsAgo.getFullYear();
-        fileName = `accounting_${monthName}_${year}.xlsx`;
-      } else if (currentPeriod === 'thisYear') {
-        const year = now.getFullYear();
-        fileName = `accounting_${year}.xlsx`;
-      } else if (currentPeriod === 'lastYear') {
-        const year = now.getFullYear() - 1;
-        fileName = `accounting_${year}.xlsx`;
-      } else if (currentPeriod === 'thisWeek' || currentPeriod === 'lastWeek') {
-        // For weeks, use the current date
-        fileName = `accounting_export_${currentPeriod}_${today}.xlsx`;
+      if (customStart && customEnd) {
+        fileName = `accounting_${customStart}_to_${customEnd}.xlsx`;
       } else {
-        // For 'all' or other periods
-        fileName = `accounting_export_all_${today}.xlsx`;
+        // Get the actual month/year for the selected period
+        const now = new Date();
+        const monthNames = [
+          'january', 'february', 'march', 'april', 'may', 'june',
+          'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+        
+        if (currentPeriod === 'thisMonth') {
+          const monthName = monthNames[now.getMonth()];
+          const year = now.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else if (currentPeriod === 'lastMonth') {
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const monthName = monthNames[lastMonth.getMonth()];
+          const year = lastMonth.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else if (currentPeriod === 'twoMonthsAgo') {
+          const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+          const monthName = monthNames[twoMonthsAgo.getMonth()];
+          const year = twoMonthsAgo.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else if (currentPeriod === 'threeMonthsAgo') {
+          const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          const monthName = monthNames[threeMonthsAgo.getMonth()];
+          const year = threeMonthsAgo.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else if (currentPeriod === 'sixMonthsAgo') {
+          const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+          const monthName = monthNames[sixMonthsAgo.getMonth()];
+          const year = sixMonthsAgo.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else if (currentPeriod === 'thisYear') {
+          const year = now.getFullYear();
+          fileName = `accounting_${year}.xlsx`;
+        } else if (currentPeriod === 'lastYear') {
+          const year = now.getFullYear() - 1;
+          fileName = `accounting_${year}.xlsx`;
+        } else if (currentPeriod === 'thisWeek' || currentPeriod === 'lastWeek') {
+          fileName = `accounting_export_${currentPeriod}_${today}.xlsx`;
+        } else if (['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].includes(currentPeriod)) {
+          const monthIndex = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(currentPeriod);
+          const targetDate = new Date(now.getFullYear(), monthIndex, 1);
+          const monthName = monthNames[targetDate.getMonth()];
+          const year = targetDate.getFullYear();
+          fileName = `accounting_${monthName}_${year}.xlsx`;
+        } else {
+          fileName = `accounting_export_all_${today}.xlsx`;
+        }
       }
       
       a.download = fileName;
@@ -2923,7 +2933,6 @@ function clearCustomDateRange() {
     }
   }
 }
-
 // Initialize global period selector
 function initializeGlobalPeriodSelector() {
   const globalPeriodSelector = document.getElementById('global-period-selector');
@@ -3493,9 +3502,6 @@ function updateProgramSortIcons() {
   if (programIcon) programIcon.textContent = getProgramSortIcon('program');
   if (supplierIcon) supplierIcon.textContent = getProgramSortIcon('supplier');
 }
-
-
-
 function renderProgramsTable(programs) {
   // Sort programs based on current sort settings
   programs = programs.slice().sort((a, b) => {
@@ -4031,7 +4037,6 @@ function moveDownHandler() {
     currentItem.parentNode.insertBefore(nextItem, currentItem);
   }
 }
-
 // Initialize rate-related event listeners
 document.addEventListener('DOMContentLoaded', function() {
   // Add Rate Button event listener
@@ -5289,7 +5294,6 @@ function closeAddBookingForm() {
     addBookingSection.style.display = 'none';
   }
 }
-
 function initializeAddBooking() {
   const addBookingBtn = document.getElementById('add-booking-btn');
   const addBookingSection = document.getElementById('add-booking-section');
@@ -5938,7 +5942,6 @@ function parseCSVLine(line) {
   
   return result;
 }
-
 // Handle booking deletion
 async function handleDelete(bookingNumber, button) {
   if (!confirm(`Are you sure you want to delete booking ${bookingNumber}? This action cannot be undone.`)) {
@@ -6573,7 +6576,6 @@ async function applyEmailFilters() {
 async function refreshEmailLogs() {
     await loadEmailLogs(emailLogsCurrentPage);
 }
-
 // View email log details
 function viewEmailLogDetails(logId) {
     const log = emailLogsData.find(l => l.id === parseInt(logId));

@@ -1,16 +1,12 @@
 const handler = require('../../api/email-management.js');
-const { createRequestResponse } = require('./api-adapter');
+const { createRequestResponse, formatNetlifyResponse } = require('./api-adapter');
 
 exports.handler = async (event, context) => {
   try {
     const { req, res, getResponse } = createRequestResponse(event);
     await handler(req, res);
     const response = getResponse();
-    return {
-      statusCode: response.statusCode,
-      headers: response.headers,
-      body: response.body
-    };
+    return formatNetlifyResponse(response);
   } catch (error) {
     console.error('Email management function error:', error);
     return {

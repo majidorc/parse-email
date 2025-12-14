@@ -266,38 +266,41 @@ module.exports = async function handler(req, res) {
             totalCount = parseInt(countRows[0].count);
           }
           
-          // Handle sorting
+          // Handle sorting - use string interpolation like other APIs
           const { sort = 'sku', dir = 'asc' } = req.query;
-          let orderBy = 'p.sku ASC';
+          const dirStr = dir.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
           
+          let orderByClause = 'p.sku ASC';
           if (sort === 'sku') {
-            orderBy = dir === 'desc' ? 'p.sku DESC' : 'p.sku ASC';
+            orderByClause = `p.sku ${dirStr}`;
           } else if (sort === 'program') {
-            orderBy = dir === 'desc' ? 'p.program DESC' : 'p.program ASC';
+            orderByClause = `p.program ${dirStr}`;
           } else if (sort === 'supplier') {
-            orderBy = dir === 'desc' ? 's.name DESC, p.sku ASC' : 's.name ASC, p.sku ASC';
+            orderByClause = `s.name ${dirStr}, p.sku ASC`;
           }
           
-          // Get paginated products with supplier info
+          // Get paginated products with supplier info - use sql.query with string interpolation
           let products;
           if (search) {
-            const { rows: productsRows } = await sql`
+            const searchQuery = `
               SELECT p.*, s.name as supplier_name 
               FROM products p 
               LEFT JOIN suppliers s ON p.supplier_id = s.id 
-              WHERE p.sku ILIKE ${`%${search}%`} OR p.program ILIKE ${`%${search}%`} OR p.remark ILIKE ${`%${search}%`} OR p.product_id_optional ILIKE ${`%${search}%`}
-              ORDER BY ${orderBy === 'p.sku ASC' ? sql`p.sku ASC` : orderBy === 'p.sku DESC' ? sql`p.sku DESC` : orderBy === 'p.program DESC' ? sql`p.program DESC` : orderBy === 'p.program ASC' ? sql`p.program ASC` : orderBy === 's.name DESC, p.sku ASC' ? sql`s.name DESC, p.sku ASC` : sql`s.name ASC, p.sku ASC`}
-              LIMIT ${limit} OFFSET ${offset}
+              WHERE p.sku ILIKE $1 OR p.program ILIKE $1 OR p.remark ILIKE $1 OR p.product_id_optional ILIKE $1
+              ORDER BY ${orderByClause}
+              LIMIT $2 OFFSET $3
             `;
+            const { rows: productsRows } = await sql.query(searchQuery, [`%${search}%`, limit, offset]);
             products = productsRows;
           } else {
-            const { rows: productsRows } = await sql`
+            const query = `
               SELECT p.*, s.name as supplier_name 
               FROM products p 
               LEFT JOIN suppliers s ON p.supplier_id = s.id 
-              ORDER BY ${orderBy === 'p.sku ASC' ? sql`p.sku ASC` : orderBy === 'p.sku DESC' ? sql`p.sku DESC` : orderBy === 'p.program DESC' ? sql`p.program DESC` : orderBy === 'p.program ASC' ? sql`p.program ASC` : orderBy === 's.name DESC, p.sku ASC' ? sql`s.name DESC, p.sku ASC` : sql`s.name ASC, p.sku ASC`}
-              LIMIT ${limit} OFFSET ${offset}
+              ORDER BY ${orderByClause}
+              LIMIT $1 OFFSET $2
             `;
+            const { rows: productsRows } = await sql.query(query, [limit, offset]);
             products = productsRows;
           }
     

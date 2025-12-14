@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[functions]
+  "netlify/functions/products-rates.js" = { timeout = 26 }
+  "netlify/functions/bookings.js" = { timeout = 26 }
+  "netlify/functions/accounting.js" = { timeout = 26 }
+  "netlify/functions/analytics.js" = { timeout = 26 }
+  "netlify/functions/dashboard-settings.js" = { timeout = 26 }
+
 # Route API requests to Netlify Functions
 [[redirects]]
   from = "/api/auth"

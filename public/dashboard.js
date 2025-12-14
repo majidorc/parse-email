@@ -1672,16 +1672,16 @@ async function fetchAccounting(page = 1, sort = accountingSort, dir = accounting
     }
     
     // Try to fix missing NET prices first if this is the first load
+    // Run in background without blocking the page load
     if (page === 1 && !cacheBuster) {
-      try {
-        await fetch('/api/booking-utilities', { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'fix-booking-nets' })
-        });
-      } catch (err) {
-        console.log('Could not run NET price fix script:', err.message);
-      }
+      // Don't await - let it run in the background
+      fetch('/api/booking-utilities', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'fix-booking-nets' })
+      }).catch(err => {
+        console.log('NET price fix script running in background (may take time):', err.message);
+      });
     }
     
     // Add cache buster to ensure fresh data

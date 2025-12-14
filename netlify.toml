@@ -11,6 +11,7 @@
   "netlify/functions/accounting.js" = { timeout = 26 }
   "netlify/functions/analytics.js" = { timeout = 26 }
   "netlify/functions/dashboard-settings.js" = { timeout = 26 }
+  "netlify/functions/booking-utilities.js" = { timeout = 26 }
 
 # Route API requests to Netlify Functions
 [[redirects]]

@@ -5,8 +5,59 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Route API requests to Netlify Functions
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/auth"
+  to = "/.netlify/functions/auth"
+  status = 200
+
+[[redirects]]
+  from = "/api/bookings"
+  to = "/.netlify/functions/bookings"
+  status = 200
+
+[[redirects]]
+  from = "/api/dashboard-settings"
+  to = "/.netlify/functions/dashboard-settings"
+  status = 200
+
+[[redirects]]
+  from = "/api/analytics"
+  to = "/.netlify/functions/analytics"
+  status = 200
+
+[[redirects]]
+  from = "/api/accounting"
+  to = "/.netlify/functions/accounting"
+  status = 200
+
+[[redirects]]
+  from = "/api/products-rates"
+  to = "/.netlify/functions/products-rates"
+  status = 200
+
+[[redirects]]
+  from = "/api/suppliers"
+  to = "/.netlify/functions/suppliers"
+  status = 200
+
+[[redirects]]
+  from = "/api/booking-utilities"
+  to = "/.netlify/functions/booking-utilities"
+  status = 200
+
+[[redirects]]
+  from = "/api/email-management"
+  to = "/.netlify/functions/email-management"
+  status = 200
+
+[[redirects]]
+  from = "/api/webhook"
+  to = "/.netlify/functions/webhook"
+  status = 200
+
+[[redirects]]
+  from = "/api/daily-scheduler"
+  to = "/.netlify/functions/daily-scheduler"
   status = 200
 

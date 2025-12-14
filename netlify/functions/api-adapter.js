@@ -27,11 +27,25 @@ function createRequestResponse(event) {
   }
   
   // Normalize headers (Netlify provides them in lowercase)
+  // Netlify uses lowercase header keys, but we need to preserve cookie header properly
   const headers = {};
   if (event.headers) {
     Object.keys(event.headers).forEach(key => {
-      headers[key.toLowerCase()] = event.headers[key];
+      const lower = key.toLowerCase();
+      headers[lower] = event.headers[key];
       headers[key] = event.headers[key]; // Also keep original case for compatibility
+    });
+  }
+  
+  // Handle multiValueHeaders for cookies (Netlify may provide cookies here)
+  if (event.multiValueHeaders) {
+    Object.keys(event.multiValueHeaders).forEach(key => {
+      const lower = key.toLowerCase();
+      if (lower === 'cookie') {
+        // Combine multiple cookie headers
+        headers[lower] = event.multiValueHeaders[key].join('; ');
+        headers[key] = headers[lower];
+      }
     });
   }
   
@@ -103,5 +117,38 @@ function createRequestResponse(event) {
   };
 }
 
-module.exports = { createRequestResponse };
+// Helper to format Netlify response with proper cookie handling
+function formatNetlifyResponse(response) {
+  const headers = { ...response.headers };
+  const multiValueHeaders = {};
+  
+  // Extract Set-Cookie headers (Netlify requires them in multiValueHeaders)
+  const setCookieHeaders = [];
+  Object.keys(headers).forEach(key => {
+    if (key.toLowerCase() === 'set-cookie') {
+      setCookieHeaders.push(headers[key]);
+      delete headers[key];
+    }
+  });
+  
+  // Add Set-Cookie to multiValueHeaders if present
+  if (setCookieHeaders.length > 0) {
+    multiValueHeaders['Set-Cookie'] = setCookieHeaders;
+  }
+  
+  const result = {
+    statusCode: response.statusCode,
+    headers: headers,
+    body: response.body
+  };
+  
+  // Only include multiValueHeaders if we have cookies
+  if (Object.keys(multiValueHeaders).length > 0) {
+    result.multiValueHeaders = multiValueHeaders;
+  }
+  
+  return result;
+}
+
+module.exports = { createRequestResponse, formatNetlifyResponse };
 

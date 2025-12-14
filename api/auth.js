@@ -51,7 +51,7 @@ module.exports = async (req, res) => {
     if (!rows.length || !rows[0].is_active) return res.status(403).json({ error: 'Not whitelisted' });
     const role = rows[0].role;
     const token = signSession(email, role);
-    res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800`);
+    res.setHeader('Set-Cookie', `${COOKIE_NAME}=${token}; HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=604800`);
     return res.status(200).json({ success: true, email, role });
   }
   if (type === 'logout' && req.method === 'POST') {

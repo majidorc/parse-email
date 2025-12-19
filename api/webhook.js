@@ -1074,16 +1074,18 @@ class EmailParserFactory {
     
     if (fromAddress && fromAddress.includes('tours.co.th')) {
       channel = 'Website';
-    } else if (fromAddress && fromAddress.includes('bokun.io')) {
-      // For bokun.io emails, check the content for "Sold by"
+    } else if (fromAddress && (fromAddress.includes('bokun.io') || fromAddress.includes('anywhere.tours'))) {
+      // For bokun.io and anywhere.tours emails, check the content for "Sold by"
       const emailContent = html || text || '';
       if (emailContent.includes('Sold by') && emailContent.includes('GetYourGuide')) {
         channel = 'GYG';
       } else if (emailContent.includes('Sold by') && emailContent.includes('Viator.com')) {
         channel = 'Viator';
+      } else if (emailContent.includes('Sold by') && emailContent.includes('Website')) {
+        channel = 'Website';
       } else {
-        // Default for bokun.io emails
-        channel = 'Viator';
+        // Default for bokun.io/anywhere.tours emails - check if it says Website in the email
+        channel = emailContent.includes('Website') ? 'Website' : 'Viator';
       }
     } else {
       channel = 'Website';
@@ -1095,13 +1097,17 @@ class EmailParserFactory {
 
     const content = html || text;
     
-    if (fromAddress && fromAddress.includes('bokun.io')) {
+    // Bokun-style HTML emails (original Bokun domain and anywhere.tours)
+    // Both use the same HTML table layout, so use the same parser
+    if (fromAddress && (fromAddress.includes('bokun.io') || fromAddress.includes('anywhere.tours'))) {
+      console.log('[PARSER] Using BokunParser for email from:', fromAddress);
       return new BokunParser(content);
     }
     
+    // Legacy text-style emails from tours.co.th
     if (fromAddress && fromAddress.includes('tours.co.th')) {
-        const textContent = cleanupHtml(content);
-        return new ThailandToursParser(textContent);
+      const textContent = cleanupHtml(content);
+      return new ThailandToursParser(textContent);
     }
     
     const textContent = cleanupHtml(content);

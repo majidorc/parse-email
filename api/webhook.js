@@ -473,9 +473,20 @@ class BokunParser extends BaseEmailParser {
 }
 
 class ThailandToursParser extends BaseEmailParser {
-    constructor(textContent) {
-        super(textContent);
-        this.lines = textContent.split('\n').map(line => line.trim());
+    constructor(content) {
+        super(content);
+        // Try to parse as HTML first (for HTML emails)
+        try {
+            const cleanedHtml = content.replace(/=\s*\r?\n/g, '').replace(/=3D/g, '=');
+            this.$ = cheerio.load(cleanedHtml);
+            // Extract text content from HTML for line-based parsing
+            const textContent = cleanupHtml(content);
+            this.lines = textContent.split('\n').map(line => line.trim());
+        } catch (error) {
+            // If HTML parsing fails, treat as plain text
+            this.$ = null;
+            this.lines = content.split('\n').map(line => line.trim());
+        }
     }
 
     _findLineValue(label) {
@@ -484,7 +495,34 @@ class ThailandToursParser extends BaseEmailParser {
     }
     
     extractBookingNumber() {
-        // Try multiple formats
+        // PRIORITY 1: Try to extract from HTML (for HTML emails)
+        if (this.$) {
+            // Look for "New Order: #68121911640" in h1 tags
+            const h1Text = this.$('h1').first().text();
+            const h1Match = h1Text.match(/(?:new\s+order|order)\s*:?\s*#?\s*(\d+)/i);
+            if (h1Match && h1Match[1]) {
+                return h1Match[1];
+            }
+            
+            // Look for order number links
+            const orderLink = this.$('a[href*="wc-orders"][href*="action=edit"]').first();
+            if (orderLink.length > 0) {
+                const href = orderLink.attr('href');
+                const idMatch = href.match(/[?&]id=(\d+)/);
+                if (idMatch && idMatch[1]) {
+                    return idMatch[1];
+                }
+            }
+            
+            // Look for "Order number: 68121911640" in any element
+            const orderNumberText = this.$('*:contains("Order number:")').first().text();
+            const orderMatch = orderNumberText.match(/order\s+number:\s*(\d+)/i);
+            if (orderMatch && orderMatch[1]) {
+                return orderMatch[1];
+            }
+        }
+        
+        // PRIORITY 2: Try text-based extraction
         let bookingNumber = this._findLineValue('ORDER NUMBER:');
         if (bookingNumber === 'N/A') {
             bookingNumber = this._findLineValue('Order number:');
@@ -795,7 +833,35 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractTourDate() {
-        // Try multiple formats:
+        // PRIORITY 1: Try to extract from HTML elements (for HTML emails)
+        if (this.$) {
+            // Look for <span class="booking-start-date">December 22, 2025</span>
+            const bookingDateSpan = this.$('span.booking-start-date').first();
+            if (bookingDateSpan.length > 0) {
+                const dateText = bookingDateSpan.text().trim();
+                const dateMatch = dateText.match(/([A-Za-z]+ \d{1,2}, \d{4})/);
+                if (dateMatch) {
+                    return dateMatch[1];
+                }
+            }
+            
+            // Also try to find date in <time> elements
+            const timeElement = this.$('time[datetime]').first();
+            if (timeElement.length > 0) {
+                const datetime = timeElement.attr('datetime');
+                if (datetime) {
+                    const d = new Date(datetime);
+                    if (!isNaN(d.getTime())) {
+                        // Convert to "Month Day, Year" format
+                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                                           'July', 'August', 'September', 'October', 'November', 'December'];
+                        return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+                    }
+                }
+            }
+        }
+        
+        // PRIORITY 2: Try multiple text formats:
         // 1. "* June 22, 2025" (old format)
         let dateLine = this.lines.find(line => line.trim().startsWith('*') && /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(line));
         if (dateLine) {
@@ -942,7 +1008,23 @@ class ThailandToursParser extends BaseEmailParser {
     }
 
     extractSKU() {
-        // Find a line with (#CODE) and extract CODE
+        // PRIORITY 1: Try to extract from HTML (for HTML emails)
+        if (this.$) {
+            // Look for (#CODE) pattern in HTML text
+            const htmlText = this.$('body').text();
+            const htmlMatch = htmlText.match(/\(#([A-Z0-9]+)\)/);
+            if (htmlMatch && htmlMatch[1]) {
+                return htmlMatch[1];
+            }
+            
+            // Fallback: look for #CODE pattern
+            const hashMatch = htmlText.match(/#([A-Z0-9]+)/);
+            if (hashMatch && hashMatch[1]) {
+                return hashMatch[1];
+            }
+        }
+        
+        // PRIORITY 2: Try text-based extraction
         const line = this.lines.find(l => /\(#([A-Z0-9]+)\)/.test(l));
         if (line) {
           const match = line.match(/\(#([A-Z0-9]+)\)/);
@@ -1129,8 +1211,8 @@ class EmailParserFactory {
     
     // Legacy text-style emails from tours.co.th
     if (fromAddress && fromAddress.includes('tours.co.th')) {
-      const textContent = cleanupHtml(content);
-      return new ThailandToursParser(textContent);
+      // Pass original content (HTML or text) so parser can handle both
+      return new ThailandToursParser(content);
     }
     
     const textContent = cleanupHtml(content);

@@ -441,7 +441,13 @@ class BokunParser extends BaseEmailParser {
         if (rate) return false;
       }
     });
-    return rate;
+    if (!rate) return '';
+
+    // Anywhere.tours style may include extra explanation in parentheses:
+    // "C2 (Emerald Pool & Hot Springs + Tiger cave)"
+    // We only want the main rate code/name before the first '('.
+    const cleaned = rate.split('(')[0].trim();
+    return cleaned || rate;
   }
   extractAll() {
     const passengers = this.extractPassengers();

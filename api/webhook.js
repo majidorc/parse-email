@@ -504,16 +504,6 @@ class ThailandToursParser extends BaseEmailParser {
                 return h1Match[1];
             }
             
-            // Look for order number links
-            const orderLink = this.$('a[href*="wc-orders"][href*="action=edit"]').first();
-            if (orderLink.length > 0) {
-                const href = orderLink.attr('href');
-                const idMatch = href.match(/[?&]id=(\d+)/);
-                if (idMatch && idMatch[1]) {
-                    return idMatch[1];
-                }
-            }
-            
             // Look for "Order number: 68121911640" in any element
             const orderNumberText = this.$('*:contains("Order number:")').first().text();
             const orderMatch = orderNumberText.match(/order\s+number:\s*(\d+)/i);
@@ -1348,285 +1338,6 @@ function extractQuery(text, botUsername) {
     return text;
 }
 
-// Function to extract order link from email content
-function extractOrderLinkFromEmail(emailContent) {
-  console.log('[ORDER-LINK-DEBUG] Extracting order link from email content...');
-  
-  // PRIORITY 1: Try to extract order ID and create a direct link first
-  const orderId = extractOrderIdFromContent(emailContent);
-  if (orderId) {
-    const directLink = createDirectOrderLink(orderId);
-    if (directLink) {
-      console.log('[ORDER-LINK-DEBUG] PRIORITY 1: Created direct order link from order ID:', directLink);
-      return directLink;
-    }
-  }
-  
-  // Pattern 1: "Total: [amount]" followed by "View order → [URL]"
-  const totalPattern = /Total:\s*[^\n]*\n[^]*?View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
-  const match = emailContent.match(totalPattern);
-  
-  if (match && match[1]) {
-    const url = match[1].trim();
-    if (isValidOrderEditUrl(url)) {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 1 (Total + View order):', url);
-      return url;
-    } else {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 1 URL but it\'s not a valid order edit link:', url);
-    }
-  }
-  
-  // Pattern 2: "View order → [URL]"
-  const viewOrderPattern = /View\s*order\s*→\s*(https?:\/\/[^\s\n]+)/i;
-  const viewOrderMatch = emailContent.match(viewOrderPattern);
-  
-  if (viewOrderMatch && viewOrderMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 2 (View order):', viewOrderMatch[1]);
-    return viewOrderMatch[1].trim();
-  }
-  
-  // Pattern 3: "Order link:" or "Order:" followed by URL
-  const orderLinkPattern = /(?:Order\s*link|Order):\s*(https?:\/\/[^\s\n]+)/i;
-  const orderLinkMatch = emailContent.match(orderLinkPattern);
-  
-  if (orderLinkMatch && orderLinkMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 3 (Order link/Order):', orderLinkMatch[1]);
-    return orderLinkMatch[1].trim();
-  }
-  
-  // Pattern 4: "Click here" or "View" followed by URL
-  const clickHerePattern = /(?:Click\s*here|View|View\s*details?)\s*[:\-]?\s*(https?:\/\/[^\s\n]+)/i;
-  const clickHereMatch = emailContent.match(clickHerePattern);
-  
-  if (clickHereMatch && clickHereMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found pattern 4 (Click here/View):', clickHereMatch[1]);
-    return clickHereMatch[1].trim();
-  }
-  
-  // Pattern 5: Any URL that contains "order" or "booking" in the path
-  const orderUrlPattern = /(https?:\/\/[^\s\n]*?(?:order|booking|reservation)[^\s\n]*)/i;
-  const orderUrlMatch = emailContent.match(orderUrlPattern);
-  
-  if (orderUrlMatch && orderUrlMatch[1]) {
-    const url = orderUrlMatch[1].trim();
-    if (isValidOrderEditUrl(url)) {
-      console.log('[ORDER-LINK-DEBUG] Found valid order/booking URL:', url);
-      return url;
-    } else {
-      console.log('[ORDER-LINK-DEBUG] Found order/booking URL but it\'s not a valid order edit link:', url);
-    }
-  }
-  
-  // Pattern 6: Only specific WooCommerce order edit URLs (not homepage)
-  const wooCommerceOrderPattern = /(https?:\/\/[^\/]+\/wp-admin\/admin\.php\?page=wc-orders[^"\s\n]+)/i;
-  const wooCommerceMatch = emailContent.match(wooCommerceOrderPattern);
-  
-  if (wooCommerceMatch && wooCommerceMatch[1]) {
-    console.log('[ORDER-LINK-DEBUG] Found WooCommerce order URL:', wooCommerceMatch[1]);
-    return wooCommerceMatch[1].trim();
-  }
-  
-  // Pattern 6b: Any tours.co.th URL that might be an order link (but be more specific)
-  const toursUrlPattern = /(https?:\/\/[^\s\n]*?tours\.co\.th[^\s\n]*?(?:wc-orders|admin\.php|order|booking)[^\s\n]*)/i;
-  const toursUrlMatch = emailContent.match(toursUrlPattern);
-  
-  if (toursUrlMatch && toursUrlMatch[1]) {
-    const url = toursUrlMatch[1].trim();
-    if (isValidOrderEditUrl(url)) {
-      console.log('[ORDER-LINK-DEBUG] Found valid tours.co.th order URL:', url);
-      return url;
-    } else {
-      console.log('[ORDER-LINK-DEBUG] Found tours.co.th URL but it\'s not a valid order edit link:', url);
-    }
-  }
-  
-  // Pattern 7: Any URL that appears after common order-related keywords
-  const orderKeywordsPattern = /(?:order|booking|reservation|confirm|details?)\s*[:\-]?\s*(https?:\/\/[^\s\n]+)/gi;
-  let orderKeywordsMatch;
-  while ((orderKeywordsMatch = orderKeywordsPattern.exec(emailContent)) !== null) {
-    if (orderKeywordsMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 7 (order keywords + URL):', orderKeywordsMatch[1]);
-      return orderKeywordsMatch[1].trim();
-    }
-  }
-  
-  // Pattern 8: Any URL that appears in the last few lines (often order links are at the bottom)
-  const lines = emailContent.split('\n');
-  const lastLines = lines.slice(-10); // Check last 10 lines
-  for (const line of lastLines) {
-    const urlMatch = line.match(/(https?:\/\/[^\s\n]+)/);
-    if (urlMatch && urlMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 8 (URL in last lines):', urlMatch[1]);
-      return urlMatch[1].trim();
-    }
-  }
-  
-  // Pattern 9: HTML anchor tags with order-related text
-  const htmlAnchorPattern = /<a[^>]*>(?:[^<]*?(?:order|booking|reservation|confirm|details?|view)[^<]*?)<\/a>/gi;
-  let htmlAnchorMatch;
-  while ((htmlAnchorMatch = htmlAnchorPattern.exec(emailContent)) !== null) {
-    const hrefMatch = htmlAnchorMatch[0].match(/href\s*=\s*["']([^"']+)["']/i);
-    if (hrefMatch && hrefMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 9 (HTML anchor with order text):', hrefMatch[1]);
-      return hrefMatch[1].trim();
-    }
-  }
-  
-  // Pattern 10: Any URL in href attributes that might be an order link
-  const hrefUrlPattern = /href\s*=\s*["'](https?:\/\/[^"']+)["']/gi;
-  let hrefUrlMatch;
-  while ((hrefUrlMatch = hrefUrlPattern.exec(emailContent)) !== null) {
-    if (hrefUrlMatch[1] && (hrefUrlMatch[1].includes('order') || hrefUrlMatch[1].includes('booking') || hrefUrlMatch[1].includes('tours.co.th'))) {
-      console.log('[ORDER-LINK-DEBUG] Found pattern 10 (href with order-related URL):', hrefUrlMatch[1]);
-      return hrefUrlMatch[1].trim();
-    }
-  }
-  
-  // Pattern 11: WP Mail SMTP tracking links - convert to direct order links
-  const wpMailTrackingPattern = /(https?:\/\/[^\/]+\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]+)/gi;
-  let wpMailMatch;
-  while ((wpMailMatch = wpMailTrackingPattern.exec(emailContent)) !== null) {
-    if (wpMailMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found WP Mail SMTP tracking link:', wpMailMatch[1]);
-      
-      try {
-        // Try to decode the base64 part to extract the actual URL
-        const urlParts = wpMailMatch[1].split('/e/');
-        if (urlParts.length === 2) {
-          let base64Data = urlParts[1];
-          
-          // Clean up malformed base64 data (remove line breaks, spaces, and invalid characters)
-          base64Data = base64Data
-            .replace(/\s+/g, '') // Remove all whitespace
-            .replace(/\n/g, '') // Remove newlines
-            .replace(/\r/g, '') // Remove carriage returns
-            .replace(/[^A-Za-z0-9+/=]/g, ''); // Remove invalid base64 characters
-          
-          console.log('[ORDER-LINK-DEBUG] Cleaned base64 data:', base64Data);
-          
-          // Try to decode the base64
-          const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
-          console.log('[ORDER-LINK-DEBUG] Decoded data:', decodedData);
-          
-          // Look for the actual URL in the decoded data
-          const urlMatch = decodedData.match(/data\[url\]=([^&]+)/);
-          if (urlMatch && urlMatch[1]) {
-            const actualUrl = decodeURIComponent(urlMatch[1]);
-            console.log('[ORDER-LINK-DEBUG] Extracted actual URL from tracking link:', actualUrl);
-            return actualUrl.trim();
-          }
-          
-          // Also look for order ID in the decoded data to create a direct link
-          const orderIdMatch = decodedData.match(/id%3D(\d+)/);
-          if (orderIdMatch && orderIdMatch[1]) {
-            const orderId = orderIdMatch[1];
-            const directLink = createDirectOrderLink(orderId);
-            if (directLink) {
-              console.log('[ORDER-LINK-DEBUG] Created direct link from decoded order ID:', directLink);
-              return directLink;
-            }
-          }
-        }
-      } catch (error) {
-        console.log('[ORDER-LINK-DEBUG] Error decoding tracking link:', error.message);
-        
-        // If decoding fails, try to extract order ID from the URL itself
-        const orderIdMatch = wpMailMatch[1].match(/id%3D(\d+)/);
-        if (orderIdMatch && orderIdMatch[1]) {
-          const orderId = orderIdMatch[1];
-          const directLink = createDirectOrderLink(orderId);
-          if (directLink) {
-            console.log('[ORDER-LINK-DEBUG] Created direct link from URL order ID:', directLink);
-            return directLink;
-          }
-        }
-        
-        // If all else fails, return the original tracking link as fallback
-        return wpMailMatch[1].trim();
-      }
-    }
-  }
-  
-  // Pattern 12: WooCommerce order URLs that might be embedded in the email (already handled in Pattern 6)
-  // Removed duplicate pattern to avoid variable redeclaration
-  
-  // Pattern 13: Any URL containing "wc-orders" or "admin.php" that might be an order link
-  const adminOrderPattern = /(https?:\/\/[^"\s\n]*?(?:wc-orders|admin\.php)[^"\s\n]*)/gi;
-  let adminOrderMatch;
-  while ((adminOrderMatch = adminOrderPattern.exec(emailContent)) !== null) {
-    if (adminOrderMatch[1] && adminOrderMatch[1].includes('tours.co.th')) {
-      console.log('[ORDER-LINK-DEBUG] Found admin order URL:', adminOrderMatch[1]);
-      return adminOrderMatch[1].trim();
-    }
-  }
-  
-  // Pattern 14: Handle URLs that might be split across multiple lines
-  const splitUrlPattern = /(https?:\/\/[^"\s]*?\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]*)/gi;
-  let splitUrlMatch;
-  while ((splitUrlMatch = splitUrlPattern.exec(emailContent)) !== null) {
-    if (splitUrlMatch[1]) {
-      console.log('[ORDER-LINK-DEBUG] Found potentially split tracking URL:', splitUrlMatch[1]);
-      
-      // Try to find the complete URL by looking for more content after this
-      const startIndex = splitUrlMatch.index;
-      const searchText = emailContent.substring(startIndex, startIndex + 1000); // Look ahead 1000 chars
-      
-      // Look for a complete base64 string
-      const completeUrlMatch = searchText.match(/(https?:\/\/[^"\s]*?\/wp-json\/wp-mail-smtp\/v1\/e\/[A-Za-z0-9+/=]+)/);
-      if (completeUrlMatch && completeUrlMatch[1] !== splitUrlMatch[1]) {
-        console.log('[ORDER-LINK-DEBUG] Found complete tracking URL:', completeUrlMatch[1]);
-        
-        try {
-          // Process this complete URL using the same logic as Pattern 11
-          const urlParts = completeUrlMatch[1].split('/e/');
-          if (urlParts.length === 2) {
-            let base64Data = urlParts[1];
-            
-            // Clean up malformed base64 data
-            base64Data = base64Data
-              .replace(/\s+/g, '')
-              .replace(/\n/g, '')
-              .replace(/\r/g, '')
-              .replace(/[^A-Za-z0-9+/=]/g, '');
-            
-            const decodedData = Buffer.from(base64Data, 'base64').toString('utf-8');
-            const urlMatch = decodedData.match(/data\[url\]=([^&]+)/);
-            if (urlMatch && urlMatch[1]) {
-              const actualUrl = decodeURIComponent(urlMatch[1]);
-              console.log('[ORDER-LINK-DEBUG] Extracted actual URL from complete tracking link:', actualUrl);
-              return actualUrl.trim();
-            }
-          }
-        } catch (error) {
-          console.log('[ORDER-LINK-DEBUG] Error processing complete tracking URL:', error.message);
-        }
-      }
-    }
-  }
-  
-  // Final fallback: Look for any number that might be an order ID in the email (if we haven't found one yet)
-  const anyNumberPattern = /(\d{4,6})/g;
-  let numberMatch;
-  while ((numberMatch = anyNumberPattern.exec(emailContent)) !== null) {
-    if (numberMatch[1]) {
-      const potentialOrderId = numberMatch[1];
-      // Only create a link if it looks like a reasonable order ID (4-6 digits)
-      if (potentialOrderId.length >= 4 && potentialOrderId.length <= 6) {
-        const directLink = createDirectOrderLink(potentialOrderId);
-        if (directLink) {
-          console.log('[ORDER-LINK-DEBUG] Created final fallback direct order link from potential order ID:', potentialOrderId);
-          return directLink;
-        }
-      }
-    }
-  }
-  
-  // Debug: Log what we're looking at
-  console.log('[ORDER-LINK-DEBUG] Email content preview (first 500 chars):', emailContent.substring(0, 500));
-  console.log('[ORDER-LINK-DEBUG] No order link patterns found');
-  
-  return null;
-}
 
 // Helper function to analyze email content structure for debugging
 function analyzeEmailContent(emailContent) {
@@ -2060,29 +1771,6 @@ async function handler(req, res) {
                     parsed_at = EXCLUDED.parsed_at;
             `;
 
-            // Extract order link from email content if it's from tours.co.th
-            let orderLink = null;
-            if (parsedEmail.from?.value?.[0]?.address?.includes('tours.co.th')) {
-              console.log(`[ORDER-LINK] Processing tours.co.th email for booking ${extractedInfo.bookingNumber}`);
-              const emailContent = parsedEmail.html || parsedEmail.text || '';
-              console.log(`[ORDER-LINK] Email content type: HTML=${!!parsedEmail.html}, Text=${!!parsedEmail.text}`);
-              console.log(`[ORDER-LINK] Email content length: ${emailContent.length} characters`);
-              
-              // Analyze the email content structure for debugging
-              analyzeEmailContent(emailContent);
-              
-              orderLink = extractOrderLinkFromEmail(emailContent);
-              
-              if (orderLink && extractedInfo.bookingNumber) {
-                console.log(`[ORDER-LINK] SUCCESS: Extracted order link for booking ${extractedInfo.bookingNumber}: ${orderLink}`);
-              } else {
-                console.log(`[ORDER-LINK] FAILED: No order link extracted for booking ${extractedInfo.bookingNumber}`);
-              }
-              
-              // Store the order link in the extractedInfo object so it can be accessed later
-              extractedInfo.orderLink = orderLink;
-            }
-
             if (!extractedInfo || extractedInfo.tourDate === 'N/A' || !extractedInfo.isoDate) {
                 console.warn('[SKIP] Skipped due to invalid date:', {
                     bookingNumber: extractedInfo?.bookingNumber,
@@ -2201,7 +1889,7 @@ async function handler(req, res) {
                     }
                     if (anyFieldChanged || clearHighlight) {
                       await sql`
-                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, order_link=${extractedInfo.orderLink}, updated_fields=${JSON.stringify(updatedFields)}
+                        UPDATE bookings SET tour_date=${extractedInfo.isoDate}, sku=${extractedInfo.sku}, program=${comparisonProgram}, customer_name=${extractedInfo.name}, adult=${adult}, child=${child}, infant=${infant}, hotel=${extractedInfo.hotel}, phone_number=${extractedInfo.phoneNumber}, raw_tour_date=${extractedInfo.tourDate}, paid=${paid}, book_date=${extractedInfo.book_date}, rate=${comparisonRate}, order_number=${extractedInfo.orderNumber}, updated_fields=${JSON.stringify(updatedFields)}
                         WHERE booking_number = ${extractedInfo.bookingNumber}
                       `;
                       
@@ -2344,8 +2032,8 @@ async function handler(req, res) {
                     }
 
                     await sql`
-                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total, order_link)
-                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal}, ${extractedInfo.orderLink})
+                        INSERT INTO bookings (booking_number, order_number, tour_date, sku, program, customer_name, customer_email, adult, child, infant, hotel, phone_number, notification_sent, raw_tour_date, paid, book_date, channel, rate, net_total)
+                        VALUES (${extractedInfo.bookingNumber}, ${extractedInfo.orderNumber}, ${extractedInfo.isoDate}, ${extractedInfo.sku}, ${finalProgram}, ${extractedInfo.name}, ${extractedInfo.customerEmail}, ${adult}, ${child}, ${infant}, ${extractedInfo.hotel}, ${extractedInfo.phoneNumber}, FALSE, ${extractedInfo.tourDate}, ${paid}, ${extractedInfo.book_date}, ${channel}, ${finalRate}, ${netTotal})
                         ON CONFLICT (booking_number) DO UPDATE SET
                           order_number = EXCLUDED.order_number,
                           tour_date = EXCLUDED.tour_date,
@@ -2364,8 +2052,7 @@ async function handler(req, res) {
                           book_date = EXCLUDED.book_date,
                           channel = EXCLUDED.channel,
                           rate = EXCLUDED.rate,
-                          net_total = EXCLUDED.net_total,
-                          order_link = EXCLUDED.order_link;
+                          net_total = EXCLUDED.net_total;
                     `;
 
                     // Send Telegram notification for ALL new bookings regardless of date
@@ -2457,62 +2144,6 @@ async function triggerWebNotification(booking) {
     }
 }
 
-// Helper function to create direct order link from order ID
-function createDirectOrderLink(orderId) {
-  if (!orderId) return null;
-  
-  // Create a direct link to the WooCommerce order
-  const directLink = `https://tours.co.th/wp-admin/admin.php?page=wc-orders&action=edit&id=${orderId}`;
-  console.log('[ORDER-LINK-DEBUG] Created direct order link:', directLink);
-  return directLink;
-}
-
-// Helper function to validate if a URL is actually an order edit link
-function isValidOrderEditUrl(url) {
-  if (!url) return false;
-  
-  // Must be a tours.co.th URL
-  if (!url.includes('tours.co.th')) return false;
-  
-  // Must contain order-related paths
-  const validPaths = [
-    '/wp-admin/admin.php?page=wc-orders',
-    '/wp-admin/admin.php?page=orders',
-    '/wp-admin/edit.php?post_type=shop_order',
-    '/my-account/orders/',
-    '/order/',
-    '/booking/'
-  ];
-  
-  return validPaths.some(path => url.includes(path));
-}
-
-// Helper function to extract order ID from various sources
-function extractOrderIdFromContent(emailContent) {
-  // Look for order ID patterns in the email content
-  const patterns = [
-    /order\s*#?\s*:?\s*(\d{4,6})/i,
-    /order\s*id\s*:?\s*(\d{4,6})/i,
-    /order\s*number\s*:?\s*(\d{4,6})/i,
-    /booking\s*#?\s*:?\s*(\d{4,6})/i,
-    /id\s*:?\s*(\d{4,6})/i,
-    /(\d{4,6})/ // Look for 4-6 digit numbers that might be order IDs
-  ];
-  
-  for (const pattern of patterns) {
-    const match = emailContent.match(pattern);
-    if (match && match[1]) {
-      const orderId = match[1];
-      // Validate that this looks like a reasonable order ID
-      if (orderId.length >= 4 && orderId.length <= 6 && !isNaN(parseInt(orderId))) {
-        console.log('[ORDER-LINK-DEBUG] Extracted valid order ID:', orderId);
-        return orderId;
-      }
-    }
-  }
-  
-  return null;
-}
 
 module.exports = handler;
 module.exports.config = { api: { bodyParser: false } };

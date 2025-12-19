@@ -524,7 +524,7 @@ function renderTable() {
         }
         return `
           <tr class="${getRowClass(b.tour_date)}" style="background-color: ${getRowClass(b.tour_date) === 'row-past' ? '#F58573' : getRowClass(b.tour_date) === 'row-today' ? '#8CFA97' : getRowClass(b.tour_date) === 'row-tomorrow' ? '#BAFCE5' : getRowClass(b.tour_date) === 'row-future' ? 'white' : ''} !important;">
-            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">${createBookingNumberDisplay(b.booking_number, shouldHighlight('booking_number'), b.order_link)}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium"><span class="${shouldHighlight('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.booking_number || ''}</span></td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('book_date') ? ' bg-yellow-100' : ''}">${b.book_date ? b.book_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('tour_date') ? ' bg-yellow-100' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</td>
             <td class="px-4 py-3 whitespace-nowrap text-sm${shouldHighlight('customer_name') ? ' bg-yellow-100' : ''}">${b.customer_name || ''}</td>
@@ -576,7 +576,7 @@ function renderTable() {
       return `
       <div class="rounded-lg shadow border mb-4 p-4 bg-white ${getRowClass(b.tour_date)} ${cardClass}">
         <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2 items-center">
-          <span class="font-bold">🆔 Booking #:</span> <span class="${shouldHighlightCard('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${createBookingNumberDisplay(b.booking_number, shouldHighlightCard('booking_number'), b.order_link)}</span>
+          <span class="font-bold">🆔 Booking #:</span> <span class="${shouldHighlightCard('booking_number') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.booking_number || ''}</span>
           <span class="font-bold ml-4">📅 Tour Date:</span> <span class="${shouldHighlightCard('tour_date') ? 'bg-yellow-100 px-2 py-1 rounded' : ''}">${b.tour_date ? b.tour_date.substring(0, 10) : ''}</span>
         </div>
         <hr class="my-2">
@@ -992,47 +992,6 @@ function generateNotificationText(b) {
   return lines.join('\n');
 }
 
-// Function to parse order link from email content
-async function parseOrderLinkFromEmail(bookingNumber) {
-  try {
-    // Fetch order link from database
-    const response = await fetch(`/api/bookings?search=${bookingNumber}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.bookings && data.bookings.length > 0) {
-        const booking = data.bookings[0];
-        return booking.order_link || null;
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching order link:', error);
-  }
-  return null;
-}
-
-
-
-// Function to create booking number display with optional hyperlink
-function createBookingNumberDisplay(bookingNumber, shouldHighlight, orderLink = null) {
-  if (orderLink && orderLink.trim() !== '') {
-
-    const linkId = `order-link-${bookingNumber}`;
-    return `<a href="${orderLink}" target="_blank" rel="noopener noreferrer" class="booking-number-link ${shouldHighlight ? 'bg-yellow-100' : ''}" title="Click to view order in new tab" style="cursor: pointer; text-decoration: underline;" id="${linkId}" onclick="testOrderLink('${orderLink}')">${bookingNumber || ''}</a>`;
-  } else {
-
-    return `<span class="${shouldHighlight ? 'bg-yellow-100' : ''}">${bookingNumber || ''}</span>`;
-  }
-}
-
-// Test function to verify order links work
-function testOrderLink(url) {
-  try {
-    // Try to open the link
-    window.open(url, '_blank', 'noopener,noreferrer');
-  } catch (error) {
-    console.error('[ERROR] Error opening link:', error);
-  }
-}
 
 // Function to send email to customer
 async function sendCustomerEmail(bookingNumber, button) {

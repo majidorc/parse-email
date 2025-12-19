@@ -308,12 +308,20 @@ class BokunParser extends BaseEmailParser {
   extractBookingNumber() { return this.findValueByLabel('Ext. booking ref'); }
   extractTourDate() {
     const dateText = this.findValueByLabel('Date');
-    // More robust regex: handles optional day of week, and space or period after the day number.
+    if (!dateText) return 'N/A';
+
+    // Original Bokun style: "10.Aug '25" or "10 Aug '25"
     const dateMatch = dateText.match(/(\d{1,2})[\.\s]([A-Za-z]{3}\s'\d{2})/);
     if (dateMatch && dateMatch[1] && dateMatch[2]) {
-        // Reconstruct to "DD.Mmm 'YY" format for consistency.
-        return `${dateMatch[1]}.${dateMatch[2]}`;
+      // Reconstruct to "DD.Mmm 'YY" format for consistency.
+      return `${dateMatch[1]}.${dateMatch[2]}`;
     }
+
+    // Anywhere.tours style: "Sat Dec 20 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
+    // Try to convert any parsable date string to ISO (YYYY-MM-DD)
+    const iso = this._getISODate(dateText);
+    if (iso) return iso;
+
     return 'N/A';
   }
   extractProgram() {
@@ -381,12 +389,18 @@ class BokunParser extends BaseEmailParser {
     return match ? match[1] : '';
   }
   extractPaid() {
-    // Look for 'Viator amount: THB 1234.56' in the text content
-    const match = this.textContent.match(/Viator amount:\s*THB\s*([\d,.]+)/i);
+    // Look for 'Viator amount: THB 1234.56' (Viator-style emails)
+    let match = this.textContent.match(/Viator amount:\s*THB\s*([\d,.]+)/i);
     if (match && match[1]) {
-      // Remove commas, parse as float, fix to 2 decimals
       return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
     }
+
+    // Anywhere.tours style: "Total Amount THB&nbsp;5,296.00"
+    match = this.textContent.match(/Total Amount\s*THB\s*([\d,.]+)/i);
+    if (match && match[1]) {
+      return parseFloat(match[1].replace(/,/g, '')).toFixed(2);
+    }
+
     return null;
   }
   extractBookDate() {

@@ -418,24 +418,16 @@ class BokunParser extends BaseEmailParser {
     return null;
   }
   extractBookDate() {
-    // Look for a line containing 'Created' and extract the date part before '@'
-    // Examples:
-    // - 'Created\tFri, July 04 2025 @ 23:17'
-    // - 'Created Fri, December 19, 2025 @ 08:35'
-    const createdMatch = this.textContent.match(/Created[^\n@]*/i);
-    if (createdMatch && createdMatch[0]) {
-      let line = createdMatch[0];
-      // Remove the 'Created' label
-      line = line.replace(/Created\s*[\t:]*/i, '').trim();
-      // If there's an '@', keep only the part before it
-      const atIndex = line.indexOf('@');
-      if (atIndex !== -1) {
-        line = line.substring(0, atIndex).trim();
+    // Look anywhere in the text for the Created line, allowing line breaks:
+    // e.g. "Created\nFri, December 19, 2025 @ 08:35"
+    // We capture the 'Month Day, Year' part.
+    const match = this.textContent.match(/Created[\s\S]*?([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
+    if (match && match[1]) {
+      const dateStr = match[1];
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
       }
-      // Remove leading day-of-week like 'Fri,' or 'Fri '
-      line = line.replace(/^[A-Za-z]+,?\s+/, '');
-      const d = new Date(line);
-      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
     }
     return null;
   }

@@ -325,7 +325,19 @@ class BokunParser extends BaseEmailParser {
     return 'N/A';
   }
   extractProgram() {
-    let program = this.findValueByLabel('Product').replace(/^[A-Z0-9]+\s*-\s*/, '').replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ').replace(/\s+/g, ' ').trim();
+    // Product examples:
+    // - "HKT0041 - Phang Nga Bay James Bond Island Tour..."
+    // - "HKT0007 Phang Nga Bay James Bond Island Tour..."
+    let productText = this.findValueByLabel('Product') || '';
+    
+    // Remove leading SKU with optional dash or just whitespace
+    // Matches "HKT0041 - " or "HKT0041 "
+    productText = productText.replace(/^[A-Z0-9]+\s*-\s*/, '').replace(/^[A-Z0-9]+\s+/, '');
+
+    let program = productText
+      .replace(/[^a-zA-Z0-9\s,:'&\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     
     // Extract start time from the date field and append to program
     const startTime = this.extractStartTime();

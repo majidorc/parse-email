@@ -331,14 +331,32 @@ class NotificationManager {
             return '🎯'; // Default icon
         };
         
-        const programIcon = getProgramIcon(program);
+        // Clean up program for display (in case SKU is still prefixed)
+        // Examples to clean:
+        // - "HKT0007 Phang Nga Bay James Bond Island Tour: Canoe Adventure by Bigboat"
+        // - "HKT0041 - Phang Nga Bay James Bond Island Tour..."
+        let displayProgram = program || '';
+        displayProgram = displayProgram
+            .replace(/^[A-Z0-9]+\s*-\s*/, '')  // Remove "HKT0007 - "
+            .replace(/^[A-Z0-9]+\s+/, '')      // Remove "HKT0007 "
+            .trim();
+
+        const programIcon = getProgramIcon(displayProgram || program);
         
         // Compose program line with rate title for all bookings
-        let programLine = `${programIcon} Program : ${program}`;
-        const rate = booking.rate || '';
+        let programLine = `${programIcon} Program : ${displayProgram || program}`;
 
-        if (rate) {
-            programLine = `${programIcon} Program : ${program} - [${rate}]`;
+        // Clean up rate for display:
+        // Example original:
+        // "With Transfer (In Free pickup zone) (Pickup outside the free zone will incur an additional fee.)"
+        // Desired display: "With Transfer"
+        const rawRate = booking.rate || '';
+        const shortRate = rawRate
+            ? rawRate.replace(/\s*\([^)]*\)/g, '').trim() // Remove all (...) parts
+            : '';
+
+        if (shortRate) {
+            programLine = `${programIcon} Program : ${displayProgram || program} - [${shortRate}]`;
         }
         
         // Dynamic cash on tour text based on national_park_fee value

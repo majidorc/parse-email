@@ -395,9 +395,11 @@ class BokunParser extends BaseEmailParser {
   extractPhone() { return this.findValueByLabel('Customer phone').replace(/\D/g, ''); }
   extractCustomerEmail() { return this.findValueByLabel('Customer email'); }
   extractSKU() {
-    // Product field: e.g., 'HKT0041 - ...'
-    const product = this.findValueByLabel('Product');
-    const match = product.match(/^([A-Z0-9]+)\s*-/);
+    // Product field examples:
+    // - 'HKT0041 - Phang Nga Bay...'
+    // - 'HKT0007 Phang Nga Bay...'
+    const product = this.findValueByLabel('Product') || '';
+    const match = product.match(/^([A-Z0-9]+)\s*(?:-|\s)/);
     return match ? match[1] : '';
   }
   extractPaid() {
@@ -416,12 +418,23 @@ class BokunParser extends BaseEmailParser {
     return null;
   }
   extractBookDate() {
-    // Look for a line like 'Created\tFri, July 04 2025 @ 23:17'
-    const match = this.textContent.match(/Created\s*[\t:]*\s*([A-Za-z]+,?\s+[A-Za-z]+\s+\d{1,2}\s+\d{4})/);
-    if (match && match[1]) {
-      // Remove day of week if present (e.g., 'Fri, July 04 2025' -> 'July 04 2025')
-      const dateStr = match[1].replace(/^[A-Za-z]+,?\s+/, '');
-      const d = new Date(dateStr);
+    // Look for a line containing 'Created' and extract the date part before '@'
+    // Examples:
+    // - 'Created\tFri, July 04 2025 @ 23:17'
+    // - 'Created Fri, December 19, 2025 @ 08:35'
+    const createdMatch = this.textContent.match(/Created[^\n@]*/i);
+    if (createdMatch && createdMatch[0]) {
+      let line = createdMatch[0];
+      // Remove the 'Created' label
+      line = line.replace(/Created\s*[\t:]*/i, '').trim();
+      // If there's an '@', keep only the part before it
+      const atIndex = line.indexOf('@');
+      if (atIndex !== -1) {
+        line = line.substring(0, atIndex).trim();
+      }
+      // Remove leading day-of-week like 'Fri,' or 'Fri '
+      line = line.replace(/^[A-Za-z]+,?\s+/, '');
+      const d = new Date(line);
       if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
     }
     return null;

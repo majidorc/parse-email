@@ -495,46 +495,16 @@ class ThailandToursParser extends BaseEmailParser {
     }
     
     extractBookingNumber() {
-        // PRIORITY 1: Try to extract "Booking #" from HTML (for HTML emails)
-        // This is the actual booking number, not the order number
+        // PRIORITY 1: Extract order number (this is the booking number for tours.co.th emails)
         if (this.$) {
-            // Look for "Booking #36676" in the HTML content
-            const htmlText = this.$('body').text();
-            const bookingMatch = htmlText.match(/Booking\s+#(\d+)/i);
-            if (bookingMatch && bookingMatch[1]) {
-                return bookingMatch[1];
-            }
-            
-            // Also check in specific elements that might contain booking number
-            const bookingElements = this.$('*:contains("Booking #")');
-            bookingElements.each((i, el) => {
-                const text = this.$(el).text();
-                const match = text.match(/Booking\s+#(\d+)/i);
-                if (match && match[1]) {
-                    return match[1];
-                }
-            });
-        }
-        
-        // PRIORITY 2: Try text-based extraction for "Booking #"
-        const bookingLine = this.lines.find(line => /Booking\s+#\d+/i.test(line));
-        if (bookingLine) {
-            const bookingMatch = bookingLine.match(/Booking\s+#(\d+)/i);
-            if (bookingMatch && bookingMatch[1]) {
-                return bookingMatch[1];
-            }
-        }
-        
-        // PRIORITY 3: Fall back to order number if no booking number found
-        if (this.$) {
-            // Look for "New Order: #68121911640" in h1 tags
+            // Look for "New Order: #68122011645" in h1 tags
             const h1Text = this.$('h1').first().text();
             const h1Match = h1Text.match(/(?:new\s+order|order)\s*:?\s*#?\s*(\d+)/i);
             if (h1Match && h1Match[1]) {
                 return h1Match[1];
             }
             
-            // Look for "Order number: 68121911640" in any element
+            // Look for "Order number: 68122011645" in any element
             const orderNumberText = this.$('*:contains("Order number:")').first().text();
             const orderMatch = orderNumberText.match(/order\s+number:\s*(\d+)/i);
             if (orderMatch && orderMatch[1]) {
@@ -542,7 +512,7 @@ class ThailandToursParser extends BaseEmailParser {
             }
         }
         
-        // PRIORITY 4: Try text-based extraction for order number
+        // PRIORITY 2: Try text-based extraction for order number
         let bookingNumber = this._findLineValue('ORDER NUMBER:');
         if (bookingNumber === 'N/A') {
             bookingNumber = this._findLineValue('Order number:');

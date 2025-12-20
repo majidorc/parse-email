@@ -495,7 +495,37 @@ class ThailandToursParser extends BaseEmailParser {
     }
     
     extractBookingNumber() {
-        // PRIORITY 1: Try to extract from HTML (for HTML emails)
+        // PRIORITY 1: Try to extract "Booking #" from HTML (for HTML emails)
+        // This is the actual booking number, not the order number
+        if (this.$) {
+            // Look for "Booking #36676" in the HTML content
+            const htmlText = this.$('body').text();
+            const bookingMatch = htmlText.match(/Booking\s+#(\d+)/i);
+            if (bookingMatch && bookingMatch[1]) {
+                return bookingMatch[1];
+            }
+            
+            // Also check in specific elements that might contain booking number
+            const bookingElements = this.$('*:contains("Booking #")');
+            bookingElements.each((i, el) => {
+                const text = this.$(el).text();
+                const match = text.match(/Booking\s+#(\d+)/i);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            });
+        }
+        
+        // PRIORITY 2: Try text-based extraction for "Booking #"
+        const bookingLine = this.lines.find(line => /Booking\s+#\d+/i.test(line));
+        if (bookingLine) {
+            const bookingMatch = bookingLine.match(/Booking\s+#(\d+)/i);
+            if (bookingMatch && bookingMatch[1]) {
+                return bookingMatch[1];
+            }
+        }
+        
+        // PRIORITY 3: Fall back to order number if no booking number found
         if (this.$) {
             // Look for "New Order: #68121911640" in h1 tags
             const h1Text = this.$('h1').first().text();
@@ -512,7 +542,7 @@ class ThailandToursParser extends BaseEmailParser {
             }
         }
         
-        // PRIORITY 2: Try text-based extraction
+        // PRIORITY 4: Try text-based extraction for order number
         let bookingNumber = this._findLineValue('ORDER NUMBER:');
         if (bookingNumber === 'N/A') {
             bookingNumber = this._findLineValue('Order number:');
@@ -667,10 +697,17 @@ class ThailandToursParser extends BaseEmailParser {
                 continue;
             }
 
-            // Look for "person+" patterns (adults)
-            const personPlusMatch = line.match(/\*?\s*(\d+)\s*person\+/i);
-            if (personPlusMatch) {
+            // Look for "Person (+4 Years) ฿1899: 2" or "Person (+4 Years): 2" patterns (adults)
+            const personPlusMatch = line.match(/person\s*\(\+\d+\s*years?\)[^:]*:\s*(\d+)/i);
+            if (personPlusMatch && personPlusMatch[1]) {
                 adult = parseInt(personPlusMatch[1], 10);
+                continue;
+            }
+            
+            // Look for "person+" patterns (adults) - fallback
+            const personPlusMatch2 = line.match(/\*?\s*(\d+)\s*person\+/i);
+            if (personPlusMatch2) {
+                adult = parseInt(personPlusMatch2[1], 10);
                 continue;
             }
 
@@ -894,7 +931,8 @@ class ThailandToursParser extends BaseEmailParser {
                 pax.infant = (parseInt(pax.infant, 10) + parseInt(infantMatch[1], 10)).toString();
             }
             // Person (+4 Years): N (treat as adult)
-            const personPlusMatch = line.match(/person \(\+\d+ years\):\s*(\d+)/i);
+            // Handle both "Person (+4 Years): 2" and "Person (+4 Years) ฿1899: 2"
+            const personPlusMatch = line.match(/person\s*\(\+\d+\s*years?\)[^:]*:\s*(\d+)/i);
             if (personPlusMatch && personPlusMatch[1]) {
                 pax.adult = (parseInt(pax.adult, 10) + parseInt(personPlusMatch[1], 10)).toString();
             }

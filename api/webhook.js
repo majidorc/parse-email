@@ -422,12 +422,22 @@ class BokunParser extends BaseEmailParser {
     const createdValue = this.findValueByLabel('Created');
     if (createdValue) {
       // Try various date formats that might appear in the Created field:
-      // - "Fri, December 19, 2025 @ 08:35"
+      // - "Sat, December 20 2025 @ 15:32" (NO comma after day number)
+      // - "Fri, December 19, 2025 @ 08:35" (WITH comma after day number)
       // - "December 19, 2025"
       // - "19 Dec 2025"
       // - "2025-12-19"
       
-      // Format 1: "Fri, December 19, 2025 @ 08:35" or "December 19, 2025"
+      // Format 1: "Sat, December 20 2025 @ 15:32" (no comma after day) - MOST COMMON
+      const noCommaMatch = createdValue.match(/([A-Za-z]+\s+\d{1,2}\s+\d{4})/);
+      if (noCommaMatch && noCommaMatch[1]) {
+        const d = new Date(noCommaMatch[1]);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split('T')[0];
+        }
+      }
+      
+      // Format 2: "Fri, December 19, 2025 @ 08:35" or "December 19, 2025" (with comma)
       const commaMatch = createdValue.match(/([A-Za-z]+\s+\d{1,2},\s*\d{4})/);
       if (commaMatch && commaMatch[1]) {
         const d = new Date(commaMatch[1]);
@@ -436,7 +446,7 @@ class BokunParser extends BaseEmailParser {
         }
       }
       
-      // Format 2: "19 Dec 2025" or "19 December 2025"
+      // Format 3: "19 Dec 2025" or "19 December 2025"
       const spaceMatch = createdValue.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
       if (spaceMatch) {
         const d = new Date(spaceMatch[0]);
@@ -445,13 +455,13 @@ class BokunParser extends BaseEmailParser {
         }
       }
       
-      // Format 3: ISO format "2025-12-19"
+      // Format 4: ISO format "2025-12-19"
       const isoMatch = createdValue.match(/(\d{4}-\d{2}-\d{2})/);
       if (isoMatch && isoMatch[1]) {
         return isoMatch[1];
       }
       
-      // Format 4: Try parsing the entire string as a date
+      // Format 5: Try parsing the entire string as a date
       const d = new Date(createdValue);
       if (!isNaN(d.getTime())) {
         return d.toISOString().split('T')[0];
@@ -459,9 +469,18 @@ class BokunParser extends BaseEmailParser {
     }
     
     // PRIORITY 2: Fall back to text-based extraction (for non-table emails)
-    const match = this.textContent.match(/Created[\s\S]*?([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
-    if (match && match[1]) {
-      const dateStr = match[1];
+    // Try both formats: with and without comma
+    const noCommaTextMatch = this.textContent.match(/Created[\s\S]*?([A-Za-z]+\s+\d{1,2}\s+\d{4})/i);
+    if (noCommaTextMatch && noCommaTextMatch[1]) {
+      const d = new Date(noCommaTextMatch[1]);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
+    const commaTextMatch = this.textContent.match(/Created[\s\S]*?([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
+    if (commaTextMatch && commaTextMatch[1]) {
+      const dateStr = commaTextMatch[1];
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
         return d.toISOString().split('T')[0];

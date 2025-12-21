@@ -418,9 +418,47 @@ class BokunParser extends BaseEmailParser {
     return null;
   }
   extractBookDate() {
-    // Look anywhere in the text for the Created line, allowing line breaks:
-    // e.g. "Created\nFri, December 19, 2025 @ 08:35"
-    // We capture the 'Month Day, Year' part.
+    // PRIORITY 1: Try to extract from HTML table using findValueByLabel
+    const createdValue = this.findValueByLabel('Created');
+    if (createdValue) {
+      // Try various date formats that might appear in the Created field:
+      // - "Fri, December 19, 2025 @ 08:35"
+      // - "December 19, 2025"
+      // - "19 Dec 2025"
+      // - "2025-12-19"
+      
+      // Format 1: "Fri, December 19, 2025 @ 08:35" or "December 19, 2025"
+      const commaMatch = createdValue.match(/([A-Za-z]+\s+\d{1,2},\s*\d{4})/);
+      if (commaMatch && commaMatch[1]) {
+        const d = new Date(commaMatch[1]);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split('T')[0];
+        }
+      }
+      
+      // Format 2: "19 Dec 2025" or "19 December 2025"
+      const spaceMatch = createdValue.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      if (spaceMatch) {
+        const d = new Date(spaceMatch[0]);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split('T')[0];
+        }
+      }
+      
+      // Format 3: ISO format "2025-12-19"
+      const isoMatch = createdValue.match(/(\d{4}-\d{2}-\d{2})/);
+      if (isoMatch && isoMatch[1]) {
+        return isoMatch[1];
+      }
+      
+      // Format 4: Try parsing the entire string as a date
+      const d = new Date(createdValue);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+    }
+    
+    // PRIORITY 2: Fall back to text-based extraction (for non-table emails)
     const match = this.textContent.match(/Created[\s\S]*?([A-Za-z]+\s+\d{1,2},\s*\d{4})/i);
     if (match && match[1]) {
       const dateStr = match[1];
@@ -429,6 +467,7 @@ class BokunParser extends BaseEmailParser {
         return d.toISOString().split('T')[0];
       }
     }
+    
     return null;
   }
   extractRate() {

@@ -465,6 +465,30 @@ async function handleRateChange(dropdown) {
       
       if (data.success) {
         showToast('Rate and net price updated successfully', 'success');
+
+        // Optimistically update NET and benefit in the current accounting table row
+        try {
+          const netValue = data.net_total != null ? Number(data.net_total) : null;
+          const netCell = document.querySelector(`.accounting-net-cell[data-booking="${bookingNumber}"]`);
+          if (netCell && netValue !== null && !isNaN(netValue)) {
+            netCell.textContent = netValue.toFixed(2);
+
+            const row = netCell.closest('tr');
+            if (row) {
+              const paidCell = row.querySelector('.accounting-paid-cell');
+              const benefitCell = row.querySelector('.accounting-benefit-cell');
+              if (paidCell && benefitCell) {
+                const paidText = paidCell.textContent.trim();
+                const paidVal = paidText && paidText !== 'Click to add' ? Number(paidText) : 0;
+                const benefit = paidVal - netValue;
+                benefitCell.textContent = !isNaN(benefit) ? benefit.toFixed(2) : '';
+              }
+            }
+          }
+        } catch (e) {
+          console.log('Failed to optimistically update NET/benefit in table:', e);
+        }
+
         console.log('Refreshing accounting table...');
         // Refresh the table to update calculations with cache buster
         // Add debug parameter to track the specific booking that was updated
@@ -1763,7 +1787,7 @@ function renderAccountingTable() {
           <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${b.child || 0}</td>
           <td class="px-4 py-3 text-sm accounting-paid-cell" data-booking="${b.booking_number}" tabindex="0">${b.paid !== null && b.paid !== undefined ? Number(b.paid).toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
           <td class="px-4 py-3 text-sm text-blue-900 font-semibold accounting-net-cell" data-booking="${b.booking_number}" tabindex="0">${typeof b.net_total === 'number' ? b.net_total.toFixed(2) : '<span class="text-gray-400">Click to add</span>'}</td>
-          <td class="px-4 py-3 text-sm text-yellow-900 font-semibold">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>
+          <td class="px-4 py-3 text-sm text-yellow-900 font-semibold accounting-benefit-cell">${typeof b.benefit === 'number' ? b.benefit.toFixed(2) : ''}</td>
           <td class="px-4 py-3 text-center">${userRole === 'admin' ? `<button class="cancel-btn" title="Cancel booking" data-booking="${b.booking_number}">❌</button>` : ''}</td>
         </tr>
       `;

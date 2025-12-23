@@ -469,7 +469,11 @@ async function handleRateChange(dropdown) {
         // Optimistically update NET and benefit in the current accounting table row
         try {
           const netValue = data.net_total != null ? Number(data.net_total) : null;
+          console.log('Optimistic NET update:', { bookingNumber, netValue, rawNet: data.net_total });
           const netCell = document.querySelector(`.accounting-net-cell[data-booking="${bookingNumber}"]`);
+          if (!netCell) {
+            console.log('No accounting NET cell found for booking', bookingNumber);
+          }
           if (netCell && netValue !== null && !isNaN(netValue)) {
             netCell.textContent = netValue.toFixed(2);
 
@@ -477,10 +481,17 @@ async function handleRateChange(dropdown) {
             if (row) {
               const paidCell = row.querySelector('.accounting-paid-cell');
               const benefitCell = row.querySelector('.accounting-benefit-cell');
+              if (!paidCell) {
+                console.log('No accounting PAID cell found in row for booking', bookingNumber);
+              }
+              if (!benefitCell) {
+                console.log('No accounting BENEFIT cell found in row for booking', bookingNumber);
+              }
               if (paidCell && benefitCell) {
                 const paidText = paidCell.textContent.trim();
                 const paidVal = paidText && paidText !== 'Click to add' ? Number(paidText) : 0;
                 const benefit = paidVal - netValue;
+                console.log('Recalculated benefit:', { paidText, paidVal, netValue, benefit });
                 benefitCell.textContent = !isNaN(benefit) ? benefit.toFixed(2) : '';
               }
             }

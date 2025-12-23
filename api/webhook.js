@@ -313,8 +313,8 @@ class BokunParser extends BaseEmailParser {
     // Original Bokun style: "10.Aug '25" or "10 Aug '25"
     const dateMatch = dateText.match(/(\d{1,2})[\.\s]([A-Za-z]{3}\s'\d{2})/);
     if (dateMatch && dateMatch[1] && dateMatch[2]) {
-      // Reconstruct to "DD.Mmm 'YY" format for consistency.
-      return `${dateMatch[1]}.${dateMatch[2]}`;
+        // Reconstruct to "DD.Mmm 'YY" format for consistency.
+        return `${dateMatch[1]}.${dateMatch[2]}`;
     }
 
     // Anywhere.tours style: "Sat Dec 20 2025 00:00:00 GMT+0000 (Coordinated Universal Time)"
@@ -484,7 +484,7 @@ class BokunParser extends BaseEmailParser {
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
         return d.toISOString().split('T')[0];
-      }
+    }
     }
     
     return null;
@@ -539,7 +539,7 @@ class ThailandToursParser extends BaseEmailParser {
             this.$ = cheerio.load(cleanedHtml);
             // Extract text content from HTML for line-based parsing
             const textContent = cleanupHtml(content);
-            this.lines = textContent.split('\n').map(line => line.trim());
+        this.lines = textContent.split('\n').map(line => line.trim());
         } catch (error) {
             // If HTML parsing fails, treat as plain text
             this.$ = null;
